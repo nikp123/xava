@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <title>cava by karlstav</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>cava</h1>
+        <h2>Console-based Audio Visualizer for Alsa</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/karlstav/cava/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/karlstav/cava/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/karlstav/cava" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a id="cava-" class="anchor" href="#cava-" aria-hidden="true"><span class="octicon octicon-link"></span></a>C.A.V.A. </h1>
+
+<p><strong>C</strong>onsole-based <strong>A</strong>udio <strong>V</strong>isualizer for <strong>A</strong>LSA</p>
+
+<p>by <a href="mailto:karl@stavestrand.no">Karl Stavestrand</a></p>
+
+<p><img src="https://cloud.githubusercontent.com/assets/5231746/7368413/7d7ca93e-ed9f-11e4-842f-61c54fc03dbe.gif" alt="spectrum" title="spectrum"></p>
+
+<p>thanks to <a href="https://github.com/anko">anko</a> for the gif, here is the <a href="http://unix.stackexchange.com/questions/113695/gif-screencastng-the-unix-way">recipe</a>.</p>
+
+<p><a href="http://youtu.be/vA4RyatP064">Demo video</a> (old)</p>
+
+
+
+
+
+<p><strong>Table of Contents</strong>  <em>generated with <a href="https://github.com/thlorenz/doctoc">DocToc</a></em></p>
+
+<ul>
+<li>
+<a href="#cava">C.A.V.A. </a>
+
+<ul>
+<li><a href="#updates">Updates</a></li>
+<li><a href="#what-it-is">What it is</a></li>
+<li><a href="#build-requirements">Build requirements</a></li>
+<li>
+<a href="#getting-started">Getting started</a>
+
+<ul>
+<li><a href="#installing">Installing</a></li>
+<li><a href="#uninstalling">Uninstalling</a></li>
+</ul>
+</li>
+<li>
+<a href="#capturing-audio">Capturing audio</a>
+
+<ul>
+<li>
+<a href="#from-loopback-device">From loopback device</a>
+
+<ul>
+<li><a href="#pulseaudio-easy">PulseAudio (easy)</a></li>
+<li><a href="#alsa-hard">ALSA (hard)</a></li>
+</ul>
+</li>
+<li><a href="#from-mpds-fifo-output">From mpd's fifo output</a></li>
+</ul>
+</li>
+<li><a href="#running-via-ssh">Running via ssh</a></li>
+<li>
+<a href="#font-notes">Font notes</a>
+
+<ul>
+<li><a href="#in-ttys">In ttys</a></li>
+<li><a href="#in-terminal-emulators">In terminal emulators</a></li>
+</ul>
+</li>
+<li><a href="#latency-notes">Latency notes</a></li>
+<li>
+<a href="#usage">Usage</a>
+
+<ul>
+<li><a href="#controls">Controls</a></li>
+</ul>
+</li>
+<li>
+<a href="#configuration">Configuration</a>
+
+<ul>
+<li><a href="#example-file">Example file:</a></li>
+<li>
+<a href="#sections">Sections:</a>
+
+<ul>
+<li><a href="#general">[general]</a></li>
+<li><a href="#input">[input]</a></li>
+<li><a href="#output">[output]</a></li>
+<li><a href="#color">[color]</a></li>
+<li><a href="#smoothing">[smoothing]</a></li>
+<li><a href="#eq">[eq]</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+
+<h2>
+<a id="updates" class="anchor" href="#updates" aria-hidden="true"><span class="octicon octicon-link"></span></a>Updates</h2>
+
+<p>7/16/2015 - 0.3.2 - added legacy ouput mode 'noncurses', for people experiencing issues with ncurses</p>
+
+<p>7/15/2015 - 0.3.1 - added config file</p>
+
+<p>7/12/2015 - 0.3.0 - Modular source code</p>
+
+<p>5/23/2015 - 0.2.0 - Switched to ncurses</p>
+
+<p>4/23/2015 - Fixed terminal window resizing, added smoothing </p>
+
+<p>4/19/2015 - Added Monstercat style FFT easing (by <a href="https://github.com/CelestialWalrus">CelestialWalrus)</a>.</p>
+
+<p>9/22/2014 - Added support for mpd FIFO input.</p>
+
+<h2>
+<a id="what-it-is" class="anchor" href="#what-it-is" aria-hidden="true"><span class="octicon octicon-link"></span></a>What it is</h2>
+
+<p>C.A.V.A. is a bar spectrum analyzer for audio using ALSA for input. Its frequency range is limited to 50-10,000Hz. I know that the human ear can hear from 20 up to 20,000 Hz (and probably "sense" even higher frequencies), but the frequencies between 50-10,000Hz seem to me to be the most distinguishable. (I believe telephones used to be limited to as low as 8kHz.)</p>
+
+<p>This program is not intended for scientific use.</p>
+
+<p>This is my first published code. I am not a professional programmer so the source code is probably, by all conventions, a complete mess. Please excuse all the typos as I am both dyslexic and foreign.</p>
+
+<p>Any tips or comments would be much appreciated.</p>
+
+<h2>
+<a id="build-requirements" class="anchor" href="#build-requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build requirements</h2>
+
+<ul>
+<li><a href="http://alsa-project.org/">ALSA dev files</a></li>
+<li><a href="http://www.fftw.org/">FFTW</a></li>
+<li>
+<a href="http://www.gnu.org/software/ncurses/">ncursesw dev files</a> (bundled in ncurses in arch)</li>
+</ul>
+
+<p>This can be installed easily in all major distros:</p>
+
+<p>Debian/Raspbian:</p>
+
+<pre><code>apt-get install libfftw3-dev libasound2-dev libncursesw5-dev
+</code></pre>
+
+<p>ArchLinux:</p>
+
+<pre><code>pacman -S base-devel fftw ncurses
+</code></pre>
+
+<p>openSUSE:</p>
+
+<pre><code>zypper install alsa-devel ncurses-devel fftw3-devel
+</code></pre>
+
+<h2>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting started</h2>
+
+<pre><code>make
+</code></pre>
+
+<p>You can use the following for compilation options, value in <em>italic style</em> is the default value:</p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>debug</code></td>
+<td>
+<em>0</em> or 1</td>
+<td>Debugging message switch</td>
+</tr>
+</tbody>
+</table>
+
+<p>For example, turning on debugging messages:</p>
+
+<pre><code>make debug=1
+</code></pre>
+
+<h3>
+<a id="installing-manually" class="anchor" href="#installing-manually" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installing manually</h3>
+
+<p>Install <code>cava</code> to default <code>/usr/local</code>:</p>
+
+<pre><code>make install
+</code></pre>
+
+<p>Or you can change <code>PREFIX</code>, for example:</p>
+
+<pre><code>make PREFIX=$HOME/.local install
+</code></pre>
+
+<h3>
+<a id="uninstalling" class="anchor" href="#uninstalling" aria-hidden="true"><span class="octicon octicon-link"></span></a>Uninstalling</h3>
+
+<pre><code>make uninstall
+</code></pre>
+
+<p>Or:</p>
+
+<pre><code>make PREFIX=$HOME/.local uninstall
+</code></pre>
+
+<h3>
+<a id="opensuse" class="anchor" href="#opensuse" aria-hidden="true"><span class="octicon octicon-link"></span></a>openSUSE</h3>
+
+<p>On openSUSE you need to add jubalh's home repository to install cava via zypper. For example for Tumbleweed do:</p>
+
+<pre><code>zypper ar -f http://download.opensuse.org/repositories/home:/jubalh/openSUSE_Tumbleweed/home:jubalh.repo
+zypper in cava
+</code></pre>
+
+<p>If you use 13.2 or 13.1 just replace <em>openSUSE_Tumbleweed</em> with <em>openSUSE_13.2</em>, adjust it to your version.</p>
+
+<h2>
+<a id="capturing-audio" class="anchor" href="#capturing-audio" aria-hidden="true"><span class="octicon octicon-link"></span></a>Capturing audio</h2>
+
+<h3>
+<a id="from-loopback-device" class="anchor" href="#from-loopback-device" aria-hidden="true"><span class="octicon octicon-link"></span></a>From loopback device</h3>
+
+<p>If you want to capture audio straight fom the output (not just mic or line-in), you must create an ALSA loopback interface, then output the audio simultaneously to both the loopback and your normal interface.</p>
+
+<p>To create a loopback interface simply run:</p>
+
+<p><code>sudo modprobe snd_aloop</code></p>
+
+<p>Hopefully your <code>aplay -l</code> should now contain a loopback interface.</p>
+
+<p>To make it presistent across boot add the line <code>snd-aloop</code> to "/etc/modules". To keep it form beeing loaded as the first soundcard add the line <code>options snd-aloop index=1</code> to "/etc/modprobe.d/alsa-base.conf", this will load it at '1' which is what cava uses as default. You can replace '1' with whatever makes most senes in your audio setup, but then cava must be specified to use that index. Simply pass the -d argument or alter the config file with the loopback interface index.</p>
+
+<p>Playing the audio through your Loopback interface makes it possible for cava to to capture it, but there will be no sound in your speakers. :(</p>
+
+<p>Not to worry! There are (at least) two ways of sending the audio output to the loopback <em>and</em> your actual audio interface at the same time:</p>
+
+<h4>
+<a id="pulseaudio-easy" class="anchor" href="#pulseaudio-easy" aria-hidden="true"><span class="octicon octicon-link"></span></a>PulseAudio (easy)</h4>
+
+<p>First create the loopback device as explained in the section above.</p>
+
+<p>To <code>/etc/pulse/default.pa</code>, add the line <code>load-module module-combine-sink</code> (in PulseAudio versions &lt;1.0, the module was only called <code>module-combine</code>). Then restart PulseAudio. For some reason, I had to turn off realtime scheduling for this to work on a Raspberry Pi (set <code>realtime-scheduling = no</code> in <code>/etc/pulse/daemon.conf</code>).</p>
+
+<p>PulseAudio setup can also be done in paprefs (Debian: <code>sudo apt-get install paprefs &amp;&amp; paprefs</code>): In the far right tab check the box "Simultaneous Output".</p>
+
+<p>An extra Output should appear in your sound options called "Simultaneous output to..." Note that when using this method if you turn down the volume on the Simultaneous output, this will effect the visualizer. To avoid this, select the actual output, turn down the volume, then select the Simultaneous output again.</p>
+
+<h4>
+<a id="alsa-hard" class="anchor" href="#alsa-hard" aria-hidden="true"><span class="octicon octicon-link"></span></a>ALSA (hard)</h4>
+
+<p>First create the loopback device as explained in the section above.</p>
+
+<p>Look at the inculded example file <code>example_files/etc/asound.conf</code>. I was able to make this work on my laptop (an Asus UX31 running Elementary OS). I had no luck with the ALSA method on my Rasberry PI (Rasbian) with an USB DAC. The PulseAudio method however works perfectly on my PI.</p>
+
+<p>Read more about the ALSA method <a href="http://stackoverflow.com/questions/12984089/capture-playback-on-play-only-sound-card-with-alsa">here</a>.</p>
+
+<h3>
+<a id="from-mpds-fifo-output" class="anchor" href="#from-mpds-fifo-output" aria-hidden="true"><span class="octicon octicon-link"></span></a>From mpd's fifo output</h3>
+
+<p>Add these lines in mpd:</p>
+
+<pre><code>audio_output {
+    type                    "fifo"
+    name                    "my_fifo"
+    path                    "/tmp/mpd.fifo"
+    format                  "44100:16:2"
+}
+</code></pre>
+
+<p>Run cava with <code>./cava -i fifo</code>.</p>
+
+<p>The path of the fifo can be specified with <code>-p</code>.</p>
+
+<p>I had some trouble with sync (the visualizer was ahead of the sound). Reducing the ALSA buffer in mpd fixed it:</p>
+
+<pre><code>audio_output {
+        type            "alsa"
+        name            "My ALSA"
+        buffer_time     "50000"   # (50ms); default is 500000 microseconds (0.5s)
+}
+</code></pre>
+
+<h2>
+<a id="running-via-ssh" class="anchor" href="#running-via-ssh" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running via ssh</h2>
+
+<p>To run via ssh to an external monitor, redirect output to <code>/dev/console</code>:</p>
+
+<pre><code> ~# ./cava [options] &gt; /dev/console
+</code></pre>
+
+<p>exit with ctrl+z then run 'bg' to keep it running after you log out.</p>
+
+<p>(You must be root to redirect to console. Simple sudo is not enough: Run <code>sudo su</code> first.)</p>
+
+<h2>
+<a id="font-notes" class="anchor" href="#font-notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Font notes</h2>
+
+<p>Since the graphics are simply based on characters, performance is dependent on the terminal font.</p>
+
+<h3>
+<a id="in-ttys" class="anchor" href="#in-ttys" aria-hidden="true"><span class="octicon octicon-link"></span></a>In ttys</h3>
+
+<p>If you run this in a TTY the program will change the font to the included <code>cava.psf</code> (actually a slightly modified "unifont").</p>
+
+<p>In console fonts it seems that only 256 Unicode characters are supported, probably because they are bitmap fonts. I could not find a font with Unicode characters 2581-2587 (the 1/8 - 7/8 blocks used on the top of each bar to increase resolution).</p>
+
+<p>So in <code>cava.psf</code>, the characters 1-7 are actually replaced by Unicode characters 2581-2587. When cava exits, it changes the font back. If cava exits abnormally and you notice that 1-7 are replaced by partial blocks, just change the font with <code>setfont</code>.</p>
+
+<p>Actually, <code>setfont</code> is supposed to return the default font, but this usually isn't set. I haven't found another way to get the current font. So cava sets the font to "Lat2-Fixed16" when interrupted. All major distros should have it. It will revert to your default font at reboot.</p>
+
+<h3>
+<a id="in-terminal-emulators" class="anchor" href="#in-terminal-emulators" aria-hidden="true"><span class="octicon octicon-link"></span></a>In terminal emulators</h3>
+
+<p>In terminal emulators like <code>xterm</code>, the font settings is chosen in the software and cannot be changed by an application. So find your terminal settings and try out different fonts and settings. Also character spacing affects the look of the bar spectrum.</p>
+
+<p>Cava also disables the terminal cursor, and turns it back on on exit, but in case it terminates unexpectedly, run <code>setterm -cursor on</code> to get it back.e</p>
+
+<p>Tip: Cava will look much nicer in small font sizes. Use a second terminal emulator for cava and set the font size to 1. Warning, can cause high CPU usage and latency if the terminal window is too large!</p>
+
+<h2>
+<a id="latency-notes" class="anchor" href="#latency-notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Latency notes</h2>
+
+<p>If you see latency issues (sound before image) in a terminal emulator, try increasing the font size. This will reduce the number of characters that have to be shown.</p>
+
+<p>If your audio device has a huge buffer, you might experience that cava is actually faster then the audio you hear. This reduces the experience of the visualization. To fix this, you try decreasing the buffer settings in your audio playing software.</p>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<pre><code>Usage : cava [options]
+Visualize audio input in terminal. 
+
+Options:
+    -b 1..(console columns/2-1) or 200  number of bars in the spectrum (default 25 + fills up the console), program will automatically adjust if there are too many frequency bands)
+    -i 'input method'           method used for listnening to audio, supports: 'alsa' and 'fifo'
+    -o 'output method'          method used for outputting processed data, supports: 'ncurses', 'noncurses' and 'circle'
+    -d 'alsa device'            name of alsa capture device (default 'hw:Loopback,1')
+    -p 'fifo path'              path to fifo (default '/tmp/mpd.fifo')
+    -c foreground color         suported colors: red, green, yellow, magenta, cyan, white, blue, black (default: cyan)
+    -C background color         supported colors: same as above (default: no change)
+    -s sensitivity              sensitivity percentage, 0% - no response, 50% - half, 100% - normal, etc...
+    -f framerate                FPS limit, if you are experiencing high CPU usage, try redcing this (default: 60)
+    -m mode                 set mode (normal, scientific, waves)
+    -h                  print the usage
+    -v                  print version
+</code></pre>
+
+<p>Exit with ctrl+c.</p>
+
+<p>If cava quits unexpectedly or is force killed, echo must be turned on manually with <code>stty -echo</code>.</p>
+
+<h3>
+<a id="controls" class="anchor" href="#controls" aria-hidden="true"><span class="octicon octicon-link"></span></a>Controls</h3>
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><kbd>m</kbd></td>
+<td>Swtich between smoothing modes</td>
+</tr>
+<tr>
+<td>
+<kbd>up</kbd> / <kbd>down</kbd>
+</td>
+<td>increase/decrease sensitivity</td>
+</tr>
+<tr>
+<td><kbd>r</kbd></td>
+<td>Reload configuration</td>
+</tr>
+<tr>
+<td>
+<kbd>q</kbd> or <kbd>CTRL-C</kbd>
+</td>
+<td>Quit C.A.V.A.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="configuration" class="anchor" href="#configuration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuration</h2>
+
+<p>Configuration file is located in <code>$XDG_CONFIG_HOME/cava/config</code> or <code>$HOME/.config/cava/config</code>.</p>
+
+<h3>
+<a id="example-file" class="anchor" href="#example-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example file:</h3>
+
+<pre><code>[general]
+mode=normal
+framerate=60
+sensitivity=100
+bars=0
+lower_cutoff_freq = 300
+higher_cutoff_freq = 15000
+
+[input]
+method=fifo
+source=/tmp/mpd.fifo
+
+[output]
+method=terminal
+
+[color]
+background=white
+foreground=blue
+
+[smoothing]
+integral=0.7
+monstercat=1
+gravity=1
+ignore=0
+
+[eq]
+; naming of keys doesn't matter
+1=0.5
+2=0.6
+3=0.7
+4=0.3
+5=0.2
+</code></pre>
+
+<h3>
+<a id="sections" class="anchor" href="#sections" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sections:</h3>
+
+<h4>
+<a id="general" class="anchor" href="#general" aria-hidden="true"><span class="octicon octicon-link"></span></a>[general]</h4>
+
+<ul>
+<li>
+<code>mode</code> defines smoothing mode, can be <code>normal</code>, <code>scientific</code> or <code>waves</code>. Default: <code>normal</code>.</li>
+<li>
+<code>framerate</code> is framerate (FPS). Default: <code>60</code>. Accepts only non-negative values.</li>
+<li>
+<code>sensitivity</code> is sensitivity %. Default: <code>100</code>. Accepts only non-negative values.</li>
+<li>
+<code>bars</code> defines the amount of bars. <code>0</code> sets it to auto. Default: <code>0</code>. Accepts only non-negative values.</li>
+<li>
+<code>lower_cutoff_freq</code> defines the lower cutof frequency for the far left bar. Default: <code>50</code>.</li>
+<li>
+<code>higher_cutoff_freq</code> defines the higher cutoff frequency for the far right bar. Default: <code>10000</code>. Note: there is a minimum total bandwith of 43Mhz x number of bars. Cava will automaticly increase the higher cuttoff if a too low band is specified.</li>
+</ul>
+
+<h4>
+<a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>[input]</h4>
+
+<ul>
+<li>
+<code>method</code> may be <code>alsa</code> or <code>fifo</code>.</li>
+<li>
+<code>source</code> is the ALSA path or FIFO path.</li>
+</ul>
+
+<h4>
+<a id="output" class="anchor" href="#output" aria-hidden="true"><span class="octicon octicon-link"></span></a>[output]</h4>
+
+<ul>
+<li>
+<code>method</code> may be <code>terminal</code> or <code>circle</code>. Default: <code>terminal</code>.</li>
+</ul>
+
+<h4>
+<a id="color" class="anchor" href="#color" aria-hidden="true"><span class="octicon octicon-link"></span></a>[color]</h4>
+
+<ul>
+<li>
+<code>background</code> is the background color.</li>
+<li>
+<code>foreground</code> is the foreground (bars) color.</li>
+</ul>
+
+<h4>
+<a id="smoothing" class="anchor" href="#smoothing" aria-hidden="true"><span class="octicon octicon-link"></span></a>[smoothing]</h4>
+
+<ul>
+<li>
+<code>integral</code> sets the multiplier for the integral smoothing calculations. Default: <code>0.7</code>. Another example: <code>0.5</code>. Accepts only non-negative values.</li>
+<li>
+<code>monstercat</code> disables or enables the so-called "Monstercat smoothing". Default: <code>1</code>. Accepts only <code>0</code> or <code>1</code>.</li>
+<li>
+<code>gravity</code> sets the gravity multiplier. Default: <code>1</code>. Accepts only non-negative values.</li>
+<li>
+<code>ignore</code> zeroes bars with height lower than this setting's value. Default: <code>0</code>. Accepts only non-negative values.</li>
+</ul>
+
+<h4>
+<a id="eq" class="anchor" href="#eq" aria-hidden="true"><span class="octicon octicon-link"></span></a>[eq]</h4>
+
+<p>This one is tricky. You can have as much keys as you want. More keys = more precision.</p>
+
+<p><strong>How it works:</strong></p>
+
+<ol>
+<li>Cava takes values from this section in the order of appearance (naming of the keys doesn't really matter) and puts them into an array.</li>
+<li>Visualization is divided into <code>x</code> sections (where x is the amount of values) and all bars in each of these sections are multiplied by the corresponding value from that array.</li>
+</ol>
+
+<p><strong>Examples:</strong></p>
+
+<pre><code>[eq]
+1=0
+2=1
+3=0
+4=1
+5=0
+</code></pre>
+
+<p><img src="https://cloud.githubusercontent.com/assets/6376571/8670183/a54a851e-29e8-11e5-9eff-346bf6ed91e0.png" alt="3_138"></p>
+
+<pre><code>[eq]
+1=2
+2=2
+3=1
+4=1
+5=0.5
+</code></pre>
+
+<p><img src="https://cloud.githubusercontent.com/assets/6376571/8670181/9db0ef50-29e8-11e5-81bc-3e2bb9892da0.png" alt="3_139"></p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
