@@ -149,7 +149,9 @@ int init_window_x(char *color, char *bcolor, double foreground_opacity, int col,
 	XSelectInput(cavaXDisplay, cavaXWindow, VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
 	
 	// init OpenGL
-	if(GLXmode) if(XGLInit()) return 1;
+	#ifdef GLX
+		if(GLXmode) if(XGLInit()) return 1;
+	#endif
 	
 	// give user control over the window		
 	XMapWindow(cavaXDisplay, cavaXWindow);
@@ -623,9 +625,11 @@ void draw_graphical_x(int window_height, int bars_count, int bar_width, int bar_
 {
 
 	if(GLXmode) {
+		#ifdef GLX
 		pixelWidthGL = 2.0/(bars_count*(bar_width+bar_spacing)+rest*2);
 		glClearColor(xbgcol.red, xbgcol.green, xbgcol.blue, 0.0); // TODO BG transparency
 		glClear(GL_COLOR_BUFFER_BIT);
+		#endif
 	} else {	// don't worry we have shaders for this
 		if(!shadow_drawn && shadow) render_shadows_x(window_height, bars_count, bar_width, bar_spacing, rest);
 		if(!gradient_drawn && gradient) render_gradient_x(window_height, bar_width, bar_spacing, rest, foreground_opacity); 
@@ -759,7 +763,9 @@ void draw_graphical_x(int window_height, int bars_count, int bar_width, int bar_
 
 void cleanup_graphical_x(void)
 {
-	if(GLXmode) glXDestroyContext(cavaXDisplay, glcontext);
+	#ifdef GLX
+		if(GLXmode) glXDestroyContext(cavaXDisplay, glcontext);
+	#endif
 	
 	if(shadowBox != NULL) {
 		XFreePixmap(cavaXDisplay, shadowBox);
