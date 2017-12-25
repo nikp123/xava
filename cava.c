@@ -778,7 +778,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						curScale -= 1.0/bars*(p.logScale+1.0)/p.logScale;
 					}
 					totalScale += curScale;
-					newBars[(int)ceil(totalScale)] = fl[o];
+					if(newBars[(int)ceil(totalScale)] < fl[o])	newBars[(int)ceil(totalScale)] = fl[o];
 					if((int)ceil(totalScale) - lastCeil > 1) {
 						for(int i = lastCeil; i < (int)ceil(totalScale); i++) {
 							newBars[i] = (newBars[(int)ceil(totalScale)]-newBars[lastCeil])/(ceil(totalScale)-lastCeil)*(i-lastCeil) + newBars[lastCeil];
