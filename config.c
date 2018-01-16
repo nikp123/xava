@@ -203,12 +203,13 @@ if (p->stereo == -1) {
 }
 
 // validate: opengl
+#ifdef GLX
 if(GLXmode) {
 	#ifndef	GLX
 		fprintf(stderr, "opengl option not availble, install OpenGL and GLU dev files and run make clean && ./configure && make again\n");
 	#endif 
 }
-
+#endif
 
 // validate: bars
 p->autobars = 1;
@@ -427,7 +428,9 @@ p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 50);
 p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 10000);
 
 // config: window
-GLXmode = iniparser_getint(ini, "window:opengl", 1);
+#ifdef GLX
+	GLXmode = iniparser_getint(ini, "window:opengl", 1);
+#endif
 w = iniparser_getint(ini, "window:width", 640);
 h = iniparser_getint(ini, "window:height", 480);
 windowAlignment = (char *)iniparser_getstring(ini, "window:alignment", "none");
