@@ -18,7 +18,7 @@ unsigned int lowcf, highcf, shdw, shdw_col;
 double *smooth;
 int smcount, customEQ, im, om, col, bgcol, autobars, stereo, is_bin, ascii_range,
  bit_format, gradient, fixedbars, framerate, bw, bs, autosens, overshoot, waves,
-monstercat_alternative, set_win_props;
+monstercat_alternative, set_win_props, w, h;
 };
 
 
@@ -431,8 +431,10 @@ p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 10000);
 #ifdef GLX
 	GLXmode = iniparser_getint(ini, "window:opengl", 1);
 #endif
-w = iniparser_getint(ini, "window:width", 640);
-h = iniparser_getint(ini, "window:height", 480);
+if(!strcmp(outputMethod, "sdl") | !strcmp(outputMethod, "x")) {
+	p->w = iniparser_getint(ini, "window:width", 640);
+	p->h = iniparser_getint(ini, "window:height", 480);
+}
 windowAlignment = (char *)iniparser_getstring(ini, "window:alignment", "none");
 windowX = iniparser_getint(ini, "window:x_padding", 0);
 windowY = iniparser_getint(ini, "window:y_padding", 0);
