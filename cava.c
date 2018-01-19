@@ -776,14 +776,20 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					
 				// first calculate according bar positions
 				for(o = 0; o < bars; o++) {
-					if(o < (int)ceil(bars/(p.logScale+1.0))) {
-						if(o != 0) curScale -= (p.logScale-1.0)/bars*(p.logScale+1.0);
+					if(o < (int)floor((float)bars/(p.logScale+1.0))) {
+						if(o != 0) curScale -= (float)(p.logScale-1.0)/bars*(p.logScale+1.0);
 						else curScale = p.logScale;
 					} else {
-						curScale -= 1.0/bars*(p.logScale+1.0)/p.logScale;
+						curScale -= (float)1.0/bars*(p.logScale+1.0)/p.logScale;
 					}
+					if(curScale >= bars) break;
+					
 					totalScale += curScale;
-					if(newBars[(int)ceil(totalScale)] < fl[o])	newBars[(int)ceil(totalScale)] = fl[o];
+					if(lastCeil == (int)ceil(totalScale) && newBars[lastCeil] > newBars[(int)ceil(totalScale)])
+						newBars[(int)ceil(totalScale)] = fl[o];
+					else if(lastCeil != (int)ceil(totalScale))
+						newBars[(int)ceil(totalScale)] = fl[o];
+					
 					if((int)ceil(totalScale) - lastCeil > 1) {
 						for(int i = lastCeil; i < (int)ceil(totalScale); i++) {
 							newBars[i] = (newBars[(int)ceil(totalScale)]-newBars[lastCeil])/(ceil(totalScale)-lastCeil)*(i-lastCeil) + newBars[lastCeil];
