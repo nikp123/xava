@@ -14,7 +14,7 @@ Screen *cavaXScreen;
 Window cavaXWindow;
 GC cavaXGraphics;
 Colormap cavaXColormap;
-Pixmap gradientBox, shadowBox;
+Pixmap *gradientBox, *shadowBox;
 int cavaXScreenNumber;
 XClassHint cavaXClassHint;
 XColor xbgcol, xcol, xgrad[3];
