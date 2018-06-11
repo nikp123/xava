@@ -162,7 +162,6 @@ long cavaSleep(long oldTime, int framerate) {
 		GetSystemTime(&time);
 		return time.wSecond*1000+time.wMilliseconds;
 	#else
-		struct timespec req = { .tv_sec = 0, .tv_nsec = 0 };
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 		newTime = tv.tv_sec*1000+tv.tv_usec/1000;

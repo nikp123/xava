@@ -481,6 +481,7 @@ fs = iniparser_getboolean(ini, "window:fullscreen", FALSE);
 transparentFlag = iniparser_getboolean(ini, "window:transparency", FALSE);
 borderFlag = iniparser_getboolean(ini, "window:border", TRUE);
 keepInBottom = iniparser_getboolean(ini, "window:keep_below", FALSE);
+interactable = iniparser_getboolean(ini, "window:interactable", TRUE);
 
 // config: output
 channels =  (char *)iniparser_getstring(ini, "output:channels", "stereo");

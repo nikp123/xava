@@ -18,7 +18,7 @@
 #endif
 
 int windowX, windowY;
-unsigned char fs, borderFlag, transparentFlag, keepInBottom;
+unsigned char fs, borderFlag, transparentFlag, keepInBottom, interactable;
 char *windowAlignment;
 
 void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int scrH, char *winPos);

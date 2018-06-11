@@ -5,6 +5,8 @@
 #include <X11/Xutil.h>
 #include <X11/Xresource.h>
 #include <X11/XKBlib.h>
+#include <X11/extensions/shape.h>
+#include <X11/extensions/Xfixes.h>
 #include "output/graphical.h"
 
 
@@ -216,6 +218,12 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	XGetWindowAttributes(cavaXDisplay, cavaXWindow, &xwa);
 	if(strcmp(windowAlignment, "none"))
 		XMoveWindow(cavaXDisplay, cavaXWindow, windowX, windowY);
+
+	if(!interactable) {
+		Atom xa = XInternAtom(cavaXDisplay, "_NET_WM_STATE", FALSE);
+		Atom xa_prop = XInternAtom(cavaXDisplay, "_NET_WM_STATE_SKIP_TASKBAR", FALSE);
+		XChangeProperty(cavaXDisplay, cavaXWindow, xa, XA_ATOM, 32, PropModeAppend, (unsigned char *)&xa_prop, 1);
+	}	
 	
 	return 0;
 }
@@ -267,6 +275,14 @@ int apply_window_settings_x(int *w, int *h)
 		XSetBackground(cavaXDisplay, cavaXGraphics, xbgcol.pixel);
 		XClearWindow(cavaXDisplay, cavaXWindow);
 	}
+
+	if(!interactable){	
+		XRectangle rect;
+		XserverRegion region = XFixesCreateRegion(cavaXDisplay, &rect, 1);
+		XFixesSetWindowShapeRegion(cavaXDisplay, cavaXWindow, ShapeInput, 0, 0, region);
+		XFixesDestroyRegion(cavaXDisplay, region);
+	}
+
 	return 0;
 }
 
