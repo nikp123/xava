@@ -183,7 +183,7 @@ long cavaSleep(long oldTime, int framerate) {
 // general: handle signals
 void sig_handler(int sig_no)
 {
-	if (sig_no == SIGUSR1) {
+	if (sig_no == SIGUSR1&&output_mode==3) {
 		should_reload = 1;
 		return;
 	}
