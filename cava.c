@@ -166,10 +166,7 @@ long cavaSleep(long oldTime, int framerate) {
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 		newTime = tv.tv_sec*1000+tv.tv_usec/1000;
-		req.tv_sec = 0;
-		if(newTime-oldTime>1000/framerate || newTime<oldTime) req.tv_nsec = 0;
-		else req.tv_nsec = (1 / (framerate-(newTime-oldTime))) * 1000000000; 
-		nanosleep (&req, NULL);
+		usleep(1000000/framerate+(oldTime-newTime)*1000 > 0 ? 1000000/framerate+(oldTime-newTime)*1000 : 0);
 		gettimeofday(&tv, NULL);
 		return tv.tv_sec*1000+tv.tv_usec/1000;
 	#endif
@@ -177,8 +174,7 @@ long cavaSleep(long oldTime, int framerate) {
 	#ifdef WIN
 	Sleep(oldTime);
 	#else
-	struct timespec req = { .tv_sec = oldTime/1000, .tv_nsec = oldTime%1000*1000 };
-	nanosleep(&req, NULL);
+	usleep(oldTime*1000);
 	#endif
 	return 0;
 }
