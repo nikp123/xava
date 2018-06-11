@@ -213,7 +213,13 @@ if (p->om == 0) {
 // validate: output channels
 p->stereo = -1;
 if (strcmp(channels, "mono") == 0) p->stereo = 0;
-if (strcmp(channels, "stereo") == 0) p->stereo = 1;
+if (strcmp(channels, "stereo") == 0) {
+	if(p->oddoneout) {
+		fprintf(stderr, "oddoneout doesn't work on 'stereo'!\n");
+		exit(EXIT_FAILURE);
+	}
+	p->stereo = 1;
+}
 if (p->stereo == -1) {
 	fprintf(stderr,
 		"output channels %s is not supported, supported channelss are: 'mono' and 'stereo'\n",

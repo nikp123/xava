@@ -688,11 +688,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 
 		// freqconst contains the logarithm intensity
-		double freqconst = log(p.highcf-p.lowcf)/log(pow(bars, p.logScale));
+		double freqconst = log(p.highcf-p.lowcf)/log(pow(bars/(p.oddoneout?2:1), p.logScale));
 		//freqconst = -2;
 
 		// process: calculate cutoff frequencies
-		for (n = 0; n < bars + 1; n++) {
+		for (n = 0; n < bars/(p.oddoneout?2:1) + 1; n++) {
 			fc[n] = pow((n+1.0), freqconst*(1.0+(p.logScale-1.0)*((double)(n+1.0)/bars)))+p.lowcf;
 			fre[n] = fc[n] / (audio.rate / 2); 
 			//remember nyquist!, pr my calculations this should be rate/2 
@@ -717,7 +717,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		}
 
 		// process: weigh signal to frequencies
-		for (n = 0; n < bars;
+		for (n = 0; n < bars/(p.oddoneout?2:1);
 			n++)k[n] = pow(fc[n],0.85) * ((float)height/(M*32000)) * 
 				p.smooth[(int)floor(((double)n) * smh)];
 
@@ -857,17 +857,15 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					fftw_execute(pl);
 					fftw_execute(pr);
 
-					fl = separate_freq_bands(outl,bars/2,lcf,hcf, k, 1, 
+					fl = separate_freq_bands(outl,bars/(p.oddoneout?4:2),lcf,hcf, k, 1, 
 						p.sens, p.ignore);
-					fr = separate_freq_bands(outr,bars/2,lcf,hcf, k, 2, 
+					fr = separate_freq_bands(outr,bars/(p.oddoneout?4:2),lcf,hcf, k, 2, 
 						p.sens, p.ignore);
 				} else {
 					fftw_execute(pl);
-					fl = separate_freq_bands(outl,bars,lcf,hcf, k, 1, 
+					fl = separate_freq_bands(outl,bars/(p.oddoneout?2:1),lcf,hcf, k, 1, 
 						p.sens, p.ignore);
 				}
-
-
 			}
 			 else { //**if in sleep mode wait and continue**//
 				#ifdef DEBUG
@@ -879,7 +877,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			}
 			
 			// process [smoothing]
-
 			if (p.monstercat) {
 				if (p.stereo) {
 					fl = monstercat_filter(fl, bars / 2, p.waves,
@@ -887,10 +884,18 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					fr = monstercat_filter(fr, bars / 2, p.waves,
 						p.monstercat);	
 				} else {
-					fl = monstercat_filter(fl, bars, p.waves, p.monstercat);
+					fl = monstercat_filter(fl, bars/(1+p.oddoneout)+p.oddoneout, p.waves, p.monstercat);
 				}
 			}
-
+			
+			if(p.oddoneout) {
+				//memset(fl+sizeof(float)*(bars/2), 0.0f, sizeof(float)*bars);
+				for(i=bars/2; i>=0; i--) {
+					fl[i*2]=fl[i];
+					fl[i*2+1]=0;
+				}
+			}
+			
 			//preperaing signal for drawing
 			for (o = 0; o < bars; o++) {
 				if (p.stereo) {
@@ -943,14 +948,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 			// process [oddoneout]
 			if(p.oddoneout) {
-				for(i=0; i<bars-1; i=i+2) {
-					if(f[i+1] > f[i] && f[i+1] > f[i+2]){ 
-						if(f[i+1] > f[i+2])
-							f[i] = f[i+1];
-						else f[i+2] = f[i+1];
-					}
-					f[i+1] = f[i]/2+f[i+2]/2;
-					if(i!=0) f[i] = f[i-1]/2+f[i+1]/2;
+				for(i=1; i<bars; i+=2) {
+					f[i] = f[i+1]/2 + f[i-1]/2;
 				}
 			}
 
