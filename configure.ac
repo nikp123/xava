@@ -76,8 +76,11 @@ if [[ $build_windows = "no" ]] ; then
 	AC_CHECK_LIB(X11, XOpenDisplay, have_xlib=yes, have_xlib=no)
 
 	if [[ $have_xlib = "yes" ]] ; then
-		LIBS="$LIBS -lX11"
-		CPPFLAGS="$CPPFLAGS -DXLIB"
+		AC_CHECK_LIB(Xfixes, XFixesSetWindowShapeRegion, have_xfixes=yes, have_xfixes=no)
+		if [[ $have_xfixes = "yes" ]] ; then
+			LIBS="$LIBS -lX11 -lXfixes"
+			CPPFLAGS="$CPPFLAGS -DXLIB"
+		fi
 	fi
 
 	if [[ $have_xlib = "no" ]] ; then
