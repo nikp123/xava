@@ -182,11 +182,15 @@ int init_window_win(char *color, char *bcolor, double foreground_opacity, int co
 	#endif
 	
 	// create window
-	cavaWinWindow = CreateWindowEx(WS_EX_APPWINDOW, szAppName, wcWndName, WS_VISIBLE | WS_POPUP, windowX, windowY, w, h, NULL, NULL, cavaWinModule, NULL);
+	cavaWinWindow = CreateWindowEx(interactable ? WS_EX_APPWINDOW : WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST, szAppName, wcWndName, WS_VISIBLE | WS_POPUP, windowX, windowY, w, h, NULL, NULL, cavaWinModule, NULL);
 	if(cavaWinWindow == NULL) {
 		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
+	// transparency fix
+	SetLayeredWindowAttributes(cavaWinWindow, 0, 255, LWA_ALPHA);
+	SetWindowPos(cavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_TOPMOST, windowX, windowY, w, h, SWP_SHOWWINDOW);
+
 	
 	// we need the desktop window manager to enable transparent background (from Vista ...onward)
 	DWM_BLURBEHIND bb = {0};
