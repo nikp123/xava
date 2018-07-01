@@ -75,7 +75,6 @@
 ; opengl = 1
 
 # This option removes the ability to interact with the window (works under Xorg only)
-# Also it removes it from the taskbar
 ; interactable = 1
 
 

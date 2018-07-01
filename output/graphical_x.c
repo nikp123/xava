@@ -218,12 +218,6 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	XGetWindowAttributes(cavaXDisplay, cavaXWindow, &xwa);
 	if(strcmp(windowAlignment, "none"))
 		XMoveWindow(cavaXDisplay, cavaXWindow, windowX, windowY);
-
-	if(!interactable) {
-		Atom xa = XInternAtom(cavaXDisplay, "_NET_WM_STATE", FALSE);
-		Atom xa_prop = XInternAtom(cavaXDisplay, "_NET_WM_STATE_SKIP_TASKBAR", FALSE);
-		XChangeProperty(cavaXDisplay, cavaXWindow, xa, XA_ATOM, 32, PropModeAppend, (unsigned char *)&xa_prop, 1);
-	}	
 	
 	return 0;
 }
