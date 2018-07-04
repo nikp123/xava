@@ -45,14 +45,6 @@
 #include "output/terminal_bcircle.c"
 #endif
 
-
-#include "output/raw.h"
-#include "output/raw.c"
-
-
-#include "input/fifo.h"
-#include "input/fifo.c"
-
 #ifdef ALSA
 #include <alsa/asoundlib.h>
 #include "input/alsa.h"
@@ -88,15 +80,15 @@
 #include "output/graphical_win.c"
 #endif
 
-#if defined(WIN)||defined(SDL)||defined(XLIB)
-#include "output/graphical.c"
-#include "output/graphical.h"
+#ifdef INIPARSER
+	#include "iniparser/src/iniparser.h"
+#else
+	#include <iniparser.h>
 #endif
 
-#include <iniparser.h>
-
-#include "config.h"
+#include "input/fifo.c"
 #include "config.c"
+#include "output/graphical.h"
 
 #ifdef __GNUC__
 // curses.h or other sources may already define

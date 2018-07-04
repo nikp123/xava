@@ -1,3 +1,12 @@
+#ifdef INIPARSER
+	#include "iniparser/src/iniparser.h"
+#else
+	#include <iniparser.h>
+#endif
+
+#include "output/graphical.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 double smoothDef[64] = {0.8, 0.8, 1, 1, 0.8, 0.8, 1, 0.8, 0.8, 1, 1, 0.8,
 					1, 1, 0.8, 0.6, 0.6, 0.7, 0.8, 0.8, 0.8, 0.8, 0.8,
@@ -477,11 +486,11 @@ if(!strcmp(outputMethod, "sdl") | !strcmp(outputMethod, "x") | !strcmp(outputMet
 windowAlignment = (char *)iniparser_getstring(ini, "window:alignment", "none");
 windowX = iniparser_getint(ini, "window:x_padding", 0);
 windowY = iniparser_getint(ini, "window:y_padding", 0);
-fs = iniparser_getboolean(ini, "window:fullscreen", FALSE);
-transparentFlag = iniparser_getboolean(ini, "window:transparency", FALSE);
-borderFlag = iniparser_getboolean(ini, "window:border", TRUE);
-keepInBottom = iniparser_getboolean(ini, "window:keep_below", FALSE);
-interactable = iniparser_getboolean(ini, "window:interactable", TRUE);
+fs = iniparser_getboolean(ini, "window:fullscreen", 0);
+transparentFlag = iniparser_getboolean(ini, "window:transparency", 0);
+borderFlag = iniparser_getboolean(ini, "window:border", 1);
+keepInBottom = iniparser_getboolean(ini, "window:keep_below", 0);
+interactable = iniparser_getboolean(ini, "window:interactable", 1);
 
 // config: output
 channels =  (char *)iniparser_getstring(ini, "output:channels", "stereo");

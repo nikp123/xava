@@ -1,5 +1,1 @@
-cava
-*.so
-*.so.0
-*.o
-*.a
+build

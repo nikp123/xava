@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/fcntl.h>
 #define BUFSIZE 1024
 #define FFTSIZE 16384
 int rc;
@@ -38,7 +40,7 @@ void* input_fifo(void* data)
 	int t = 0;
 	//int size = 1024;
 	int bytes = 0;
-	int16_t buf[BUFSIZE / 2];
+	__int16_t buf[BUFSIZE / 2];
 	struct timespec req = { .tv_sec = 0, .tv_nsec = 10000000 };
 
 
