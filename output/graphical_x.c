@@ -7,8 +7,7 @@
 #include <X11/XKBlib.h>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xfixes.h>
-#include "output/graphical.h"
-
+#include "graphical.h"
 
 Pixmap gradientBox = 0;
 XColor xbgcol, xcol, xgrad[3];

@@ -1,3 +1,5 @@
+#include "fifo.c"
+
 // input: ALSA
 
 // assuming stereo

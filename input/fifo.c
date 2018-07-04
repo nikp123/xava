@@ -1,8 +1,13 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
+
+#ifndef C_FIFO
+#define C_FIFO
+
 #define BUFSIZE 1024
 #define FFTSIZE 16384
+
 int rc;
 
 struct audio_data {
@@ -124,4 +129,6 @@ templ) /
 
 	return 0;
 }
+#endif
+
 #endif
