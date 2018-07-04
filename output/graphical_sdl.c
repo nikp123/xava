@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <time.h>
 #include "graphical.h"
 
 SDL_Window *cavaSDLWindow;

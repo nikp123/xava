@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <portaudio.h>
 #include "portaudio.h"
+#include "fifo.h"
 
 #define FRAMES_PER_BUFFER 1
 #define BUFSIZE 1024

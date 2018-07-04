@@ -1,4 +1,5 @@
-#include "fifo.c"
+#include "fifo.h"
+#include <alsa/asoundlib.h>
 
 // input: ALSA
 

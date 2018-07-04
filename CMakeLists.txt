@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 project(cava)
 
 set(CMAKE_BUILD_TYPE Debug)
@@ -40,11 +40,20 @@ endif()
 
 
 # Optional features
+set(ADDITIONAL_SOURCES "")
+
+# OS-Specific inclusions
+if(UNIX)
+	list(APPEND ADDITIONAL_SOURCES "output/terminal_noncurses.c")
+	list(APPEND ADDITIONAL_SOURCES "input/fifo.c")
+endif()
 
 # ncursesw
 find_library(CURSES_LIB ncursesw)
 if(CURSES_LIB)
 	add_definitions(-DNCURSES)
+	list(APPEND ADDITIONAL_SOURCES "output/terminal_ncurses.c")
+	list(APPEND ADDITIONAL_SOURCES "output/terminal_bcircle.c")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lncursesw")
 else()
 	message(STATUS "ncursesw library not found")
@@ -54,6 +63,7 @@ endif()
 find_library(SDL_LIB SDL2)
 if(SDL_LIB)
 	add_definitions(-DSDL)
+	list(APPEND ADDITIONAL_SOURCES "output/graphical_sdl.c")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lSDL2")
 else()
 	message(STATUS "SDL2 library not found")
@@ -65,6 +75,7 @@ if(XORG_LIB)
 	find_library(XFIXES_LIB Xfixes)
 	if(XFIXES_LIB)
 		add_definitions(-DXLIB)
+		list(APPEND ADDITIONAL_SOURCES "output/graphical_x.c")
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lX11 -lXfixes")
 		
 		# GLX
@@ -86,6 +97,7 @@ endif()
 find_library(ALSA_LIB asound)
 if(ALSA_LIB)
 	add_definitions(-DALSA)
+	list(APPEND ADDITIONAL_SOURCES "input/alsa.c")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lasound")
 else()
 	message(STATUS "alsa library not found")
@@ -95,6 +107,7 @@ endif()
 find_library(PULSE_LIB pulse-simple)
 if(PULSE_LIB)
 	add_definitions(-DPULSE)
+	list(APPEND ADDITIONAL_SOURCES "input/pulse.c")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpulse-simple -lpulse")
 else()
 	message(STATUS "pulseaudio library not found")
@@ -104,6 +117,7 @@ endif()
 find_library(SNDIO_LIB sndio)
 if(SNDIO_LIB)
 	add_definitions(-DSNDIO)
+	list(APPEND ADDITIONAL_SOURCES "input/sndio.c")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lsndio")
 else()
 	message(STATUS "sndio library not found")
@@ -113,6 +127,7 @@ endif()
 find_library(PORTAUDIO_LIB portaudio)
 if(PORTAUDIO_LIB)
 	add_definitions(-DPORTAUDIO)
+	list(APPEND ADDITIONAL_SOURCES "input/portaudio.c")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lportaudio")
 else()
 	message(STATUS "portaudio library not found")
@@ -121,13 +136,12 @@ endif()
 # Build executable
 add_executable(
 	cava
+	${ADDITIONAL_SOURCES}
 	output/graphical.c
 	output/raw.c
+	config.c
 	cava.c
 )
-
-if(CURSES_LIB)
-endif()
 
 # Link executable
 target_link_libraries(cava m fftw3 pthread iniparser)

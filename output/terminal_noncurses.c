@@ -5,6 +5,9 @@
 #include <termios.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <sys/ioctl.h>
 
 wchar_t barstring[8][100];
 int ttybarstring[8];
