@@ -14,6 +14,7 @@ add_definitions(-DPACKAGE="cava" -DVERSION="${cava_VERSION_MAJOR}.${cava_VERSION
 find_library(INIPARSER iniparser)
 if(NOT INIPARSER)
 	message(STATUS "iniparser not found on system, building from source.")
+	execute_process(COMMAND git submodule update --init)
 	add_library(iniparser
 			iniparser/src/dictionary.c
 			iniparser/src/iniparser.c)
