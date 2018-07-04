@@ -8,7 +8,7 @@ set(cava_VERSION_MINOR 6)
 set(cava_VERSION_PATCH 1)
 set(cava_VERSION_TWEAK 0)
 
-add_definitions(-DPACKAGE="cava" -DVERSION="$cava_VERSION_MAJOR.$cava_VERSION_MINOR.$cava_VERSION_PATH.$cava_VERSION_TWEAK")
+add_definitions(-DPACKAGE="cava" -DVERSION="${cava_VERSION_MAJOR}.${cava_VERSION_MINOR}.${cava_VERSION_PATCH}.${cava_VERSION_TWEAK}")
 
 # iniparser
 find_library(INIPARSER iniparser)
