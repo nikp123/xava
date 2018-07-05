@@ -1,9 +1,10 @@
-#include <curses.h>
 #include <locale.h>
 #include <wchar.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#define NCURSES_WIDECHAR 1
+#include <curses.h>
 
 #ifndef M_PI
 #define M_PI 3.141592

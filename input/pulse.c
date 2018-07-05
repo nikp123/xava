@@ -5,6 +5,10 @@
 #include <pulse/simple.h>
 #include <pulse/error.h>
 #include <pulse/pulseaudio.h>
+#include <pthread.h>
+
+#include "fifo.h"
+
 #define BUFSIZE 1024
 
 pa_mainloop *m_pulseaudio_mainloop;

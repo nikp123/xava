@@ -7,8 +7,11 @@
 #include <X11/XKBlib.h>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xfixes.h>
-#include "output/graphical.h"
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include "graphical.h"
 
 Pixmap gradientBox = 0;
 XColor xbgcol, xcol, xgrad[3];
@@ -61,7 +64,7 @@ enum {
 #ifdef GLX
 int XGLInit() {
 	// we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
-	cavaGLXContext = glXCreateContext(cavaXDisplay, &cavaVInfo, NULL, TRUE);
+	cavaGLXContext = glXCreateContext(cavaXDisplay, &cavaVInfo, NULL, 1);
 	glXMakeCurrent(cavaXDisplay, cavaXWindow, cavaGLXContext);
 	if(transparentFlag) {
 		glEnable(GL_BLEND);
@@ -104,16 +107,16 @@ void calculateColors(char *color, char *bcolor, int bgcol, int col) {
 		blueSum /= xPrecision*yPrecision;
 
 		XDestroyImage(background);
-		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)redSum, (unsigned char)greenSum, (unsigned char)blueSum);
+		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(redSum), (unsigned char)(greenSum), (unsigned char)(blueSum));
 	} else if(color[0] != '#') 
-		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(defaultColors[col]>>16)%256, (unsigned char)(defaultColors[col]>>8)%256, (unsigned char)defaultColors[col]);
+		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)((defaultColors[col]>>16)%256), (unsigned char)((defaultColors[col]>>8)%256), (unsigned char)(defaultColors[col]));
 	
 	XParseColor(cavaXDisplay, cavaXColormap, color[0]=='#' ? color : tempColorStr, &xcol);
 	XAllocColor(cavaXDisplay, cavaXColormap, &xcol);
 
 	
 	if(bcolor[0] != '#')
-		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)defaultColors[bgcol]>>16, (unsigned char)defaultColors[bgcol]>>8, (unsigned char)defaultColors[bgcol]);
+		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(defaultColors[bgcol]>>16), (unsigned char)(defaultColors[bgcol]>>8), (unsigned char)(defaultColors[bgcol]));
 	
 	XParseColor(cavaXDisplay, cavaXColormap, bcolor[0]=='#' ? bcolor : tempColorStr, &xbgcol);
 	XAllocColor(cavaXDisplay, cavaXColormap, &xbgcol);
@@ -150,7 +153,7 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	XStoreName(cavaXDisplay, cavaXWindow, "CAVA");
 
 	// The "X" button is handled by the window manager and not Xorg, so we set up a Atom
-	wm_delete_window = XInternAtom (cavaXDisplay, "WM_DELETE_WINDOW", FALSE);
+	wm_delete_window = XInternAtom (cavaXDisplay, "WM_DELETE_WINDOW", 0);
 	XSetWMProtocols(cavaXDisplay, cavaXWindow, &wm_delete_window, 1);
 	
 	if(set_win_props) {
@@ -179,10 +182,10 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	}
 	
 	// Set up atoms
-	wmState = XInternAtom(cavaXDisplay, "_NET_WM_STATE", FALSE);
-	fullScreen = XInternAtom(cavaXDisplay, "_NET_WM_STATE_FULLSCREEN", FALSE);
-	mwmHintsProperty = XInternAtom(cavaXDisplay, "_MOTIF_WM_HINTS", FALSE);
-	wmStateBelow = XInternAtom(cavaXDisplay, "_NET_WM_STATE_BELOW", TRUE);
+	wmState = XInternAtom(cavaXDisplay, "_NET_WM_STATE", 0);
+	fullScreen = XInternAtom(cavaXDisplay, "_NET_WM_STATE_FULLSCREEN", 0);
+	mwmHintsProperty = XInternAtom(cavaXDisplay, "_MOTIF_WM_HINTS", 0);
+	wmStateBelow = XInternAtom(cavaXDisplay, "_NET_WM_STATE_BELOW", 1);
 
 	if(keepInBottom){
 	/**
@@ -204,7 +207,7 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 		xev.xclient.data.l[2] = 0;
 		xev.xclient.data.l[3] = 0;
 		xev.xclient.data.l[4] = 0;
-		XSendEvent(cavaXDisplay, cavaXRoot, FALSE, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+		XSendEvent(cavaXDisplay, cavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 	}
 
 	// Setting window options			
@@ -230,13 +233,13 @@ int apply_window_settings_x(int *w, int *h)
 		(*h) = DisplayHeight(cavaXDisplay, cavaXScreenNumber);
 	}
 
-	//Atom xa = XInternAtom(cavaXDisplay, "_NET_WM_WINDOW_TYPE", FALSE); May be used in the future
+	//Atom xa = XInternAtom(cavaXDisplay, "_NET_WM_WINDOW_TYPE", 0); May be used in the future
 	//Atom prop;
 
 	// change window type (this makes sure that compoziting managers don't mess with it)
 	//if(xa != NULL)
 	//{
-	//	prop = XInternAtom(cavaXDisplay, "_NET_WM_WINDOW_TYPE_DESKTOP", FALSE);
+	//	prop = XInternAtom(cavaXDisplay, "_NET_WM_WINDOW_TYPE_DESKTOP", 0);
 	//	XChangeProperty(cavaXDisplay, cavaXWindow, xa, XA_ATOM, 32, PropModeReplace, (unsigned char *) &prop, 1);
 	//}
 	// The code above breaks stuff, please don't use it.	
@@ -245,14 +248,14 @@ int apply_window_settings_x(int *w, int *h)
 	// tell the window manager to switch to a fullscreen state
 	xev.xclient.type=ClientMessage;
 	xev.xclient.serial = 0;
-	xev.xclient.send_event = TRUE;
+	xev.xclient.send_event = 1;
 	xev.xclient.window = cavaXWindow;
 	xev.xclient.message_type = wmState;
 	xev.xclient.format = 32;
 	xev.xclient.data.l[0] = fs ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
 	xev.xclient.data.l[1] = fullScreen;
 	xev.xclient.data.l[2] = 0;
-	XSendEvent(cavaXDisplay, cavaXRoot, FALSE, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+	XSendEvent(cavaXDisplay, cavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 	
 	// do the usual stuff :P
 	if(GLXmode){	
@@ -326,7 +329,7 @@ int get_window_input_x(int *should_reload, int *bs, double *sens, int *bw, int *
 						if(bcolor[0] == '#' && strlen(bcolor) == 7) free(bcolor);
 						srand(time(NULL));
 						bcolor = (char *) malloc(8*sizeof(char));
-						sprintf(bcolor, "#%hhx%hhx%hhx", (rand() % 0x100), (rand() % 0x100), (rand() % 0x100));
+						sprintf(bcolor, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
 						XParseColor(cavaXDisplay, cavaXColormap, bcolor, &xbgcol);
 						XAllocColor(cavaXDisplay, cavaXColormap, &xbgcol);
 						return 2;
@@ -335,7 +338,7 @@ int get_window_input_x(int *should_reload, int *bs, double *sens, int *bw, int *
 						if(color[0] == '#' && strlen(color) == 7) free(color);
 						srand(time(NULL));
 						color = (char *) malloc(8*sizeof(char));
-						sprintf(color, "#%hhx%hhx%hhx", (rand() % 0x100), (rand() % 0x100), (rand() % 0x100));
+						sprintf(color, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
 						XParseColor(cavaXDisplay, cavaXColormap, color, &xcol);
 						XAllocColor(cavaXDisplay, cavaXColormap, &xcol);
 						return 2;
@@ -440,7 +443,7 @@ void draw_graphical_x(int window_height, int bars_count, int bar_width, int bar_
 				}
 			}
 			else if (f[i] < flastd[i])
-				XClearArea(cavaXDisplay, cavaXWindow, rest + i*(bar_spacing+bar_width), window_height - flastd[i], bar_width, flastd[i] - f[i], FALSE);
+				XClearArea(cavaXDisplay, cavaXWindow, rest + i*(bar_spacing+bar_width), window_height - flastd[i], bar_width, flastd[i] - f[i], 0);
 		}
 	}
 	

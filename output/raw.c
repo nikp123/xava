@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <math.h>
+#include <unistd.h>
+
 int16_t buf_16;
 int8_t buf_8;
 

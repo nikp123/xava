@@ -11,13 +11,10 @@
 #endif
 
 #include <stdio.h>
-#include <stddef.h>
 #include <stdbool.h>
 #ifdef __unix__
 	#include <termios.h>
-	#include <sys/ioctl.h>
 	#include "output/terminal_noncurses.h"
-	#include "output/terminal_noncurses.c"
 #endif
 #include <math.h>
 #include <fcntl.h> 
@@ -27,76 +24,57 @@
 	 ({ __typeof__ (a) _a = (a); \
 			 __typeof__ (b) _b = (b); \
 		 _a > _b ? _a : _b; })
-#include <unistd.h>
-#include <sys/types.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <getopt.h>
 #include <pthread.h>
 #include <dirent.h>
-#include <ctype.h>
 
 #ifdef NCURSES
+#include <curses.h>
 #include "output/terminal_ncurses.h"
-#include "output/terminal_ncurses.c"
 #include "output/terminal_bcircle.h"
-#include "output/terminal_bcircle.c"
 #endif
 
-
-#include "output/raw.h"
-#include "output/raw.c"
-
-
-#include "input/fifo.h"
-#include "input/fifo.c"
-
 #ifdef ALSA
-#include <alsa/asoundlib.h>
 #include "input/alsa.h"
-#include "input/alsa.c"
 #endif
 
 #ifdef PULSE
 #include "input/pulse.h"
-#include "input/pulse.c"
 #endif
 
 #ifdef XLIB
-#include "output/graphical_x.c"
 #include "output/graphical_x.h"
 #endif
 
 #ifdef SDL
-#include "output/graphical_sdl.c"
 #include "output/graphical_sdl.h"
 #endif
 
 #ifdef SNDIO
-#include "input/sndio.c"
+#include "input/sndio.h"
 #endif
 
 #ifdef PORTAUDIO
-#include "input/portaudio.c"
 #include "input/portaudio.h"
 #endif
 
 #ifdef WIN
 #include "output/graphical_win.h"
-#include "output/graphical_win.c"
 #endif
 
-#if defined(WIN)||defined(SDL)||defined(XLIB)
-#include "output/graphical.c"
+#ifdef INIPARSER
+	#include "iniparser/src/iniparser.h"
+#else
+	#include <iniparser.h>
+#endif
+
 #include "output/graphical.h"
-#endif
-
-#include <iniparser.h>
-
+#include "output/raw.h"
+#include "input/fifo.h"
 #include "config.h"
-#include "config.c"
 
 #ifdef __GNUC__
 // curses.h or other sources may already define

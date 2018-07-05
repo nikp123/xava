@@ -2,6 +2,9 @@
 #include <errno.h>
 #include <sndio.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "fifo.h"
 
 void* input_sndio(void* data)
 {

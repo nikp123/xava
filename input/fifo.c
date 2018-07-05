@@ -1,22 +1,11 @@
 #include <unistd.h>
-#define BUFSIZE 1024
-#define FFTSIZE 16384
+#include <sys/stat.h>
+#include <sys/fcntl.h>
+#include <time.h>
+#include "fifo.h"
+
 int rc;
 
-struct audio_data {
-
-        int audio_out_r[FFTSIZE];
-        int audio_out_l[FFTSIZE];
-        int format;
-        unsigned int rate ;
-        char *source; //alsa device, fifo path or pulse source
-        int im; //input mode alsa, fifo or pulse
-        int channels;
-	int terminate; // shared variable used to terminate audio thread
-        char error_message[1024];
-};
-
-#ifdef __unix__
 int open_fifo(const char *path)
 {
 	int fd = open(path, O_RDONLY);
@@ -26,7 +15,7 @@ int open_fifo(const char *path)
 }
 
 
-//input: FIFO
+// input: FIFO
 void* input_fifo(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
@@ -38,7 +27,7 @@ void* input_fifo(void* data)
 	int t = 0;
 	//int size = 1024;
 	int bytes = 0;
-	int16_t buf[BUFSIZE / 2];
+	__int16_t buf[BUFSIZE / 2];
 	struct timespec req = { .tv_sec = 0, .tv_nsec = 10000000 };
 
 
@@ -122,4 +111,3 @@ templ) /
 
 	return 0;
 }
-#endif

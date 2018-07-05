@@ -1,5 +1,7 @@
-#include "output/graphical_win.h"
-#include "output/graphical.h"
+#include "graphical_win.h"
+#include "graphical.h"
+#include <stdio.h>
+#include <time.h>
 
 const char szAppName[] = "CAVA";
 const char wcWndName[] = "CAVA";
@@ -277,11 +279,13 @@ int init_window_win(char *color, char *bcolor, double foreground_opacity, int co
 	return 0;
 }
 
-void apply_win_settings(int w, int h) {
+void apply_win_settings(int w, int h, int framerate) {
 	resize_framebuffer(w, h);
 	ReleaseDC(cavaWinWindow, cavaWinFrame);
 
 	if(!transparentFlag) glClearColor(((bgcolor>>16)%256)/255.0, ((bgcolor>>8)%256)/255.0,(bgcolor%256)/255.0, opacity[1]);
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = wglGetProcAddress("wglSwapIntervalEXT"); 
+	wglSwapIntervalEXT(framerate);
 	return;
 }
 

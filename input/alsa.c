@@ -1,3 +1,6 @@
+#include "fifo.h"
+#include <alsa/asoundlib.h>
+
 // input: ALSA
 
 // assuming stereo
