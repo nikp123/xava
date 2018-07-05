@@ -181,3 +181,9 @@ add_executable(
 
 # Link executable
 target_link_libraries(cava ${ADDITIONAL_LIBRARIES} m fftw3 pthread iniparser)
+
+# Install
+install (TARGETS cava DESTINATION bin)
+install (FILES LICENSE DESTINATION share/licenses/cava)
+install (FILES example_files/desktop/cava.desktop DESTINATION share/applications)
+install (FILES example_files/desktop/cava.png DESTINATION share/icons/hicolor/64x64/apps)

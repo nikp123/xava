@@ -78,51 +78,44 @@ Build requirements
 * [Portaudio dev files](http://www.portaudio.com/)
 * [GNU libtool](https://www.gnu.org/software/libtool/)
 
-Only FFTW is actually required for CAVA to compile, but for maximum usage and performance ncurses and pulseaudio and/or alsa dev files are recommended. Not sure how to get the pulseaudio dev files for other distros than debian/ubuntu or if they are bundled in pulseaudio.
+Only FFTW is actually required for CAVA to compile.
 
 All the requirements can be installed easily in all major distros:
 
 Debian/Raspbian:
 
-    apt-get install libfftw3-dev libasound2-dev libncursesw5-dev libpulse-dev libtool libx11-dev libsdl2-dev libportaudio-dev 
+    apt-get install libfftw3-dev libasound2-dev libncursesw5-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake
 
 ArchLinux:
 
-    pacman -S base-devel fftw ncurses alsa-lib iniparser pulseaudio libx11 sdl2 portaudio
+    pacman -S base-devel fftw ncurses alsa-lib iniparser pulseaudio libx11 sdl2 portaudio cmake
 
 openSUSE:
 
-    zypper install alsa-devel ncurses-devel fftw3-devel libX11-devel libSDL2-devel libtool portaudio-devel
+    zypper install alsa-devel ncurses-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake
 
 Fedora:
 
-    dnf install alsa-lib-devel ncurses-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel libtool portaudio-devel
+    dnf install alsa-lib-devel ncurses-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake
 
 Cygwin dependencies (64bit ONLY):
 
-    gcc-core w32api-headers libfftw3-devel libportaudio-devel libncurses-devel portaudio
+    gcc-core w32api-headers libfftw3-devel libportaudio-devel libncurses-devel portaudio cmake
 
-Iniparser is also required, but if it is not already installed, a bundled version will be used.
 
-To run the autogen script you will also need `automake`, `libtool` and `git`.
+Iniparser is also required, but if it is not already installed, it will clone the [repository](https://github.com/ndevilla/iniparser).
+
+For compilation you will also need `cmake` and `git`.
 
 
 Getting started
 ---------------
 
-    ./autogen.sh
-    ./configure
-    make
+    mkdir build (if it doesn't already exist)
+    cd build
+    cmake ..
+    make -j4
 
-You can use the following for compilation options:
-
-    --enable-debug          	enable debug messages and frequency table output
-    --enable-legacy_iniparser	enable legacy iniparser mode necessary to build cava with iniparser < 4.0
-
-For example, turning on debugging messages:
-
-    ./configure --enable-debug 
-    
 ### Installing manually
 
 Install `cava` to default `/usr/local`:
@@ -131,87 +124,37 @@ Install `cava` to default `/usr/local`:
 
 Or you can change `PREFIX`, for example:
 
-    ./configure --prefix=PREFIX
-
-### Creating a desktop shortcut
-
-In the example_files/desktop you will find an desktop entry for GNU/Linux systems and an icon file.
-
-To create a desktop shortcut you can do the following:
-
-	cp example_files/desktop/cava.desktop /usr/share/applications
-	cp example_files/desktop/cava.png /usr/share/icons/hicolor/64x64/apps
+    cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/usr
 
 ### Uninstalling
 
-    make uninstall
-
-### openSUSE
-
-Tumbleweed users have cava in their repo. They can just use:
-
-    zypper in cava
-
-Leap users need to add the multimedia:apps repository first:
-
-    zypper ar -f obs://multimedia:apps/openSUSE_Leap_42.2 multimedia
-
-If you use another version just replace *openSUSE_Leap_42.2* with *openSUSE_13.2*, adjust it to your version.
-
-### Fedora
-
-Cava is available in Fedora 26 and later.  You can install Cava by
-running:
-
-    dnf install cava
-
-Unfourtunately for Fedora users the graphical branch is not availble and it must be compiled from source.
+    xargs rm < install_manifest.txt
 
 ### Arch
 
-CAVA (graphical branch) is availble in [AUR](https://aur.archlinux.org/packages/cava-gui-git/).
+CAVA-G is availble in [AUR](https://aur.archlinux.org/packages/cava-gui-git/).
 
     pacaur -S cava-gui-git
 
-### Ubuntu
-
-Michael Nguyen has added CAVA to his PPA, it can be installed with:
-
-    sudo add-apt-repository ppa:tehtotalpwnage/ppa
-    sudo apt-get update
-    sudo apt-get install cava
-    
-Unfourtunately for Ubuntu users, you will have to compile this branch since there are no active repositories. 
-
 ### VoidLinux
 
-CAVA (graphical branch) is avaible in the Void repos:
+CAVA-G is avaible in the Void repos:
 	
 	xbps-install cava-gui
 
 
 ### Windows
 
-It should work from Vista onwards, but on XP you can get it working by setting a color and disabling transparency.
+There should be an installer in the Releases page of this repository.
 
-You can download the binary from the `Releases` tab of this project.
-
-The archive will contain `cava.exe` alongside all of the dlls needed to run this.
-
-If a dll is missing, please raise an issue.
-
-If you are on Windows, please use `portaudio` as the input method and `win` as the output method.
+Please use minGW for compilation. You can use `-DCMAKE_C_COMIPLER=/usr/bin/gcc.exe` and `-DCMAKE_CXX_COMPILER=/usr/bin/g++.exe` in the cmake command for cross-compilation.
 
 
 #### Additional info
 
 This version doesn't include compatibility for noncurses and raw modes (since they depend on UNIX functions).
 
-To get them, compile this package with cygwin:
-	
-	apt-cyg install automake autoconf libtool gcc-base libportaudio-devel libfftw3-devel libncurses-devel w32api-runtime
-
-NOTE: You CANNOT BUILD this on a 32bit x86 system. You will need to run `./configure` on a 64bit system and manually change the Makefile's compiler.
+To get them, compile this package with cygwin.
 
 
 All distro specific instalation sources might be out of date.
@@ -232,6 +175,13 @@ To enable just uncomment:
 
 in the `[input]` section of your config.
 
+To change the portaudio input device, set `source = list` temporarely and run cava again.
+
+It should list all of the available devices (even that aren't input devices, watch out for that).
+
+Once you find the device you want to record from, take it's number and set `soruce = *that number*`
+
+
 #### If the host is running Pulseaudio
 
 Once CAVA is running, on pulseaudio you should change it's input to the device you want to use.
@@ -246,14 +196,7 @@ If you don't, install better drivers or get a better sound card.
 Once you figured that out, continue below.
 
 
-#### Set source in Portaudio
-
-Set 'source' to 'list' and start CAVA. Start CAVA and it should print out all audio devices.
-
-Find the input device that you want to use and set 'source' to it's number!
-
-
-### From Pulseaudio monitor source (Easy, default if supported)
+### From Pulseaudio monitor source (Easy aswell, unsupported on macOS and Windows)
 
 First make sure you have installed pulseaudio dev files and that cava has been built with pulseaudio support (it should be automatically if the dev files are found).
 
@@ -264,7 +207,7 @@ If you're lucky all you have to do is to uncomment this line in the config file 
 If nothing happens you might have to use a different source than the default. The default might also be your microphone. Look at the config file for help. 
 
 
-### From ALSA-loopback device (Tricky)
+### From ALSA-loopback device (Tricky, unsupported on macOS and Windows)
 
 Set
 
@@ -493,10 +436,9 @@ In addition to window aligment you can adjust the window position further with:
 
 You can enable transparent windows:
      
-	transparency = 1 or 0
+	transparency = 1
 
 WARNING: SDL2 doesn't have transparency.
-
 
 Force the window to be behind any window (works only under Xlib):
     
@@ -507,6 +449,11 @@ Set window properties (Window Class):
 	set_win_props = 1
 
 This helps with removing blur and shadows from behind the window, but also removes the ability to interact with the window.
+
+Make window click-proof (as in the window is totally ignored when clicked and clicks behind it):
+    
+    interactable = 0
+
 
 ### Additional features
 
