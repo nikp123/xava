@@ -454,6 +454,8 @@ Make window click-proof (as in the window is totally ignored when clicked and cl
     
     interactable = 0
 
+Pro-tip: You can still gain control of the window by clicking it's taskbar icon.
+
 
 ### Additional features
 
