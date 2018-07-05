@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <tchar.h>
 
-#include "output/graphical.h"
+#include "graphical.h"
 
 #ifdef assert
 #define vertify(expr) if(!expr) assert(0)

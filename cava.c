@@ -11,6 +11,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdbool.h>
 #ifdef __unix__
 	#include <termios.h>
 	#include "output/terminal_noncurses.h"

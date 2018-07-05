@@ -1,5 +1,7 @@
-#include "output/graphical_win.h"
-#include "output/graphical.h"
+#include "graphical_win.h"
+#include "graphical.h"
+#include <stdio.h>
+#include <time.h>
 
 const char szAppName[] = "CAVA";
 const char wcWndName[] = "CAVA";
