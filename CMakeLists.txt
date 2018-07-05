@@ -46,7 +46,7 @@ set(ADDITIONAL_LIBRARIES "")
 
 # OS-Specific inclusions
 if(NOT (MSYS OR MINGW OR MSVC))
-	messaage(STATUS "Not a Windows platform, can use POSIX now!")
+	message(STATUS "Not a Windows platform, can use POSIX now!")
 	list(APPEND ADDITIONAL_SOURCES "output/terminal_noncurses.c")
 	list(APPEND ADDITIONAL_SOURCES "input/fifo.c")
 endif()
