@@ -606,7 +606,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		if(output_mode == 6) apply_window_settings_sdl(p.bgcol, &w, &h);
 		#endif
 		#ifdef WIN
-		if(output_mode == 7) apply_win_settings(w, h);
+		if(output_mode == 7) apply_win_settings(w, h, 
+p.framerate);
 		#endif
 		
  		//handle for user setting too many bars
