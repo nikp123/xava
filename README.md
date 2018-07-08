@@ -28,7 +28,6 @@ thanks to [anko](https://github.com/anko) for the gif, here is the [recipe]( htt
 - [Build requirements](#build-requirements)
 - [Getting started](#getting-started)
   - [Installing manually](#installing-manually)
-  - [Creating a desktop shortcut](#creating-a-desktop-shortcut)
   - [Uninstalling](#uninstalling)
   - [openSUSE](#opensuse)
   - [Fedora](#fedora)
@@ -37,8 +36,8 @@ thanks to [anko](https://github.com/anko) for the gif, here is the [recipe]( htt
   - [Windows](#windows)
 - [Capturing audio](#capturing-audio)
   - [From PortAudio (easy)](#from-portaudio-easy)
-  - [From Pulseaudio monitor source (Easy, default if supported)](#from-pulseaudio-monitor-source-easy-default-if-supported)
-  - [From ALSA-loopback device (Tricky)](#from-alsa-loopback-device-tricky)
+  - [From Pulseaudio monitor source](#from-pulseaudio-monitor-source-easy-as-well-unsupported-on-macos-and-windows)
+  - [From ALSA-loopback device (Tricky)](#from-alsa-loopback-device-tricky-unsupported-on-macos-and-windows) )
   - [From mpd's fifo output](#from-mpds-fifo-output)
 - [Running via ssh](#running-via-ssh)
 - [Font notes](#font-notes)
@@ -196,7 +195,7 @@ If you don't, install better drivers or get a better sound card.
 Once you figured that out, continue below.
 
 
-### From Pulseaudio monitor source (Easy aswell, unsupported on macOS and Windows)
+### From Pulseaudio monitor source (Easy as well, unsupported on macOS and Windows)
 
 First make sure you have installed pulseaudio dev files and that cava has been built with pulseaudio support (it should be automatically if the dev files are found).
 
