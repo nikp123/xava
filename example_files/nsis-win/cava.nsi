@@ -16,7 +16,7 @@ Section
 
     # include these files
     File cava.exe
-    File devices.exe
+    File portaudio-list.exe
     File README.txt
     File LICENSE.txt
     File *.dll
@@ -32,6 +32,7 @@ Section
     # point the new shortcut at the program uninstaller
     CreateShortCut "$SMPROGRAMS\CAVA-G.lnk" "$INSTDIR\cava.exe"
 
+    Exec "$INSTDIR\portaudio-list.exe"
     Exec "$WINDIR\notepad.exe $INSTDIR\README.txt"
 SectionEnd
  
