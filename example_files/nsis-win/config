@@ -44,7 +44,7 @@ background = default
 ; foreground = "#c1c1c1"	# Misc
 
 ; foreground = "#000000"	# Everything Black xD
- foreground = "#ffffff"	# New layout
+; foreground = "#ffffff"	# New layout
 
 foreground_opacity = 1.0
 
@@ -75,5 +75,5 @@ color = "#ff000000"
 7 = 0.5
 
 [input]
- method = portaudio
- source = auto
+method = portaudio
+source = auto
