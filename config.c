@@ -419,11 +419,6 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		inputMethod = (char *)iniparser_getstring(ini, "input:method", "pulse");
 	#endif
 	
-	//setting sndio to default if supported
-	#ifdef SNDIO
-		inputMethod = (char *)iniparser_getstring(ini, "input:method", "sndio");
-	#endif
-	
 	// setting portaudio to default if supported
 	#ifdef PORTAUDIO
 		inputMethod = (char *)iniparser_getstring(ini, "input:method", "portaudio");
