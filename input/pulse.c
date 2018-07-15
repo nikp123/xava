@@ -144,36 +144,33 @@ void* input_pulse(void* data)
 	n = 0;
                
 	while (1) {
-        	/* Record some data ... */
-        	if (pa_simple_read(s, buf, sizeof(buf), &error) < 0) {
-            //fprintf(stderr, __FILE__": pa_simple_read() failed: %s\n", pa_strerror(error));
-        	//exit(EXIT_FAILURE);
-            sprintf(audio->error_message, __FILE__": pa_simple_read() failed: %s\n", pa_strerror(error));
-            audio->terminate = 1;
-            pthread_exit(NULL);
+		/* Record some data ... */
+		if (pa_simple_read(s, buf, sizeof(buf), &error) < 0) {
+			//fprintf(stderr, __FILE__": pa_simple_read() failed: %s\n", pa_strerror(error));
+			//exit(EXIT_FAILURE);
+			sprintf(audio->error_message, __FILE__": pa_simple_read() failed: %s\n", pa_strerror(error));
+			audio->terminate = 1;
+			pthread_exit(NULL);
 		}
-
-		 //sorting out channels
-
-	        for (i = 0; i < BUFSIZE / 2; i += 2) {
-
-                                if (audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
-
-                                //stereo storing channels in buffer
-                                if (audio->channels == 2) {
-                                        audio->audio_out_l[n] = buf[i];
-                                        audio->audio_out_r[n] = buf[i + 1];
-                                        }
-
-                                n++;
-                                if (n == 2048 - 1)n = 0;
-                        }
-
+		
+		//sorting out channels
+		for (i = 0; i < BUFSIZE / 2; i += 2) {	
+			if (audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
+			
+			//stereo storing channels in buffer
+			if (audio->channels == 2) {
+				audio->audio_out_l[n] = buf[i];
+				audio->audio_out_r[n] = buf[i + 1];
+			}
+			
+			n++;
+			if (n == 2048 - 1)n = 0;
+		}
 		if (audio->terminate == 1) {            		
 			pa_simple_free(s);
 			break;
-		    }
-        }
+		}
+	}
 
 	return 0;
 }

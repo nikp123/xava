@@ -89,7 +89,7 @@
 #endif
 
 int rc;
-int M = FFTSIZE;
+int M;
 int output_mode;
 
 // whether we should reload the config or not
@@ -192,15 +192,14 @@ static bool directory_exists(const char * path) {
 
 #endif
 
-int * separate_freq_bands(fftw_complex out[M / 2 + 1], int bars, int lcf[200],
-			 int hcf[200], float k[200], int channel, double sens, double ignore) {
+int * separate_freq_bands(fftw_complex *out, int bars, int lcf[200],
+			 int hcf[200], float k[200], int channel, double sens, double ignore, int fftsize) {
 	int o,i;
 	float peak[201];
 	static int fl[200];
 	static int fr[200];
-	int y[M / 2 + 1];
+	int y[fftsize / 2 + 1];
 	float temp;
-
 
 	// process: separate frequency bands
 	for (o = 0; o < bars; o++) {
@@ -313,19 +312,17 @@ Keys:\n\
 as of 0.4.0 all options are specified in config file, see in '/home/username/.config/cava/' \n";
 
 	char ch = '\0';
-	double inr[2 * (M / 2 + 1)];
-    double inl[2 * (M / 2 + 1)];
 	int bars = 25;
 	char supportedInput[255] = "'fifo'";
 	int sourceIsAuto = 1;
 	double smh;
+	double *inl,*inr;
 	bool isGraphical = false;
 	
 	//int maxvalue = 0;
 
-	struct audio_data audio;
 	struct config_params p;
-
+	struct audio_data audio;
 
 	// general: console title
 	#ifdef __unix__
@@ -380,13 +377,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         strcat(supportedInput,", 'sndio'");
     #endif
 
-	//fft: planning to rock
-	fftw_complex outl[M / 2 + 1];
-	fftw_plan pl =  fftw_plan_dft_r2c_1d(M, inl, outl, FFTW_MEASURE);
-
-	fftw_complex outr[M / 2 + 1];
-	fftw_plan pr =  fftw_plan_dft_r2c_1d(M, inr, outr, FFTW_MEASURE);
-
 	// general: main loop
 	while (1) {
 
@@ -416,16 +406,33 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	audio.source = malloc(1 +  strlen(p.audio_source));
 	strcpy(audio.source, p.audio_source);
 
+	audio.fftsize = p.fftsize;
+	audio.audio_out_l = malloc(sizeof(int)*p.fftsize+1);
+	inl = malloc(sizeof(double)*(p.fftsize+2));	
+	if(p.stereo) {
+		audio.audio_out_r = malloc(sizeof(int)*p.fftsize+1);
+		inr = malloc(sizeof(double)*(p.fftsize+2));	
+	}
+	M = p.fftsize;
 	audio.format = -1;
 	audio.rate = 0;
 	audio.terminate = 0;
-	if (p.stereo) audio.channels = 2;
-	if (!p.stereo) audio.channels = 1;
+	audio.channels = 1+p.stereo;
 
-	for (i = 0; i < M; i++) {
-		audio.audio_out_l[i] = 0;
-		audio.audio_out_r[i] = 0;
-	}
+	if(p.stereo) {
+		for (i = 0; i < M; i++) {
+			audio.audio_out_l[i] = 0;
+			audio.audio_out_r[i] = 0;
+		}
+	} else for(i=0; i<M; i++) audio.audio_out_l[i] = 0;
+
+	//fft: planning to rock
+	fftw_complex outl[M/2+1];
+	fftw_plan pl =  fftw_plan_dft_r2c_1d(M, inl, outl, FFTW_MEASURE);
+
+	fftw_complex outr[M/2+1];
+	fftw_plan pr =  fftw_plan_dft_r2c_1d(M, inr, outr, FFTW_MEASURE);
+
 
 	#ifdef ALSA
 	// input_alsa: wait for the input to be ready
@@ -813,7 +820,7 @@ p.framerate);
 				if (i < M) {
 					inl[i] = audio.audio_out_l[i];
 					if (p.stereo) inr[i] = audio.audio_out_r[i];
-					if (inl[i] || inr[i]) silence = 0;
+					if (p.stereo ? inl[i] || inr[i] : inl[i]) silence = 0;
 				} else {
 					inl[i] = 0;
 					if (p.stereo) inr[i] = 0;
@@ -832,13 +839,13 @@ p.framerate);
 					fftw_execute(pr);
 
 					fl = separate_freq_bands(outl,bars/(p.oddoneout?4:2),lcf,hcf, k, 1, 
-						p.sens, p.ignore);
+						p.sens, p.ignore, M);
 					fr = separate_freq_bands(outr,bars/(p.oddoneout?4:2),lcf,hcf, k, 2, 
-						p.sens, p.ignore);
+						p.sens, p.ignore, M);
 				} else {
 					fftw_execute(pl);
 					fl = separate_freq_bands(outl,bars/(p.oddoneout?2:1),lcf,hcf, k, 1, 
-						p.sens, p.ignore);
+						p.sens, p.ignore, M);
 				}
 			}
 			 else { //**if in sleep mode wait and continue**//
@@ -1039,6 +1046,14 @@ p.framerate);
 
 	if (p.customEQ) free(p.smooth);
 	if (sourceIsAuto) free(audio.source);
+
+	// cleanup remaining FFT buffers
+	if(audio.channels==2) {
+		free(audio.audio_out_r);
+		free(inr);
+	}
+	free(audio.audio_out_l);
+	free(inl);
    
     cleanup();
 

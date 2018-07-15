@@ -137,6 +137,11 @@
 ; bar_delimiter = 59
 ; frame_delimiter = 10
 
+# Adjusts the FFT buffer size (MUST BE POWER OF TWO, otherwise unexpected results can happen)
+# FFT buffer is the size of the output of the fourier transform, the bigger it is
+# the more precise the visualization is at the cost of CPU performance
+; fft_size = 4096
+
 
 [color]
 

@@ -431,6 +431,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		outputMethod = (char *)iniparser_getstring(ini, "output:method", "noncurses");
 	#endif
 	
+	p->fftsize = iniparser_getint(ini, "smoothing:fft_size", 1024);
 	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 1);
 	p->waves = iniparser_getint(ini, "smoothing:waves", 0);
 	p->integral = iniparser_getdouble(ini, "smoothing:integral", 90);

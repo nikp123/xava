@@ -6,6 +6,6 @@ struct config_params {
 	double *smooth;
 	int smcount, customEQ, im, om, col, bgcol, autobars, stereo, is_bin, ascii_range,
  bit_format, gradient, fixedbars, framerate, bw, bs, autosens, overshoot, waves,
- set_win_props, w, h;
+ set_win_props, w, h, fftsize;
 };
 void load_config(char configPath[255], char supportedInput[255], void* p);

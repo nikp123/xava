@@ -1,9 +1,8 @@
 #define BUFSIZE 1024
-#define FFTSIZE 16384
 
 struct audio_data {
-	int audio_out_r[FFTSIZE];
-	int audio_out_l[FFTSIZE];
+	int *audio_out_r;
+	int *audio_out_l;
 	int format;
 	unsigned int rate;
 	char *source;				// alsa device, fifo path or pulse source
@@ -11,6 +10,7 @@ struct audio_data {
 	int channels;
 	int terminate;				// shared variable used to terminate audio thread
 	char error_message[1024];
+	int fftsize;
 };
 
 // header files for fifo, part of cava
