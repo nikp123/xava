@@ -669,12 +669,12 @@ p.framerate);
 
 
 		// freqconst contains the logarithm intensity
-		double freqconst = log(p.highcf-p.lowcf)/log(pow(bars/(p.oddoneout?2:1), p.logScale));
+		double freqconst = log(p.highcf-p.lowcf)/log(pow(bars, p.logScale));
 		//freqconst = -2;
 
 		// process: calculate cutoff frequencies
-		for (n = 0; n < bars/(p.oddoneout?2:1) + 1; n++) {
-			fc[n] = pow((n+1.0), freqconst*(1.0+(p.logScale-1.0)*((double)(n+1.0)/bars)))+p.lowcf;
+		for (n = 0; n < bars + 1; n++) {
+			fc[n] = pow((n+1.0), freqconst*(1.0+(p.logScale-1.0)*((double)(n*(p.oddoneout+1.0)+1.0)/bars)))+p.lowcf;
 			fre[n] = fc[n] / (audio.rate / 2); 
 			//remember nyquist!, pr my calculations this should be rate/2 
 			//and  nyquist freq in M/2 but testing shows it is not... 
