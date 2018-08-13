@@ -14,7 +14,8 @@
 #include "graphical.h"
 
 Pixmap gradientBox = 0;
-XColor xbgcol, xcol, xgrad[3];
+XColor xbgcol, xcol, *xgrad;
+int gradcount;
 
 XEvent cavaXEvent;
 Colormap cavaXColormap;
@@ -122,7 +123,7 @@ void calculateColors(char *color, char *bcolor, int bgcol, int col) {
 	XAllocColor(cavaXDisplay, cavaXColormap, &xbgcol);
 }
 
-int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_props, char **argv, int argc, int gradient, char *gradient_color_1, char *gradient_color_2, unsigned int shdw, unsigned int shdw_col, int w, int h)
+int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_props, char **argv, int argc, int gradient, char **gradient_colors, int gradient_count, unsigned int shdw, unsigned int shdw_col, int w, int h)
 {
 	// Pass the shadow values
 	shadow = shdw;
@@ -173,12 +174,14 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	cavaXGraphics = XCreateGC(cavaXDisplay, cavaXWindow, 0, 0);
 	
 	if(gradient) {
-		XParseColor(cavaXDisplay, cavaXColormap, gradient_color_1, &xgrad[2]);
-		XAllocColor(cavaXDisplay, cavaXColormap, &xgrad[2]);
-		XParseColor(cavaXDisplay, cavaXColormap, gradient_color_1, &xgrad[0]);
-		XAllocColor(cavaXDisplay, cavaXColormap, &xgrad[0]);
-		XParseColor(cavaXDisplay, cavaXColormap, gradient_color_2, &xgrad[1]);
-		XAllocColor(cavaXDisplay, cavaXColormap, &xgrad[1]);
+		xgrad = malloc((gradient_count+1)*sizeof(XColor));
+		XParseColor(cavaXDisplay, cavaXColormap, gradient_colors[0], &xgrad[gradient_count]);
+		XAllocColor(cavaXDisplay, cavaXColormap, &xgrad[gradient_count]);
+		for(int i=0; i<gradient_count; i++) {
+			XParseColor(cavaXDisplay, cavaXColormap, gradient_colors[i], &xgrad[i]);
+			XAllocColor(cavaXDisplay, cavaXColormap, &xgrad[i]);
+		}
+		gradcount=gradient_count;
 	}
 	
 	// Set up atoms
@@ -379,33 +382,35 @@ int render_gradient_x(int window_height, int bar_width, double foreground_opacit
 	// TODO: Error checks
 
 	for(int I = 0; I < window_height; I++) {
-		double step = (double)I / (float)window_height;
+		// don't touch +1.0/w_h at the end fixes some math problems
+		double step = (double)(I%(window_height/(gradcount-1)))/(double)(window_height/(gradcount-1))+1.0/window_height;
 
 		// gradients break compatibility with non ARGB displays.
 		// if you could fix this without allocating bilions of colors, please do so
 
-		xgrad[2].pixel ^= xgrad[2].pixel; 	
-		if(xgrad[0].red != 0 || xgrad[1].red != 0) {
-			if(xgrad[0].red < xgrad[1].red) 
-				xgrad[2].pixel |= (unsigned long)(xgrad[0].red + ((xgrad[1].red - xgrad[0].red) * step)) / 256 << 16;
-			else xgrad[2].pixel |= (unsigned long)(xgrad[0].red - ((xgrad[0].red - xgrad[1].red) * step)) / 256 << 16;
+		int gcPhase = (gradcount-1)*I/window_height;
+		xgrad[gradcount].pixel ^= xgrad[gradcount].pixel; 	
+		if(xgrad[gcPhase].red != 0 || xgrad[gcPhase+1].red != 0) {
+			if(xgrad[gcPhase].red < xgrad[gcPhase+1].red) 
+				xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].red + ((xgrad[gcPhase+1].red - xgrad[gcPhase].red) * step)) / 256 << 16;
+			else xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].red - ((xgrad[gcPhase].red - xgrad[gcPhase+1].red) * step)) / 256 << 16;
 		}
 		
-		if(xgrad[0].green != 0 || xgrad[1].green != 0) {
-			if(xgrad[0].green < xgrad[1].green) 
-				xgrad[2].pixel |= (unsigned long)(xgrad[0].green + ((xgrad[1].green - xgrad[0].green) * step)) / 256 << 8;
-			else xgrad[2].pixel |= (unsigned long)(xgrad[0].green - ((xgrad[0].green - xgrad[1].green) * step)) / 256 << 8;
+		if(xgrad[gcPhase].green != 0 || xgrad[gcPhase+1].green != 0) {
+			if(xgrad[gcPhase].green < xgrad[gcPhase+1].green) 
+				xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].green + ((xgrad[gcPhase+1].green - xgrad[gcPhase].green) * step)) / 256 << 8;
+			else xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].green - ((xgrad[gcPhase].green - xgrad[gcPhase+1].green) * step)) / 256 << 8;
 		}
 		
-		if(xgrad[0].blue != 0 || xgrad[1].blue != 0) {
-			if(xgrad[0].blue < xgrad[1].blue) 
-				xgrad[2].pixel |= (unsigned long)(xgrad[0].blue + ((xgrad[1].blue - xgrad[0].blue) * step)) / 256;
-			else xgrad[2].pixel |= (unsigned long)(xgrad[0].blue - ((xgrad[0].blue - xgrad[1].blue) * step)) / 256;
+		if(xgrad[gcPhase].blue != 0 || xgrad[gcPhase+1].blue != 0) {
+			if(xgrad[gcPhase].blue < xgrad[gcPhase+1].blue) 
+				xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].blue + ((xgrad[gcPhase+1].blue - xgrad[gcPhase].blue) * step)) / 256;
+			else xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].blue - ((xgrad[gcPhase].blue - xgrad[gcPhase+1].blue) * step)) / 256;
 		}
 		
-		xgrad[2].pixel |= (unsigned int)((unsigned char)(0xFF * foreground_opacity) << 24);	// set window opacity
+		xgrad[gradcount].pixel |= (unsigned int)((unsigned char)(0xFF * foreground_opacity) << 24);	// set window opacity
 
-		XSetForeground(cavaXDisplay, cavaXGraphics, xgrad[2].pixel);
+		XSetForeground(cavaXDisplay, cavaXGraphics, xgrad[gradcount].pixel);
 		XFillRectangle(cavaXDisplay, gradientBox, cavaXGraphics, 0, window_height - I, bar_width, 1);
 	}
 	return 0;
@@ -435,7 +440,7 @@ void draw_graphical_x(int window_height, int bars_count, int bar_width, int bar_
 			if(f[i] > window_height) f[i] = window_height;
 				
 			if(f[i] > flastd[i]) {
-				if(gradient&&transparentFlag)
+				if(gradient)
 					XCopyArea(cavaXDisplay, gradientBox, cavaXWindow, cavaXGraphics, 0, window_height - f[i], bar_width, f[i] - flastd[i], rest + i*(bar_spacing+bar_width), window_height - f[i]);	
 				else {
 					XSetForeground(cavaXDisplay, cavaXGraphics, xcol.pixel);
@@ -477,5 +482,6 @@ void cleanup_graphical_x(void)
 	XDestroyWindow(cavaXDisplay, cavaXWindow);
 	XFreeColormap(cavaXDisplay, cavaXColormap);
 	XCloseDisplay(cavaXDisplay);
+	free(xgrad);
 	return;
 }
