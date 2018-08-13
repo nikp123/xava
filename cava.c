@@ -527,7 +527,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	// setting up sdl
 	#ifdef SDL
-	if(output_mode == 6) if(init_window_sdl(&p.col, &p.bgcol, p.color, p.bcolor, p.gradient, p.gradient_color_1, p.gradient_color_2, w, h)) exit(EXIT_FAILURE);
+	if(output_mode == 6) if(init_window_sdl(&p.col, &p.bgcol, p.color, p.bcolor, p.gradient, p.gradient_colors, p.gradient_count, w, h)) exit(EXIT_FAILURE);
 	#endif
 
 	#ifdef WIN

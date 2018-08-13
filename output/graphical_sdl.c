@@ -6,16 +6,17 @@ SDL_Window *cavaSDLWindow;
 SDL_Surface *cavaSDLWindowSurface;
 SDL_Event cavaSDLEvent;
 SDL_DisplayMode cavaSDLVInfo;
-int gradCol[2];
+int *gradCol, gradNum;
 
 void cleanup_graphical_sdl(void)
 {
+	free(gradCol);
 	SDL_FreeSurface(cavaSDLWindowSurface);
 	SDL_DestroyWindow(cavaSDLWindow);
 	SDL_Quit();
 }
 
-int init_window_sdl(int *col, int *bgcol, char *color, char *bcolor, int gradient, char *gradient_color_1, char *gradient_color_2, int w, int h)
+int init_window_sdl(int *col, int *bgcol, char *color, char *bcolor, int gradient, char **gradient_colors, int gradient_num, int w, int h)
 {
 	
 	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
@@ -128,12 +129,12 @@ int init_window_sdl(int *col, int *bgcol, char *color, char *bcolor, int gradien
 	else
 		sscanf(bcolor, "%x", bgcol);
 
-	if(gradient)
-	{
-		sscanf(gradient_color_1 + 1, "%x", &gradCol[0]);
-		sscanf(gradient_color_2 + 1, "%x", &gradCol[1]);
+	if(gradient) {
+		gradCol = malloc(sizeof(int)*gradient_num);
+		for(int i=0; i<gradient_num; i++)
+			sscanf(gradient_colors[i]+1, "%x", &gradCol[i]);
+		gradNum = gradient_num;
 	}
-
 	return 0;
 }
 
@@ -237,22 +238,24 @@ void draw_graphical_sdl(int bars, int rest, int bw, int bs, int *f, int *flastd,
 				for(int I = flastd[i]; I < f[i]; I++)
 				{
 					Uint32 color = 0xFF;
-					double step = (double)I/(double)h;
+					double step = (double)(I%(h/(gradNum-1)))/(double)(h/(gradNum-1));
 					color = color << 8;
-					if(gradCol[0] / 0x10000 % 0x100 < gradCol[1] / 0x10000 % 0x100)
-						color += step*(gradCol[1] / 0x10000 % 0x100 - gradCol[0] / 0x10000 % 0x100) + gradCol[0] / 0x10000 % 0x100;
+					
+					int gcPhase = (gradNum-1)*I/h;
+					if(gradCol[gcPhase] / 0x10000 % 0x100 < gradCol[gcPhase+1] / 0x10000 % 0x100)
+						color += step*(gradCol[gcPhase+1] / 0x10000 % 0x100 - gradCol[gcPhase] / 0x10000 % 0x100) + gradCol[gcPhase] / 0x10000 % 0x100;
 					else
-						color += -1*step*(gradCol[0] / 0x10000 % 0x100 - gradCol[1] / 0x10000 % 0x100) + gradCol[0] / 0x10000 % 0x100;
+						color += -1*step*(gradCol[gcPhase] / 0x10000 % 0x100 - gradCol[gcPhase+1] / 0x10000 % 0x100) + gradCol[gcPhase] / 0x10000 % 0x100;
 					color = color << 8;
-					if(gradCol[0] / 0x100 % 0x100 < gradCol[1] / 0x100 % 0x100)
-						color += step*(gradCol[1] / 0x100 % 0x100 - gradCol[0] / 0x100 % 0x100) + gradCol[0] / 0x100 % 0x100;
+					if(gradCol[gcPhase] / 0x100 % 0x100 < gradCol[gcPhase+1] / 0x100 % 0x100)
+						color += step*(gradCol[gcPhase+1] / 0x100 % 0x100 - gradCol[gcPhase] / 0x100 % 0x100) + gradCol[gcPhase] / 0x100 % 0x100;
 					else
-						color += -1*step*(gradCol[0] / 0x100 % 0x100 - gradCol[1] / 0x100 % 0x100) + gradCol[0] / 0x100 % 0x100;
+						color += -1*step*(gradCol[gcPhase] / 0x100 % 0x100 - gradCol[gcPhase+1] / 0x100 % 0x100) + gradCol[gcPhase] / 0x100 % 0x100;
 					color = color << 8;
-					if(gradCol[0] % 0x100 < gradCol[1] % 0x100)
-						color += step*(gradCol[1] % 0x100 - gradCol[0] % 0x100) + gradCol[0] % 0x100;
+					if(gradCol[gcPhase] % 0x100 < gradCol[gcPhase+1] % 0x100)
+						color += step*(gradCol[gcPhase+1] % 0x100 - gradCol[gcPhase] % 0x100) + gradCol[gcPhase] % 0x100;
 					else
-						color += -1*step*(gradCol[0] % 0x100 - gradCol[1] % 0x100) + gradCol[0] % 0x100;
+						color += -1*step*(gradCol[gcPhase] % 0x100 - gradCol[gcPhase+1] % 0x100) + gradCol[gcPhase] % 0x100;
 					current_bar = (SDL_Rect) {rest + i*(bs+bw), h - I, bw, 1};
 					SDL_FillRect(cavaSDLWindowSurface, &current_bar, SDL_MapRGB(cavaSDLWindowSurface->format, color / 0x10000 % 0x100, color / 0x100 % 0x100, color % 0x100));
 				}
