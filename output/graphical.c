@@ -1,5 +1,6 @@
 #include "graphical.h"
 #include <string.h>
+#include <math.h>
 
 void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int scrH, char *winPos) {
 	if(!strcmp(winPos, "top")){
@@ -31,7 +32,7 @@ void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int s
 }
 
 #ifdef GL
-int drawGLBars(int rest, int bw, int bs, int bars, int h, int shadow, int gradient, float colors[11], int *f) {
+int drawGLBars(int rest, int bw, int bs, int bars, int h, int shadow, int gradient, float colors[8], float gradColors[24], int *f) {
 	for(int i = 0; i < bars; i++) {
 		double point[4];
 		point[0] = rest+(bw+bs)*i;
@@ -42,7 +43,7 @@ int drawGLBars(int rest, int bw, int bs, int bars, int h, int shadow, int gradie
 		glBegin(GL_QUADS);
 			if(shadow) {
 				// left side
-				glColor4f(colors[8], colors[9], colors[10], colors[7]);
+				glColor4f(colors[5], colors[6], colors[7], colors[4]);
 				glVertex2f(point[0], point[2]);
 				glVertex2f(point[0], point[3]);
 				glColor4f(0.0, 0.0, 0.0, 0.0);
@@ -50,7 +51,7 @@ int drawGLBars(int rest, int bw, int bs, int bars, int h, int shadow, int gradie
 				glVertex2f(point[0]-shadow/2, point[2]+shadow/2);
 				
 				// right side
-				glColor4f(colors[8], colors[9], colors[10], colors[7]);
+				glColor4f(colors[5], colors[6], colors[7], colors[4]);
 				glVertex2f(point[1], point[2]);
 				glVertex2f(point[1], point[3]);
 				glColor4f(0.0, 0.0, 0.0, 0.0);
@@ -58,7 +59,7 @@ int drawGLBars(int rest, int bw, int bs, int bars, int h, int shadow, int gradie
 				glVertex2f(point[1]+shadow, point[2]+shadow/2);
 				
 				// top side
-				glColor4f(colors[8], colors[9], colors[10], colors[7]);
+				glColor4f(colors[5], colors[6], colors[7], colors[4]);
 				glVertex2f(point[1], point[2]);
 				glVertex2f(point[0], point[2]);
 				glColor4f(0.0, 0.0, 0.0, 0.0);
@@ -66,24 +67,47 @@ int drawGLBars(int rest, int bw, int bs, int bars, int h, int shadow, int gradie
 				glVertex2f(point[1]+shadow, point[2]+shadow/2);
 
 				// bottom side
-				glColor4f(colors[8], colors[9], colors[10], colors[7]);
+				glColor4f(colors[5], colors[6], colors[7], colors[4]);
 				glVertex2f(point[1], point[3]);
 				glVertex2f(point[0], point[3]);
 				glColor4f(0.0, 0.0, 0.0, 0.0);
 				glVertex2f(point[0]-shadow/2, point[3]-shadow);
 				glVertex2f(point[1]+shadow, point[3]-shadow);
 			}
-			
-			glColor4f(
-			gradient ? (colors[0]+(colors[3]-colors[0])*f[i]/h) : colors[0], 
-			gradient ? (colors[1]+(colors[4]-colors[1])*f[i]/h) : colors[1],
-			gradient ? (colors[2]+(colors[5]-colors[2])*f[i]/h) : colors[2], colors[6]);
-			glVertex2f(point[0], point[2]);
-			glVertex2f(point[1], point[2]);
-			
-			glColor4f(colors[0], colors[1], colors[2], colors[6]);
-			glVertex2f(point[1], point[3]);
-			glVertex2f(point[0], point[3]);
+		
+			if(gradient) {
+				float progress = (float)(point[2]-shadow)/(float)(h-shadow);
+				int gcMax = ceil((gradient-1.0)*progress);
+				float cutLenght = (h-shadow)/(float)(gradient-1.0);
+				for(int gcPhase=0; gcPhase<gcMax; gcPhase++) {
+					if(gcPhase==gcMax-1) {
+						float barProgress = fmod(point[2]-1.0-(float)shadow, cutLenght)/cutLenght;
+						glColor4f(
+							gradColors[gcPhase*3]+(gradColors[gcPhase*3+3]-gradColors[gcPhase*3])*barProgress, 
+							gradColors[gcPhase*3+1]+(gradColors[gcPhase*3+4]-gradColors[gcPhase*3+1])*barProgress,
+							gradColors[gcPhase*3+2]+(gradColors[gcPhase*3+5]-gradColors[gcPhase*3+2])*barProgress, colors[3]);
+						glVertex2f(point[0], point[2]);
+						glVertex2f(point[1], point[2]);
+					} else {
+						glColor4f(gradColors[gcPhase*3+3], gradColors[gcPhase*3+4],
+							gradColors[gcPhase*3+5], colors[3]);
+						glVertex2f(point[0], cutLenght*(gcPhase+1)+point[3]);
+						glVertex2f(point[1], cutLenght*(gcPhase+1)+point[3]);
+					}
+					
+					glColor4f(gradColors[gcPhase*3], gradColors[gcPhase*3+1], gradColors[gcPhase*3+2], colors[3]);
+					glVertex2f(point[1], cutLenght*gcPhase+point[3]);
+					glVertex2f(point[0], cutLenght*gcPhase+point[3]);
+				}
+		} else {
+				glColor4f(colors[0],colors[1],colors[2],colors[3]);
+				glVertex2f(point[0], point[2]);
+				glVertex2f(point[1], point[2]);
+				
+				glColor4f(colors[0], colors[1], colors[2], colors[3]);
+				glVertex2f(point[1], point[3]);
+				glVertex2f(point[0], point[3]);
+			}
 		glEnd();
 	}
 	return 0;

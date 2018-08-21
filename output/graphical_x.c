@@ -383,7 +383,7 @@ int render_gradient_x(int window_height, int bar_width, double foreground_opacit
 
 	for(int I = 0; I < window_height; I++) {
 		// don't touch +1.0/w_h at the end fixes some math problems
-		double step = (double)(I%(window_height/(gradcount-1)))/(double)(window_height/(gradcount-1))+1.0/window_height;
+		double step = (double)(I%(window_height/(gradcount-1)))/(double)(window_height/(gradcount-1))+2.0/window_height;
 
 		// gradients break compatibility with non ARGB displays.
 		// if you could fix this without allocating bilions of colors, please do so
@@ -429,9 +429,15 @@ void draw_graphical_x(int window_height, int bars_count, int bar_width, int bar_
 	
 	if(GLXmode) {
 		#ifdef GLX
-		float glColors[11] = {gradient ? xgrad[0].red/65535.0 : xcol.red/65535.0, gradient ? xgrad[0].green/65535.0 : xcol.green/65535.0, gradient ? xgrad[0].blue/65535.0 : xcol.blue/65535.0,
-							xgrad[1].red/65535.0, xgrad[1].green/65535.0, xgrad[1].blue/65535.0, foreground_opacity, ((unsigned int)shadow_color>>24)%256/255.0, ((unsigned int)shadow_color>>16)%256/255.0, ((unsigned int)shadow_color>>8)%256/255.0, (unsigned int)shadow_color%256/255.0};
-		if(drawGLBars(rest, bar_width, bar_spacing, bars_count, window_height, shadow, gradient, glColors, f)) exit(EXIT_FAILURE);
+		float glColors[8] = {xcol.red/65535.0, xcol.green/65535.0, xcol.blue/65535.0, foreground_opacity, ((unsigned int)shadow_color>>24)%256/255.0,
+			 ((unsigned int)shadow_color>>16)%256/255.0, ((unsigned int)shadow_color>>8)%256/255.0, (unsigned int)shadow_color%256/255.0};
+		float gradColors[24] = {0.0};
+		for(int i=0; i<gradcount; i++) {
+			gradColors[i*3] = xgrad[i].red/65535.0;
+			gradColors[i*3+1] = xgrad[i].green/65535.0;
+			gradColors[i*3+2] = xgrad[i].blue/65535.0;
+		}
+		if(drawGLBars(rest, bar_width, bar_spacing, bars_count, window_height, shadow, gradient?gradcount:0, glColors, gradColors, f)) exit(EXIT_FAILURE);
 		#endif
 	} else {	
 		// draw bars on the X11 window
