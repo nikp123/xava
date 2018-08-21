@@ -383,6 +383,7 @@ void draw_graphical_win(int window_height, int bars_count, int bar_width, int ba
 }
 
 void cleanup_graphical_win(void) {
+	free(gradientColor);
 	wglMakeCurrent(NULL, NULL);
         wglDeleteContext(cavaWinGLFrame);
 	ReleaseDC(cavaWinWindow, cavaWinFrame);
