@@ -13,7 +13,7 @@ WNDCLASSEX cavaWinClass;	// same thing as window classes in Xlib
 HDC cavaWinFrame;
 HGLRC cavaWinGLFrame;
 unsigned int fgcolor, bgcolor;
-unsigned int gradientColor[2], grad = 0;
+unsigned int *gradientColor, grad = 0;
 unsigned int shadowColor, shadow = 0;
 double opacity[2] = {1.0, 1.0};
 
@@ -138,7 +138,7 @@ void resize_framebuffer(int width,int height) {
 	glLoadIdentity();
 }
 
-int init_window_win(char *color, char *bcolor, double foreground_opacity, int col, int bgcol, int gradient, char *gradient_color_1, char *gradient_color_2, unsigned int shdw, unsigned int shdw_col, int w, int h) {
+int init_window_win(char *color, char *bcolor, double foreground_opacity, int col, int bgcol, int gradient_count, char *gradient_colors, unsigned int shdw, unsigned int shdw_col, int w, int h) {
 
 	// get handle
 	cavaWinModule = GetModuleHandle(NULL);
@@ -261,14 +261,12 @@ int init_window_win(char *color, char *bcolor, double foreground_opacity, int co
 		}
 	} else if(bcolor[0] == '#') sscanf(bcolor, "#%x", &fgcolor);
 	
-	// gradient strings are consts, so we need to improvise
-	if(gradient) {
-		sscanf(gradient_color_1, "#%06x", &gradientColor[0]);
-		sscanf(gradient_color_2, "#%06x", &gradientColor[1]);
-	}
-
 	// parse all of the values
-	grad = gradient;
+	grad = gradient_count;
+	gradientColor = malloc(sizeof(int)*grad);
+	for(int i=0; i<grad; i++) {
+		sscanf(gradient_colors[i], "#%06x", &gradientColor[i]);
+	}
 	shadow = shdw;
 	shadowColor = shdw_col;
 	opacity[0] = foreground_opacity;
@@ -367,11 +365,16 @@ void draw_graphical_win(int window_height, int bars_count, int bar_width, int ba
 	// clear color and calculate pixel witdh in double
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-	float glColors[11] = {gradient ? ((gradientColor[0]>>16)%256)/255.0 : ((fgcolor>>16)%256)/255.0, gradient ? ((gradientColor[0]>>8)%256)/255.0 : ((fgcolor>>8)%256)/255.0,
-		gradient ? (gradientColor[0]%256)/255.0 : (fgcolor%256)/255.0, ((gradientColor[1]>>16)%256)/255.0, ((gradientColor[1]>>8)%256)/255.0, (gradientColor[1]%256)/255.0,
-	       	opacity[0], ((shadowColor>>24)%256)/255.0, ((shadowColor>>16)%256)/255.0, ((shadowColor>>8)%256)/255.0, (shadowColor%256)/255.0};
-	if(drawGLBars(rest, bar_width, bar_spacing, bars_count, window_height, transparentFlag ? shadow : 0, gradient, glColors, f)) exit(EXIT_FAILURE);
-	
+	float glColors[8] = {((fgcolor>>16)%256)/255.0, ((fgcolor>>8)%256)/255.0, (fgcolor%256)/255.0, opacity[0], ((unsigned int)shadowColor>>24)%256/255.0,
+		 ((unsigned int)shadowColor>>16)%256/255.0, ((unsigned int)shadowColor>>8)%256/255.0, (unsigned int)shadowColor%256/255.0};
+	float gradColors[24] = {0.0};
+	for(int i=0; i<grad; i++) {
+		gradColors[i*3] = ((gradientColor[i]>>16)%256)/255.0;
+		gradColors[i*3+1] = ((gradientColor[i]>>8)%256)/255.0;
+		gradColors[i*3+2] = (gradientColor[i]%256)/255.0;;
+	}
+
+	if(drawGLBars(rest, bar_width, bar_spacing, bars_count, window_height, transparentFlag ? shadow : 0, gradient?grad:0, glColors, gradColors, f)) exit(EXIT_FAILURE);	
 	glFlush();
 
 	// swap buffers	

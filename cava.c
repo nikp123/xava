@@ -531,7 +531,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	#endif
 
 	#ifdef WIN
-	if(output_mode == 7) if(init_window_win(p.color, p.bcolor, p.foreground_opacity, p.col, p.bgcol, p.gradient, p.gradient_color_1, p.gradient_color_2, p.shdw, p.shdw_col, w, h)) exit(EXIT_FAILURE);
+	if(output_mode == 7) if(init_window_win(p.color, p.bcolor, p.foreground_opacity, p.col, p.bgcol, p.gradient_count, p.gradient_colors, p.shdw, p.shdw_col, w, h)) exit(EXIT_FAILURE);
 	#endif
 
 	while  (!reloadConf) {//jumbing back to this loop means that you resized the screen
