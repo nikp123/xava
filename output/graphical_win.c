@@ -138,7 +138,7 @@ void resize_framebuffer(int width,int height) {
 	glLoadIdentity();
 }
 
-int init_window_win(char *color, char *bcolor, double foreground_opacity, int col, int bgcol, int gradient_count, char *gradient_colors, unsigned int shdw, unsigned int shdw_col, int w, int h) {
+int init_window_win(char *color, char *bcolor, double foreground_opacity, int col, int bgcol, int gradient_count, char **gradient_colors, unsigned int shdw, unsigned int shdw_col, int w, int h) {
 
 	// get handle
 	cavaWinModule = GetModuleHandle(NULL);

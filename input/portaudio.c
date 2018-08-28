@@ -105,7 +105,7 @@ void* input_portaudio(void *audiodata) {
 	// start portaudio
 	err = Pa_Initialize();
 	if(err != paNoError) {
-		fprintf(stderr, "Error: unable to initilize portaudio %x\n", err);
+		fprintf(stderr, "Error: unable to initilize portaudio - %s\n", Pa_GetErrorText(err));
 		exit(EXIT_FAILURE);
 	}
 
