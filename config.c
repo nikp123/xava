@@ -436,6 +436,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->gravity = iniparser_getdouble(ini, "smoothing:gravity", 100);
 	p->ignore = iniparser_getdouble(ini, "smoothing:ignore", 0);
 	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.0);
+	p->logEnd = iniparser_getdouble(ini, "smoothing:log_end", 1.0);
 	p->oddoneout = iniparser_getdouble(ini, "smoothing:oddoneout", 0);
 	
 	p->color = (char *)iniparser_getstring(ini, "color:foreground", "default");

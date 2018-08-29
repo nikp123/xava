@@ -667,14 +667,16 @@ p.framerate);
 			smh = (double)(((double)p.smcount)/((double)bars));
 		}
 
+	 	// since oddoneout requires every odd bar, why not split them in half?
+		const int calcbars = p.oddoneout ? bars/2+bars%2 : bars;
 
-		// freqconst contains the logarithm intensity
-		double freqconst = log(p.highcf-p.lowcf)/log(pow(bars, p.logScale));
+		// frequency constant that we'll use for logarithmic progression of frequencies
+		double freqconst = log(p.highcf-p.lowcf)/log(pow(calcbars, p.logScale));
 		//freqconst = -2;
 
 		// process: calculate cutoff frequencies
-		for (n = 0; n < bars + 1; n++) {
-			fc[n] = pow((n+1.0), freqconst*(1.0+(p.logScale-1.0)*((double)(n*(p.oddoneout+1.0)+1.0)/bars)))+p.lowcf;
+		for (n = 0; n < calcbars*p.logEnd; n++) {
+			fc[n] = pow(powf(n+1.0, (p.logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0), freqconst)+p.lowcf;
 			fre[n] = fc[n] / (audio.rate / 2); 
 			//remember nyquist!, pr my calculations this should be rate/2 
 			//and  nyquist freq in M/2 but testing shows it is not... 
@@ -696,11 +698,41 @@ p.framerate);
 						}
 			#endif
 		}
+		
+		// this way we can cut off the logarithmic function for the higher frequencies
+		if(p.logEnd<1.0) {
+			// we need to know where n ended
+			const int bn = n-1;
+			
+			// do not change n as it's stored from the previous loop
+			for (n; n<calcbars+1; n++) {
+				fc[n] = ((double)p.highcf-fc[bn])*(double)(n-bn)/(double)(calcbars-bn)+fc[bn];
+				fre[n] = fc[n] / (audio.rate / 2); 
+				//remember nyquist!, pr my calculations this should be rate/2 
+				//and  nyquist freq in M/2 but testing shows it is not... 
+				//or maybe the nq freq is in M/4
+
+				//lfc stores the lower cut frequency foo each bar in the fft out buffer
+				lcf[n] = fre[n] * (M /2);
+				
+				if (n != 0) {
+					//hfc holds the high cut frequency for each bar
+					hcf[n-1] = lcf[n]; 
+				}
+
+				#ifdef DEBUG
+				 	if (n != 0) {
+						mvprintw(n,0,"%d: %f -> %f (%d -> %d) \n", n, 
+							fc[n - 1], fc[n], lcf[n - 1],
+				 				 hcf[n - 1]);
+							}
+				#endif
+			}
+		}
 
 		// process: weigh signal to frequencies
-		for (n = 0; n < bars/(p.oddoneout?2:1);
-			n++)k[n] = pow(fc[n],0.85) * ((float)height/(M*32000)) * 
-				p.smooth[(int)floor(((double)n) * smh)];
+		for (n = 0; n < calcbars; n++)
+			k[n] = pow(fc[n],0.85) * ((float)height/(M*32000)) * p.smooth[(int)floor(((double)n) * smh)];
 
 		if (p.stereo) bars = bars * 2;
 
@@ -838,13 +870,13 @@ p.framerate);
 					fftw_execute(pl);
 					fftw_execute(pr);
 
-					fl = separate_freq_bands(outl,bars/(p.oddoneout?4:2),lcf,hcf, k, 1, 
+					fl = separate_freq_bands(outl,calcbars/2,lcf,hcf, k, 1, 
 						p.sens, p.ignore, M);
-					fr = separate_freq_bands(outr,bars/(p.oddoneout?4:2),lcf,hcf, k, 2, 
+					fr = separate_freq_bands(outr,calcbars/2,lcf,hcf, k, 2, 
 						p.sens, p.ignore, M);
 				} else {
 					fftw_execute(pl);
-					fl = separate_freq_bands(outl,bars/(p.oddoneout?2:1),lcf,hcf, k, 1, 
+					fl = separate_freq_bands(outl,calcbars,lcf,hcf, k, 1, 
 						p.sens, p.ignore, M);
 				}
 			}
@@ -865,13 +897,13 @@ p.framerate);
 					fr = monstercat_filter(fr, bars / 2, p.waves,
 						p.monstercat);	
 				} else {
-					fl = monstercat_filter(fl, bars/(1+p.oddoneout)+p.oddoneout, p.waves, p.monstercat);
+					fl = monstercat_filter(fl, calcbars, p.waves, p.monstercat);
 				}
 			}
 			
 			if(p.oddoneout) {
 				//memset(fl+sizeof(float)*(bars/2), 0.0f, sizeof(float)*bars);
-				for(i=bars/2; i>=0; i--) {
+				for(i=bars/2+bars%2; i>=0; i--) {
 					fl[i*2]=fl[i];
 					fl[i*2+1]=0;
 				}
