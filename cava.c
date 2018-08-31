@@ -71,6 +71,8 @@
 	#include <iniparser.h>
 #endif
 
+#include "misc/reload.h"
+
 #include "output/graphical.h"
 #include "output/raw.h"
 #include "input/fifo.h"
@@ -98,6 +100,7 @@ int should_reload = 0;
 // general: cleanup
 void cleanup()
 {
+	destroyFileWatcher();
 	switch(output_mode) {
 		#ifdef NCURSES
 		case 1:
@@ -743,6 +746,8 @@ p.framerate);
 			#ifdef NCURSES
 			if (output_mode == 1 || output_mode == 2) ch = getch();
 			#endif
+		
+			should_reload = getFileStatus();
 			
 			switch (ch) {
 				case 65:    // key up
