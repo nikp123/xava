@@ -732,7 +732,7 @@ p.framerate);
 
 		// process: weigh signal to frequencies
 		for (n = 0; n < calcbars; n++)
-			k[n] = pow(fc[n],0.85) * ((float)height/(M*32000)) * p.smooth[(int)floor(((double)n) * smh)];
+			k[n] = pow(fc[n], p.eqBalance) * ((float)height/(M*32000)) * p.smooth[(int)floor(((double)n) * smh)];
 
 		if (p.stereo) bars = bars * 2;
 

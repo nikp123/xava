@@ -193,6 +193,8 @@
 # Average out the value of each odd bar (just like the monstercat visualizer)
 ; oddoneout = 0
 
+# Balances the eq towards higher or lower frequencies (lower value->lower frequencies, higher value->higher frequencies)
+; eq_balance = 0.85
 
 [shadow]
 
