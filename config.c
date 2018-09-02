@@ -354,7 +354,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	//config: creating path to default config file
 	if (configPath[0] == '\0') {
 		char *configFile = "config";
-		#ifdef __unix__
+		#if defined(__unix__)||defined(__APPLE__)
 			char *configHome = getenv("XDG_CONFIG_HOME");
 		#elif defined(WIN)
 			char *configHome = getenv("APPDATA");
@@ -372,7 +372,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		}
 	
 		// config: create directory
-		#ifdef __unix__
+		#if defined(__unix__)||defined(__APPLE__)
 			mkdir(configPath, 0777);
 		#else
 			mkdir(configPath);
