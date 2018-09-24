@@ -430,12 +430,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	} else for(i=0; i<M; i++) audio.audio_out_l[i] = 0;
 
 	//fft: planning to rock
-	fftw_complex outl[M/2+1];
-	fftw_plan pl =  fftw_plan_dft_r2c_1d(M, inl, outl, FFTW_MEASURE);
-
-	fftw_complex outr[M/2+1];
-	fftw_plan pr =  fftw_plan_dft_r2c_1d(M, inr, outr, FFTW_MEASURE);
-
+	fftw_complex outl[M/2+1], outr[M/2+1];
+	fftw_plan pl = fftw_plan_dft_r2c_1d(M, inl, outl, FFTW_MEASURE), pr;
+	if(p.stereo) pr = fftw_plan_dft_r2c_1d(M, inr, outr, FFTW_MEASURE);
 
 	#ifdef ALSA
 	// input_alsa: wait for the input to be ready
