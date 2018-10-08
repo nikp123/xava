@@ -90,6 +90,8 @@
 	struct termios oldtio, newtio;
 #endif
 
+long oldTime; // used to calculate frame times
+
 int rc;
 int M;
 int output_mode;
@@ -321,6 +323,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	double smh;
 	double *inl,*inr;
 	bool isGraphical = false;
+	long oldTime = 0;
 	
 	//int maxvalue = 0;
 
@@ -1053,7 +1056,6 @@ p.framerate);
 				//terminal has been resized breaking to recalibrating values
 				if (rc == -1) resizeTerminal = true;
 				
-				long oldTime;
 				oldTime = cavaSleep(oldTime, p.framerate);
 			#endif
 
