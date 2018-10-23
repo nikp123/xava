@@ -134,8 +134,8 @@ void cleanup()
 	}
 }
 
-long cavaSleep(long oldTime, int framerate) {
-	long newTime = 0;
+unsigned long cavaSleep(unsigned long oldTime, int framerate) {
+	unsigned long newTime = 0;
 	if(framerate) {
 	#ifdef WIN
 		SYSTEMTIME time;
@@ -148,7 +148,8 @@ long cavaSleep(long oldTime, int framerate) {
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 		newTime = tv.tv_sec*1000+tv.tv_usec/1000;
-		usleep(1000000/framerate+(oldTime-newTime)*1000 > 0 ? 1000000/framerate+(oldTime-newTime)*1000 : 0);
+		if(oldTime+1000/framerate>newTime)
+			usleep((1000/framerate+oldTime-newTime)*1000);
 		gettimeofday(&tv, NULL);
 		return tv.tv_sec*1000+tv.tv_usec/1000;
 	#endif
@@ -323,7 +324,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	double smh;
 	double *inl,*inr;
 	bool isGraphical = false;
-	long oldTime = 0;
+	unsigned long oldTime = 0;
 	
 	//int maxvalue = 0;
 
