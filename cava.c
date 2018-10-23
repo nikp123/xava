@@ -708,7 +708,7 @@ p.framerate);
 			const int bn = n-1;
 			
 			// do not change n as it's stored from the previous loop
-			for (n; n<calcbars+1; n++) {
+			for(; n<calcbars+1; n++) {
 				fc[n] = ((double)p.highcf-fc[bn])*(double)(n-bn)/(double)(calcbars-bn)+fc[bn];
 				fre[n] = fc[n] / (audio.rate / 2); 
 				//remember nyquist!, pr my calculations this should be rate/2 
@@ -732,6 +732,7 @@ p.framerate);
 				#endif
 			}
 		}
+		hcf[calcbars-1] = p.highcf/(audio.rate/2)*(M/2);
 
 		// process: weigh signal to frequencies
 		for (n = 0; n < calcbars; n++)
