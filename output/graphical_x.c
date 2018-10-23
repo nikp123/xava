@@ -228,6 +228,12 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	return 0;
 }
 
+void clear_screen_x(void) {
+	if(GLXmode) return;	
+	XSetBackground(cavaXDisplay, cavaXGraphics, xbgcol.pixel);
+	XClearWindow(cavaXDisplay, cavaXWindow);
+}
+
 int apply_window_settings_x(int *w, int *h)
 {
 	// Gets the monitors resolution
@@ -271,10 +277,7 @@ int apply_window_settings_x(int *w, int *h)
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		#endif
-	}else{
-		XSetBackground(cavaXDisplay, cavaXGraphics, xbgcol.pixel);
-		XClearWindow(cavaXDisplay, cavaXWindow);
-	}
+	} else clear_screen_x();
 
 	if(!interactable){	
 		XRectangle rect;
@@ -330,21 +333,19 @@ int get_window_input_x(int *should_reload, int *bs, double *sens, int *bw, int *
 					case XK_b:
 						if(transparentFlag) break;
 						if(bcolor[0] == '#' && strlen(bcolor) == 7) free(bcolor);
-						srand(time(NULL));
 						bcolor = (char *) malloc(8*sizeof(char));
 						sprintf(bcolor, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
 						XParseColor(cavaXDisplay, cavaXColormap, bcolor, &xbgcol);
 						XAllocColor(cavaXDisplay, cavaXColormap, &xbgcol);
-						return 2;
+						return 3;
 					case XK_c:
 						if(gradient) break;
 						if(color[0] == '#' && strlen(color) == 7) free(color);
-						srand(time(NULL));
 						color = (char *) malloc(8*sizeof(char));
 						sprintf(color, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
 						XParseColor(cavaXDisplay, cavaXColormap, color, &xcol);
 						XAllocColor(cavaXDisplay, cavaXColormap, &xcol);
-						return 2;
+						return 3;
 				}
 				break;
 			}
@@ -362,7 +363,7 @@ int get_window_input_x(int *should_reload, int *bs, double *sens, int *bw, int *
 				break;
 			}
 			case Expose:
-				return 2;
+				return 3;
 			case VisibilityNotify:
 				if(cavaXEvent.xvisibility.state == VisibilityUnobscured) return 2;
 				break;

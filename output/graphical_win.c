@@ -293,11 +293,11 @@ int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int
 		DispatchMessage(&cavaWinEvent);	// windows handles the rest
 		switch(cavaWinEvent.message) {
 			case WM_KEYDOWN:
-			       switch(cavaWinEvent.wParam) {
-			       		// should_reload = 1
+				switch(cavaWinEvent.wParam) {
+					// should_reload = 1
 					// resizeTerminal = 2
 					// bail = -1
-				        case 'A':
+					case 'A':
 						(*bs)++;
 						return 2;
 					case 'S':
@@ -327,19 +327,17 @@ int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int
 						return -1;
 					case 'B':
 						if(transparentFlag) break;
-						srand(time(NULL));
 						bgcolor = (rand()<<16)+rand();
-						return 2;
+						return 3;
 					case 'C':
 						if(grad) break;
-						srand(time(NULL));
 						fgcolor = (rand()<<16)+rand();
-						return 2;
-			       		default: break;
-			       }
-			       break;
+						return 3;
+			    default: break;
+				}
+			  break;
 			case WM_CLOSE:
-			       	return -1;
+			 	return -1;
 			case WM_DESTROY:
 				return -1;
 			case WM_QUIT:

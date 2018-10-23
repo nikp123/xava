@@ -803,6 +803,10 @@ p.framerate);
 						adjust_x();	
 						resizeTerminal = TRUE;
 						break;
+					case 3:
+						clear_screen_x();
+						memset(flastd, 0x00, sizeof(int)*200);
+						break;
 				}
 			}
 			#endif
@@ -820,6 +824,10 @@ p.framerate);
 					case 2:
 						resizeTerminal = 1;
 						break;
+					case 3:
+						clear_screen_sdl(p.bgcol);
+						memset(flastd, 0x00, sizeof(int)*200);
+						break;
 				}
 			}
 			#endif
@@ -834,6 +842,10 @@ p.framerate);
 					case 1: break;
 					case 2:
 						resizeTerminal = TRUE;
+						break;
+					case 3:
+						//clear_screen_win();
+						//memset(flastd, 0x00, sizeof(int)*200);
 						break;
 				}
 			}

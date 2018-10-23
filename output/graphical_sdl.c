@@ -138,6 +138,10 @@ int init_window_sdl(int *col, int *bgcol, char *color, char *bcolor, int gradien
 	return 0;
 }
 
+void clear_screen_sdl(int bgcol) {
+	SDL_FillRect(cavaSDLWindowSurface, NULL, SDL_MapRGB(cavaSDLWindowSurface->format, bgcol / 0x10000 % 0x100, bgcol / 0x100 % 0x100, bgcol % 0x100));
+}
+
 void apply_window_settings_sdl(int bgcol, int *w, int *h)
 {
 	// toggle fullscreen
@@ -147,7 +151,7 @@ void apply_window_settings_sdl(int bgcol, int *w, int *h)
 	// Appearently SDL uses multithreading so this avoids invalid access
 	// If I had a job, here's what I would be fired for xD
 	SDL_Delay(100);
-	SDL_FillRect(cavaSDLWindowSurface, NULL, SDL_MapRGB(cavaSDLWindowSurface->format, bgcol / 0x10000 % 0x100, bgcol / 0x100 % 0x100, bgcol % 0x100));
+	clear_screen_sdl(bgcol);
 	
 	// Window size patch, because cava wipes w and h for some reason.
 	(*w) = cavaSDLWindowSurface->w;
@@ -194,17 +198,15 @@ int get_window_input_sdl(int *bs, int *bw, double *sens, int *col, int *bgcol, i
 						return 1;
 					case SDLK_c: // change foreground color
 						if(gradient) break;
-						srand(time(NULL));
 						(*col) = rand() % 0x100;
 						(*col) = (*col) << 16;
 						(*col) += rand();
-						return 2;
+						return 3;
 					case SDLK_b: // change background color
-						srand(time(NULL));
 						(*bgcol) = rand() % 0x100;
 						(*bgcol) = (*bgcol) << 16;
 						(*bgcol) += rand();
-						return 2;
+						return 3;
 					case SDLK_q:
 						return -1;
 				}
