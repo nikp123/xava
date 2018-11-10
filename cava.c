@@ -676,8 +676,33 @@ p.framerate);
 		double freqconst = log(p.highcf-p.lowcf)/log(pow(calcbars, p.logScale));
 		//freqconst = -2;
 
+		float logBeginStart = pow(powf((calcbars*p.logBegin)+1.0, (p.logScale-1.0)*((double)calcbars*p.logBegin+1.0)/((double)calcbars)+1.0), freqconst);
+		for(n=0;n<calcbars*p.logBegin;n++) {
+			fc[n] = logBeginStart*(n/(calcbars*p.logBegin))+p.lowcf;
+			fre[n] = fc[n] / (audio.rate / 2); 
+			//remember nyquist!, pr my calculations this should be rate/2 
+			//and  nyquist freq in M/2 but testing shows it is not... 
+			//or maybe the nq freq is in M/4
+
+			//lfc stores the lower cut frequency foo each bar in the fft out buffer
+			lcf[n] = fre[n] * (M /2);
+			
+			if (n != 0) {
+				//hfc holds the high cut frequency for each bar
+				hcf[n-1] = lcf[n]; 
+			}
+
+			#ifdef DEBUG
+			 	if (n != 0) {
+					mvprintw(n,0,"%d: %f -> %f (%d -> %d) \n", n, 
+						fc[n - 1], fc[n], lcf[n - 1],
+			 				 hcf[n - 1]);
+						}
+			#endif
+		}
+
 		// process: calculate cutoff frequencies
-		for (n = 0; n < calcbars*p.logEnd; n++) {
+		for (n; n < calcbars*p.logEnd; n++) {
 			fc[n] = pow(powf(n+1.0, (p.logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0), freqconst)+p.lowcf;
 			fre[n] = fc[n] / (audio.rate / 2); 
 			//remember nyquist!, pr my calculations this should be rate/2 

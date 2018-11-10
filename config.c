@@ -436,6 +436,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->gravity = iniparser_getdouble(ini, "smoothing:gravity", 100);
 	p->ignore = iniparser_getdouble(ini, "smoothing:ignore", 0);
 	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.0);
+	p->logBegin = iniparser_getdouble(ini, "smoothing:log_begin", 0.0);
 	p->logEnd = iniparser_getdouble(ini, "smoothing:log_end", 1.0);
 	p->oddoneout = iniparser_getdouble(ini, "smoothing:oddoneout", 0);
 	p->eqBalance = iniparser_getdouble(ini, "smoothing:eq_balance", 0.85);

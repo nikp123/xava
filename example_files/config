@@ -186,6 +186,10 @@
 # Variable logarithm (the higher the value, the more intense) 
 ; log = 1.0
 
+# Change the start position of the logarithm (0.0 (begining of the spectrum) to 1.0 (end of spectrum))
+# 0.5 is the half, and to disable logarithms, just put 1.0
+; log_begin = 1.0
+
 # Change the end position of the logarithm (0.0 (begining of the spectrum) to 1.0 (end of spectrum))
 # 0.5 is the half, and to disable logarithms, just put 0.0
 ; log_end = 1.0
