@@ -15,7 +15,6 @@
 
 #include "output/graphical.h"
 #include "config.h"
-#include "misc/reload.h"
 
 double smoothDef[64] = {0.8, 0.8, 1, 1, 0.8, 0.8, 1, 0.8, 0.8, 1, 1, 0.8,
 					1, 1, 0.8, 0.6, 0.6, 0.7, 0.8, 0.8, 0.8, 0.8, 0.8,
@@ -575,7 +574,4 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	
 	validate_config(supportedInput, params);
 	//iniparser_freedict(ini);
-	
-	// spawn a file watcher
-	watchFile(configPath);
 }

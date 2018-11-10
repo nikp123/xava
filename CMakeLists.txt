@@ -182,7 +182,6 @@ endif()
 add_executable(
 	cava
 	${ADDITIONAL_SOURCES}
-	misc/reload.c
 	output/graphical.c
 	output/raw.c
 	config.c
