@@ -689,7 +689,7 @@ p.framerate);
 			
 			if (n != 0) {
 				//hfc holds the high cut frequency for each bar
-				hcf[n-1] = lcf[n]; 
+				hcf[n-1] = lcf[n]+1; 
 			}
 
 			#ifdef DEBUG
@@ -714,7 +714,7 @@ p.framerate);
 			
 			if (n != 0) {
 				//hfc holds the high cut frequency for each bar
-				hcf[n-1] = lcf[n]; 
+				hcf[n-1] = lcf[n]+1; 
 			}
 
 			#ifdef DEBUG
@@ -744,7 +744,7 @@ p.framerate);
 				
 				if (n != 0) {
 					//hfc holds the high cut frequency for each bar
-					hcf[n-1] = lcf[n]; 
+					hcf[n-1] = lcf[n]+1; 
 				}
 
 				#ifdef DEBUG
