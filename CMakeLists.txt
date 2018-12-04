@@ -52,19 +52,7 @@ set(ADDITIONAL_LIBRARIES "")
 # OS-Specific inclusions
 if(NOT (MSYS OR MINGW OR MSVC))
 	message(STATUS "Not a Windows platform, can use POSIX now!")
-	list(APPEND ADDITIONAL_SOURCES "output/terminal_noncurses.c")
 	list(APPEND ADDITIONAL_SOURCES "input/fifo.c")
-endif()
-
-# ncursesw
-find_library(CURSES_LIB ncursesw)
-if(CURSES_LIB)
-	add_definitions(-DNCURSES)
-	list(APPEND ADDITIONAL_SOURCES "output/terminal_ncurses.c")
-	list(APPEND ADDITIONAL_SOURCES "output/terminal_bcircle.c")
-	list(APPEND ADDITIONAL_LIBRARIES "-lncursesw")
-else()
-	message(STATUS "ncursesw library not found")
 endif()
 
 # SDL2
@@ -195,4 +183,3 @@ target_link_libraries(gava ${ADDITIONAL_LIBRARIES} m fftw3 pthread iniparser)
 install (TARGETS gava DESTINATION bin)
 install (FILES LICENSE DESTINATION share/licenses/gava)
 install (FILES example_files/desktop/gava.desktop DESTINATION share/applications)
-install (FILES example_files/desktop/gava.png DESTINATION share/icons/hicolor/64x64/apps)

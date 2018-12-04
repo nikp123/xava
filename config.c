@@ -28,11 +28,6 @@ int validate_color(char *checkColor, int om)
 {
 	int validColor = 0;
 	if (checkColor[0] == '#' && strlen(checkColor) == 7) {
-		// If the output mode is not ncurses, tell the user to use a named colour instead of hex colours.
-		if (om != 1 && om != 2 && om != 5 && om != 6 && om != 7) {
-			fprintf(stderr, "'ncurses','x','sdl' and 'win' output methods supports HTML colors. Please change the colours or the output method.\n");
-			exit(EXIT_FAILURE);
-		}
 		// 0 to 9 and a to f
 		for (int i = 1; checkColor[i]; ++i) {
 			if (!isdigit(checkColor[i])) {
@@ -109,27 +104,6 @@ void validate_config(char supportedInput[255], void* params)
 	
 	// validate: output method
 	p->om = 0;
-	if (strcmp(outputMethod, "ncurses") == 0) {
-		p->om = 1;
-	    p->bgcol = -1;
-		#ifndef NCURSES
-			fprintf(stderr,
-				"gava was built without ncurses support, install ncursesw dev files and run make clean && ./configure && make again\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if (strcmp(outputMethod, "circle") == 0) {
-		 p->om = 2;
-		#ifndef NCURSES
-			fprintf(stderr,
-				"gava was built without ncurses support, install ncursesw dev files and run make clean && ./configure && make again\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if (strcmp(outputMethod, "noncurses") == 0) {
-		p->om = 3;
-		p->bgcol = 0;
-	}
 	if (strcmp(outputMethod, "raw") == 0) {//raw:
 		p->om = 4;
 		
@@ -190,16 +164,13 @@ void validate_config(char supportedInput[255], void* params)
 	}
 	if (p->om == 0) {
 		fprintf(stderr,
-			"output method %s is not supported, supported methods are: 'noncurses'",
+			"output method %s is not supported, supported methods are: 'raw'",
 						outputMethod);
 		#ifdef XLIB
 			fprintf(stderr, ", 'x'");
 		#endif
 		#ifdef SDL
 			fprintf(stderr, ", 'sdl'");
-		#endif
-		#ifdef NCURSES
-			fprintf(stderr, ", 'ncurses'");
 		#endif
 		#ifdef WIN
 			fprintf(stderr, ", 'win'");
@@ -212,13 +183,7 @@ void validate_config(char supportedInput[255], void* params)
 	// validate: output channels
 	p->stereo = -1;
 	if (strcmp(channels, "mono") == 0) p->stereo = 0;
-	if (strcmp(channels, "stereo") == 0) {
-		if(p->oddoneout) {
-			fprintf(stderr, "oddoneout doesn't work on 'stereo'!\n");
-			exit(EXIT_FAILURE);
-		}
-		p->stereo = 1;
-	}
+	if (strcmp(channels, "stereo") == 0) p->stereo = 1;
 	if (p->stereo == -1) {
 		fprintf(stderr,
 			"output channels %s is not supported, supported channelss are: 'mono' and 'stereo'\n",
@@ -234,9 +199,9 @@ void validate_config(char supportedInput[255], void* params)
 	if (p->bw < 1) p->bw = 1;
 	
 	// validate: framerate
-	if (p->framerate < 0) {
+	if (p->framerate <= 0) {
 		fprintf(stderr,
-			"framerate can't be negative!\n");
+			"framerate can't equal or lower than 0!\n");
 		exit(EXIT_FAILURE);
 	}
 	
@@ -421,14 +386,15 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	#ifdef PORTAUDIO
 		inputMethod = (char *)iniparser_getstring(ini, "input:method", "portaudio");
 	#endif
-	
-	#ifdef NCURSES
-		outputMethod = (char *)iniparser_getstring(ini, "output:method", "ncurses");
+
+	#if defined(__linux__)||defined(__APPLE__)||defined(__unix__)
+		outputMethod = (char *)iniparser_getstring(ini, "output:method", "x");
+	#elif defined(__WIN32__)
+		outputMethod = (char *)iniparser_getstring(ini, "output:method", "win");
+	#else	
+		outputMethod = (char *)iniparser_getstring(ini, "output:method", "sdl");
 	#endif
-	#ifndef NCURSES
-		outputMethod = (char *)iniparser_getstring(ini, "output:method", "noncurses");
-	#endif
-	
+
 	p->fftsize = iniparser_getint(ini, "smoothing:fft_size", 1024);
 	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 1);
 	p->waves = iniparser_getint(ini, "smoothing:waves", 0);
@@ -484,10 +450,10 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	#ifdef GLX
 		GLXmode = iniparser_getint(ini, "window:opengl", 1);
 	#endif
-	if(!strcmp(outputMethod, "sdl") | !strcmp(outputMethod, "x") | !strcmp(outputMethod, "win")) {
-		p->w = iniparser_getint(ini, "window:width", 640);
-		p->h = iniparser_getint(ini, "window:height", 480);
-	}
+	
+	p->w = iniparser_getint(ini, "window:width", 640);
+	p->h = iniparser_getint(ini, "window:height", 480);
+	
 	windowAlignment = (char *)iniparser_getstring(ini, "window:alignment", "none");
 	windowX = iniparser_getint(ini, "window:x_padding", 0);
 	windowY = iniparser_getint(ini, "window:y_padding", 0);
@@ -496,6 +462,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	borderFlag = iniparser_getboolean(ini, "window:border", 1);
 	keepInBottom = iniparser_getboolean(ini, "window:keep_below", 0);
 	interactable = iniparser_getboolean(ini, "window:interactable", 1);
+	p->set_win_props = iniparser_getint(ini, "window:set_win_props", 0);
 	
 	// config: output
 	channels =  (char *)iniparser_getstring(ini, "output:channels", "stereo");
@@ -508,7 +475,13 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	
 	// config: shadow
 	p->shdw = iniparser_getint(ini, "shadow:size", 0);
-	p->shadow_color = (char *)iniparser_getstring(ini, "shadow:color", "#ff000000");
+	p->shadow_color = (char *)iniparser_getstring(ini, "shadow:color", "#ff000000");	
+	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
+	{
+		fprintf(stderr, "shadow color is improperly formatted!\n");
+		exit(EXIT_FAILURE);
+	}
+	
 	
 	// read & validate: eq
 	p->smooth = smoothDef;
@@ -557,22 +530,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "auto");
 	}
 	#endif
-	
-	// Get bar settings
-	if(!strcmp(outputMethod, "x") | !strcmp(outputMethod, "sdl") | !strcmp(outputMethod, "win")) {
-		p->bw = iniparser_getint(ini, "window:bar_width", 20);
-		p->bs = iniparser_getint(ini, "window:bar_spacing", 4);
-	}
 		
-	// Set window properties
-	p->set_win_props = iniparser_getint(ini, "window:set_win_props", 0);
-	
-	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
-	{
-		fprintf(stderr, "shadow color is improperly formatted!\n");
-		exit(EXIT_FAILURE);
-	}
-	
 	validate_config(supportedInput, params);
 	//iniparser_freedict(ini);
 }

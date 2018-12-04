@@ -14,7 +14,6 @@
 #include <stdbool.h>
 #if defined(__unix__)||defined(__APPLE__)
 	#include <termios.h>
-	#include "output/terminal_noncurses.h"
 #endif
 #include <math.h>
 #include <fcntl.h> 
@@ -30,12 +29,6 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include <dirent.h>
-
-#ifdef NCURSES
-#include <curses.h>
-#include "output/terminal_ncurses.h"
-#include "output/terminal_bcircle.h"
-#endif
 
 #ifdef ALSA
 #include "input/alsa.h"
@@ -101,17 +94,6 @@ int should_reload = 0;
 void cleanup()
 {
 	switch(output_mode) {
-		#ifdef NCURSES
-		case 1:
-		case 2:
-			cleanup_terminal_ncurses();
-			break;
-		#endif
-		#ifdef POSIX
-		case 3:
-			cleanup_terminal_noncurses();
-			break;
-		#endif
 		#ifdef XLIB
 		case 5:
 			cleanup_graphical_x();
@@ -161,20 +143,12 @@ unsigned long gavaSleep(unsigned long oldTime, int framerate) {
 
 #if defined(__unix__)||defined(__APPLE__)
 // general: handle signals
-void sig_handler(int sig_no)
-{
-	if (sig_no == SIGUSR1&&output_mode==3) {
-		should_reload = 1;
-		return;
-	}
-
+void sig_handler(int sig_no) {
 	if (sig_no == SIGINT) {
 		printf("CTRL-C pressed -- goodbye\n");
 		cleanup();
 		return;
 	}
-	signal(sig_no, SIG_DFL);
-	raise(sig_no);
 }
 #endif
 
@@ -297,7 +271,7 @@ int main(int argc, char **argv)
 	char configPath[255];
 	char *usage = "\n\
 Usage : " PACKAGE " [options]\n\
-Visualize audio input in terminal. \n\
+Visualize audio input in a window. \n\
 \n\
 Options:\n\
 	-p          path to config file\n\
@@ -321,18 +295,12 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	int sourceIsAuto = 1;
 	double smh;
 	double *inl,*inr;
-	bool isGraphical = false;
 	unsigned long oldTime = 0;
 	
 	//int maxvalue = 0;
 
 	struct config_params p;
 	struct audio_data audio;
-
-	// general: console title
-	#if defined(__unix__)||defined(__APPLE__)
-	printf("%c]0;%s%c", '\033', PACKAGE, '\007');
-	#endif	
 
 	configPath[0] = '\0';
 
@@ -346,8 +314,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	memset(&action, 0, sizeof(action));
 	action.sa_handler = &sig_handler;
 	sigaction(SIGINT, &action, NULL);
-	sigaction(SIGTERM, &action, NULL);
-	sigaction(SIGUSR1, &action, NULL);
 	#endif
 
 	// general: handle command-line arguments
@@ -381,6 +347,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
     #ifdef SNDIO
         strcat(supportedInput,", 'sndio'");
     #endif
+    #ifdef PORTAUDIO
+        strcat(supportedInput,", 'portaudio'");
+    #endif
 
 	// general: main loop
 	while (1) {
@@ -389,23 +358,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	load_config(configPath, supportedInput, (void *)&p);
 	w = p.w;
 	h = p.h;
-    output_mode = p.om;
-	isGraphical = (output_mode==5)||(output_mode==6)||(output_mode==7);
-
-	#if defined(__unix__)||defined(__APPLE__)
-	if (output_mode != 4 && !isGraphical) { 
-		// Check if we're running in a tty
-		inAtty = 0;
-		if (strncmp(ttyname(0), "/dev/tty", 8) == 0 || strcmp(ttyname(0),
-			 "/dev/console") == 0) inAtty = 1;
-
-		if (inAtty) {
-			system("setfont gava.psf  >/dev/null 2>&1");
-			system("setterm -blank 0");
-		}
-	}
-	#endif
-
+  output_mode = p.om;
 
 	//input: init
 	audio.source = malloc(1 +  strlen(p.audio_source));
@@ -546,20 +499,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			f[i] = 0;
 		}
 
-		#ifdef NCURSES
-		//output: start ncurses mode
-		if (output_mode == 1 || output_mode ==  2) {
-			init_terminal_ncurses(p.color, p.bcolor, p.col,
-			p.bgcol, p.gradient, p.gradient_count, p.gradient_colors,&w, &h);
-			//get_terminal_dim_ncurses(&w, &h);
-		}
-		#endif
-
-		#if defined(__unix__)||defined(__APPLE__)
-		if (output_mode == 3) get_terminal_dim_noncurses(&w, &h);
-		#endif
-
-		height = (h - 1) * (8-7*isGraphical);
+		height = (h - 1) * (1+7*(output_mode==4));
 
 		#if defined(__unix__)||defined(__APPLE__)
 		// output open file/fifo for raw output
@@ -639,10 +579,6 @@ p.framerate);
 			if (bars%2 != 0) bars--;
 		}
 
-
-
-
-
 		// process [smoothing]: calculate gravity
 		g = p.gravity * ((float)height / 2160) * pow((60 / (float)p.framerate), 2.5);
 
@@ -656,12 +592,6 @@ p.framerate);
 						 w,
 						 h, bars, p.bw, rest);
 		#endif
-
-		#if defined(__unix__)||defined(__APPLE__)
-		//output: start noncurses mode
-		if (output_mode == 3) init_terminal_noncurses(p.col, p.bgcol, w, h, p.bw);
-		#endif
-
 
 		if (p.stereo) bars = bars / 2; // in stereo onle half number of bars per channel
 
@@ -764,53 +694,9 @@ p.framerate);
 
 		if (p.stereo) bars = bars * 2;
 
-		bool resizeTerminal = false;
+		bool resizeWindow = false;
 
-		while  (!resizeTerminal) {
-
-			#ifdef NCURSES
-			if (output_mode == 1 || output_mode == 2) ch = getch();
-			#endif
-			
-			switch (ch) {
-				case 65:    // key up
-					p.sens = p.sens * 1.05;
-					break;
-				case 66:    // key down
-					p.sens = p.sens * 0.95;
-					break;
-				case 68:    // key right
-					p.bw++;
-					resizeTerminal = true;
-					break;
-				case 67:    // key left
-					if (p.bw > 1) p.bw--;
-					resizeTerminal = true;
-					break;
-				case 'a':
-					if (p.bs > 1) p.bs--;
-					resizeTerminal = TRUE;
-					break;
-				case 's':
-					p.bs++;
-					break;
-				case 'r': //reload config
-					should_reload = 1;
-					break;
-				case 'c': //change forground color
-					if (p.col < 7) p.col++;
-					else p.col = 0;
-					resizeTerminal = true;
-					break;
-				case 'b': //change backround color
-					if (p.bgcol < 7) p.bgcol++;
-					else p.bgcol = 0;
-					resizeTerminal = true;
-					break;
-				case 'q':
-					cleanup();
-					return EXIT_SUCCESS;
-			}
+		while  (!resizeWindow) {
 			#ifdef XLIB
 			if(output_mode == 5)
 			{
@@ -822,7 +708,7 @@ p.framerate);
 					case 1: break;
 					case 2:
 						adjust_x();	
-						resizeTerminal = TRUE;
+						resizeWindow = TRUE;
 						break;
 					case 3:
 						clear_screen_x();
@@ -843,7 +729,7 @@ p.framerate);
 						should_reload = 1;
 						break;
 					case 2:
-						resizeTerminal = 1;
+						resizeWindow = 1;
 						break;
 					case 3:
 						clear_screen_sdl(p.bgcol);
@@ -862,7 +748,7 @@ p.framerate);
 						return EXIT_SUCCESS;
 					case 1: break;
 					case 2:
-						resizeTerminal = TRUE;
+						resizeWindow = TRUE;
 						break;
 					case 3:
 						//clear_screen_win();
@@ -875,7 +761,7 @@ p.framerate);
 			if (should_reload) {
 
 				reloadConf = true;
-				resizeTerminal = true;
+				resizeWindow = true;
 				should_reload = 0;
 			}
 
@@ -1034,23 +920,6 @@ p.framerate);
 			// output: draw processed input
 			#ifndef DEBUG
 				switch (output_mode) {
-					case 1:
-						#ifdef NCURSES
-						rc = draw_terminal_ncurses(inAtty, h, w, bars, 
-							p.bw, p.bs, rest, f, flastd, p.gradient);
-						break;
-						#endif
-					case 2:
-						#ifdef NCURSES
-						rc = draw_terminal_bcircle(inAtty, h, w, f);
-						break;
-						#endif
-					case 3:
-						#if defined(__unix__)||defined(__APPLE__)
-						rc = draw_terminal_noncurses(inAtty, h, w, bars,
-							 p.bw, p.bs, rest, f, flastd);
-						break;
-						#endif
 					case 4:
 						#if defined(__unix__)||defined(__APPLE__)
 						rc = print_raw_out(bars, fp, p.is_bin, 
@@ -1088,8 +957,8 @@ p.framerate);
 					}
 				}
 
-				//terminal has been resized breaking to recalibrating values
-				if (rc == -1) resizeTerminal = true;
+				// window has been resized breaking to recalibrating values
+				if (rc == -1) resizeWindow = true;
 				
 				oldTime = gavaSleep(oldTime, p.framerate);
 			#endif
@@ -1098,15 +967,14 @@ p.framerate);
 				flastd[o] = f[o];
 			}
 
-            //checking if audio thread has exited unexpectedly
-            if (audio.terminate == 1) {
-                cleanup();
-   				fprintf(stderr,
-                "Audio thread exited unexpectedly. %s\n", audio.error_message);
-                exit(EXIT_FAILURE); 
-            } 
-
-		}//resize terminal
+			//checking if audio thread has exited unexpectedly
+			if(audio.terminate == 1) {
+				cleanup();
+				fprintf(stderr,
+				"Audio thread exited unexpectedly. %s\n", audio.error_message);
+				exit(EXIT_FAILURE); 
+			} 
+		}//resize window
         
 	}//reloading config
 	gavaSleep(100, 0);
@@ -1126,7 +994,7 @@ p.framerate);
 	free(audio.audio_out_l);
 	free(inl);
    
-    cleanup();
+  cleanup();
 
 	//fclose(fp);
 	}

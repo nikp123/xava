@@ -11,7 +11,7 @@
 
 # 'autosens' will attempt to decrease sensitivity if the bars peak. 1 = on, 0 = off
 # new as of 0.6.0 autosens of low values (dynamic range)
-# 'overshoot' allows bars to overshoot (in % of terminal height) without initiating autosens. DEPRECATED as of 0.6.0
+# 'overshoot' allows bars to overshoot (in % of display height) without initiating autosens. DEPRECATED as of 0.6.0
 ; autosens = 1
 ; overshoot = 20
 
@@ -19,7 +19,7 @@
 # 200 means double height. Accepts only non-negative values.
 ; sensitivity = 100
 
-# The number of bars (0-200). 0 sets it to auto (fill up console).
+# The number of bars (0-200). 0 sets it to auto (put as many as you can).
 # Bars' width and space between bars in number of characters.
 # These options DO NOT apply if you're using 'sdl' or 'x' modes.
 ; bars = 0
@@ -36,11 +36,6 @@
 
 
 [window]
-
-# Bars' width and space between bars in pixels.
-# Doesn't apply to terminal or serial modes.
-; bar_width = 20
-; bar_spacing = 4
 
 # Window width and height
 ; width = 640
@@ -106,8 +101,8 @@
 
 [output]
 
-# Ouput method. Can be 'ncurses', 'noncurses', 'raw', 'sdl' or 'x'. 
-# 'noncurses' is for systems that does not suport ncurses.
+# Ouput method. Can be any of the following (if supported):
+# By default it's the window that is recommended for your platform/OS.
 # 'raw' is a 16 bit data stream of the bar heights that can be used to send to other applications.
 # 'raw' defaults to 200 bars, which can be adjusted in the 'bars' option above.
 # 'sdl' is for a graphical window using OpenGL
@@ -146,9 +141,7 @@
 [color]
 
 # Colors can be one of seven predefined: black, blue, cyan, green, magenta, red, white, yellow.
-# Or defined by hex code '#xxxxxx' (hex code must be within ''). User defined colors requires a
-# terminal that can change color definitions such as Gnome-terminal or rxvt.
-# Or in case you're running in 'x' you could use the default option
+# Or defined by hex code '#xxxxxx' (hex code must be within '').
 ; background = black
 ; foreground = cyan
 
@@ -156,9 +149,8 @@
 ; foreground_opacity = 1.0
 
 # Gradient mode, only hex defined colors are supported, background must also be defined in hex
-# or remain commented out. 1 = on, 0 = off. Warning: for certain terminal emulators gava will
-# not able to restore color definitions on exit, simply restart your terminal to restore colors.
-# For graphical modes, you have to enable transparency.
+# or remain commented out. 1 = on, 0 = off.
+# You need to enable transparency in order for this to work.
 ; gradient = 1
 ; gradient_count = 2
 ; gradient_color_1 = '#0099ff'
