@@ -131,7 +131,7 @@ void cleanup()
 	}
 }
 
-unsigned long cavaSleep(unsigned long oldTime, int framerate) {
+unsigned long gavaSleep(unsigned long oldTime, int framerate) {
 	unsigned long newTime = 0;
 	if(framerate) {
 	#ifdef WIN
@@ -313,7 +313,7 @@ Keys:\n\
         b         Cycle background color\n\
         q         Quit\n\
 \n\
-as of 0.4.0 all options are specified in config file, see in '/home/username/.config/cava/' \n";
+as of 0.4.0 all options are specified in config file, see in '/home/username/.config/gava/' \n";
 
 	char ch = '\0';
 	int bars = 25;
@@ -400,7 +400,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			 "/dev/console") == 0) inAtty = 1;
 
 		if (inAtty) {
-			system("setfont cava.psf  >/dev/null 2>&1");
+			system("setfont gava.psf  >/dev/null 2>&1");
 			system("setterm -blank 0");
 		}
 	}
@@ -457,7 +457,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		n = 0;
 
 		while (audio.format == -1 || audio.rate == 0) {
-			cavaSleep(1000, 0);
+			gavaSleep(1000, 0);
 			n++;
 			if (n > 2000) {
 			#ifdef DEBUG
@@ -925,7 +925,7 @@ p.framerate);
 					printw("no sound detected for 3 sec, going to sleep mode\n");
 				#endif
 				//wait 1 sec, then check sound again.
-				cavaSleep(1000, 0);
+				gavaSleep(1000, 0);
 				continue;
 			}
 			
@@ -1091,7 +1091,7 @@ p.framerate);
 				//terminal has been resized breaking to recalibrating values
 				if (rc == -1) resizeTerminal = true;
 				
-				oldTime = cavaSleep(oldTime, p.framerate);
+				oldTime = gavaSleep(oldTime, p.framerate);
 			#endif
 
 			for (o = 0; o < bars; o++) {
@@ -1109,7 +1109,7 @@ p.framerate);
 		}//resize terminal
         
 	}//reloading config
-	cavaSleep(100, 0);
+	gavaSleep(100, 0);
 
 	//**telling audio thread to terminate**//
 	audio.terminate = 1;

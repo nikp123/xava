@@ -3,8 +3,8 @@
 
 #ifdef GLX
 	#include <GL/glx.h>
-	GLXContext cavaGLXContext;
-	GLXFBConfig* cavaFBConfig;
+	GLXContext gavaGLXContext;
+	GLXFBConfig* gavaFBConfig;
 	extern int GLXmode;
 #endif
 

@@ -1,11 +1,11 @@
-C.A.V.A. - G.
+G.A.V.A.
 ====================
 
-**C**onsole-based **A**udio **V**isualizer for **A**LSA - **G**raphical fork
+**G**raphical **A**udio **V**isualizer for **A**LSA
 
 also supports audio input from Portaudio, Pulseaudio, MPD and sndio.
 
-by [Karl Stavestrand](mailto:karl@stavestrand.no) and this fork by [Nikola Pavlica](mailto:pavlica.nikola@gmail.com)
+a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://github.com/karlstav/cava) by [Nikola Pavlica](mailto:pavlica.nikola@gmail.com)
 
 Changes in 0.6:
 * Autosens of low values (dynamic range)
@@ -15,8 +15,7 @@ Changes in 0.6:
 * Changed config parameter 'style' to 'channels' (was either 'mono' or 'stereo' anyway)
 * Parameters 'integral' and 'gravity' are now in percentage
 
-
-![spectrum](https://raw.githubusercontent.com/karlstav/cava/gh-pages/cava_gradient.gif "spectrum")
+![spectrum](https://raw.githubusercontent.com/karlstav/gava/gh-pages/gava_gradient.gif "spectrum")
 
 thanks to [anko](https://github.com/anko) for the gif, here is the [recipe]( http://unix.stackexchange.com/questions/113695/gif-screencastng-the-unix-way).
 
@@ -31,10 +30,7 @@ thanks to [anko](https://github.com/anko) for the gif, here is the [recipe]( htt
 - [Getting started](#getting-started)
   - [Installing manually](#installing-manually)
   - [Uninstalling](#uninstalling)
-  - [openSUSE](#opensuse)
-  - [Fedora](#fedora)
   - [Arch](#arch)
-  - [Ubuntu](#ubuntu)
   - [Windows](#windows)
 - [Capturing audio](#capturing-audio)
   - [From PortAudio (easy)](#from-portaudio-easy)
@@ -42,20 +38,15 @@ thanks to [anko](https://github.com/anko) for the gif, here is the [recipe]( htt
   - [From ALSA-loopback device (Tricky)](#from-alsa-loopback-device-tricky-unsupported-on-macos-and-windows) )
   - [From mpd's fifo output](#from-mpds-fifo-output)
   - [sndio](#sndio)
-- [Running via ssh](#running-via-ssh)
-- [Font notes](#font-notes)
-  - [In ttys](#in-ttys)
-  - [In terminal emulators](#in-terminal-emulators)
 - [Latency notes](#latency-notes)
 - [Usage](#usage)
   - [Controls](#controls)
 - [Configuration](#configuration)
-- [Graphical modes](#graphical-modes)
   - [Output modes](#output-modes)
   - [OpenGL](#opengl)
   - [Window options](#window-options)
-  - [Additional features](#additional-features)
   - [Shadow](#shadow)
+  - [Additional features](#additional-features)
 - [Contribution](#contribution)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -64,7 +55,7 @@ thanks to [anko](https://github.com/anko) for the gif, here is the [recipe]( htt
 What it is
 ----------
 
-C.A.V.A. is a bar spectrum audio visualizer for the Linux terminalusing ALSA, pulseaudio, portaudio or fifo buffer for input.
+G.A.V.A. is a bar spectrum audio visualizer in a graphical window (X11, WINAPI, SDL2).
 
 This program is not intended for scientific use. It's written to look responsive and aesthetic when used to visualize music. 
 
@@ -72,42 +63,40 @@ This program is not intended for scientific use. It's written to look responsive
 Build requirements
 ------------------
 * [FFTW](http://www.fftw.org/)
-* [ncursesw dev files](http://www.gnu.org/software/ncurses/) (bundled in ncurses in arch)
 * [Xlib/X11 dev files](http://x.org/)
 * [SDL2 dev files](https://libsdl.org/)
 * [ALSA dev files](http://alsa-project.org/)
 * [Pulseaudio dev files](http://freedesktop.org/software/pulseaudio/doxygen/)
 * [Portaudio dev files](http://www.portaudio.com/)
-* [GNU libtool](https://www.gnu.org/software/libtool/)
 
-Only FFTW is actually required for CAVA to compile.
+Only FFTW is actually required for GAVA to compile.
 
 All the requirements can be installed easily in all major distros:
 
 Debian/Raspbian:
 
-    apt-get install libfftw3-dev libasound2-dev libncursesw5-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake
+    apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake
 
 ArchLinux:
 
-    pacman -S base-devel fftw ncurses alsa-lib iniparser pulseaudio libx11 sdl2 portaudio cmake
+    pacman -S base-devel fftw alsa-lib iniparser pulseaudio libx11 sdl2 portaudio cmake
 
 openSUSE:
 
-    zypper install alsa-devel ncurses-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake
+    zypper install alsa-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake
 
 Fedora:
 
-    dnf install alsa-lib-devel ncurses-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake
+    dnf install alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake
 
 Cygwin dependencies (64bit ONLY):
 
-    gcc-core w32api-headers libfftw3-devel libportaudio-devel libncurses-devel portaudio cmake
+    gcc-core w32api-headers libfftw3-devel libportaudio-devel portaudio cmake
 
 
 Iniparser is also required, but if it is not already installed, it will clone the [repository](https://github.com/ndevilla/iniparser).
 
-For compilation you will also need `cmake` and `git`.
+For compilation you will also need a C modern compiler, 'make', `cmake` and `git`.
 
 
 Getting started
@@ -120,7 +109,7 @@ Getting started
 
 ### Installing manually
 
-Install `cava` to default `/usr/local`:
+Install `gava` to default `/usr/local`:
 
     make install
 
@@ -134,16 +123,19 @@ Or you can change `PREFIX`, for example:
 
 ### Arch
 
-CAVA-G is availble in [AUR](https://aur.archlinux.org/packages/cava-gui-git/).
+> NOTE: Currently unavailable.
 
-    pacaur -S cava-gui-git
+GAVA-G is availble in [AUR](https://aur.archlinux.org/packages/gava-gui-git/).
+
+    pacaur -S gava-gui-git
 
 ### VoidLinux
 
-CAVA-G is avaible in the Void repos:
-	
-	xbps-install cava-gui
+> NOTE: Currently unavailable.
 
+GAVA-G is avaible in the Void repos:
+	
+	xbps-install gava-gui
 
 ### Windows
 
@@ -151,12 +143,11 @@ There should be an installer in the Releases page of this repository.
 
 Please use minGW for compilation. You can use `-DCMAKE_C_COMIPLER=/usr/bin/gcc.exe` and `-DCMAKE_CXX_COMPILER=/usr/bin/g++.exe` in the cmake command for cross-compilation.
 
-
 #### Additional info
 
-This version doesn't include compatibility for noncurses and raw modes (since they depend on UNIX functions).
+This version doesn't include compatibility for the raw mode (since they depend on UNIX functionality to work).
 
-To get them, compile this package with cygwin.
+To get raw functionality, compile this package with cygwin. But it still probably won't work.
 
 
 All distro specific instalation sources might be out of date.
@@ -167,7 +158,7 @@ Capturing audio
 
 ### From portaudio (easy)
 
-First make sure you have portaudio dev files and that cava was built with portaudio support (it should have done so automatically if it found the dev files).
+First make sure you have portaudio dev files and that gava was built with portaudio support (it should have done so automatically if it found the dev files).
 
 Since portaudio combines the functionality of all audio systems, it should work "out of the box".
 
@@ -177,7 +168,7 @@ To enable just uncomment:
 
 in the `[input]` section of your config.
 
-To change the portaudio input device, set `source = list` temporarely and run cava again.
+To change the portaudio input device, set `source = list` temporarely and run gava again.
 
 It should list all of the available devices (even that aren't input devices, watch out for that).
 
@@ -186,7 +177,7 @@ Once you find the device you want to record from, take it's number and set `soru
 
 #### If the host is running Pulseaudio
 
-Once CAVA is running, on pulseaudio you should change it's input to the device you want to use.
+Once GAVA is running, on pulseaudio you should change it's input to the device you want to use.
 
 
 #### If the host is Windows
@@ -200,7 +191,7 @@ Once you figured that out, continue below.
 
 ### From Pulseaudio monitor source (Easy as well, unsupported on macOS and Windows)
 
-First make sure you have installed pulseaudio dev files and that cava has been built with pulseaudio support (it should be automatically if the dev files are found).
+First make sure you have installed pulseaudio dev files and that gava has been built with pulseaudio support (it should be automatically if the dev files are found).
 
 If you're lucky all you have to do is to uncomment this line in the config file under input:
 
@@ -227,7 +218,7 @@ Hopefully your `aplay -l` should now contain a loopback interface.
 
 To make it presistent across boot add the line `snd-aloop` to "/etc/modules". To keep it form beeing loaded as the first soundcard add the line `options snd-aloop index=1` to "/etc/modprobe.d/alsa-base.conf", this will load it at '1'. You can replace '1' with whatever makes most sense in your audio setup.
 
-Playing the audio through your Loopback interface makes it possible for cava to to capture it, but there will be no sound in your speakers. In order to play audio on the loopback interface and your actual interface you must make use of the ALSA multi channel.
+Playing the audio through your Loopback interface makes it possible for gava to to capture it, but there will be no sound in your speakers. In order to play audio on the loopback interface and your actual interface you must make use of the ALSA multi channel.
 
 Look at the included example file `example_files/etc/asound.conf` on how to use the multi channel. I was able to make this work on my laptop (an Asus UX31 running Ubuntu), but I had no luck with the ALSA method on my Rasberry PI (Rasbian) with an USB DAC. The PulseAudio method however works perfectly on my PI. 
 
@@ -273,63 +264,21 @@ To test it
 $ sndiod -dd -s default -m mon -s monitor
 
 # Set the AUDIODEVICE environment variable to override the default
-# sndio device and run cava
-$ AUDIODEVICE=snd/0.monitor cava
+# sndio device and run gava
+$ AUDIODEVICE=snd/0.monitor gava
 ```
-
-
-
-Running via ssh
----------------
-
-To run via ssh to an external monitor, redirect output to `/dev/console`:
-
-     ~# ./cava  <> /dev/console >&0 2>&1
-
-exit with ctrl+z then run 'bg' to keep it running after you log out.
-
-(You must be root to redirect to console. Simple sudo is not enough: Run `sudo su` first.)
-
-
-
-Font notes
-----------
-
-If you are running in terminal or raw modes the graphics are based on characters and thus the performance is dependent on the terminal font. Or you are running in graphical modes from which the graphics are pixel based and the performance depends on the window size you are running at.
-
-### In ttys
-
-If you run this in a TTY the program will change the font to the included `cava.psf` (actually a slightly modified "unifont").
-
-In console fonts it seems that only 256 Unicode characters are supported, probably because they are bitmap fonts. I could not find a font with Unicode characters 2581-2587 (the 1/8 - 7/8 blocks used on the top of each bar to increase resolution).
-
-So in `cava.psf`, the characters 1-7 are actually replaced by Unicode characters 2581-2587. When cava exits, it changes the font back. If cava exits abnormally and you notice that 1-7 are replaced by partial blocks, just change the font with `setfont`.
-
-Actually, `setfont` is supposed to return the default font, but this usually isn't set. I haven't found another way to get the current font. So cava sets the font to "Lat2-Fixed16" when interrupted. All major distros should have it. It will revert to your default font at reboot.
-
-### In terminal emulators
-
-In terminal emulators like `xterm`, the font settings is chosen in the software and cannot be changed by an application. So find your terminal settings and try out different fonts and settings. Also character spacing affects the look of the bar spectrum.
-
-Performance is also different, urxvt is the best I found so far, while Gnome-terminal is quite slow.
-
-Cava also disables the terminal cursor, and turns it back on on exit, but in case it terminates unexpectedly, run `setterm -cursor on` to get it back.
-
-Tip: Cava will look much nicer in small font sizes. Use a second terminal emulator for cava and set the font size to 1. Warning, can cause high CPU usage and latency if the terminal window is too large!
 
 Latency notes
 -------------
 
-If you see latency issues (sound before image) in a terminal emulator, try increasing the font size. This will reduce the number of characters that have to be shown.
+If you see latency issues, ie. visualizer not reacting on time, try turning off demanding graphical effect and/or shrinking the window, or just lower the ``fft_size``.
 
-But if you are running in either in the graphical modes, you can shrink the window, enable GPU acceleration or enable OpenGL (if supported).
-
-If your audio device has a huge buffer, you might experience that cava is actually faster than the audio you hear. This reduces the experience of the visualization. To fix this, try decreasing the buffer settings in your audio playing software.
+If your audio device has a huge buffer, you might experience that gava is actually faster than the audio you hear. This reduces the experience of the visualization. To fix this, try decreasing the buffer settings in your audio playing software.
 
 Usage
 -----
 
-    Usage : cava [options]
+    Usage : gava [options]
     Visualize audio input in terminal. 
 
     Options:
@@ -338,9 +287,7 @@ Usage
 
 
 
-Exit with ctrl+c or q.
-
-If cava quits unexpectedly or is force killed, echo must be turned on manually with `stty -echo`.
+Exit by pressing Q, ESC or by closing the window ;)
 
 ### Controls
 
@@ -352,21 +299,14 @@ If cava quits unexpectedly or is force killed, echo must be turned on manually w
 | <kbd>f</kbd> | toggle fullscreen (only in window modes, besides win32) |
 | <kbd>c</kbd> / <kbd>b</kbd>| change forground/background color |
 | <kbd>r</kbd> | Reload configuration |
-| <kbd>q</kbd> or <kbd>CTRL-C</kbd>| Quit C.A.V.A. |
+| <kbd>q</kbd> or <kbd>ESC</kbd>| Quit C.A.V.A. |
 
 Configuration
 -------------
 
 As of version 0.4.0 all options are done in the config file, no more command-line arguments!
 
-By default a configuration file is located in `$XDG_CONFIG_HOME/cava/config` or `$HOME/.config/cava/config` or in case of Windows in `%APPDATA%\cava\config` (you have to manually copy it from `example_files\config`), but cava can also be made to use a different file with the `-p` option. Look in the default config file for details on the different options.
-
-Sending cava a SIGUSR1 signal, will force cava to reload its configuration file. Thus, it behaves as if the user pressed <kbd>r</kbd> in the terminal. One might send a SIGUSR1 signal using `pkill` or `killall`.
-For example:
-```
-$ pkill -USR1 cava
-```
-
+By default a configuration file is located in `$XDG_CONFIG_HOME/gava/config`, `$HOME/.config/gava/config` or in case of Windows in `%APPDATA%\gava\config`
 
 **Examples on how the equalizer works:**
 
@@ -388,28 +328,13 @@ $ pkill -USR1 cava
 
 ![3_139](https://cloud.githubusercontent.com/assets/6376571/8670181/9db0ef50-29e8-11e5-81bc-3e2bb9892da0.png)
 
-
-Graphical modes
----------------
-
-CAVA (this branch) can now run in grapical modes.
-
-To achieve this you have to change `method` in the `[output]` category to one of the supported graphical modes.
-
 ### Output modes
 
-CAVA currently supports these graphical modes:
-
-	x - standard XFree86 window
-
-	sdl - SDL2 window
-
-	win - win32 window
-
+GAVA supports outputing as a X11 window, SDL2 and WINAPI.
 
 ### OpenGL
 
-To run CAVA in OpenGL:
+To run GAVA in OpenGL:
       
 	opengl = true
 
@@ -428,7 +353,7 @@ Toggle window border:
     
 	border = 1 or 0
 
-WARNING: On Windows the border is always off.
+WARNING: On Windows the border is always disabled.
 
 
 Change bar width/height (units are in pixels rather than characters):
@@ -458,6 +383,7 @@ You can enable transparent windows:
 
 WARNING: SDL2 doesn't have transparency.
 
+
 Force the window to be behind any window (works only under Xlib):
     
 	keep_below = 1
@@ -473,6 +399,18 @@ Make window click-proof (as in the window is totally ignored when clicked and cl
     interactable = 0
 
 Pro-tip: You can still gain control of the window by clicking it's taskbar icon.
+
+### Shadow
+
+You can change the following options:
+    
+    size = (in pixels)
+
+and
+    
+    color = '#aarrggbb'
+
+You need to enable transparency for the shadows to work.
 
 
 ### Additional features
@@ -491,18 +429,6 @@ Set foreground opacity:
 
 You need OpenGL and transparency support in order for it to work.
 
-### Shadow
-
-You can change the following options:
-    
-    size = (in pixels)
-
-and
-    
-    color = '#aarrggbb'
-
-You need to enable transparency for the shadows to work.
-
 
 Contribution
 ------------
@@ -517,3 +443,4 @@ Thanks to:
 for major contributions in the early development of this project.
 
 Also thanks to [dpayne](https://github.com/dpayne/) for figuring out how to find the pulseaudio default sink name.
+

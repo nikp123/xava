@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.1)
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
-project(cava C)
+project(gava C)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_C_STANDARD 11)
-set(cava_VERSION_MAJOR 0)
-set(cava_VERSION_MINOR 6)
-set(cava_VERSION_PATCH 1)
-set(cava_VERSION_TWEAK 1)
+set(gava_VERSION_MAJOR 0)
+set(gava_VERSION_MINOR 6)
+set(gava_VERSION_PATCH 1)
+set(gava_VERSION_TWEAK 1)
 
-add_definitions(-DPACKAGE="cava" -DVERSION="${cava_VERSION_MAJOR}.${cava_VERSION_MINOR}.${cava_VERSION_PATCH}.${cava_VERSION_TWEAK}")
+add_definitions(-DPACKAGE="gava" -DVERSION="${gava_VERSION_MAJOR}.${gava_VERSION_MINOR}.${gava_VERSION_PATCH}.${gava_VERSION_TWEAK}")
 
 # iniparser
 find_library(INIPARSER iniparser)
@@ -180,19 +180,19 @@ endif()
 
 # Build executable
 add_executable(
-	cava
+	gava
 	${ADDITIONAL_SOURCES}
 	output/graphical.c
 	output/raw.c
 	config.c
-	cava.c
+	gava.c
 )
 
 # Link executable
-target_link_libraries(cava ${ADDITIONAL_LIBRARIES} m fftw3 pthread iniparser)
+target_link_libraries(gava ${ADDITIONAL_LIBRARIES} m fftw3 pthread iniparser)
 
 # Install
-install (TARGETS cava DESTINATION bin)
-install (FILES LICENSE DESTINATION share/licenses/cava)
-install (FILES example_files/desktop/cava.desktop DESTINATION share/applications)
-install (FILES example_files/desktop/cava.png DESTINATION share/icons/hicolor/64x64/apps)
+install (TARGETS gava DESTINATION bin)
+install (FILES LICENSE DESTINATION share/licenses/gava)
+install (FILES example_files/desktop/gava.desktop DESTINATION share/applications)
+install (FILES example_files/desktop/gava.png DESTINATION share/icons/hicolor/64x64/apps)

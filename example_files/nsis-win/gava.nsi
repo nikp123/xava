@@ -1,10 +1,10 @@
 !include "MUI.nsh"
 
 # define name of installer
-OutFile "cava-win-installer.exe"
+OutFile "gava-win-installer.exe"
 
 # define installation directory
-InstallDir $PROGRAMFILES\cava
+InstallDir $PROGRAMFILES\gava
 
 # For removing Start Menu shortcut in Windows 7
 RequestExecutionLevel admin
@@ -15,13 +15,13 @@ Section
     SetOutPath $INSTDIR
 
     # include these files
-    File cava.exe
+    File gava.exe
     File portaudio-list.exe
     File README.txt
     File LICENSE.txt
     File *.dll
 
-    SetOutPath $APPDATA\cava\
+    SetOutPath $APPDATA\gava\
 
     File config
  
@@ -30,7 +30,7 @@ Section
  
     # create a shortcut named "new shortcut" in the start menu programs directory
     # point the new shortcut at the program uninstaller
-    CreateShortCut "$SMPROGRAMS\CAVA-G.lnk" "$INSTDIR\cava.exe"
+    CreateShortCut "$SMPROGRAMS\GAVA-G.lnk" "$INSTDIR\gava.exe"
 
     Exec "$INSTDIR\portaudio-list.exe"
     Exec "$WINDIR\notepad.exe $INSTDIR\README.txt"
@@ -43,7 +43,7 @@ Section "uninstall"
     Delete "$INSTDIR\uninstall.exe"
  
     # second, remove the link from the start menu
-    Delete "$SMPROGRAMS\CAVA-G.lnk"
+    Delete "$SMPROGRAMS\GAVA-G.lnk"
  
 # uninstaller section end
 SectionEnd

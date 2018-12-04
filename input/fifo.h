@@ -13,5 +13,5 @@ struct audio_data {
 	int fftsize;
 };
 
-// header files for fifo, part of cava
+// header files for fifo, part of gava
 void* input_fifo(void* data);
