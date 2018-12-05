@@ -15,12 +15,6 @@ Changes in 0.6:
 * Changed config parameter 'style' to 'channels' (was either 'mono' or 'stereo' anyway)
 * Parameters 'integral' and 'gravity' are now in percentage
 
-![spectrum](https://raw.githubusercontent.com/karlstav/gava/gh-pages/gava_gradient.gif "spectrum")
-
-thanks to [anko](https://github.com/anko) for the gif, here is the [recipe]( http://unix.stackexchange.com/questions/113695/gif-screencastng-the-unix-way).
-
-[Demo video](https://youtu.be/9PSp8VA6yjU)
-
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*

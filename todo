@@ -1,13 +1,12 @@
 TODO
 ----
 
-
 * config option print cut-off frequencies on x-axis
 * config option different color for different threshold amplitude
 * configurable left OR right when in mono
-* downloag iniconfig from git instad of bundle
 * possibility to save settings to config file
-* openGL
+* new default config that is good and compatible
+* new demo video and/or screenshots
+* new and nicer README
 * plug-in api
-* new demo video
 * JACK support
