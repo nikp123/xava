@@ -17,8 +17,8 @@ if(NOT INIPARSER)
 	message(STATUS "iniparser not found on system, building from source.")
 	execute_process(COMMAND git submodule update --init)
 	add_library(iniparser
-			iniparser/src/dictionary.c
-			iniparser/src/iniparser.c)
+			lib/iniparser/src/dictionary.c
+			lib/iniparser/src/iniparser.c)
 	add_definitions(-DINIPARSER)
 endif()
 
@@ -52,14 +52,14 @@ set(ADDITIONAL_LIBRARIES "")
 # OS-Specific inclusions
 if(NOT (MSYS OR MINGW OR MSVC))
 	message(STATUS "Not a Windows platform, can use POSIX now!")
-	list(APPEND ADDITIONAL_SOURCES "input/fifo.c")
+	list(APPEND ADDITIONAL_SOURCES "src/input/fifo.c")
 endif()
 
 # SDL2
 find_library(SDL_LIB SDL2)
 if(SDL_LIB)
 	add_definitions(-DSDL)
-	list(APPEND ADDITIONAL_SOURCES "output/graphical_sdl.c")
+	list(APPEND ADDITIONAL_SOURCES "src/output/graphical_sdl.c")
 	list(APPEND ADDITIONAL_LIBRARIES "-lSDL2")
 else()
 	message(STATUS "SDL2 library not found")
@@ -71,7 +71,7 @@ if(XORG_LIB)
 	find_library(XFIXES_LIB Xfixes)
 	if(XFIXES_LIB)
 		add_definitions(-DXLIB)
-		list(APPEND ADDITIONAL_SOURCES "output/graphical_x.c")
+		list(APPEND ADDITIONAL_SOURCES "src/output/graphical_x.c")
 		list(APPEND ADDITIONAL_LIBRARIES "-lX11")
 		list(APPEND ADDITIONAL_LIBRARIES "-lXfixes")
 		if(APPLE)
@@ -105,7 +105,7 @@ if(MSYS OR MINGW OR MSVC)
 				find_library(DWM_LIB dwmapi)
 				if(DWM_LIB)
 					add_definitions(-DWIN -DGL)
-					list(APPEND ADDITIONAL_SOURCES "output/graphical_win.c")
+					list(APPEND ADDITIONAL_SOURCES "src/output/graphical_win.c")
 					list(APPEND ADDITIONAL_LIBRARIES "-lgdi32")
 					list(APPEND ADDITIONAL_LIBRARIES "-lopengl32")
 					list(APPEND ADDITIONAL_LIBRARIES "-lglu32")
@@ -128,7 +128,7 @@ endif()
 find_library(ALSA_LIB asound)
 if(ALSA_LIB)
 	add_definitions(-DALSA)
-	list(APPEND ADDITIONAL_SOURCES "input/alsa.c")
+	list(APPEND ADDITIONAL_SOURCES "src/input/alsa.c")
 	list(APPEND ADDITIONAL_LIBRARIES "-lasound")
 else()
 	message(STATUS "alsa library not found")
@@ -138,7 +138,7 @@ endif()
 find_library(PULSE_LIB pulse-simple)
 if(PULSE_LIB)
 	add_definitions(-DPULSE)
-	list(APPEND ADDITIONAL_SOURCES "input/pulse.c")
+	list(APPEND ADDITIONAL_SOURCES "src/input/pulse.c")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpulse-simple -lpulse")
 	list(APPEND ADDITIONAL_LIBRARIES "-lpulse")
 	list(APPEND ADDITIONAL_LIBRARIES "-lpulse-simple")
@@ -150,7 +150,7 @@ endif()
 find_library(SNDIO_LIB sndio)
 if(SNDIO_LIB)
 	add_definitions(-DSNDIO)
-	list(APPEND ADDITIONAL_SOURCES "input/sndio.c")
+	list(APPEND ADDITIONAL_SOURCES "src/input/sndio.c")
 	list(APPEND ADDITIONAL_LIBRARIES "-lsndio")
 else()
 	message(STATUS "sndio library not found")
@@ -160,7 +160,7 @@ endif()
 find_library(PORTAUDIO_LIB portaudio)
 if(PORTAUDIO_LIB)
 	add_definitions(-DPORTAUDIO)
-	list(APPEND ADDITIONAL_SOURCES "input/portaudio.c")
+	list(APPEND ADDITIONAL_SOURCES "src/input/portaudio.c")
 	list(APPEND ADDITIONAL_LIBRARIES "-lportaudio")
 else()
 	message(STATUS "portaudio library not found")
@@ -170,10 +170,10 @@ endif()
 add_executable(
 	gava
 	${ADDITIONAL_SOURCES}
-	output/graphical.c
-	output/raw.c
-	config.c
-	gava.c
+	src/output/graphical.c
+	src/output/raw.c
+	src/config.c
+	src/gava.c
 )
 
 # Link executable
@@ -182,4 +182,4 @@ target_link_libraries(gava ${ADDITIONAL_LIBRARIES} m fftw3 pthread iniparser)
 # Install
 install (TARGETS gava DESTINATION bin)
 install (FILES LICENSE DESTINATION share/licenses/gava)
-install (FILES example_files/desktop/gava.desktop DESTINATION share/applications)
+install (FILES assets/desktop/gava.desktop DESTINATION share/applications)
