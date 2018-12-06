@@ -79,7 +79,7 @@ void getPulseDefaultSink(void* data) {
 	m_pulseaudio_mainloop = pa_mainloop_new();
 
 	mainloop_api = pa_mainloop_get_api(m_pulseaudio_mainloop);
-	pulseaudio_context = pa_context_new(mainloop_api, "gava device list");
+	pulseaudio_context = pa_context_new(mainloop_api, "xava device list");
 
 
 	// This function connects to the pulse server
@@ -134,7 +134,7 @@ void* input_pulse(void* data)
 	pa_simple *s = NULL;
 	int error;
 
-	if (!(s = pa_simple_new(NULL, "gava", PA_STREAM_RECORD, audio->source, "audio for gava", &ss, NULL, &pb, &error))) {
+	if (!(s = pa_simple_new(NULL, "xava", PA_STREAM_RECORD, audio->source, "audio for xava", &ss, NULL, &pb, &error))) {
 		//fprintf(stderr, __FILE__": Could not open pulseaudio source: %s, %s. To find a list of your pulseaudio sources run 'pacmd list-sources'\n",audio->source, pa_strerror(error));
         sprintf(audio->error_message, __FILE__": Could not open pulseaudio source: %s, %s. To find a list of your pulseaudio sources run 'pacmd list-sources'\n",audio->source, pa_strerror(error));
 		audio->terminate = 1;

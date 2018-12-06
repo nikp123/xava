@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.1)
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
-project(gava C)
+project(xava C)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_C_STANDARD 11)
-set(gava_VERSION_MAJOR 0)
-set(gava_VERSION_MINOR 6)
-set(gava_VERSION_PATCH 1)
-set(gava_VERSION_TWEAK 1)
+set(xava_VERSION_MAJOR 0)
+set(xava_VERSION_MINOR 6)
+set(xava_VERSION_PATCH 1)
+set(xava_VERSION_TWEAK 1)
 
-add_definitions(-DPACKAGE="gava" -DVERSION="${gava_VERSION_MAJOR}.${gava_VERSION_MINOR}.${gava_VERSION_PATCH}.${gava_VERSION_TWEAK}")
+add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
 
 # iniparser
 find_library(INIPARSER iniparser)
@@ -168,18 +168,18 @@ endif()
 
 # Build executable
 add_executable(
-	gava
+	xava
 	${ADDITIONAL_SOURCES}
 	src/output/graphical.c
 	src/output/raw.c
 	src/config.c
-	src/gava.c
+	src/xava.c
 )
 
 # Link executable
-target_link_libraries(gava ${ADDITIONAL_LIBRARIES} m fftw3 pthread iniparser)
+target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m fftw3 pthread iniparser)
 
 # Install
-install (TARGETS gava DESTINATION bin)
-install (FILES LICENSE DESTINATION share/licenses/gava)
-install (FILES assets/desktop/gava.desktop DESTINATION share/applications)
+install (TARGETS xava DESTINATION bin)
+install (FILES LICENSE DESTINATION share/licenses/xava)
+install (FILES assets/desktop/xava.desktop DESTINATION share/applications)

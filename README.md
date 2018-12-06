@@ -1,7 +1,7 @@
-G.A.V.A.
+X.A.V.A.
 ====================
 
-**G**raphical **A**udio **V**isualizer for **A**LSA
+**X**11 **A**udio **V**isualizer for **A**LSA
 
 also supports audio input from Portaudio, Pulseaudio, MPD and sndio.
 
@@ -49,7 +49,7 @@ Changes in 0.6:
 What it is
 ----------
 
-G.A.V.A. is a bar spectrum audio visualizer in a graphical window (X11, WINAPI, SDL2).
+X.A.V.A. is a bar spectrum audio visualizer in a graphical window (X11, WINAPI, SDL2).
 
 This program is not intended for scientific use. It's written to look responsive and aesthetic when used to visualize music. 
 
@@ -63,7 +63,7 @@ Build requirements
 * [Pulseaudio dev files](http://freedesktop.org/software/pulseaudio/doxygen/)
 * [Portaudio dev files](http://www.portaudio.com/)
 
-Only FFTW is actually required for GAVA to compile.
+Only FFTW is actually required for XAVA to compile.
 
 All the requirements can be installed easily in all major distros:
 
@@ -103,7 +103,7 @@ Getting started
 
 ### Installing manually
 
-Install `gava` to default `/usr/local`:
+Install `xava` to default `/usr/local`:
 
     make install
 
@@ -119,17 +119,17 @@ Or you can change `PREFIX`, for example:
 
 > NOTE: Currently unavailable.
 
-GAVA-G is availble in [AUR](https://aur.archlinux.org/packages/gava-gui-git/).
+XAVA-G is availble in [AUR](https://aur.archlinux.org/packages/xava-gui-git/).
 
-    pacaur -S gava-gui-git
+    pacaur -S xava-gui-git
 
 ### VoidLinux
 
 > NOTE: Currently unavailable.
 
-GAVA-G is avaible in the Void repos:
+XAVA-G is avaible in the Void repos:
 	
-	xbps-install gava-gui
+	xbps-install xava-gui
 
 ### Windows
 
@@ -152,7 +152,7 @@ Capturing audio
 
 ### From portaudio (easy)
 
-First make sure you have portaudio dev files and that gava was built with portaudio support (it should have done so automatically if it found the dev files).
+First make sure you have portaudio dev files and that xava was built with portaudio support (it should have done so automatically if it found the dev files).
 
 Since portaudio combines the functionality of all audio systems, it should work "out of the box".
 
@@ -162,7 +162,7 @@ To enable just uncomment:
 
 in the `[input]` section of your config.
 
-To change the portaudio input device, set `source = list` temporarely and run gava again.
+To change the portaudio input device, set `source = list` temporarely and run xava again.
 
 It should list all of the available devices (even that aren't input devices, watch out for that).
 
@@ -171,7 +171,7 @@ Once you find the device you want to record from, take it's number and set `soru
 
 #### If the host is running Pulseaudio
 
-Once GAVA is running, on pulseaudio you should change it's input to the device you want to use.
+Once XAVA is running, on pulseaudio you should change it's input to the device you want to use.
 
 
 #### If the host is Windows
@@ -185,7 +185,7 @@ Once you figured that out, continue below.
 
 ### From Pulseaudio monitor source (Easy as well, unsupported on macOS and Windows)
 
-First make sure you have installed pulseaudio dev files and that gava has been built with pulseaudio support (it should be automatically if the dev files are found).
+First make sure you have installed pulseaudio dev files and that xava has been built with pulseaudio support (it should be automatically if the dev files are found).
 
 If you're lucky all you have to do is to uncomment this line in the config file under input:
 
@@ -212,7 +212,7 @@ Hopefully your `aplay -l` should now contain a loopback interface.
 
 To make it presistent across boot add the line `snd-aloop` to "/etc/modules". To keep it form beeing loaded as the first soundcard add the line `options snd-aloop index=1` to "/etc/modprobe.d/alsa-base.conf", this will load it at '1'. You can replace '1' with whatever makes most sense in your audio setup.
 
-Playing the audio through your Loopback interface makes it possible for gava to to capture it, but there will be no sound in your speakers. In order to play audio on the loopback interface and your actual interface you must make use of the ALSA multi channel.
+Playing the audio through your Loopback interface makes it possible for xava to to capture it, but there will be no sound in your speakers. In order to play audio on the loopback interface and your actual interface you must make use of the ALSA multi channel.
 
 Look at the included example file `example_files/etc/asound.conf` on how to use the multi channel. I was able to make this work on my laptop (an Asus UX31 running Ubuntu), but I had no luck with the ALSA method on my Rasberry PI (Rasbian) with an USB DAC. The PulseAudio method however works perfectly on my PI. 
 
@@ -258,8 +258,8 @@ To test it
 $ sndiod -dd -s default -m mon -s monitor
 
 # Set the AUDIODEVICE environment variable to override the default
-# sndio device and run gava
-$ AUDIODEVICE=snd/0.monitor gava
+# sndio device and run xava
+$ AUDIODEVICE=snd/0.monitor xava
 ```
 
 Latency notes
@@ -267,12 +267,12 @@ Latency notes
 
 If you see latency issues, ie. visualizer not reacting on time, try turning off demanding graphical effect and/or shrinking the window, or just lower the ``fft_size``.
 
-If your audio device has a huge buffer, you might experience that gava is actually faster than the audio you hear. This reduces the experience of the visualization. To fix this, try decreasing the buffer settings in your audio playing software.
+If your audio device has a huge buffer, you might experience that xava is actually faster than the audio you hear. This reduces the experience of the visualization. To fix this, try decreasing the buffer settings in your audio playing software.
 
 Usage
 -----
 
-    Usage : gava [options]
+    Usage : xava [options]
     Visualize audio input in terminal. 
 
     Options:
@@ -300,7 +300,7 @@ Configuration
 
 As of version 0.4.0 all options are done in the config file, no more command-line arguments!
 
-By default a configuration file is located in `$XDG_CONFIG_HOME/gava/config`, `$HOME/.config/gava/config` or in case of Windows in `%APPDATA%\gava\config`
+By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, `$HOME/.config/xava/config` or in case of Windows in `%APPDATA%\xava\config`
 
 **Examples on how the equalizer works:**
 
@@ -324,11 +324,11 @@ By default a configuration file is located in `$XDG_CONFIG_HOME/gava/config`, `$
 
 ### Output modes
 
-GAVA supports outputing as a X11 window, SDL2 and WINAPI.
+XAVA supports outputing as a X11 window, SDL2 and WINAPI.
 
 ### OpenGL
 
-To run GAVA in OpenGL:
+To run XAVA in OpenGL:
       
 	opengl = true
 

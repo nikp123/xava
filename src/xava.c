@@ -113,7 +113,7 @@ void cleanup()
 	}
 }
 
-unsigned long gavaSleep(unsigned long oldTime, int framerate) {
+unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 	unsigned long newTime = 0;
 	if(framerate) {
 	#ifdef WIN
@@ -287,7 +287,7 @@ Keys:\n\
         b         Cycle background color\n\
         q         Quit\n\
 \n\
-as of 0.4.0 all options are specified in config file, see in '/home/username/.config/gava/' \n";
+as of 0.4.0 all options are specified in config file, see in '/home/username/.config/xava/' \n";
 
 	char ch = '\0';
 	int bars = 25;
@@ -410,7 +410,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		n = 0;
 
 		while (audio.format == -1 || audio.rate == 0) {
-			gavaSleep(1000, 0);
+			xavaSleep(1000, 0);
 			n++;
 			if (n > 2000) {
 			#ifdef DEBUG
@@ -811,7 +811,7 @@ p.framerate);
 					printw("no sound detected for 3 sec, going to sleep mode\n");
 				#endif
 				//wait 1 sec, then check sound again.
-				gavaSleep(1000, 0);
+				xavaSleep(1000, 0);
 				continue;
 			}
 			
@@ -960,7 +960,7 @@ p.framerate);
 				// window has been resized breaking to recalibrating values
 				if (rc == -1) resizeWindow = true;
 				
-				oldTime = gavaSleep(oldTime, p.framerate);
+				oldTime = xavaSleep(oldTime, p.framerate);
 			#endif
 
 			for (o = 0; o < bars; o++) {
@@ -977,7 +977,7 @@ p.framerate);
 		}//resize window
         
 	}//reloading config
-	gavaSleep(100, 0);
+	xavaSleep(100, 0);
 
 	//**telling audio thread to terminate**//
 	audio.terminate = 1;

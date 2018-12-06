@@ -65,7 +65,7 @@ void validate_config(char supportedInput[255], void* params)
 		p->im = 1;
 		#ifndef ALSA
 		        fprintf(stderr,
-	                        "gava was built without alsa support, install alsa dev files and run make clean && ./configure && make again\n");
+	                        "xava was built without alsa support, install alsa dev files and run make clean && ./configure && make again\n");
 	                exit(EXIT_FAILURE);
 	        #endif
 	}
@@ -76,7 +76,7 @@ void validate_config(char supportedInput[255], void* params)
 		p->im = 3;
 		#ifndef PULSE
 		        fprintf(stderr,
-	                        "gava was built without pulseaudio support, install pulseaudio dev files and run make clean && ./configure && make again\n");
+	                        "xava was built without pulseaudio support, install pulseaudio dev files and run make clean && ./configure && make again\n");
 	                exit(EXIT_FAILURE);
 	        #endif
 	
@@ -84,14 +84,14 @@ void validate_config(char supportedInput[255], void* params)
 	if (strcmp(inputMethod, "sndio") == 0) {
 		p->im = 4;
 		#ifndef SNDIO
-			fprintf(stderr, "gava was built without sndio support\n");
+			fprintf(stderr, "xava was built without sndio support\n");
 			exit(EXIT_FAILURE);
 		#endif
 	}
 	if (strcmp(inputMethod, "portaudio") == 0) {
 		p->im = 5;
 		#ifndef PORTAUDIO
-			fprintf(stderr, "gava was built without portaudio support\n");
+			fprintf(stderr, "xava was built without portaudio support\n");
 			exit(EXIT_FAILURE);
 		#endif
 	}
@@ -140,7 +140,7 @@ void validate_config(char supportedInput[255], void* params)
 		p->om = 5;
 		#ifndef XLIB
 			fprintf(stderr,
-				"gava was built without Xlib support, install Xlib dev files and run make clean && ./configure && make again\n");
+				"xava was built without Xlib support, install Xlib dev files and run make clean && ./configure && make again\n");
 			exit(EXIT_FAILURE);
 		#endif
 	}
@@ -149,7 +149,7 @@ void validate_config(char supportedInput[255], void* params)
 		p->om = 6;
 		#ifndef SDL
 			fprintf(stderr,
-				"gava was build without SDL2 support, install SDL2 dev files and run make clean && ./configure && make again\n");
+				"xava was build without SDL2 support, install SDL2 dev files and run make clean && ./configure && make again\n");
 			exit(EXIT_FAILURE);
 		#endif
 	}
@@ -158,7 +158,7 @@ void validate_config(char supportedInput[255], void* params)
 		p->om = 7;
 		#ifndef WIN
 			fprintf(stderr,
-				"gava was build without win32 support, you need to be running windows in order for win32 to work :P\n");
+				"xava was build without win32 support, you need to be running windows in order for win32 to work :P\n");
 			exit(EXIT_FAILURE);
 		#endif
 	}

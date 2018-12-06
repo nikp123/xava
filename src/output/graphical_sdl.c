@@ -2,17 +2,17 @@
 #include <time.h>
 #include "graphical.h"
 
-SDL_Window *gavaSDLWindow;
-SDL_Surface *gavaSDLWindowSurface;
-SDL_Event gavaSDLEvent;
-SDL_DisplayMode gavaSDLVInfo;
+SDL_Window *xavaSDLWindow;
+SDL_Surface *xavaSDLWindowSurface;
+SDL_Event xavaSDLEvent;
+SDL_DisplayMode xavaSDLVInfo;
 int *gradCol, gradNum;
 
 void cleanup_graphical_sdl(void)
 {
 	free(gradCol);
-	SDL_FreeSurface(gavaSDLWindowSurface);
-	SDL_DestroyWindow(gavaSDLWindow);
+	SDL_FreeSurface(xavaSDLWindowSurface);
+	SDL_DestroyWindow(xavaSDLWindow);
 	SDL_Quit();
 }
 
@@ -25,39 +25,39 @@ int init_window_sdl(int *col, int *bgcol, char *color, char *bcolor, int gradien
 		return 1;
 	}
 	// calculating window x and y position
-	if(SDL_GetCurrentDisplayMode(0, &gavaSDLVInfo)){
+	if(SDL_GetCurrentDisplayMode(0, &xavaSDLVInfo)){
 		fprintf(stderr, "Error opening display! %s\n", SDL_GetError());
 		return 1;
 	}
 	if(!strcmp(windowAlignment, "top")){
-		windowX = (gavaSDLVInfo.w - w) / 2 + windowX;
+		windowX = (xavaSDLVInfo.w - w) / 2 + windowX;
 	}else if(!strcmp(windowAlignment, "bottom")){
-		windowX = (gavaSDLVInfo.w - w) / 2 + windowX;
-		windowY = (gavaSDLVInfo.h - h) + (-1*windowY);
+		windowX = (xavaSDLVInfo.w - w) / 2 + windowX;
+		windowY = (xavaSDLVInfo.h - h) + (-1*windowY);
 	}else if(!strcmp(windowAlignment, "top_left")){
 		// Nothing to do here :P
 	}else if(!strcmp(windowAlignment, "top_right")){
-		windowX = (gavaSDLVInfo.w - w) + (-1*windowX);
+		windowX = (xavaSDLVInfo.w - w) + (-1*windowX);
 	}else if(!strcmp(windowAlignment, "left")){
-		windowY = (gavaSDLVInfo.h - h) / 2;
+		windowY = (xavaSDLVInfo.h - h) / 2;
 	}else if(!strcmp(windowAlignment, "right")){
-		windowX = (gavaSDLVInfo.w - w) + (-1*windowX);
-		windowY = (gavaSDLVInfo.h - h) / 2 + windowY;
+		windowX = (xavaSDLVInfo.w - w) + (-1*windowX);
+		windowY = (xavaSDLVInfo.h - h) / 2 + windowY;
 	}else if(!strcmp(windowAlignment, "bottom_left")){
-		windowY = (gavaSDLVInfo.h - h) + (-1*windowY);
+		windowY = (xavaSDLVInfo.h - h) + (-1*windowY);
 	}else if(!strcmp(windowAlignment, "bottom_right")){
-		windowX = (gavaSDLVInfo.w - w) + (-1*windowX);
-		windowY = (gavaSDLVInfo.h - h) + (-1*windowY);
+		windowX = (xavaSDLVInfo.w - w) + (-1*windowX);
+		windowY = (xavaSDLVInfo.h - h) + (-1*windowY);
 	}else if(!strcmp(windowAlignment, "center")){
-		windowX = (gavaSDLVInfo.w - w) / 2 + windowX;
-		windowY = (gavaSDLVInfo.h - h) / 2 + windowY;
+		windowX = (xavaSDLVInfo.w - w) / 2 + windowX;
+		windowY = (xavaSDLVInfo.h - h) / 2 + windowY;
 	}
 	// creating a window
 	Uint32 windowFlags = SDL_WINDOW_RESIZABLE;
 	if(fs) windowFlags |= SDL_WINDOW_FULLSCREEN;
 	if(!borderFlag) windowFlags |= SDL_WINDOW_BORDERLESS;
-	gavaSDLWindow = SDL_CreateWindow("GAVA", windowX, windowY, w, h, windowFlags);
-	if(!gavaSDLWindow)
+	xavaSDLWindow = SDL_CreateWindow("XAVA", windowX, windowY, w, h, windowFlags);
+	if(!xavaSDLWindow)
 	{
 		fprintf(stderr, "SDL window cannot be created: %s\n", SDL_GetError());
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "cannot create SDL window", NULL);
@@ -139,34 +139,34 @@ int init_window_sdl(int *col, int *bgcol, char *color, char *bcolor, int gradien
 }
 
 void clear_screen_sdl(int bgcol) {
-	SDL_FillRect(gavaSDLWindowSurface, NULL, SDL_MapRGB(gavaSDLWindowSurface->format, bgcol / 0x10000 % 0x100, bgcol / 0x100 % 0x100, bgcol % 0x100));
+	SDL_FillRect(xavaSDLWindowSurface, NULL, SDL_MapRGB(xavaSDLWindowSurface->format, bgcol / 0x10000 % 0x100, bgcol / 0x100 % 0x100, bgcol % 0x100));
 }
 
 void apply_window_settings_sdl(int bgcol, int *w, int *h)
 {
 	// toggle fullscreen
-	SDL_SetWindowFullscreen(gavaSDLWindow, SDL_WINDOW_FULLSCREEN & fs);
+	SDL_SetWindowFullscreen(xavaSDLWindow, SDL_WINDOW_FULLSCREEN & fs);
 
-	gavaSDLWindowSurface = SDL_GetWindowSurface(gavaSDLWindow);
+	xavaSDLWindowSurface = SDL_GetWindowSurface(xavaSDLWindow);
 	// Appearently SDL uses multithreading so this avoids invalid access
 	// If I had a job, here's what I would be fired for xD
 	SDL_Delay(100);
 	clear_screen_sdl(bgcol);
 	
-	// Window size patch, because gava wipes w and h for some reason.
-	(*w) = gavaSDLWindowSurface->w;
-	(*h) = gavaSDLWindowSurface->h;
+	// Window size patch, because xava wipes w and h for some reason.
+	(*w) = xavaSDLWindowSurface->w;
+	(*h) = xavaSDLWindowSurface->h;
 	return;
 }
 
 int get_window_input_sdl(int *bs, int *bw, double *sens, int *col, int *bgcol, int *w, int *h, int gradient)
 {
-	while(SDL_PollEvent(&gavaSDLEvent) != 0)
+	while(SDL_PollEvent(&xavaSDLEvent) != 0)
 	{
-		switch(gavaSDLEvent.type)
+		switch(xavaSDLEvent.type)
 		{
 			case SDL_KEYDOWN:
-				switch(gavaSDLEvent.key.keysym.sym)
+				switch(xavaSDLEvent.key.keysym.sym)
 				{
 					// should_reload = 1
 					// resizeTerminal = 2
@@ -212,11 +212,11 @@ int get_window_input_sdl(int *bs, int *bw, double *sens, int *col, int *bgcol, i
 				}
 				break;
 			case SDL_WINDOWEVENT:
-				if(gavaSDLEvent.window.event == SDL_WINDOWEVENT_CLOSE) return -1;
-				else if(gavaSDLEvent.window.event == SDL_WINDOWEVENT_RESIZED){
+				if(xavaSDLEvent.window.event == SDL_WINDOWEVENT_CLOSE) return -1;
+				else if(xavaSDLEvent.window.event == SDL_WINDOWEVENT_RESIZED){
 					// if the user resized the window
-					(*w) = gavaSDLEvent.window.data1;
-					(*h) = gavaSDLEvent.window.data2;
+					(*w) = xavaSDLEvent.window.data1;
+					(*h) = xavaSDLEvent.window.data2;
 					return 2;
 				}
 				break;
@@ -233,7 +233,7 @@ void draw_graphical_sdl(int bars, int rest, int bw, int bs, int *f, int *flastd,
 			if(!gradient)
 			{
 				current_bar = (SDL_Rect) {rest + i*(bs+bw), h - f[i], bw, f[i] - flastd[i]};
-				SDL_FillRect(gavaSDLWindowSurface, &current_bar, SDL_MapRGB(gavaSDLWindowSurface->format, col / 0x10000 % 0x100, col / 0x100 % 0x100, col % 0x100));
+				SDL_FillRect(xavaSDLWindowSurface, &current_bar, SDL_MapRGB(xavaSDLWindowSurface->format, col / 0x10000 % 0x100, col / 0x100 % 0x100, col % 0x100));
 			}
 			else
 			{
@@ -259,14 +259,14 @@ void draw_graphical_sdl(int bars, int rest, int bw, int bs, int *f, int *flastd,
 					else
 						color += -1*step*(gradCol[gcPhase] % 0x100 - gradCol[gcPhase+1] % 0x100) + gradCol[gcPhase] % 0x100;
 					current_bar = (SDL_Rect) {rest + i*(bs+bw), h - I, bw, 1};
-					SDL_FillRect(gavaSDLWindowSurface, &current_bar, SDL_MapRGB(gavaSDLWindowSurface->format, color / 0x10000 % 0x100, color / 0x100 % 0x100, color % 0x100));
+					SDL_FillRect(xavaSDLWindowSurface, &current_bar, SDL_MapRGB(xavaSDLWindowSurface->format, color / 0x10000 % 0x100, color / 0x100 % 0x100, color % 0x100));
 				}
 			}
 		} else if(f[i] < flastd[i]) {
 			current_bar = (SDL_Rect) {rest + i*(bs+bw), h - flastd[i], bw, flastd[i] - f[i]};
-			SDL_FillRect(gavaSDLWindowSurface, &current_bar, SDL_MapRGB(gavaSDLWindowSurface->format, bgcol / 0x10000 % 0x100, bgcol / 0x100 % 0x100, bgcol % 0x100));
+			SDL_FillRect(xavaSDLWindowSurface, &current_bar, SDL_MapRGB(xavaSDLWindowSurface->format, bgcol / 0x10000 % 0x100, bgcol / 0x100 % 0x100, bgcol % 0x100));
 		}
 	}
-	SDL_UpdateWindowSurface(gavaSDLWindow);
+	SDL_UpdateWindowSurface(xavaSDLWindow);
 	return;
 }

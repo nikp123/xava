@@ -3,15 +3,15 @@
 #include <stdio.h>
 #include <time.h>
 
-const char szAppName[] = "GAVA";
-const char wcWndName[] = "GAVA";
+const char szAppName[] = "XAVA";
+const char wcWndName[] = "XAVA";
 
-HWND gavaWinWindow;
-MSG gavaWinEvent;
-HMODULE gavaWinModule;
-WNDCLASSEX gavaWinClass;	// same thing as window classes in Xlib
-HDC gavaWinFrame;
-HGLRC gavaWinGLFrame;
+HWND xavaWinWindow;
+MSG xavaWinEvent;
+HMODULE xavaWinModule;
+WNDCLASSEX xavaWinClass;	// same thing as window classes in Xlib
+HDC xavaWinFrame;
+HGLRC xavaWinGLFrame;
 unsigned int fgcolor, bgcolor;
 unsigned int *gradientColor, grad = 0;
 unsigned int shadowColor, shadow = 0;
@@ -32,21 +32,21 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 unsigned char register_window_win(HINSTANCE HIn) {
-    gavaWinClass.cbSize=sizeof(WNDCLASSEX);
-    gavaWinClass.style=CS_HREDRAW | CS_VREDRAW;
-    gavaWinClass.lpfnWndProc=WindowFunc;
-    gavaWinClass.cbClsExtra=0;
-    gavaWinClass.cbWndExtra=0;
-    gavaWinClass.hInstance=HIn;
-    gavaWinClass.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-    gavaWinClass.hIcon=LoadIcon(NULL,IDI_APPLICATION);
-    gavaWinClass.hCursor=LoadCursor(NULL,IDC_ARROW);
-    gavaWinClass.hbrBackground=(HBRUSH)CreateSolidBrush(0x00000000);
-    gavaWinClass.lpszMenuName=NULL;
-    gavaWinClass.lpszClassName=szAppName;
-    gavaWinClass.hIconSm=LoadIcon(NULL,IDI_APPLICATION);
+    xavaWinClass.cbSize=sizeof(WNDCLASSEX);
+    xavaWinClass.style=CS_HREDRAW | CS_VREDRAW;
+    xavaWinClass.lpfnWndProc=WindowFunc;
+    xavaWinClass.cbClsExtra=0;
+    xavaWinClass.cbWndExtra=0;
+    xavaWinClass.hInstance=HIn;
+    xavaWinClass.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+    xavaWinClass.hIcon=LoadIcon(NULL,IDI_APPLICATION);
+    xavaWinClass.hCursor=LoadCursor(NULL,IDC_ARROW);
+    xavaWinClass.hbrBackground=(HBRUSH)CreateSolidBrush(0x00000000);
+    xavaWinClass.lpszMenuName=NULL;
+    xavaWinClass.lpszClassName=szAppName;
+    xavaWinClass.hIconSm=LoadIcon(NULL,IDI_APPLICATION);
 
-    return RegisterClassEx(&gavaWinClass);
+    return RegisterClassEx(&xavaWinClass);
 }
 
 void GetDesktopResolution(int *horizontal, int *vertical) {
@@ -117,8 +117,8 @@ unsigned char CreateHGLRC(HWND hWnd) {
       return FALSE ;
    }
 
-   gavaWinGLFrame = wglCreateContext(hdc);
-   if (!gavaWinGLFrame){
+   xavaWinGLFrame = wglCreateContext(hdc);
+   if (!xavaWinGLFrame){
       assert(0);
       return FALSE;
    }
@@ -141,11 +141,11 @@ void resize_framebuffer(int width,int height) {
 int init_window_win(char *color, char *bcolor, double foreground_opacity, int col, int bgcol, int gradient_count, char **gradient_colors, unsigned int shdw, unsigned int shdw_col, int w, int h) {
 
 	// get handle
-	gavaWinModule = GetModuleHandle(NULL);
+	xavaWinModule = GetModuleHandle(NULL);
 	FreeConsole();
 	
 	// register window class
-	if(!register_window_win(gavaWinModule)) {
+	if(!register_window_win(xavaWinModule)) {
 		MessageBox(NULL, "RegisterClassEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
@@ -184,14 +184,14 @@ int init_window_win(char *color, char *bcolor, double foreground_opacity, int co
 	#endif
 	
 	// create window
-	gavaWinWindow = CreateWindowEx(interactable ? WS_EX_APPWINDOW : WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST, szAppName, wcWndName, WS_VISIBLE | WS_POPUP, windowX, windowY, w, h, NULL, NULL, gavaWinModule, NULL);
-	if(gavaWinWindow == NULL) {
+	xavaWinWindow = CreateWindowEx(interactable ? WS_EX_APPWINDOW : WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST, szAppName, wcWndName, WS_VISIBLE | WS_POPUP, windowX, windowY, w, h, NULL, NULL, xavaWinModule, NULL);
+	if(xavaWinWindow == NULL) {
 		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
 	// transparency fix
-	SetLayeredWindowAttributes(gavaWinWindow, 0, 255, LWA_ALPHA);
-	SetWindowPos(gavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_TOPMOST, windowX, windowY, w, h, SWP_SHOWWINDOW);
+	SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
+	SetWindowPos(xavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_TOPMOST, windowX, windowY, w, h, SWP_SHOWWINDOW);
 
 	
 	// we need the desktop window manager to enable transparent background (from Vista ...onward)
@@ -200,11 +200,11 @@ int init_window_win(char *color, char *bcolor, double foreground_opacity, int co
 	bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
 	bb.hRgnBlur = hRgn;
 	bb.fEnable = transparentFlag;
-	DwmEnableBlurBehindWindow(gavaWinWindow, &bb);
+	DwmEnableBlurBehindWindow(xavaWinWindow, &bb);
 	
-	CreateHGLRC(gavaWinWindow);
-	gavaWinFrame = GetDC(gavaWinWindow);
-	wglMakeCurrent(gavaWinFrame, gavaWinGLFrame);	
+	CreateHGLRC(xavaWinWindow);
+	xavaWinFrame = GetDC(xavaWinWindow);
+	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);	
 	
 	// process colors
 	if(!strcmp(color, "default")) {
@@ -279,7 +279,7 @@ int init_window_win(char *color, char *bcolor, double foreground_opacity, int co
 
 void apply_win_settings(int w, int h, int framerate) {
 	resize_framebuffer(w, h);
-	ReleaseDC(gavaWinWindow, gavaWinFrame);
+	ReleaseDC(xavaWinWindow, xavaWinFrame);
 
 	if(!transparentFlag) glClearColor(((bgcolor>>16)%256)/255.0, ((bgcolor>>8)%256)/255.0,(bgcolor%256)/255.0, opacity[1]);
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = wglGetProcAddress("wglSwapIntervalEXT"); 
@@ -288,12 +288,12 @@ void apply_win_settings(int w, int h, int framerate) {
 }
 
 int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int *w, int *h) {
-	while(!*should_reload && PeekMessage(&gavaWinEvent, NULL, WM_KEYFIRST, WM_MOUSELAST, PM_REMOVE)) {	
-		TranslateMessage(&gavaWinEvent);
-		DispatchMessage(&gavaWinEvent);	// windows handles the rest
-		switch(gavaWinEvent.message) {
+	while(!*should_reload && PeekMessage(&xavaWinEvent, NULL, WM_KEYFIRST, WM_MOUSELAST, PM_REMOVE)) {	
+		TranslateMessage(&xavaWinEvent);
+		DispatchMessage(&xavaWinEvent);	// windows handles the rest
+		switch(xavaWinEvent.message) {
 			case WM_KEYDOWN:
-				switch(gavaWinEvent.wParam) {
+				switch(xavaWinEvent.wParam) {
 					// should_reload = 1
 					// resizeTerminal = 2
 					// bail = -1
@@ -345,7 +345,7 @@ int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int
 			case WM_SIZE:
 			{
 				RECT rect;
-				if(GetWindowRect(gavaWinWindow, &rect)) {
+				if(GetWindowRect(xavaWinWindow, &rect)) {
 					(*w) = rect.right - rect.left;
 					(*h) = rect.bottom - rect.top;
 				}
@@ -357,8 +357,8 @@ int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int
 }
 
 void draw_graphical_win(int window_height, int bars_count, int bar_width, int bar_spacing, int rest, int gradient, int f[200]) {
-	HDC hdc = GetDC(gavaWinWindow);
-        wglMakeCurrent(hdc, gavaWinGLFrame);
+	HDC hdc = GetDC(xavaWinWindow);
+        wglMakeCurrent(hdc, xavaWinGLFrame);
 
 	// clear color and calculate pixel witdh in double
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -377,15 +377,15 @@ void draw_graphical_win(int window_height, int bars_count, int bar_width, int ba
 
 	// swap buffers	
 	SwapBuffers(hdc);
-	ReleaseDC(gavaWinWindow, hdc);
+	ReleaseDC(xavaWinWindow, hdc);
 }
 
 void cleanup_graphical_win(void) {
 	free(gradientColor);
 	wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(gavaWinGLFrame);
-	ReleaseDC(gavaWinWindow, gavaWinFrame);
-	DestroyWindow(gavaWinWindow);
-	UnregisterClass(szAppName, gavaWinModule);	
-	CloseHandle(gavaWinModule);
+        wglDeleteContext(xavaWinGLFrame);
+	ReleaseDC(xavaWinWindow, xavaWinFrame);
+	DestroyWindow(xavaWinWindow);
+	UnregisterClass(szAppName, xavaWinModule);	
+	CloseHandle(xavaWinModule);
 }

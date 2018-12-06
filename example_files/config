@@ -1,4 +1,4 @@
-## Configuration file for GAVA. Default values are commented out. Use either ';' or '#' for commenting.
+## Configuration file for XAVA. Default values are commented out. Use either ';' or '#' for commenting.
 
 
 [general]
@@ -29,7 +29,7 @@
 # Lower and higher cutoff frequencies for lowest and highest bars
 # the bandwidth of the visualizer.
 # Note: there is a minimum total bandwidth of 43Mhz x number of bars.
-# Gava will automatically increase the higher cutoff if a too low band is specified.
+# Xava will automatically increase the higher cutoff if a too low band is specified.
 ; lower_cutoff_freq = 50
 ; higher_cutoff_freq = 10000
 
@@ -76,7 +76,7 @@
 [input]
 
 # Audio capturing method. Possible methods are: 'pulse', 'alsa', 'fifo' or 'sndio'.
-# Defaults to 'pulse', 'alsa' or 'fifo', in that order, dependent on what support gava was built with.
+# Defaults to 'pulse', 'alsa' or 'fifo', in that order, dependent on what support xava was built with.
 #
 # All input methods uses the same config variable 'source'
 # to define where it should get the audio.

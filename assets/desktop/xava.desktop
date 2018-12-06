@@ -1,9 +1,9 @@
 [Desktop Entry]
 Type=Application
 Version=0.6.1
-Name=GAVA visualizer
+Name=XAVA visualizer
 Comment=Audio spectrum visualizer for Windows/macOS/Linux/BSD
-Exec=gava
+Exec=xava
 Icon=hdspmixer
 Terminal=false
 Categories=Audio;
