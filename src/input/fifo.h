@@ -1,4 +1,4 @@
-#define BUFSIZE 1024
+#define BUFSIZE 4096
 
 struct audio_data {
 	int *audio_out_r;

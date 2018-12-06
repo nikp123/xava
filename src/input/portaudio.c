@@ -6,7 +6,7 @@
 #include "fifo.h"
 
 #define FRAMES_PER_BUFFER 1
-#define BUFSIZE 1024
+#define BUFSIZE 4096
 #define SAMPLE_SILENCE 32768
 #define PA_SAMPLE_TYPE paInt16
 typedef short SAMPLE;

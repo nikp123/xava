@@ -54,6 +54,10 @@
 #include "input/portaudio.h"
 #endif
 
+#ifdef SHMEM
+#include "input/shmem.h"
+#endif
+
 #ifdef WIN
 #include "output/graphical_win.h"
 #endif
@@ -350,6 +354,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
     #ifdef PORTAUDIO
         strcat(supportedInput,", 'portaudio'");
     #endif
+    #ifdef SHMEM
+        strcat(supportedInput,", 'shmem'");
+    #endif
 
 	// general: main loop
 	while (1) {
@@ -458,6 +465,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	#ifdef PORTAUDIO
 	if (p.im == 5) {
 		thr_id = pthread_create(&p_thread, NULL, input_portaudio, (void*)&audio);
+		audio.rate = 44100;
+	}
+	#endif
+
+	#ifdef SHMEM
+	if (p.im == 6) {
+		thr_id = pthread_create(&p_thread, NULL, input_shmem, (void*)&audio);
 		audio.rate = 44100;
 	}
 	#endif

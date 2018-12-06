@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.1)
-set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 project(xava C)
+cmake_minimum_required(VERSION 3.1)
 
+option(SHMEM "SHMEM" OFF)
+
+set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_C_STANDARD 11)
 set(xava_VERSION_MAJOR 0)
@@ -48,6 +50,13 @@ endif()
 # Optional features
 set(ADDITIONAL_SOURCES "")
 set(ADDITIONAL_LIBRARIES "")
+
+# shmem
+if(SHMEM)
+	add_definitions(-DSHMEM)
+	list(APPEND ADDITIONAL_LIBRARIES "-lrt")
+	list(APPEND ADDITIONAL_SOURCES "src/input/shmem.c")
+endif()
 
 # OS-Specific inclusions
 if(NOT (MSYS OR MINGW OR MSVC))

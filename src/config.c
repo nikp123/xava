@@ -90,6 +90,13 @@ void validate_config(char supportedInput[255], void* params)
 			exit(EXIT_FAILURE);
 		#endif
 	}
+	if (strcmp(inputMethod, "shmem") == 0) {
+		p->im = 6;
+		#ifndef SHMEM
+			fprintf(stderr, "xava was built without shmem support\n");
+			exit(EXIT_FAILURE);
+		#endif
+	}
 	if (p->im == 0) {
 		fprintf(stderr,
 			"input method '%s' is not supported, supported methods are: %s\n",
@@ -524,6 +531,12 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	if (strcmp(inputMethod, "portaudio") == 0) {
 		p->im = 5;
 		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "auto");
+	}
+	#endif
+	#ifdef SHMEM
+	if (strcmp(inputMethod, "shmem") == 0) {
+		p->im = 6;
+		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "/squeezelite-00:00:00:00:00:00");
 	}
 	#endif
 		
