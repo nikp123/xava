@@ -796,9 +796,9 @@ p.framerate);
 					fftw_execute(pl);
 					fftw_execute(pr);
 
-					fl = separate_freq_bands(outl,calcbars/2,lcf,hcf, k, 1, 
+					fl = separate_freq_bands(outl,calcbars,lcf,hcf, k, 1, 
 						p.sens, p.ignore, M);
-					fr = separate_freq_bands(outr,calcbars/2,lcf,hcf, k, 2, 
+					fr = separate_freq_bands(outr,calcbars,lcf,hcf, k, 2, 
 						p.sens, p.ignore, M);
 				} else {
 					fftw_execute(pl);

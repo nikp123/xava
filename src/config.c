@@ -369,22 +369,22 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	dictionary* ini;
 	ini = iniparser_load(configPath);
 	
-	//setting fifo to default if no other input modes supported
+	// setting fifo to default if no other input modes supported
 	inputMethod = (char *)iniparser_getstring(ini, "input:method", "fifo"); 
 	
-	//setting alsa to default if supported
+	// setting alsa to default if supported
 	#ifdef ALSA
 		inputMethod = (char *)iniparser_getstring(ini, "input:method", "alsa"); 
 	#endif
 	
-	//setting pulse to default if supported
-	#ifdef PULSE
-		inputMethod = (char *)iniparser_getstring(ini, "input:method", "pulse");
-	#endif
-	
-	// setting portaudio to default if supported
+	// portaudio is priority 2 (sorted by difficulty)
 	#ifdef PORTAUDIO
 		inputMethod = (char *)iniparser_getstring(ini, "input:method", "portaudio");
+	#endif
+
+	// pulse is basically autoconfig (so priority 1)
+	#ifdef PULSE
+		inputMethod = (char *)iniparser_getstring(ini, "input:method", "pulse");
 	#endif
 
 	#if defined(__linux__)||defined(__APPLE__)||defined(__unix__)
@@ -437,8 +437,8 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	}
 	
 	p->fixedbars = iniparser_getint(ini, "general:bars", 0);
-	p->bw = iniparser_getint(ini, "general:bar_width", 2);
-	p->bs = iniparser_getint(ini, "general:bar_spacing", 1);
+	p->bw = iniparser_getint(ini, "general:bar_width", 8);
+	p->bs = iniparser_getint(ini, "general:bar_spacing", 2);
 	p->framerate = iniparser_getint(ini, "general:framerate", 60);
 	p->sens = iniparser_getint(ini, "general:sensitivity", 100);
 	p->autosens = iniparser_getint(ini, "general:autosens", 1);
