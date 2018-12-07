@@ -59,7 +59,7 @@
 #endif
 
 #ifdef INIPARSER
-	#include "iniparser/src/iniparser.h"
+	#include "../lib/iniparser/src/iniparser.h"
 #else
 	#include <iniparser.h>
 #endif
