@@ -13,7 +13,7 @@
 # new as of 0.6.0 autosens of low values (dynamic range)
 # 'overshoot' allows bars to overshoot (in % of display height) without initiating autosens. DEPRECATED as of 0.6.0
 ; autosens = 1
-; overshoot = 20
+; overshoot = 0
 
 # Manual sensitivity in %. Autosens must be turned off for this to take effect.
 # 200 means double height. Accepts only non-negative values.
@@ -23,23 +23,23 @@
 # Bars' width and space between bars in number of characters.
 # These options DO NOT apply if you're using 'sdl' or 'x' modes.
 ; bars = 0
-; bar_width = 2
-; bar_spacing = 1
+; bar_width = 13
+; bar_spacing = 5
 
 # Lower and higher cutoff frequencies for lowest and highest bars
 # the bandwidth of the visualizer.
 # Note: there is a minimum total bandwidth of 43Mhz x number of bars.
 # Xava will automatically increase the higher cutoff if a too low band is specified.
-; lower_cutoff_freq = 50
-; higher_cutoff_freq = 10000
+; lower_cutoff_freq = 20
+; higher_cutoff_freq = 20000
 
 
 
 [window]
 
 # Window width and height
-; width = 640
-; height = 480
+; width = 1180
+; height = 300
 
 # Fullscreen toggle (1 = on, 0 = off)
 ; fullscreen = 0
@@ -108,12 +108,12 @@
 # 'sdl' is for a graphical window using OpenGL
 # 'x' is for a graphical window using XRender (usually faster, unsupported in wayland however)
 # 'win' is a win32 graphical window (which embedded into the NT kernel)
-; method = ncurses
+; method = x
 
 # Visual channels. Can be 'stereo' or 'mono'.
 # 'stereo' mirrors both channels with low frequencies in center.
 # 'mono' averages both channels and outputs left to right lowest to highest frequencies.
-; channels = stereo
+; channels = mono
 
 # Raw output target. A fifo will be created if target does not exist.
 ; raw_target = /dev/stdout
@@ -132,10 +132,8 @@
 ; bar_delimiter = 59
 ; frame_delimiter = 10
 
-# Adjusts the FFT buffer size (MUST BE POWER OF TWO, otherwise unexpected results can happen)
-# FFT buffer is the size of the output of the fourier transform, the bigger it is
-# the more precise the visualization is at the cost of CPU performance
-; fft_size = 4096
+# Adjusts the FFT buffer size (calculated by 2^fft_size)
+; fft_size = 16
 
 
 [color]
@@ -165,7 +163,7 @@
 ; integral = 70
 
 # Disables or enables the so-called "Monstercat smoothing" with or without "waves". Set to 0 to disable. 
-; monstercat = 1
+; monstercat = 0
 ; waves = 0
 
 # Set gravity percentage for "drop off". Higher values means bars will drop faster.
@@ -178,19 +176,11 @@
 # Variable logarithm (the higher the value, the more intense) 
 ; log = 1.0
 
-# Change the start position of the logarithm (0.0 (begining of the spectrum) to 1.0 (end of spectrum))
-# 0.5 is the half, and to disable logarithms, just put 1.0
-; log_begin = 1.0
-
-# Change the end position of the logarithm (0.0 (begining of the spectrum) to 1.0 (end of spectrum))
-# 0.5 is the half, and to disable logarithms, just put 0.0
-; log_end = 1.0
-
 # Average out the value of each odd bar (just like the monstercat visualizer)
-; oddoneout = 0
+; oddoneout = 1
 
 # Balances the eq towards higher or lower frequencies (lower value->lower frequencies, higher value->higher frequencies)
-; eq_balance = 0.85
+; eq_balance = 0.64
 
 [shadow]
 
