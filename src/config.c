@@ -16,12 +16,6 @@
 #include "output/graphical.h"
 #include "config.h"
 
-double smoothDef[64] = {0.8, 0.8, 1, 1, 0.8, 0.8, 1, 0.8, 0.8, 1, 1, 0.8,
-					1, 1, 0.8, 0.6, 0.6, 0.7, 0.8, 0.8, 0.8, 0.8, 0.8,
-					0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8,
-					0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8,
-					0.7, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6};
-
 char *inputMethod, *outputMethod, *channels;
 
 int validate_color(char *checkColor, int om)
@@ -255,7 +249,12 @@ void validate_config(char supportedInput[255], void* params)
 	if (p->gravity < 0) {
 		p->gravity = 0;
 	} 
-	
+
+	// validate: oddoneout
+	if(p->stereo&&p->oddoneout) {
+		fprintf(stderr, "oddoneout cannot work with stereo mode on\n");
+		exit(EXIT_FAILURE);
+	}
 	
 	// validate: integral
 	p->integral = p->integral / 100;
@@ -277,8 +276,7 @@ void validate_config(char supportedInput[255], void* params)
 	p->sens = p->sens / 100;
 	
 	// validate: window settings
-	if(p->om == 5 || p->om == 6 || p->om == 7)
-	{
+	if(p->om == 5 || p->om == 6 || p->om == 7) {
 		// validate: alignment
 		if(strcmp(windowAlignment, "top_left"))
 		if(strcmp(windowAlignment, "top_right"))
@@ -292,8 +290,7 @@ void validate_config(char supportedInput[255], void* params)
 		if(strcmp(windowAlignment, "none"))
 			fprintf(stderr, "The value for alignment is invalid, '%s'!", windowAlignment);
 		
-		if(p->foreground_opacity > 1.0)
-		{
+		if(p->foreground_opacity > 1.0) {
 			fprintf(stderr, "foreground_opacity cannot be above 1.0\n");
 			exit(EXIT_FAILURE);
 		}
@@ -395,17 +392,15 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		outputMethod = (char *)iniparser_getstring(ini, "output:method", "sdl");
 	#endif
 
-	p->fftsize = iniparser_getint(ini, "smoothing:fft_size", 1024);
-	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 1);
+	p->fftsize = (int)exp2((float)iniparser_getint(ini, "smoothing:fft_size", 16));
+	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 0);
 	p->waves = iniparser_getint(ini, "smoothing:waves", 0);
 	p->integral = iniparser_getdouble(ini, "smoothing:integral", 90);
 	p->gravity = iniparser_getdouble(ini, "smoothing:gravity", 100);
 	p->ignore = iniparser_getdouble(ini, "smoothing:ignore", 0);
 	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.0);
-	p->logBegin = iniparser_getdouble(ini, "smoothing:log_begin", 0.0);
-	p->logEnd = iniparser_getdouble(ini, "smoothing:log_end", 1.0);
-	p->oddoneout = iniparser_getdouble(ini, "smoothing:oddoneout", 0);
-	p->eqBalance = iniparser_getdouble(ini, "smoothing:eq_balance", 0.85);
+	p->oddoneout = iniparser_getdouble(ini, "smoothing:oddoneout", 1);
+	p->eqBalance = iniparser_getdouble(ini, "smoothing:eq_balance", 0.64);
 	
 	p->color = (char *)iniparser_getstring(ini, "color:foreground", "default");
 	p->bcolor = (char *)iniparser_getstring(ini, "color:background", "default");
@@ -437,22 +432,22 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	}
 	
 	p->fixedbars = iniparser_getint(ini, "general:bars", 0);
-	p->bw = iniparser_getint(ini, "general:bar_width", 8);
-	p->bs = iniparser_getint(ini, "general:bar_spacing", 2);
+	p->bw = iniparser_getint(ini, "general:bar_width", 13);
+	p->bs = iniparser_getint(ini, "general:bar_spacing", 5);
 	p->framerate = iniparser_getint(ini, "general:framerate", 60);
 	p->sens = iniparser_getint(ini, "general:sensitivity", 100);
 	p->autosens = iniparser_getint(ini, "general:autosens", 1);
-	p->overshoot = iniparser_getint(ini, "general:overshoot", 20);
-	p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 50);
-	p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 10000);
+	p->overshoot = iniparser_getint(ini, "general:overshoot", 0);
+	p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 20);
+	p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 20000);
 	
 	// config: window
 	#ifdef GLX
 		GLXmode = iniparser_getint(ini, "window:opengl", 1);
 	#endif
 	
-	p->w = iniparser_getint(ini, "window:width", 640);
-	p->h = iniparser_getint(ini, "window:height", 480);
+	p->w = iniparser_getint(ini, "window:width", 1180);
+	p->h = iniparser_getint(ini, "window:height", 300);
 	
 	windowAlignment = (char *)iniparser_getstring(ini, "window:alignment", "none");
 	windowX = iniparser_getint(ini, "window:x_padding", 0);
@@ -465,7 +460,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->set_win_props = iniparser_getint(ini, "window:set_win_props", 0);
 	
 	// config: output
-	channels =  (char *)iniparser_getstring(ini, "output:channels", "stereo");
+	channels =  (char *)iniparser_getstring(ini, "output:channels", "mono");
 	p->raw_target = (char *)iniparser_getstring(ini, "output:raw_target", "/dev/stdout");
 	p->data_format = (char *)iniparser_getstring(ini, "output:data_format", "binary");
 	p->bar_delim = (char)iniparser_getint(ini, "output:bar_delimiter", 59);
@@ -484,24 +479,22 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	
 	
 	// read & validate: eq
-	p->smooth = smoothDef;
 	p->smcount = iniparser_getsecnkeys(ini, "eq");
 	if (p->smcount > 0) {
-		p->customEQ = 1;
 		p->smooth = malloc(p->smcount*sizeof(double));
 		#ifndef LEGACYINIPARSER
 		const char *keys[p->smcount];
 		iniparser_getseckeys(ini, "eq", keys);
-		#endif
-		#ifdef LEGACYINIPARSER
+		#else
 		char **keys = iniparser_getseckeys(ini, "eq");
 		#endif
 		for (int sk = 0; sk < p->smcount; sk++) {
 			p->smooth[sk] = iniparser_getdouble(ini, keys[sk], 1);
 		}
 	} else {
-		p->customEQ = 0;
 		p->smcount = 64; //back to the default one
+		p->smooth = malloc(p->smcount*sizeof(double));
+		for(int i=0; i<64; i++) p->smooth[i]=1.0f;
 	}
 	
 	// config: input

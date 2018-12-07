@@ -4,7 +4,7 @@ struct config_params {
 	double monstercat, integral, gravity, ignore, sens, foreground_opacity, logScale, logBegin, logEnd, eqBalance; 
 	unsigned int lowcf, highcf, shdw, shdw_col;
 	double *smooth;
-	int smcount, customEQ, im, om, col, bgcol, autobars, stereo, is_bin, ascii_range,
+	int smcount, im, om, col, bgcol, autobars, stereo, is_bin, ascii_range,
  bit_format, gradient, fixedbars, framerate, bw, bs, autosens, overshoot, waves,
  set_win_props, w, h, fftsize, gradient_count;
 };
