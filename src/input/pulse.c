@@ -9,7 +9,7 @@
 
 #include "fifo.h"
 
-#define BUFSIZE 1024
+#define BUFSIZE 4096
 
 pa_mainloop *m_pulseaudio_mainloop;
 
@@ -127,7 +127,7 @@ void* input_pulse(void* data)
 		.channels = 2
 		};
 	static const pa_buffer_attr pb = {
-	.maxlength = BUFSIZE * 2,
+	.maxlength = (uint32_t) -1, //BUFSIZE * 2,
 	.fragsize = BUFSIZE
 	};
 
