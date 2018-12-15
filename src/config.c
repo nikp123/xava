@@ -101,7 +101,9 @@ void validate_config(char supportedInput[255], void* params)
 	p->om = 0;
 	if (strcmp(outputMethod, "raw") == 0) {//raw:
 		p->om = 4;
-		
+		p->bs = 0;
+		p->bw = 1;
+
 		//checking data format
 		p->is_bin = -1;
 		if (strcmp(p->data_format, "binary") == 0) {
