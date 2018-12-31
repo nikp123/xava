@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <math.h>
 
 #include "output/graphical.h"
 #include "config.h"
