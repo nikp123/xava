@@ -3,17 +3,9 @@ X.A.V.A.
 
 **X**11 **A**udio **V**isualizer for **A**LSA
 
-also supports audio input from Portaudio, Pulseaudio, MPD and sndio.
+also supports audio input from Portaudio, Pulseaudio, shmem, fifo (MPD) and sndio.
 
 a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://github.com/karlstav/cava) by [Nikola Pavlica](mailto:pavlica.nikola@gmail.com)
-
-Changes in 0.6:
-* Autosens of low values (dynamic range)
-* Removed config parameter 'overshoot'
-* Removed config parameter 'mode'
-* New config parameter 'waves'
-* Changed config parameter 'style' to 'channels' (was either 'mono' or 'stereo' anyway)
-* Parameters 'integral' and 'gravity' are now in percentage
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
