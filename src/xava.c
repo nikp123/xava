@@ -568,6 +568,7 @@ p.framerate);
 		//getting orignial numbers of barss incase of resize
 		if (p.autobars == 1)  {
 			bars = (w + p.bs) / (p.bw + p.bs);
+
 			//if (p.bs != 0) bars = (w - bars * p.bs + p.bs) / bw;
 		} else bars = p.fixedbars;
 
@@ -577,6 +578,8 @@ p.framerate);
 
 		if (p.stereo) { //stereo must have even numbers of bars
 			if (bars%2 != 0) bars--;
+		} else if(p.oddoneout) { // and oddoneout nees to have odd number of bars
+			if (bars%2 == 0) bars--;
 		}
 
 		// process [smoothing]: calculate gravity
