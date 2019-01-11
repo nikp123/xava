@@ -461,13 +461,15 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 	
 	if(GLXmode) {
 		#ifdef GLX
-		float gradColors[24] = {0.0};
+		double glColors[8] = {xcol.red/65535.0, xcol.green/65535.0, xcol.blue/65535.0, p.foreground_opacity, ((unsigned int)p.shdw_col>>24)%256/255.0,
+		((unsigned int)p.shdw_col>>16)%256/255.0, ((unsigned int)p.shdw_col>>8)%256/255.0, (unsigned int)p.shdw_col%256/255.0};
+		double gradColors[24] = {0.0};
 		for(int i=0; i<p.gradient_count; i++) {
 			gradColors[i*3] = xgrad[i].red/65535.0;
 			gradColors[i*3+1] = xgrad[i].green/65535.0;
 			gradColors[i*3+2] = xgrad[i].blue/65535.0;
 		}
-		if(drawGLBars(rest, bars, gradColors, f)) exit(EXIT_FAILURE);
+		if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
 		#endif
 	} else {	
 		// draw bars on the X11 window

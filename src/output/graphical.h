@@ -10,7 +10,7 @@
 
 #ifdef GL
 	#include <GL/gl.h>
-	int drawGLBars(int rest, int bars, float gradColors[24], int *f);
+	int drawGLBars(int rest, int bars, double colors[8], double gradColors[24], int *f);
 #endif
 
 void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int scrH, char *winPos);

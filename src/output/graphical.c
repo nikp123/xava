@@ -33,9 +33,7 @@ void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int s
 }
 
 #ifdef GL
-int drawGLBars(int rest, int bars, float gradColors[24], int *f) {
-	const double colors[8] = {((p.col>>24)%0x100)/255.0, ((p.col>>8)%0x100)/255.0, (p.col%0x100)/255.0, (float)p.foreground_opacity,
-							 (p.shdw_col>>24)%256/255.0, (p.shdw_col>>16)%256/255.0, (p.shdw_col>>8)%256/255.0, p.shdw_col%256/255.0};
+int drawGLBars(int rest, int bars, double colors[8], double gradColors[24], int *f) {
 	for(int i = 0; i < bars; i++) {
 		double point[4];
 		point[0] = rest+(p.bw+p.bs)*i;
