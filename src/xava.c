@@ -89,13 +89,13 @@ long oldTime; // used to calculate frame times
 
 int rc;
 int M;
+int kys = 0;
 
 // whether we should reload the config or not
 int should_reload = 0;
 
 // general: cleanup
-void cleanup()
-{
+void cleanup() {
 	switch(p.om) {
 		#ifdef XLIB
 		case 5:
@@ -149,7 +149,7 @@ unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 void sig_handler(int sig_no) {
 	if (sig_no == SIGINT) {
 		printf("CTRL-C pressed -- goodbye\n");
-		cleanup();
+		kys=1;
 		return;
 	}
 }
@@ -926,6 +926,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			for (o = 0; o < bars; o++) {
 				flastd[o] = f[o];
 			}
+			
+			if(kys) {
+				resizeWindow=1;
+				reloadConf=1;
+			}
 
 			//checking if audio thread has exited unexpectedly
 			if(audio.terminate == 1) {
@@ -956,6 +961,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
    
   cleanup();
 
+	if(kys) exit(EXIT_SUCCESS);
+	
 	//fclose(fp);
 	}
 }
