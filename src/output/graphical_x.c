@@ -200,7 +200,8 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	if(set_win_props) {
 		xavaXWMHints.flags = InputHint | StateHint;
 		xavaXWMHints.initial_state = NormalState;
-		xavaXClassHint.res_name = (char *)"Xava";
+		xavaXClassHint.res_name = (char *)"XAVA";
+		xavaXClassHint.res_class = (char *)"XAVA";
 		XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, argv, argc, NULL, &xavaXWMHints, &xavaXClassHint);
 	}
 
