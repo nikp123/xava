@@ -7,6 +7,9 @@
 #include <X11/XKBlib.h>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xfixes.h>
+#ifdef GLX
+#include <X11/extensions/Xrender.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +33,24 @@ Atom wm_delete_window, wmState, fullScreen, mwmHintsProperty, wmStateBelow;
 XClassHint xavaXClassHint;
 XWMHints xavaXWMHints;
 XEvent xev;
+
+#ifdef GLX
+static int VisData[] = {
+GLX_RENDER_TYPE, GLX_RGBA_BIT,
+GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+GLX_DOUBLEBUFFER, True,
+GLX_RED_SIZE, 8,
+GLX_GREEN_SIZE, 8,
+GLX_BLUE_SIZE, 8,
+GLX_ALPHA_SIZE, 8,
+GLX_DEPTH_SIZE, 16,
+None
+};
+static XRenderPictFormat *pict_format;
+
+static GLXFBConfig *fbconfigs, fbconfig;
+static int numfbconfigs;
+#endif
 
 
 // mwmHints helps us comunicate with the window manager
@@ -143,7 +164,26 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	calculate_win_pos(&windowX, &windowY, w, h, xavaXScreen->width, xavaXScreen->height, windowAlignment);
 	
 	// 32 bit color means alpha channel support
+  #ifdef GLX
+	fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
+  fbconfig = 0;
+  for(int i = 0; i<numfbconfigs; i++) {
+    XVisualInfo *visInfo = glXGetVisualFromFBConfig(xavaXDisplay, fbconfigs[i]);
+   	if(!visInfo)	continue;
+		else xavaVInfo = *visInfo;
+
+    pict_format = XRenderFindVisualFormat(xavaXDisplay, xavaVInfo.visual);
+    if(!pict_format)
+      continue;
+
+    fbconfig = fbconfigs[i];
+    if(pict_format->direct.alphaMask > 0 && transparentFlag) {
+      break;
+    }
+  }
+	#else
 	XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, transparentFlag ? 32 : 24, TrueColor, &xavaVInfo);
+	#endif
 		xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 		xavaXColormap = xavaAttr.colormap; 
 		calculateColors(color, bcolor, bgcol, col);
@@ -423,6 +463,7 @@ void draw_graphical_x(int window_height, int bars_count, int bar_width, int bar_
 		#ifdef GLX
 		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, (!transparentFlag)*1.0); // TODO BG transparency
 		glClear(GL_COLOR_BUFFER_BIT);
+
 		#endif
 	} else {
 		if(gradient&&!gradientBox&&transparentFlag) render_gradient_x(window_height, bar_width, foreground_opacity); 
