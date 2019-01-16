@@ -1,7 +1,8 @@
-#include "graphical_win.h"
-#include "graphical.h"
 #include <stdio.h>
 #include <time.h>
+#include "graphical_win.h"
+#include "graphical.h"
+#include "../config.h"
 
 const char szAppName[] = "XAVA";
 const char wcWndName[] = "XAVA";
@@ -12,10 +13,7 @@ HMODULE xavaWinModule;
 WNDCLASSEX xavaWinClass;	// same thing as window classes in Xlib
 HDC xavaWinFrame;
 HGLRC xavaWinGLFrame;
-unsigned int fgcolor, bgcolor;
-unsigned int *gradientColor, grad = 0;
-unsigned int shadowColor, shadow = 0;
-double opacity[2] = {1.0, 1.0};
+unsigned int *gradientColor;
 
 LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
     switch(msg) {
@@ -128,17 +126,17 @@ unsigned char CreateHGLRC(HWND hWnd) {
    return TRUE;
 }
 
-void resize_framebuffer(int width,int height) {
-	glViewport(0, 0, (double)width, (double)height);
+void resize_framebuffer() {
+	glViewport(0, 0, p.w, p.h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	
-	glOrtho(0, (double)width, 0, (double)height, -1, 1);
+	glOrtho(0, p.w, 0, p.h, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
 
-int init_window_win(char *color, char *bcolor, double foreground_opacity, int col, int bgcol, int gradient_count, char **gradient_colors, unsigned int shdw, unsigned int shdw_col, int w, int h) {
+int init_window_win() {
 
 	// get handle
 	xavaWinModule = GetModuleHandle(NULL);
@@ -153,45 +151,46 @@ int init_window_win(char *color, char *bcolor, double foreground_opacity, int co
 	// get window size etc..
 	int screenWidth, screenHeight;
 	GetDesktopResolution(&screenWidth, &screenHeight);
+	
 	// adjust window position etc...
 	if(!strcmp(windowAlignment, "top")){
-		windowX = (screenWidth - w) / 2 + windowX;
+		windowX = (screenWidth - p.w) / 2 + windowX;
 	}else if(!strcmp(windowAlignment, "bottom")){
-		windowX = (screenWidth - w) / 2 + windowX;
-		windowY = (screenHeight - h) + (-1*windowY);
+		windowX = (screenWidth - p.w) / 2 + windowX;
+		windowY = (screenHeight - p.h) + (-1*windowY);
 	}else if(!strcmp(windowAlignment, "top_left")){
 		// Nothing to do here :P
 	}else if(!strcmp(windowAlignment, "top_right")){
-		windowX = (screenHeight - w) + (-1*windowX);
+		windowX = (screenHeight - p.w) + (-1*windowX);
 	}else if(!strcmp(windowAlignment, "left")){
-		windowY = (screenHeight - h) / 2;
+		windowY = (screenHeight - p.h) / 2;
 	}else if(!strcmp(windowAlignment, "right")){
-		windowX = (screenWidth - w) + (-1*windowX);
-		windowY = (screenHeight - h) / 2 + windowY;
+		windowX = (screenWidth - p.w) + (-1*windowX);
+		windowY = (screenHeight - p.h) / 2 + windowY;
 	}else if(!strcmp(windowAlignment, "bottom_left")){
-		windowY = (screenHeight - h) + (-1*windowY);
+		windowY = (screenHeight - p.h) + (-1*windowY);
 	}else if(!strcmp(windowAlignment, "bottom_right")){
-		windowX = (screenWidth - w) + (-1*windowX);
-		windowY = (screenHeight - h) + (-1*windowY);
+		windowX = (screenWidth - p.w) + (-1*windowX);
+		windowY = (screenHeight - p.h) + (-1*windowY);
 	}else if(!strcmp(windowAlignment, "center")){
-		windowX = (screenWidth - w) / 2 + windowX;
-		windowY = (screenHeight - h) / 2 + windowY;
+		windowX = (screenWidth - p.w) / 2 + windowX;
+		windowY = (screenHeight - p.h) / 2 + windowY;
 	}
 	// Some error checking
 	#ifdef DEBUG
-		if(windowX > screenWidth - w) printf("Warning: Screen out of bounds (X axis)!");
-		if(windowY > screenHeight - h) printf("Warning: Screen out of bounds (Y axis)!");
+		if(windowX > screenWidth - p.w) printf("Warning: Screen out of bounds (X axis)!");
+		if(windowY > screenHeight - p.h) printf("Warning: Screen out of bounds (Y axis)!");
 	#endif
 	
 	// create window
-	xavaWinWindow = CreateWindowEx(interactable ? WS_EX_APPWINDOW : WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST, szAppName, wcWndName, WS_VISIBLE | WS_POPUP, windowX, windowY, w, h, NULL, NULL, xavaWinModule, NULL);
+	xavaWinWindow = CreateWindowEx(interactable ? WS_EX_APPWINDOW : WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST, szAppName, wcWndName, WS_VISIBLE | WS_POPUP, windowX, windowY, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
 	if(xavaWinWindow == NULL) {
 		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
 	// transparency fix
 	SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
-	SetWindowPos(xavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_TOPMOST, windowX, windowY, w, h, SWP_SHOWWINDOW);
+	SetWindowPos(xavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_TOPMOST, windowX, windowY, p.w, p.h, SWP_SHOWWINDOW);
 
 	
 	// we need the desktop window manager to enable transparent background (from Vista ...onward)
@@ -207,88 +206,60 @@ int init_window_win(char *color, char *bcolor, double foreground_opacity, int co
 	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);	
 	
 	// process colors
-	if(!strcmp(color, "default")) {
+	if(!strcmp(p.color, "default")) {
 		// instead of messing around with average colors like on Xlib
 		// we'll just get the accent color (which is way easier and an better thing to do)
 
 		WINBOOL opaque = 1;
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
-		fgcolor = fancyVariable;
+		p.col = fancyVariable;
 		if(!SUCCEEDED(error)) {
 			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
 			return 1;
 		}
-	} else if(color[0] != '#') {
-		switch(col)
-		{
-			case 0: fgcolor = 0x000000; break;
-			case 1: fgcolor = 0xFF0000; break;
-			case 2: fgcolor = 0x00FF00; break;
-			case 3: fgcolor = 0xFFFF00; break;
-			case 4: fgcolor = 0x0000FF; break;
-			case 5: fgcolor = 0xFF00FF; break;
-			case 6: fgcolor = 0x00FFFF; break;
-			case 7: fgcolor = 0xFFFFFF; break;
-			default: MessageBox(NULL, "Missing color.\nPlease send a bug report!", "Error", MB_OK | MB_ICONERROR); return 1;
-		}
-	} else if(color[0] == '#') sscanf(color, "#%x", &fgcolor);
+	} else if(p.color[0] != '#')
+		p.col = definedColors[p.col];
+	else sscanf(p.color, "#%x", &p.col);
 
-	if(!strcmp(bcolor, "default")) {
+	if(!strcmp(p.bcolor, "default")) {
 		// instead of messing around with average colors like on Xlib
 		// we'll just get the accent color (which is way easier and a better thing to do)
 
 		WINBOOL opaque = 1;
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
-		bgcolor = fancyVariable;
+		p.bgcol = fancyVariable;
 		if(!SUCCEEDED(error)) {
 			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
 			return 1;
 		}
-	} else if(bcolor[0] != '#') {
-		switch(bgcol)
-		{
-			case 0: bgcolor = 0x000000; break;
-			case 1: bgcolor = 0xFF0000; break;
-			case 2: bgcolor = 0x00FF00; break;
-			case 3: bgcolor = 0xFFFF00; break;
-			case 4: bgcolor = 0x0000FF; break;
-			case 5: bgcolor = 0xFF00FF; break;
-			case 6: bgcolor = 0x00FFFF; break;
-			case 7: bgcolor = 0xFFFFFF; break;
-			default: MessageBox(NULL, "Missing color.\nPlease send a bug report!", "Error", MB_OK | MB_ICONERROR); return 1;
-		}
-	} else if(bcolor[0] == '#') sscanf(bcolor, "#%x", &fgcolor);
+	} else if(p.bcolor[0] != '#') 
+		p.bgcol = definedColors[p.bgcol];
+	else sscanf(p.bcolor, "#%x", &p.bgcol);
 	
 	// parse all of the values
-	grad = gradient_count;
-	gradientColor = malloc(sizeof(int)*grad);
-	for(int i=0; i<grad; i++) {
-		sscanf(gradient_colors[i], "#%06x", &gradientColor[i]);
-	}
-	shadow = shdw;
-	shadowColor = shdw_col;
-	opacity[0] = foreground_opacity;
-	//opacity[1] = ;
-
+	gradientColor = malloc(sizeof(int)*p.gradient_count);
+	for(int i=0; i<p.gradient_count; i++)
+		sscanf(p.gradient_colors[i], "#%06x", &gradientColor[i]);
+	
 	// set up opengl and stuff
 	init_opengl_win();
 	return 0;
 }
 
-void apply_win_settings(int w, int h, int framerate) {
-	resize_framebuffer(w, h);
+void apply_win_settings() {
+	resize_framebuffer(p.w, p.h);
 	ReleaseDC(xavaWinWindow, xavaWinFrame);
 
-	if(!transparentFlag) glClearColor(((bgcolor>>16)%256)/255.0, ((bgcolor>>8)%256)/255.0,(bgcolor%256)/255.0, opacity[1]);
+	if(!transparentFlag) glClearColor(((p.bgcol>>16)%256)/255.0, ((p.bgcol>>8)%256)/255.0,(p.bgcol%256)/255.0, 0.0f);
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = wglGetProcAddress("wglSwapIntervalEXT"); 
-	wglSwapIntervalEXT(framerate);
+	wglSwapIntervalEXT(p.framerate);
 	return;
 }
 
-int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int *w, int *h) {
-	while(!*should_reload && PeekMessage(&xavaWinEvent, NULL, WM_KEYFIRST, WM_MOUSELAST, PM_REMOVE)) {	
+int get_window_input_win() {
+	while(PeekMessage(&xavaWinEvent, NULL, WM_KEYFIRST, WM_MOUSELAST, PM_REMOVE)) {	
 		TranslateMessage(&xavaWinEvent);
 		DispatchMessage(&xavaWinEvent);	// windows handles the rest
 		switch(xavaWinEvent.message) {
@@ -298,28 +269,27 @@ int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int
 					// resizeTerminal = 2
 					// bail = -1
 					case 'A':
-						(*bs)++;
+						p.bs++;
 						return 2;
 					case 'S':
-						if((*bs) > 0) (*bs)--;
+						if(p.bs > 0) p.bs--;
 						return 2;
 					case 'F': // fullscreen
 						//fs = !fs;
 						return 2;
 					case VK_UP:
-						(*sens) *= 1.05;
+						p.sens *= 1.05;
 						break;
 					case VK_DOWN:
-						(*sens) *= 0.95;
+						p.sens *= 0.95;
 						break;
 					case VK_LEFT:
-						(*bw)++;
+						p.bw++;
 						return 2;
 					case VK_RIGHT:
-						if ((*bw) > 1) (*bw)--;
+						if (p.bw > 1) p.bw--;
 						return 2;
 					case 'R': //reload config
-						(*should_reload) = 1;
 						return 1;
 					case 'Q':
 						return -1;
@@ -327,11 +297,11 @@ int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int
 						return -1;
 					case 'B':
 						if(transparentFlag) break;
-						bgcolor = (rand()<<16)+rand();
+						p.bgcol = (rand()<<16)+rand();
 						return 3;
 					case 'C':
-						if(grad) break;
-						fgcolor = (rand()<<16)+rand();
+						if(p.gradient) break;
+						p.col = (rand()<<16)+rand();
 						return 3;
 			    default: break;
 				}
@@ -346,8 +316,8 @@ int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int
 			{
 				RECT rect;
 				if(GetWindowRect(xavaWinWindow, &rect)) {
-					(*w) = rect.right - rect.left;
-					(*h) = rect.bottom - rect.top;
+					p.w = rect.right - rect.left;
+					p.h = rect.bottom - rect.top;
 				}
 				return 2;
 			}
@@ -356,23 +326,23 @@ int get_window_input_win(int *should_reload, int *bs, double *sens, int *bw, int
 	return 0;
 }
 
-void draw_graphical_win(int window_height, int bars_count, int bar_width, int bar_spacing, int rest, int gradient, int f[200]) {
+void draw_graphical_win(int bars, int rest, int f[200]) {
 	HDC hdc = GetDC(xavaWinWindow);
         wglMakeCurrent(hdc, xavaWinGLFrame);
 
 	// clear color and calculate pixel witdh in double
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-	float glColors[8] = {((fgcolor>>16)%256)/255.0, ((fgcolor>>8)%256)/255.0, (fgcolor%256)/255.0, opacity[0], ((unsigned int)shadowColor>>24)%256/255.0,
-		 ((unsigned int)shadowColor>>16)%256/255.0, ((unsigned int)shadowColor>>8)%256/255.0, (unsigned int)shadowColor%256/255.0};
-	float gradColors[24] = {0.0};
-	for(int i=0; i<grad; i++) {
+	double glColors[8] = {((p.col>>16)%256)/255.0, ((p.col>>8)%256)/255.0, (p.col%256)/255.0, p.foreground_opacity, ((unsigned int)p.shadow_color>>24)%256/255.0,
+		 ((unsigned int)p.shadow_color>>16)%256/255.0, ((unsigned int)p.shadow_color>>8)%256/255.0, (unsigned int)p.shadow_color%256/255.0};
+	double gradColors[24] = {0.0};
+	for(int i=0; i<p.gradient_count; i++) {
 		gradColors[i*3] = ((gradientColor[i]>>16)%256)/255.0;
 		gradColors[i*3+1] = ((gradientColor[i]>>8)%256)/255.0;
 		gradColors[i*3+2] = (gradientColor[i]%256)/255.0;;
 	}
 
-	if(drawGLBars(rest, bar_width, bar_spacing, bars_count, window_height, transparentFlag ? shadow : 0, gradient?grad:0, glColors, gradColors, f)) exit(EXIT_FAILURE);	
+	if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);	
 	glFlush();
 
 	// swap buffers	
@@ -383,7 +353,7 @@ void draw_graphical_win(int window_height, int bars_count, int bar_width, int ba
 void cleanup_graphical_win(void) {
 	free(gradientColor);
 	wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(xavaWinGLFrame);
+	wglDeleteContext(xavaWinGLFrame);
 	ReleaseDC(xavaWinWindow, xavaWinFrame);
 	DestroyWindow(xavaWinWindow);
 	UnregisterClass(szAppName, xavaWinModule);	

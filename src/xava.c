@@ -495,7 +495,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	#endif
 
 	#ifdef WIN
-	if(p.om == 7) if(init_window_win(p.color, p.bcolor, p.foreground_opacity, p.col, p.bgcol, p.gradient_count, p.gradient_colors, p.shdw, p.shdw_col, w, h)) exit(EXIT_FAILURE);
+	if(p.om == 7) if(init_window_win()) exit(EXIT_FAILURE);
 	#endif
 
 	while  (!reloadConf) {//jumbing back to this loop means that you resized the screen
@@ -564,7 +564,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		if(p.om == 6) apply_window_settings_sdl();
 		#endif
 		#ifdef WIN
-		if(p.om == 7) apply_win_settings(w, h, p.framerate);
+		if(p.om == 7) apply_win_settings();
 		#endif
 		
  		//handle for user setting too many bars
@@ -652,10 +652,10 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		bool resizeWindow = false;
 
 		while  (!resizeWindow) {
+			if(should_reload) break;
 			#ifdef XLIB
 			if(p.om == 5)
 			{
-				if(should_reload) break;
 				switch(get_window_input_x())
 				{
 					case -1:
@@ -699,12 +699,14 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			#ifdef WIN
 			if(p.om == 7)
 			{
-				switch(get_window_input_win(&should_reload, &p.bs, &p.sens, &p.bw, &w, &h))
+				switch(get_window_input_win())
 				{
 					case -1:
 						cleanup(); 
 						return EXIT_SUCCESS;
-					case 1: break;
+					case 1:
+						should_reload = 1;
+						break;
 					case 2:
 						resizeWindow = TRUE;
 						break;
@@ -911,7 +913,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						#ifdef WIN
 						if(reloadConf) break;
 						
-						draw_graphical_win(h, bars, p.bw, p.bs, rest, p.gradient, f);
+						draw_graphical_win(bars, rest, f);
 						break;
 						#endif
 					}
