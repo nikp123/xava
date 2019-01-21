@@ -254,7 +254,7 @@ void apply_win_settings() {
 
 	if(!transparentFlag) glClearColor(((p.bgcol>>16)%256)/255.0, ((p.bgcol>>8)%256)/255.0,(p.bgcol%256)/255.0, 0.0f);
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = wglGetProcAddress("wglSwapIntervalEXT"); 
-	wglSwapIntervalEXT(p.framerate);
+	wglSwapIntervalEXT(0);
 	return;
 }
 
