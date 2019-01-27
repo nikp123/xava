@@ -1,6 +1,6 @@
 void cleanup_graphical_sdl(void);
-int init_window_sdl(int *col, int *bgcol, char *color, char *bcolor, int gradient, char **gradient_colors, int gradient_num, int w, int h);
-void clear_screen_sdl(int bgcol);
-void apply_window_settings_sdl(int bgcol, int *w, int *h);
-int get_window_input_sdl(int *bs, int *bw, double *sens, int *col, int *bgcol, int *w, int *h, int gradient);
-void draw_graphical_sdl(int bars, int rest, int bw, int bs, int *f, int *flastd, int col, int bgcol, int gradient, int h);
+int init_window_sdl(void);
+void clear_screen_sdl(void);
+void apply_window_settings_sdl(void);
+int get_window_input_sdl(void);
+void draw_graphical_sdl(int bars, int rest, int *f, int *flastd);

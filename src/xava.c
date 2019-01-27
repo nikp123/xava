@@ -89,7 +89,6 @@ long oldTime; // used to calculate frame times
 
 int rc;
 int M;
-int output_mode;
 
 // whether we should reload the config or not
 int should_reload = 0;
@@ -97,7 +96,7 @@ int should_reload = 0;
 // general: cleanup
 void cleanup()
 {
-	switch(output_mode) {
+	switch(p.om) {
 		#ifdef XLIB
 		case 5:
 			cleanup_graphical_x();
@@ -262,7 +261,7 @@ int main(int argc, char **argv)
 	int flast[200];
 	int flastd[200];
 	int sleep = 0;
-	int i, n, o, height, h, w, c, rest, inAtty, silence;
+	int i, n, o, height, c, rest, inAtty, silence;
 	#if defined(__unix__)||defined(__APPLE__)
 		int fp, fptest;
 	#endif
@@ -303,7 +302,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	
 	//int maxvalue = 0;
 
-	struct config_params p;
 	struct audio_data audio;
 
 	configPath[0] = '\0';
@@ -363,9 +361,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	//config: load
 	load_config(configPath, supportedInput, (void *)&p);
-	w = p.w;
-	h = p.h;
-  output_mode = p.om;
 
 	//input: init
 	audio.source = malloc(1 +  strlen(p.audio_source));
@@ -491,16 +486,16 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	// open XLIB window and set everything up
 	#ifdef XLIB
-	if(output_mode == 5) if(init_window_x(p.color, p.bcolor, p.col, p.bgcol, p.set_win_props, argv, argc, p.gradient, p.gradient_colors, p.gradient_count, p.shdw, p.shdw_col, w, h)) exit(EXIT_FAILURE);
+	if(p.om == 5) if(init_window_x(argv, argc)) exit(EXIT_FAILURE);
 	#endif
 
 	// setting up sdl
 	#ifdef SDL
-	if(output_mode == 6) if(init_window_sdl(&p.col, &p.bgcol, p.color, p.bcolor, p.gradient, p.gradient_colors, p.gradient_count, w, h)) exit(EXIT_FAILURE);
+	if(p.om == 6) if(init_window_sdl()) exit(EXIT_FAILURE);
 	#endif
 
 	#ifdef WIN
-	if(output_mode == 7) if(init_window_win(p.color, p.bcolor, p.foreground_opacity, p.col, p.bgcol, p.gradient_count, p.gradient_colors, p.shdw, p.shdw_col, w, h)) exit(EXIT_FAILURE);
+	if(p.om == 7) if(init_window_win(p.color, p.bcolor, p.foreground_opacity, p.col, p.bgcol, p.gradient_count, p.gradient_colors, p.shdw, p.shdw_col, w, h)) exit(EXIT_FAILURE);
 	#endif
 
 	while  (!reloadConf) {//jumbing back to this loop means that you resized the screen
@@ -513,16 +508,16 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			f[i] = 0;
 		}
 
-		height = (h - 1) * (1+7*(output_mode==4));
+		height = (p.h - 1) * (1+7*(p.om==4));
 
 		#if defined(__unix__)||defined(__APPLE__)
 		// output open file/fifo for raw output
-		if (output_mode == 4) {
+		if (p.om == 4) {
 
 			if (strcmp(p.raw_target,"/dev/stdout") != 0) {
 
 				//checking if file exists
-				if( access( p.raw_target, F_OK ) != -1 ) {
+				if(access(p.raw_target, F_OK) != -1) {
 					//testopening in case it's a fifo
 					fptest = open(p.raw_target, O_RDONLY | O_NONBLOCK, 0644);
 	
@@ -551,7 +546,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			printf("open file %s for writing raw ouput\n",p.raw_target);
 
             //width must be hardcoded for raw output.
-			w = 200;
+			p.w = 200;
 
     		if (strcmp(p.data_format, "binary") == 0) {
                 height = pow(2, p.bit_format) - 1;
@@ -563,25 +558,24 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		// draw X11 background
 		#ifdef XLIB
-		if(output_mode == 5) apply_window_settings_x(&w, &h);
+		if(p.om == 5) apply_window_settings_x();
 		#endif
 		#ifdef SDL
-		if(output_mode == 6) apply_window_settings_sdl(p.bgcol, &w, &h);
+		if(p.om == 6) apply_window_settings_sdl();
 		#endif
 		#ifdef WIN
-		if(output_mode == 7) apply_win_settings(w, h, 
-p.framerate);
+		if(p.om == 7) apply_win_settings(w, h, p.framerate);
 		#endif
 		
  		//handle for user setting too many bars
 		if (p.fixedbars) {
 			p.autobars = 0;
-			if (p.fixedbars * p.bw + p.fixedbars * p.bs - p.bs > w) p.autobars = 1;
+			if (p.fixedbars * p.bw + p.fixedbars * p.bs - p.bs > p.w) p.autobars = 1;
 		}
 
 		//getting orignial numbers of barss incase of resize
 		if (p.autobars == 1)  {
-			bars = (w + p.bs) / (p.bw + p.bs);
+			bars = (p.w + p.bs) / (p.bw + p.bs);
 
 			//if (p.bs != 0) bars = (w - bars * p.bs + p.bs) / bw;
 		} else bars = p.fixedbars;
@@ -601,7 +595,7 @@ p.framerate);
 
 
 		//checks if there is stil extra room, will use this to center
-		rest = (w - bars * p.bw - bars * p.bs + p.bs) / 2;
+		rest = (p.w - bars * p.bw - bars * p.bs + p.bs) / 2;
 		if (rest < 0)rest = 0;
 
 		#ifdef DEBUG
@@ -659,14 +653,17 @@ p.framerate);
 
 		while  (!resizeWindow) {
 			#ifdef XLIB
-			if(output_mode == 5)
+			if(p.om == 5)
 			{
-				switch(get_window_input_x(&should_reload, &p.bs, &p.sens, &p.bw, &w, &h, p.color, p.bcolor, p.gradient))
+				if(should_reload) break;
+				switch(get_window_input_x())
 				{
 					case -1:
 						cleanup(); 
 						return EXIT_SUCCESS;
-					case 1: break;
+					case 1:
+						should_reload = 1;
+						break;
 					case 2:
 						adjust_x();	
 						resizeWindow = TRUE;
@@ -679,9 +676,9 @@ p.framerate);
 			}
 			#endif
 			#ifdef SDL
-			if(output_mode == 6) 
+			if(p.om == 6)
 			{
-				switch(get_window_input_sdl(&p.bs, &p.bw, &p.sens, &p.col, &p.bgcol, &w, &h, p.gradient))
+				switch(get_window_input_sdl())
 				{
 					case -1:
 						cleanup(); 
@@ -693,14 +690,14 @@ p.framerate);
 						resizeWindow = 1;
 						break;
 					case 3:
-						clear_screen_sdl(p.bgcol);
+						clear_screen_sdl();
 						memset(flastd, 0x00, sizeof(int)*200);
 						break;
 				}
 			}
 			#endif
 			#ifdef WIN
-			if(output_mode == 7)
+			if(p.om == 7)
 			{
 				switch(get_window_input_win(&should_reload, &p.bs, &p.sens, &p.bw, &w, &h))
 				{
@@ -860,7 +857,7 @@ p.framerate);
 			for (o = 0; o < bars; o++) {
 				if (f[o] < 1) {
 					f[o] = 1;
-					if (output_mode == 4) f[o] = 0;
+					if (p.om == 4) f[o] = 0;
 				}
 				//if(f[o] > maxvalue) maxvalue = f[o];
 			}
@@ -882,7 +879,7 @@ p.framerate);
 			
 			// output: draw processed input
 			#ifndef DEBUG
-				switch (output_mode) {
+				switch (p.om) {
 					case 4:
 						#if defined(__unix__)||defined(__APPLE__)
 						rc = print_raw_out(bars, fp, p.is_bin, 
@@ -896,7 +893,7 @@ p.framerate);
 						// this prevents invalid access
 						if(should_reload||reloadConf) break;
 						
-						draw_graphical_x(h, bars, p.bw, p.bs, rest, p.gradient, f, flastd, p.foreground_opacity);
+						draw_graphical_x(bars, rest, f, flastd);
 						break;
 						#endif
 					}
@@ -905,7 +902,7 @@ p.framerate);
 						#ifdef SDL
 						if(reloadConf) break;
 						
-						draw_graphical_sdl(bars, rest, p.bw, p.bs, f, flastd, p.col, p.bgcol, p.gradient, h);
+						draw_graphical_sdl(bars, rest, f, flastd);
 						break;
 						#endif
 					}

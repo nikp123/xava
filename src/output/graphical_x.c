@@ -15,10 +15,10 @@
 #include <string.h>
 #include <time.h>
 #include "graphical.h"
+#include "../config.h"
 
 Pixmap gradientBox = 0;
 XColor xbgcol, xcol, *xgrad;
-int gradcount;
 
 XEvent xavaXEvent;
 Colormap xavaXColormap;
@@ -62,9 +62,7 @@ struct mwmHints {
     unsigned long status;
 };
 
-int xavaXScreenNumber, shadow, shadow_color, GLXmode;
-static unsigned int defaultColors[8] = {0x00000000,0x00FF0000,0x0000FF00,0x00FFFF00,0x000000FF,0x00FF00FF,0x0000FFFF,0x00FFFFFF};
-
+int xavaXScreenNumber, GLXmode;
 
 // Some window manager definitions
 enum {
@@ -99,11 +97,11 @@ int XGLInit() {
 }
 #endif
 
-void calculateColors(char *color, char *bcolor, int bgcol, int col) {
+void calculateColors() {
 	char tempColorStr[8];
 	
 	// Generate a sum of colors
-	if(!strcmp(color, "default")) {
+	if(!strcmp(p.color, "default")) {
 		unsigned long redSum = 0, greenSum = 0, blueSum = 0;
 		XColor tempColor;
 		int xPrecision = 20, yPrecision = 20;	
@@ -130,26 +128,22 @@ void calculateColors(char *color, char *bcolor, int bgcol, int col) {
 
 		XDestroyImage(background);
 		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(redSum), (unsigned char)(greenSum), (unsigned char)(blueSum));
-	} else if(color[0] != '#') 
-		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)((defaultColors[col]>>16)%256), (unsigned char)((defaultColors[col]>>8)%256), (unsigned char)(defaultColors[col]));
+	} else if(p.color[0] != '#')
+		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)((definedColors[p.col]>>16)%256), (unsigned char)((definedColors[p.col]>>8)%256), (unsigned char)(definedColors[p.col]));
 	
-	XParseColor(xavaXDisplay, xavaXColormap, color[0]=='#' ? color : tempColorStr, &xcol);
+	XParseColor(xavaXDisplay, xavaXColormap, p.color[0]=='#' ? p.color:tempColorStr, &xcol);
 	XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
 
 	
-	if(bcolor[0] != '#')
-		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(defaultColors[bgcol]>>16), (unsigned char)(defaultColors[bgcol]>>8), (unsigned char)(defaultColors[bgcol]));
+	if(p.bcolor[0] != '#')
+		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(definedColors[p.bgcol]>>16), (unsigned char)(definedColors[p.bgcol]>>8), (unsigned char)(definedColors[p.bgcol]));
 	
-	XParseColor(xavaXDisplay, xavaXColormap, bcolor[0]=='#' ? bcolor : tempColorStr, &xbgcol);
+	XParseColor(xavaXDisplay, xavaXColormap, p.bcolor[0]=='#' ? p.bcolor : tempColorStr, &xbgcol);
 	XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
 }
 
-int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_props, char **argv, int argc, int gradient, char **gradient_colors, int gradient_count, unsigned int shdw, unsigned int shdw_col, int w, int h)
+int init_window_x(char **argv, int argc)
 {
-	// Pass the shadow values
-	shadow = shdw;
-	shadow_color = shdw_col;
-	
 	// connect to the X server
 	xavaXDisplay = XOpenDisplay(NULL);
 	if(xavaXDisplay == NULL) {
@@ -161,43 +155,42 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	xavaXScreenNumber = DefaultScreen(xavaXDisplay);
 	xavaXRoot = RootWindow(xavaXDisplay, xavaXScreenNumber);
 	
-	calculate_win_pos(&windowX, &windowY, w, h, xavaXScreen->width, xavaXScreen->height, windowAlignment);
+	calculate_win_pos(&windowX, &windowY, p.w, p.h, xavaXScreen->width, xavaXScreen->height, windowAlignment);
 	
 	// 32 bit color means alpha channel support
-  #ifdef GLX
+	#ifdef GLX
 	fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
-  fbconfig = 0;
-  for(int i = 0; i<numfbconfigs; i++) {
-    XVisualInfo *visInfo = glXGetVisualFromFBConfig(xavaXDisplay, fbconfigs[i]);
-   	if(!visInfo)	continue;
+	fbconfig = 0;
+	for(int i = 0; i<numfbconfigs; i++) {
+		XVisualInfo *visInfo = glXGetVisualFromFBConfig(xavaXDisplay, fbconfigs[i]);
+		if(!visInfo) continue;
 		else xavaVInfo = *visInfo;
 
-    pict_format = XRenderFindVisualFormat(xavaXDisplay, xavaVInfo.visual);
-    if(!pict_format)
-      continue;
+		pict_format = XRenderFindVisualFormat(xavaXDisplay, xavaVInfo.visual);
+		if(!pict_format) continue;
 
-    fbconfig = fbconfigs[i];
-    if(pict_format->direct.alphaMask > 0 && transparentFlag) {
-      break;
-    }
-  }
+		fbconfig = fbconfigs[i];
+
+		if(pict_format->direct.alphaMask > 0 && transparentFlag) break;
+	}
 	#else
-	XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, transparentFlag ? 32 : 24, TrueColor, &xavaVInfo);
+		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, transparentFlag ? 32 : 24, TrueColor, &xavaVInfo);
 	#endif
-		xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
-		xavaXColormap = xavaAttr.colormap; 
-		calculateColors(color, bcolor, bgcol, col);
-		xavaAttr.background_pixel = transparentFlag ? 0 : xbgcol.pixel;
-		xavaAttr.border_pixel = xcol.pixel;
+
+	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
+	xavaXColormap = xavaAttr.colormap;
+	calculateColors();
+	xavaAttr.background_pixel = transparentFlag ? 0 : xbgcol.pixel;
+	xavaAttr.border_pixel = xcol.pixel;
 	
-	xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, windowX, windowY, w, h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, CWEventMask | CWColormap | CWBorderPixel | CWBackPixel, &xavaAttr);	
+	xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, windowX, windowY, (unsigned int)p.w, (unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, CWEventMask | CWColormap | CWBorderPixel | CWBackPixel, &xavaAttr);
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
 	// The "X" button is handled by the window manager and not Xorg, so we set up a Atom
 	wm_delete_window = XInternAtom (xavaXDisplay, "WM_DELETE_WINDOW", 0);
 	XSetWMProtocols(xavaXDisplay, xavaXWindow, &wm_delete_window, 1);
 	
-	if(set_win_props) {
+	if(p.set_win_props) {
 		xavaXWMHints.flags = InputHint | StateHint;
 		xavaXWMHints.initial_state = NormalState;
 		xavaXClassHint.res_name = (char *)"XAVA";
@@ -214,15 +207,14 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	XMapWindow(xavaXDisplay, xavaXWindow);
 	xavaXGraphics = XCreateGC(xavaXDisplay, xavaXWindow, 0, 0);
 	
-	if(gradient) {
-		xgrad = malloc((gradient_count+1)*sizeof(XColor));
-		XParseColor(xavaXDisplay, xavaXColormap, gradient_colors[0], &xgrad[gradient_count]);
-		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[gradient_count]);
-		for(int i=0; i<gradient_count; i++) {
-			XParseColor(xavaXDisplay, xavaXColormap, gradient_colors[i], &xgrad[i]);
+	if(p.gradient) {
+		xgrad = malloc((p.gradient_count+1)*sizeof(XColor));
+		XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[0], &xgrad[p.gradient_count]);
+		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p.gradient_count]);
+		for(unsigned int i=0; i<p.gradient_count; i++) {
+			XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[i], &xgrad[i]);
 			XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[i]);
 		}
-		gradcount=gradient_count;
 	}
 	
 	// Set up atoms
@@ -269,18 +261,18 @@ int init_window_x(char *color, char *bcolor, int col, int bgcol, int set_win_pro
 	return 0;
 }
 
-void clear_screen_x(void) {
+void clear_screen_x() {
 	if(GLXmode) return;	
 	XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
 	XClearWindow(xavaXDisplay, xavaXWindow);
 }
 
-int apply_window_settings_x(int *w, int *h)
+int apply_window_settings_x()
 {
 	// Gets the monitors resolution
 	if(fs){
-		(*w) = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
-		(*h) = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
+		p.w = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
+		p.h = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
 	}
 
 	//Atom xa = XInternAtom(xavaXDisplay, "_NET_WM_WINDOW_TYPE", 0); May be used in the future
@@ -310,11 +302,11 @@ int apply_window_settings_x(int *w, int *h)
 	// do the usual stuff :P
 	if(GLXmode){	
 		#ifdef GLX
-		glViewport(0, 0, (double)*w, (double)*h);
+		glViewport(0, 0, p.w, p.h);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		
-		glOrtho(0, (double)*w, 0, (double)*h, -1, 1);
+		glOrtho(0, (double)p.w, 0, (double)p.h, -1, 1);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		#endif
@@ -330,8 +322,8 @@ int apply_window_settings_x(int *w, int *h)
 	return 0;
 }
 
-int get_window_input_x(int *should_reload, int *bs, double *sens, int *bw, int *w, int *h, char *color, char *bcolor, int gradient) {
-	while(!*should_reload && XPending(xavaXDisplay)) {
+int get_window_input_x() {
+	while(XPending(xavaXDisplay)) {
 		XNextEvent(xavaXDisplay, &xavaXEvent);
 		
 		switch(xavaXEvent.type) {
@@ -344,28 +336,27 @@ int get_window_input_x(int *should_reload, int *bs, double *sens, int *bw, int *
 					// resizeTerminal = 2
 					// bail = -1
 					case XK_a:
-						(*bs)++;
+						p.bs++;
 						return 2;
 					case XK_s:
-						if((*bs) > 0) (*bs)--;
+						if(p.bs > 0) p.bs--;
 						return 2;
 					case XK_f: // fullscreen
 						fs = !fs;
 						return 2;
 					case XK_Up:
-						(*sens) *= 1.05;
+						p.sens *= 1.05;
 						break;
 					case XK_Down:
-						(*sens) *= 0.95;
+						p.sens *= 0.95;
 						break;
 					case XK_Left:
-						(*bw)++;
+						p.bw++;
 						return 2;
 					case XK_Right:
-						if ((*bw) > 1) (*bw)--;
+						if (p.bw > 1) p.bw--;
 						return 2;
 					case XK_r: //reload config
-						(*should_reload) = 1;
 						return 1;
 					case XK_q:
 						return -1;
@@ -373,18 +364,18 @@ int get_window_input_x(int *should_reload, int *bs, double *sens, int *bw, int *
 						return -1;
 					case XK_b:
 						if(transparentFlag) break;
-						if(bcolor[0] == '#' && strlen(bcolor) == 7) free(bcolor);
-						bcolor = (char *) malloc(8*sizeof(char));
-						sprintf(bcolor, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
-						XParseColor(xavaXDisplay, xavaXColormap, bcolor, &xbgcol);
+						if(p.bcolor[0] == '#' && strlen(p.bcolor) == 7) free(p.bcolor);
+						p.bcolor = (char *) malloc(8*sizeof(char));
+						sprintf(p.bcolor, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
+						XParseColor(xavaXDisplay, xavaXColormap, p.bcolor, &xbgcol);
 						XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
 						return 3;
 					case XK_c:
-						if(gradient) break;
-						if(color[0] == '#' && strlen(color) == 7) free(color);
-						color = (char *) malloc(8*sizeof(char));
-						sprintf(color, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
-						XParseColor(xavaXDisplay, xavaXColormap, color, &xcol);
+						if(p.gradient) break;
+						if(p.color[0] == '#' && strlen(p.color) == 7) free(p.color);
+						p.color = (char *) malloc(8*sizeof(char));
+						sprintf(p.color, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
+						XParseColor(xavaXDisplay, xavaXColormap, p.color, &xcol);
 						XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
 						return 3;
 				}
@@ -395,10 +386,9 @@ int get_window_input_x(int *should_reload, int *bs, double *sens, int *bw, int *
 				// This is needed to track the window size
 				XConfigureEvent trackedXavaXWindow;
 				trackedXavaXWindow = xavaXEvent.xconfigure;
-				if((*w) != trackedXavaXWindow.width || (*h) != trackedXavaXWindow.height)
-				{
-					(*w) = trackedXavaXWindow.width;
-					(*h) = trackedXavaXWindow.height;
+				if(p.w != trackedXavaXWindow.width || p.h != trackedXavaXWindow.height) {
+					p.w = trackedXavaXWindow.width;
+					p.h = trackedXavaXWindow.height;
 					return 2;
 				}
 				break;
@@ -417,87 +407,84 @@ int get_window_input_x(int *should_reload, int *bs, double *sens, int *bw, int *
 	return 0;
 }
 
-int render_gradient_x(int window_height, int bar_width, double foreground_opacity) {
+int render_gradient_x() {
 	if(gradientBox != 0) XFreePixmap(xavaXDisplay, gradientBox);
 
-	gradientBox = XCreatePixmap(xavaXDisplay, xavaXWindow, bar_width, window_height, 32);
+	gradientBox = XCreatePixmap(xavaXDisplay, xavaXWindow, (unsigned int)p.bw, (unsigned int)p.h, 32);
 	// TODO: Error checks
 
-	for(int I = 0; I < window_height; I++) {
+	for(unsigned int I = 0; I < (unsigned int)p.h; I++) {
 		// don't touch +1.0/w_h at the end fixes some math problems
-		double step = (double)(I%(window_height/(gradcount-1)))/(double)(window_height/(gradcount-1))+2.0/window_height;
+		double step = (double)(I%((unsigned int)p.h/(p.gradient_count-1)))/(double)((unsigned int)p.h/(p.gradient_count-1))+2.0/p.h;
 
 		// gradients break compatibility with non ARGB displays.
 		// if you could fix this without allocating bilions of colors, please do so
 
-		int gcPhase = (gradcount-1)*I/window_height;
-		xgrad[gradcount].pixel ^= xgrad[gradcount].pixel; 	
+		unsigned int gcPhase = (p.gradient_count-1)*I/(unsigned int)p.h;
+		xgrad[p.gradient_count].pixel ^= xgrad[p.gradient_count].pixel;
 		if(xgrad[gcPhase].red != 0 || xgrad[gcPhase+1].red != 0) {
 			if(xgrad[gcPhase].red < xgrad[gcPhase+1].red) 
-				xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].red + ((xgrad[gcPhase+1].red - xgrad[gcPhase].red) * step)) / 256 << 16;
-			else xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].red - ((xgrad[gcPhase].red - xgrad[gcPhase+1].red) * step)) / 256 << 16;
+				xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].red + ((xgrad[gcPhase+1].red - xgrad[gcPhase].red) * step)) / 256 << 16;
+			else xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].red - ((xgrad[gcPhase].red - xgrad[gcPhase+1].red) * step)) / 256 << 16;
 		}
 		
 		if(xgrad[gcPhase].green != 0 || xgrad[gcPhase+1].green != 0) {
 			if(xgrad[gcPhase].green < xgrad[gcPhase+1].green) 
-				xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].green + ((xgrad[gcPhase+1].green - xgrad[gcPhase].green) * step)) / 256 << 8;
-			else xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].green - ((xgrad[gcPhase].green - xgrad[gcPhase+1].green) * step)) / 256 << 8;
+				xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].green + ((xgrad[gcPhase+1].green - xgrad[gcPhase].green) * step)) / 256 << 8;
+			else xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].green - ((xgrad[gcPhase].green - xgrad[gcPhase+1].green) * step)) / 256 << 8;
 		}
 		
 		if(xgrad[gcPhase].blue != 0 || xgrad[gcPhase+1].blue != 0) {
 			if(xgrad[gcPhase].blue < xgrad[gcPhase+1].blue) 
-				xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].blue + ((xgrad[gcPhase+1].blue - xgrad[gcPhase].blue) * step)) / 256;
-			else xgrad[gradcount].pixel |= (unsigned long)(xgrad[gcPhase].blue - ((xgrad[gcPhase].blue - xgrad[gcPhase+1].blue) * step)) / 256;
+				xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].blue + ((xgrad[gcPhase+1].blue - xgrad[gcPhase].blue) * step)) / 256;
+			else xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].blue - ((xgrad[gcPhase].blue - xgrad[gcPhase+1].blue) * step)) / 256;
 		}
 		
-		xgrad[gradcount].pixel |= (unsigned int)((unsigned char)(0xFF * foreground_opacity) << 24);	// set window opacity
+		xgrad[p.gradient_count].pixel |= (unsigned int)((unsigned char)(0xFF * p.foreground_opacity) << 24);	// set window opacity
 
-		XSetForeground(xavaXDisplay, xavaXGraphics, xgrad[gradcount].pixel);
-		XFillRectangle(xavaXDisplay, gradientBox, xavaXGraphics, 0, window_height - I, bar_width, 1);
+		XSetForeground(xavaXDisplay, xavaXGraphics, xgrad[p.gradient_count].pixel);
+		XFillRectangle(xavaXDisplay, gradientBox, xavaXGraphics, 0, p.h - (int)I, (unsigned int)p.w, 1);
 	}
 	return 0;
 }
 
-void draw_graphical_x(int window_height, int bars_count, int bar_width, int bar_spacing, int rest, int gradient, int f[200], int flastd[200], double foreground_opacity)
+void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 {
 	if(GLXmode) {
 		#ifdef GLX
 		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, (!transparentFlag)*1.0); // TODO BG transparency
 		glClear(GL_COLOR_BUFFER_BIT);
-
 		#endif
 	} else {
-		if(gradient&&!gradientBox&&transparentFlag) render_gradient_x(window_height, bar_width, foreground_opacity); 
+		if(p.gradient&&!gradientBox&&transparentFlag) render_gradient_x();
 	}
 	
 	if(GLXmode) {
 		#ifdef GLX
-		float glColors[8] = {xcol.red/65535.0, xcol.green/65535.0, xcol.blue/65535.0, foreground_opacity, ((unsigned int)shadow_color>>24)%256/255.0,
-			 ((unsigned int)shadow_color>>16)%256/255.0, ((unsigned int)shadow_color>>8)%256/255.0, (unsigned int)shadow_color%256/255.0};
 		float gradColors[24] = {0.0};
-		for(int i=0; i<gradcount; i++) {
+		for(int i=0; i<p.gradient_count; i++) {
 			gradColors[i*3] = xgrad[i].red/65535.0;
 			gradColors[i*3+1] = xgrad[i].green/65535.0;
 			gradColors[i*3+2] = xgrad[i].blue/65535.0;
 		}
-		if(drawGLBars(rest, bar_width, bar_spacing, bars_count, window_height, shadow, gradient?gradcount:0, glColors, gradColors, f)) exit(EXIT_FAILURE);
+		if(drawGLBars(rest, bars, gradColors, f)) exit(EXIT_FAILURE);
 		#endif
 	} else {	
 		// draw bars on the X11 window
-		for(int i = 0; i < bars_count; i++) {
+		for(int i = 0; i < bars; i++) {
 			// this fixes a rendering bug
-			if(f[i] > window_height) f[i] = window_height;
+			if(f[i] > p.h) f[i] = p.h;
 				
 			if(f[i] > flastd[i]) {
-				if(gradient)
-					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 0, window_height - f[i], bar_width, f[i] - flastd[i], rest + i*(bar_spacing+bar_width), window_height - f[i]);	
+				if(p.gradient)
+					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 0, p.h - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]), rest + i*(p.bs+p.bw), p.h - f[i]);
 				else {
 					XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
-					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, rest + i*(bar_spacing+bar_width), window_height - f[i], bar_width, f[i] - flastd[i]);
+					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, rest + i*(p.bs+p.bw), p.h - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]));
 				}
 			}
 			else if (f[i] < flastd[i])
-				XClearArea(xavaXDisplay, xavaXWindow, rest + i*(bar_spacing+bar_width), window_height - flastd[i], bar_width, flastd[i] - f[i], 0);
+				XClearArea(xavaXDisplay, xavaXWindow, rest + i*(p.bs+p.bw), p.h - flastd[i], (unsigned int)p.bw, (unsigned int)(flastd[i]-f[i]), 0);
 		}
 	}
 	

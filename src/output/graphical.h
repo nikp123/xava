@@ -10,10 +10,12 @@
 
 #ifdef GL
 	#include <GL/gl.h>
-	int drawGLBars(int rest, int bw, int bs, int bars, int h, int shadow, int gradient, float colors[8], float gradColors[24], int *f);
+	int drawGLBars(int rest, int bars, float gradColors[24], int *f);
 #endif
 
 void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int scrH, char *winPos);
+
+static unsigned int definedColors[] = {0x000000, 0xFF0000, 0x00FF00, 0xFFFF00, 0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF};
 
 int windowX, windowY;
 unsigned char fs, borderFlag, transparentFlag, keepInBottom, interactable;
