@@ -159,23 +159,24 @@ int init_window_x(char **argv, int argc)
 	
 	// 32 bit color means alpha channel support
 	#ifdef GLX
-	fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
-	fbconfig = 0;
-	for(int i = 0; i<numfbconfigs; i++) {
-		XVisualInfo *visInfo = glXGetVisualFromFBConfig(xavaXDisplay, fbconfigs[i]);
-		if(!visInfo) continue;
-		else xavaVInfo = *visInfo;
+	if(transparentFlag) {
+		fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
+		fbconfig = 0;
+		for(int i = 0; i<numfbconfigs; i++) {
+			XVisualInfo *visInfo = glXGetVisualFromFBConfig(xavaXDisplay, fbconfigs[i]);
+			if(!visInfo) continue;
+			else xavaVInfo = *visInfo;
 
-		pict_format = XRenderFindVisualFormat(xavaXDisplay, xavaVInfo.visual);
-		if(!pict_format) continue;
+			pict_format = XRenderFindVisualFormat(xavaXDisplay, xavaVInfo.visual);
+			if(!pict_format) continue;
 
-		fbconfig = fbconfigs[i];
+			fbconfig = fbconfigs[i];
 
-		if(pict_format->direct.alphaMask > 0 && transparentFlag) break;
-	}
-	#else
-		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, transparentFlag ? 32 : 24, TrueColor, &xavaVInfo);
+			if(pict_format->direct.alphaMask > 0) break;
+		}
+	} else
 	#endif
+		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, transparentFlag ? 32 : 24, TrueColor, &xavaVInfo);
 
 	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 	xavaXColormap = xavaAttr.colormap;
