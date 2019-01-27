@@ -793,7 +793,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					fr = monstercat_filter(fr, bars / 2, p.waves,
 						p.monstercat);	
 				} else {
-					fl = monstercat_filter(fl, bars, p.waves, p.monstercat);
+					fl = monstercat_filter(fl, calcbars, p.waves, p.monstercat);
 				}
 			}
 			
