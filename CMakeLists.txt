@@ -9,9 +9,10 @@ set(CMAKE_C_STANDARD 11)
 set(xava_VERSION_MAJOR 0)
 set(xava_VERSION_MINOR 6)
 set(xava_VERSION_PATCH 1)
-set(xava_VERSION_TWEAK 1)
+set(xava_VERSION_TWEAK 2)
 
 add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
+add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
 
 # iniparser
 find_library(INIPARSER iniparser)
@@ -197,3 +198,4 @@ target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m fftw3 pthread iniparser)
 install (TARGETS xava DESTINATION bin)
 install (FILES LICENSE DESTINATION share/licenses/xava)
 install (FILES assets/desktop/xava.desktop DESTINATION share/applications)
+install (FILES example_files/config DESTINATION share/xava)

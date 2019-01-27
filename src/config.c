@@ -324,13 +324,14 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		
 	//config: creating path to default config file
 	if (configPath[0] == '\0') {
-		char *configFile = "config";
 		#if defined(__unix__)||defined(__APPLE__)
+			char *configFile = "config";
 			char *configHome = getenv("XDG_CONFIG_HOME");
 		#elif defined(WIN)
+			char *configFile = "config.cfg";		// editing files without an extension on windows is a pain
 			char *configHome = getenv("APPDATA");
 		#endif
-		if (configHome != NULL) {
+		if (configHome != NULL) {						// don't worry, this will never happen on windows unless you are running like 98
 			sprintf(configPath,"%s/%s/", configHome, PACKAGE);
 		} else {
 			configHome = getenv("HOME");
@@ -344,7 +345,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	
 		// config: create directory
 		#if defined(__unix__)||defined(__APPLE__)
-			mkdir(configPath, 0777);
+			mkdir(configPath, 0770);
 		#else
 			mkdir(configPath);
 		#endif	
@@ -352,15 +353,39 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		// config: adding default filename file
 		strcat(configPath, configFile);
 		
-		fp = fopen(configPath, "ab+");
-		if (fp) {
-			fclose(fp);
-		} else {
-			printf("Unable to access config '%s', exiting...\n", configPath);
-			exit(EXIT_FAILURE);
+		fp = fopen(configPath, "rb+");
+		if (!fp) {
+			printf("Default config doesn't exist!\nCreating new one...");
+			
+			fp = fopen(configPath, "w");
+			if(!fp) {
+				fprintf(stderr, "FAIL\nThe file/directory is unwritable. The program will now end.\n");
+				exit(EXIT_FAILURE);
+			}
+			
+			#if defined(__unix__)||defined(__APPLE__)
+				char targetFile[255];
+				sprintf(targetFile, "%s/share/%s/%s", PREFIX, PACKAGE, configFile);
+				FILE *source = fopen(targetFile, "r");
+			#else
+				FILE *source = fopen(configFile, "r");
+			#endif
+			if(!source)
+				fprintf(stderr, "FAIL\nDefault configuration file doesnt exist. Please provide one if you can!\nContinuing without default config...\n");
+			else {
+				// Copy file 
+				short c = fgetc(source); 
+				while (c != EOF) { 
+					fputc(c, fp); 
+					c = fgetc(source); 
+				}
+				
+				fclose(source);
+				printf("DONE\n");
+			}
 		}
-	
-	
+		fclose(fp);
+			
 	} else { //opening specified file
 	
 		fp = fopen(configPath, "rb+");	
