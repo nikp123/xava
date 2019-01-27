@@ -110,11 +110,9 @@ Or you can change `PREFIX`, for example:
 
 ### Arch
 
-> NOTE: Currently unavailable.
+XAVA-G is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
 
-XAVA-G is availble in [AUR](https://aur.archlinux.org/packages/xava-gui-git/).
-
-    pacaur -S xava-gui-git
+    pacaur -S xava-git
 
 ### VoidLinux
 
@@ -129,6 +127,8 @@ XAVA-G is avaible in the Void repos:
 There should be an installer in the Releases page of this repository.
 
 Please use minGW for compilation. You can use `-DCMAKE_C_COMIPLER=/usr/bin/gcc.exe` and `-DCMAKE_CXX_COMPILER=/usr/bin/g++.exe` in the cmake command for cross-compilation.
+
+Also, XAVA on windows is WAY more choppy on Windows than on macOS/Linux because of (what i guess is) a shorter audio buffer. If you know how to fix this so it would behave the same as the mentioned OS-es it would be greately appretiated.
 
 #### Additional info
 
