@@ -21,7 +21,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
 - [Capturing audio](#capturing-audio)
   - [From PortAudio (easy)](#from-portaudio-easy)
   - [From Pulseaudio monitor source](#from-pulseaudio-monitor-source-easy-as-well-unsupported-on-macos-and-windows)
-  - [From ALSA-loopback device (Tricky)](#from-alsa-loopback-device-tricky-unsupported-on-macos-and-windows) )
+  - [From ALSA-loopback device (Tricky)](#from-alsa-loopback-device-tricky-unsupported-on-macos-and-windows)
   - [From mpd's fifo output](#from-mpds-fifo-output)
   - [sndio](#sndio)
   - [squeezelite](#squeezelite)
@@ -83,7 +83,7 @@ Cygwin dependencies (64bit ONLY):
 
 Iniparser is also required, but if it is not already installed, it will clone the [repository](https://github.com/ndevilla/iniparser).
 
-For compilation you will also need a C modern compiler, 'make', `cmake` and `git`.
+For compilation you will also need `gcc` or `clang`, `make`, `cmake` and `git`.
 
 
 Getting started
@@ -110,7 +110,7 @@ Or you can change `PREFIX`, for example:
 
 ### Arch
 
-XAVA-G is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
+XAVA is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
 
     pacaur -S xava-git
 
@@ -118,9 +118,9 @@ XAVA-G is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
 
 > NOTE: Currently unavailable.
 
-XAVA-G is avaible in the Void repos:
+XAVA is available in the Void repos:
 	
-	xbps-install xava-gui
+	xbps-install xava
 
 ### Windows
 
@@ -327,7 +327,7 @@ By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, `$
 
 ### Output modes
 
-XAVA supports outputing as a X11 window, SDL2 and WINAPI.
+XAVA supports outputing as `raw`, `x`, `sdl` and `win`.
 
 ### OpenGL
 
