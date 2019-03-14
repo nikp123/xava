@@ -11,8 +11,14 @@ set(xava_VERSION_MINOR 6)
 set(xava_VERSION_PATCH 1)
 set(xava_VERSION_TWEAK 2)
 
+set(ENV{PKG_CONFIG_DIR} "")
+set(ENV{PKG_CONFIG_LIBDIR} "${CMAKE_SYSROOT}/lib/pkgconfig:${CMAKE_SYSROOT}/usr/share/pkgconfig")
+set(ENV{PKG_CONFIG_SYSROOT_DIR} ${CMAKE_SYSROOT})
+
 add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
 add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
+
+find_package(PkgConfig REQUIRED)
 
 # iniparser
 find_library(INIPARSER iniparser)
@@ -35,17 +41,16 @@ if(NOT MATH_LIB)
   message(FATAL_ERROR "math library not found")
 endif()
 
-# fftw3
-find_library(FFTW_LIB fftw3)
-if(NOT FFTW_LIB)
-	message(FATAL_ERROR "fftw library not found")
-endif()
-
 # pthread
 find_library(THREAD_LIB pthread)
 if(NOT THREAD_LIB)
 	message(FATAL_ERROR "pthread library not found")
 endif()
+
+# fftw3
+pkg_check_modules(FFTW3 REQUIRED fftw3)
+list(APPEND INCLUDE_DIRS "${FFTW3_INCLUDE_DIRS}")
+list(APPEND LINK_DIRS "${FFTW3_LIBRARY_DIRS}")
 
 
 # Optional features
@@ -66,47 +71,38 @@ if(NOT (MSYS OR MINGW OR MSVC))
 endif()
 
 # SDL2
-find_library(SDL_LIB SDL2)
-if(SDL_LIB)
-	add_definitions(-DSDL)
+pkg_check_modules(SDL2 QUIET sdl2)
+if(SDL2_FOUND)
 	list(APPEND ADDITIONAL_SOURCES "src/output/graphical_sdl.c")
-	list(APPEND ADDITIONAL_LIBRARIES "-lSDL2")
+	list(APPEND INCLUDE_DIRS "${SDL2_INCLUDE_DIRS}")
+	list(APPEND LINK_DIRS "${SDL2_LIBRARY_DIRS}")
+	list(APPEND ADDITIONAL_LIBRARIES "${SDL2_LIBRARIES}")
+	add_definitions(-DSDL)
 else()
 	message(STATUS "SDL2 library not found")
 endif()
 
 # Xorg
-find_library(XORG_LIB X11)
-if(XORG_LIB)
-	find_library(XFIXES_LIB Xfixes)
-	if(XFIXES_LIB)
-		add_definitions(-DXLIB)
-		list(APPEND ADDITIONAL_SOURCES "src/output/graphical_x.c")
-		list(APPEND ADDITIONAL_LIBRARIES "-lX11")
-		list(APPEND ADDITIONAL_LIBRARIES "-lXfixes")
-		if(APPLE)
-			include_directories(/usr/X11/include)
-			link_directories(/usr/X11/lib)
-		endif()	
+pkg_check_modules(X11 QUIET x11 xfixes)
+if(X11_FOUND)
+	add_definitions(-DXLIB)
+	list(APPEND ADDITIONAL_SOURCES "src/output/graphical_x.c")
+	list(APPEND INCLUDE_DIRS "${X11_INCLUDE_DIRS}")
+	list(APPEND LINK_DIRS "${X11_LIBRARY_DIRS}")
+	list(APPEND ADDITIONAL_LIBRARIES "${X11_LIBRARIES}")
 	
-		# GLX
-		find_library(GL_LIB GL)
-		if(GL_LIB)
-			find_library(XRENDER_LIB Xrender)
-			if(XRENDER_LIB)
-				add_definitions(-DGLX -DGL)
-				list(APPEND ADDITIONAL_LIBRARIES "-lGL -lXrender")
-			else()
-				message(STATUS "Xrender library not found (required for openGL to work)")
-			endif()
-		else()
-			message(STATUS "GL library not found")
-		endif()
+	# GLX
+	pkg_check_modules(GL QUIET gl xrender)
+	if(GL_FOUND)
+		add_definitions(-DGLX -DGL)
+		list(APPEND INCLUDE_DIRS "${GL_INCLUDE_DIRS}")
+		list(APPEND LINK_DIRS "${GL_LIBRARY_DIRS}")
+		list(APPEND ADDITIONAL_LIBRARIES "${GL_LIBRARIES}")
 	else()
-		message(STATUS "Xfixes library not found")
+		message(STATUS "GL and or Xrender library not found")
 	endif()
 else()
-	message(STATUS "X11 library not found")
+	message(STATUS "X11 and/or Xfixes library not found")
 endif()
 
 # winapi
@@ -140,23 +136,25 @@ if(MSYS OR MINGW OR MSVC)
 endif()
 
 # alsa
-find_library(ALSA_LIB asound)
-if(ALSA_LIB)
+pkg_check_modules(ALSA QUIET alsa)
+if(ALSA_FOUND)
 	add_definitions(-DALSA)
+	list(APPEND INCLUDE_DIRS "${ALSA_INCLUDE_DIRS}")
+	list(APPEND LINK_DIRS "${ALSA_LIBRARY_DIRS}")
 	list(APPEND ADDITIONAL_SOURCES "src/input/alsa.c")
-	list(APPEND ADDITIONAL_LIBRARIES "-lasound")
+	list(APPEND ADDITIONAL_LIBRARIES "${ALSA_LIBRARIES}")
 else()
 	message(STATUS "alsa library not found")
 endif()
 
 # pulseaudio
-find_library(PULSE_LIB pulse-simple)
-if(PULSE_LIB)
+pkg_check_modules(PULSEAUDIO QUIET libpulse libpulse-simple)
+if(PULSEAUDIO_FOUND)
 	add_definitions(-DPULSE)
+	list(APPEND INCLUDE_DIRS "${PULSEAUDIO_INCLUDE_DIRS}")
+	list(APPEND LINK_DIRS "${PULSEAUDIO_LIBRARY_DIRS}")
 	list(APPEND ADDITIONAL_SOURCES "src/input/pulse.c")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpulse-simple -lpulse")
-	list(APPEND ADDITIONAL_LIBRARIES "-lpulse")
-	list(APPEND ADDITIONAL_LIBRARIES "-lpulse-simple")
+	list(APPEND ADDITIONAL_LIBRARIES "${PULSEAUDIO_LIBRARIES}")
 else()
 	message(STATUS "pulseaudio library not found")
 endif()
@@ -172,11 +170,13 @@ else()
 endif()
 
 # portaudio
-find_library(PORTAUDIO_LIB portaudio)
-if(PORTAUDIO_LIB)
+pkg_check_modules(PORTAUDIO QUIET portaudio-2.0)
+if(PORTAUDIO_FOUND)
 	add_definitions(-DPORTAUDIO)
+	list(APPEND INCLUDE_DIRS "${PORTAUDIO_INCLUDE_DIRS}")
+	list(APPEND LINK_DIRS "${PORTAUDIO_LIBRARY_DIRS}")
 	list(APPEND ADDITIONAL_SOURCES "src/input/portaudio.c")
-	list(APPEND ADDITIONAL_LIBRARIES "-lportaudio")
+	list(APPEND ADDITIONAL_LIBRARIES "${PORTAUDIO_LIBRARIES}")
 else()
 	message(STATUS "portaudio library not found")
 endif()
@@ -191,11 +191,13 @@ add_executable(
 	src/xava.c
 )
 
+include_directories(${INCLUDE_DIRS})
+link_directories(${LINK_DIRS})
+
 # Link executable
-target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m fftw3 pthread iniparser)
+target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m ${FFTW3_LIBRARIES} pthread iniparser)
 
 # Install
 install (TARGETS xava DESTINATION bin)
 install (FILES LICENSE DESTINATION share/licenses/xava)
 install (FILES assets/desktop/xava.desktop DESTINATION share/applications)
-install (FILES example_files/config DESTINATION share/xava)
