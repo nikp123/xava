@@ -11,10 +11,6 @@ set(xava_VERSION_MINOR 6)
 set(xava_VERSION_PATCH 1)
 set(xava_VERSION_TWEAK 2)
 
-set(ENV{PKG_CONFIG_DIR} "")
-set(ENV{PKG_CONFIG_LIBDIR} "${CMAKE_SYSROOT}/lib/pkgconfig:${CMAKE_SYSROOT}/usr/share/pkgconfig")
-set(ENV{PKG_CONFIG_SYSROOT_DIR} ${CMAKE_SYSROOT})
-
 add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
 add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
 
