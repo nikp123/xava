@@ -3,3 +3,4 @@ build
 *.includes
 *.user
 *.config
+CMakeLists.txt.*

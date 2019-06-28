@@ -310,7 +310,11 @@ int apply_window_settings_x()
 		glOrtho(0, (double)p.w, 0, (double)p.h, -1, 1);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		#endif
+
+		// Vsync disabled by default because this program is so light on the GPU that tearing is improbable
+		// but if you DO experience issues with tearing please notify me
+		glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, 0);
+        #endif
 	} else clear_screen_x();
 
 	if(!interactable){	
@@ -494,6 +498,7 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 	#ifdef GLX
 	if(GLXmode) {
 		glXSwapBuffers(xavaXDisplay, xavaXWindow);
+		glFinish();
 		glXWaitGL();
 	}
 	#endif
@@ -511,7 +516,7 @@ void cleanup_graphical_x(void)
 	// make sure that all events are dead by this point
 	XSync(xavaXDisplay, 0);
 	
-	adjust_x();	
+	adjust_x();
 	 
 	#ifdef GLX
 		glXMakeCurrent(xavaXDisplay, 0, 0);

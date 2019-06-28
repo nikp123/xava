@@ -964,7 +964,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	free(audio.audio_out_l);
 	free(inl);
    
-  cleanup();
+    cleanup();
 
 	if(kys) exit(EXIT_SUCCESS);
 	
