@@ -22,70 +22,70 @@ paTestData;
 struct audio_data *audio;
 int n = 0;
 
-static int recordCallback( const void *inputBuffer, void *outputBuffer,
-                           unsigned long framesPerBuffer,
-                           const PaStreamCallbackTimeInfo* timeInfo,
-                           PaStreamCallbackFlags statusFlags,
-                           void *userData )
+static int recordCallback(	const void *inputBuffer, void *outputBuffer,
+							unsigned long framesPerBuffer,
+							const PaStreamCallbackTimeInfo* timeInfo,
+							PaStreamCallbackFlags statusFlags,
+							void *userData )
 {
-    paTestData *data = (paTestData*)userData;
-    const SAMPLE *rptr = (const SAMPLE*)inputBuffer;
-    long framesToCalc;
-    long i;
-    int finished;
-    unsigned long framesLeft = data->maxFrameIndex - data->frameIndex;
-
-    (void) outputBuffer; // Prevent unused variable warnings.
-    (void) timeInfo;
-    (void) statusFlags;
-    (void) userData;
-
-    if( framesLeft < framesPerBuffer )
-    {
-        framesToCalc = framesLeft;
-        finished = paComplete;
-    }
-    else
-    {
-        framesToCalc = framesPerBuffer;
-        finished = paContinue;
-    }
-
-    if( inputBuffer == NULL )
-    {
-        for( i=0; i<framesToCalc; i++ )
-        {
+	paTestData *data = (paTestData*)userData;
+	const SAMPLE *rptr = (const SAMPLE*)inputBuffer;
+	long framesToCalc;
+	long i;
+	int finished;
+	unsigned long framesLeft = data->maxFrameIndex - data->frameIndex;
+	
+	(void) outputBuffer; // Prevent unused variable warnings.
+	(void) timeInfo;
+	(void) statusFlags;
+	(void) userData;
+	
+	if( framesLeft < framesPerBuffer )
+	{
+		framesToCalc = framesLeft;
+		finished = paComplete;
+	}
+	else
+	{
+		framesToCalc = framesPerBuffer;
+		finished = paContinue;
+	}
+	
+	if( inputBuffer == NULL )
+	{
+		for( i=0; i<framesToCalc; i++ )
+		{
 			if(audio->channels == 1) audio->audio_out_l[n] = SAMPLE_SILENCE;
-        	if(audio->channels == 2) {
+			if(audio->channels == 2) {
 				audio->audio_out_l[n] = SAMPLE_SILENCE;
 				audio->audio_out_r[n] = SAMPLE_SILENCE;
 			}
 			if(n == 2048 - 1) n = 0;
 		}
-    }
-    else
-    {
-        for( i=0; i<framesToCalc; i++ )
-        {
-		if(audio->channels == 1) {
-			audio->audio_out_l[n] = (rptr[0] + rptr[1]) / 2;
-        		rptr += 2;
+	}
+	else
+	{
+		for( i=0; i<framesToCalc; i++ )
+		{
+			if(audio->channels == 1) {
+				audio->audio_out_l[n] = (rptr[0] + rptr[1]) / 2;
+				rptr += 2;
+			}
+			if(audio->channels == 2) {
+				audio->audio_out_l[n] = *rptr++;
+				audio->audio_out_r[n] = *rptr++;
+			}
+			n++;
+			if(n == 2048 - 1) n = 0;
 		}
-		if(audio->channels == 2) {
-			audio->audio_out_l[n] = *rptr++;
-			audio->audio_out_r[n] = *rptr++;
-		}	
-		n++;
-		if(n == 2048 - 1) n = 0;
-        }
-    }
-    
+	}
+	
 	data->frameIndex += framesToCalc;
 	if(finished == paComplete) {
 		data->frameIndex = 0;
 		finished = paContinue;
 	}
-    return finished;
+	return finished;
 }
 
 
@@ -96,7 +96,7 @@ void portaudio_simple_free(paTestData data) {
 
 void* input_portaudio(void *audiodata) {
 	audio = (struct audio_data *)audiodata;
-
+	
 	PaStreamParameters inputParameters;
 	PaStream* stream;
 	PaError err = paNoError;
@@ -108,7 +108,7 @@ void* input_portaudio(void *audiodata) {
 		fprintf(stderr, "Error: unable to initilize portaudio - %s\n", Pa_GetErrorText(err));
 		exit(EXIT_FAILURE);
 	}
-
+	
 	// get portaudio device
 	if(!strcmp(audio->source, "list")) {
 		int numOfDevices = Pa_GetDeviceCount();
@@ -145,7 +145,7 @@ void* input_portaudio(void *audiodata) {
 		}
 		inputParameters.device = deviceNum-1;
 	}
-
+	
 	// set parameters
 	data.maxFrameIndex = BUFSIZE;
 	data.recordedSamples = (SAMPLE *)malloc(2*BUFSIZE*sizeof(SAMPLE));
@@ -153,7 +153,7 @@ void* input_portaudio(void *audiodata) {
 		fprintf(stderr, "Error: failure in memory allocation!\n");
 		exit(EXIT_FAILURE);
 	} else memset(data.recordedSamples, 0x00, BUFSIZE*2);
-
+	
 	inputParameters.channelCount = 2;
 	inputParameters.sampleFormat = PA_SAMPLE_TYPE;
 	inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
@@ -167,7 +167,6 @@ void* input_portaudio(void *audiodata) {
 		fprintf(stderr, "Error: failure in opening stream (%x)\n", err);
 		exit(EXIT_FAILURE);
 	}
-
 	
 	// main loop
 	while(1){
@@ -192,7 +191,6 @@ void* input_portaudio(void *audiodata) {
 		
 		// check if it bailed
 		if(audio->terminate == 1) break;
-
 	}
 	// close stream
 	if((err = Pa_CloseStream(stream)) != paNoError) {
@@ -201,5 +199,5 @@ void* input_portaudio(void *audiodata) {
 	}
 	
 	portaudio_simple_free(data);
-	return 0;	
+	return 0;
 } 
