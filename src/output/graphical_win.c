@@ -343,11 +343,11 @@ void draw_graphical_win(int bars, int rest, int f[200]) {
 	}
 
 	if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);	
-	glFlush();
+	//glFlush();
 
 	// swap buffers	
 	SwapBuffers(hdc);
-	ReleaseDC(xavaWinWindow, hdc);
+	//ReleaseDC(xavaWinWindow, hdc);
 }
 
 void cleanup_graphical_win(void) {

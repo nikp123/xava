@@ -97,6 +97,13 @@ void validate_config(char supportedInput[255], void* params)
 			exit(EXIT_FAILURE);
 		#endif
 	}
+	if (strcmp(inputMethod, "wasapi") == 0) {
+		p->im = 7;
+		#ifndef WIN
+			fprintf(stderr, "xava was built without WASAPI support\n");
+			exit(EXIT_FAILURE);
+		#endif
+	}
 	if (p->im == 0) {
 		fprintf(stderr,
 			"input method '%s' is not supported, supported methods are: %s\n",
@@ -419,11 +426,18 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		inputMethod = (char *)iniparser_getstring(ini, "input:method", "pulse");
 	#endif
 
+	// WASAPI is basically the best for windows (sorted by difficulty)
+	#ifdef WIN
+		inputMethod = (char *)iniparser_getstring(ini, "input:method", "wasapi");
+	#endif
+
 	#if defined(__linux__)||defined(__APPLE__)||defined(__unix__)
 		outputMethod = (char *)iniparser_getstring(ini, "output:method", "x");
 	#elif defined(__WIN32__)
-		outputMethod = (char *)iniparser_getstring(ini, "output:method", "win");
-	#else	
+		// win code is buggy on windows, but not on wine so defaulting to sdl
+		//outputMethod = (char *)iniparser_getstring(ini, "output:method", "win");
+		outputMethod = (char *)iniparser_getstring(ini, "output:method", "sdl");
+	#else
 		outputMethod = (char *)iniparser_getstring(ini, "output:method", "sdl");
 	#endif
 
@@ -562,6 +576,12 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	if (strcmp(inputMethod, "shmem") == 0) {
 		p->im = 6;
 		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "/squeezelite-00:00:00:00:00:00");
+	}
+	#endif
+	#ifdef WIN
+	if (strcmp(inputMethod, "wasapi") == 0) {
+		p->im = 7;
+		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "loopback");
 	}
 	#endif
 		

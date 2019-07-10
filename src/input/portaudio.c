@@ -19,8 +19,8 @@ typedef struct
 }
 paTestData;
 
-struct audio_data *audio;
-int n = 0;
+static struct audio_data *audio;
+static int n = 0;
 
 static int recordCallback(	const void *inputBuffer, void *outputBuffer,
 							unsigned long framesPerBuffer,
@@ -60,7 +60,7 @@ static int recordCallback(	const void *inputBuffer, void *outputBuffer,
 				audio->audio_out_l[n] = SAMPLE_SILENCE;
 				audio->audio_out_r[n] = SAMPLE_SILENCE;
 			}
-			if(n == 2048 - 1) n = 0;
+			if(n == 2048-1) n = 0;
 		}
 	}
 	else
@@ -76,7 +76,7 @@ static int recordCallback(	const void *inputBuffer, void *outputBuffer,
 				audio->audio_out_r[n] = *rptr++;
 			}
 			n++;
-			if(n == 2048 - 1) n = 0;
+			if(n == 2048-1) n = 0;
 		}
 	}
 	

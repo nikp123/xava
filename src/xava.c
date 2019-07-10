@@ -60,6 +60,7 @@
 
 #ifdef WIN
 #include "output/graphical_win.h"
+#include "input/wasapi.h"
 #endif
 
 #ifdef INIPARSER
@@ -467,6 +468,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	#ifdef SHMEM
 	if (p.im == 6) {
 		thr_id = pthread_create(&p_thread, NULL, input_shmem, (void*)&audio);
+		audio.rate = 44100;
+	}
+	#endif
+
+	#ifdef WIN
+	if (p.im == 7) {
+		thr_id = pthread_create(&p_thread, NULL, input_wasapi, (void*)&audio);
 		audio.rate = 44100;
 	}
 	#endif
