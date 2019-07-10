@@ -19,8 +19,9 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Arch](#arch)
   - [Windows](#windows)
 - [Capturing audio](#capturing-audio)
-  - [From PortAudio (easy)](#from-portaudio-easy)
+  - [From WASAPI (Windows)](#from-wasapi-windows-only-super-easy)
   - [From Pulseaudio monitor source](#from-pulseaudio-monitor-source-easy-as-well-unsupported-on-macos-and-windows)
+  - [From PortAudio](#from-portaudio)
   - [From ALSA-loopback device (Tricky)](#from-alsa-loopback-device-tricky-unsupported-on-macos-and-windows)
   - [From mpd's fifo output](#from-mpds-fifo-output)
   - [sndio](#sndio)
@@ -76,11 +77,6 @@ Fedora:
 
     dnf install alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake
 
-Cygwin dependencies (64bit ONLY):
-
-    gcc-core w32api-headers libfftw3-devel libportaudio-devel portaudio cmake
-
-
 Iniparser is also required, but if it is not already installed, it will clone the [repository](https://github.com/ndevilla/iniparser).
 
 For compilation you will also need `gcc` or `clang`, `make`, `cmake` and `git`.
@@ -119,16 +115,20 @@ XAVA is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
 > NOTE: Currently unavailable.
 
 XAVA is available in the Void repos:
-	
-	xbps-install xava
+
+    xbps-install xava
 
 ### Windows
 
-There should be an installer in the Releases page of this repository.
+There should be an installer in the Releases page of this repository. (However most of the time it's really outdated and best to rely on compilation).
 
-Please use minGW for compilation. You can use `-DCMAKE_C_COMIPLER=/usr/bin/gcc.exe` and `-DCMAKE_CXX_COMPILER=/usr/bin/g++.exe` in the cmake command for cross-compilation.
+Please use minGW for compilation. I haven't tested MSVC, however the code has a bit of GCC specific features so it may not work.
 
-Also, XAVA on windows is WAY more choppy on Windows than on macOS/Linux because of (what i guess is) a shorter audio buffer. If you know how to fix this so it would behave the same as the mentioned OS-es it would be greately appretiated.
+I strongly recommend cross-compilation on ArchLinux because, well I'm not sure how portable CMake is actually.
+
+Windows uses WASAPI by default, because it's THE WAY it's meant to record audio on Windows. However my WGL implementation is a buggy mess (for now) so I made SDL default (it doesnt support transparency, but I prefer stability over functionality)
+
+If you do want features from X11 like transparency and shadows, prepare for inconsitent framerates and frequent freezes. In the ``output`` section set ``method = win``.
 
 #### Additional info
 
@@ -143,23 +143,40 @@ All distro specific instalation sources might be out of date.
 Capturing audio
 ---------------
 
-### From portaudio (easy)
+### From WASAPI (Windows only, super easy)
 
-First make sure you have portaudio dev files and that xava was built with portaudio support (it should have done so automatically if it found the dev files).
+If you are on Windows, just use this. Don't even bother dealing with other options. 
 
+It's enabled by default if it detects compilation for Windows 
+and if it's disabled go and set ``method = win`` in the ``[input]`` section of the config file.
+
+If you want to record loopback audio (that is "what you hear") (default) set ``source = loopback`` in the ``[input]`` section of the config file.
+Otherwise you can set anything else for it to record from the default microphone.
+
+
+
+### From Pulseaudio monitor source (Easy as well, unsupported on macOS and Windows)
+
+First make sure you have installed pulseaudio dev files and that xava has been built with pulseaudio support (it should be automatically if the dev files are found).
+
+If you're lucky all you have to do is to set this line in the config file under the ``[input]`` section ``method = pulse``.
+ 
+If nothing happens you might have to use a different source than the default. The default might also be your microphone. Look at the config file for help. 
+
+
+
+### From portaudio
+
+First make sure you have portaudio dev files and that xava was built with portaudio support.
 Since portaudio combines the functionality of all audio systems, it should work "out of the box".
 
-To enable just uncomment:
-    
-    method = portaudio
+To enable just set ``method = portaudio`` in the ``[input]`` section of your config.
 
-in the `[input]` section of your config.
-
-To change the portaudio input device, set `source = list` temporarely and run xava again.
+To change the portaudio input device, set ``source = list`` temporarely and run xava again.
 
 It should list all of the available devices (even that aren't input devices, watch out for that).
 
-Once you find the device you want to record from, take it's number and set `soruce = *that number*`
+Once you find the device you want to record from, take it's number and set ``soruce = *that number*``
 
 
 #### If the host is running Pulseaudio
@@ -176,24 +193,10 @@ If you don't, install better drivers or get a better sound card.
 Once you figured that out, continue below.
 
 
-### From Pulseaudio monitor source (Easy as well, unsupported on macOS and Windows)
-
-First make sure you have installed pulseaudio dev files and that xava has been built with pulseaudio support (it should be automatically if the dev files are found).
-
-If you're lucky all you have to do is to uncomment this line in the config file under input:
-
-    method = pulse
- 
-If nothing happens you might have to use a different source than the default. The default might also be your microphone. Look at the config file for help. 
-
 
 ### From ALSA-loopback device (Tricky, unsupported on macOS and Windows)
 
-Set
-
-    method = alsa
-
-in the config file.
+Set ``method = alsa`` in ``[output]`` section the config file.
 
 ALSA can be difficult because there is no native way to grab audio from an output. If you want to capture audio straight fom the output (not just mic or line-in), you must create an ALSA loopback interface, then output the audio simultaneously to both the loopback and your normal interface.
 
@@ -257,7 +260,7 @@ $ AUDIODEVICE=snd/0.monitor xava
 
 ### squeezelite
 [squeezelite](https://en.wikipedia.org/wiki/Squeezelite) is one of several software clients available for the Logitech Media Server. Squeezelite can export it's audio data as shared memory, which is what this input module uses.
-Configure C.A.V.A. with the `-DSHMEM=ON` option, then adapt your config:
+Configure X.A.V.A. with the `-DSHMEM=ON` option, then adapt your config:
 ```
 method = shmem
 source = /squeezelite-AA:BB:CC:DD:EE:FF
@@ -275,12 +278,12 @@ If your audio device has a huge buffer, you might experience that xava is actual
 Usage
 -----
 
-    Usage : xava [options]
-    Visualize audio input in terminal. 
+	Usage : xava [options]
+	Visualize audio input in terminal. 
 
-    Options:
-    	    -p          path to config file
-    	    -v          print version
+	Options:
+			-p          path to config file
+			-v          print version
 
 
 
@@ -303,7 +306,7 @@ Configuration
 
 As of version 0.4.0 all options are done in the config file, no more command-line arguments!
 
-By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, `$HOME/.config/xava/config` or in case of Windows in `%APPDATA%\xava\config`
+By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, `$HOME/.config/xava/config` or on Windows `%APPDATA%\xava\config`
 
 **Examples on how the equalizer works:**
 
@@ -335,7 +338,7 @@ To run XAVA in OpenGL:
       
 	opengl = true
 
-WARNING: OpenGL isn't supported under SDL2.
+WARNING: OpenGL isn't supported on ``sdl``.
 
 ### Window options
 
@@ -343,14 +346,14 @@ Toggle fullscreen:
      
 	fullscreen = 1 or 0
 
-WARNING: On Windows it isn't supported.
+WARNING: On ``win`` it isn't supported.
 
 
 Toggle window border:
     
 	border = 1 or 0
 
-WARNING: On Windows the border is always disabled.
+WARNING: On ``win`` the border is always disabled.
 
 
 Change bar width/height (units are in pixels rather than characters):
@@ -378,7 +381,7 @@ You can enable transparent windows:
      
 	transparency = 1
 
-WARNING: SDL2 doesn't have transparency.
+WARNING: ``sdl`` doesn't have transparency.
 
 
 Force the window to be behind any window (works only under Xlib):
@@ -393,7 +396,7 @@ This helps with removing blur and shadows from behind the window, but also remov
 
 Make window click-proof (as in the window is totally ignored when clicked and clicks behind it):
     
-    interactable = 0
+	interactable = 0
 
 Pro-tip: You can still gain control of the window by clicking it's taskbar icon.
 
@@ -401,11 +404,11 @@ Pro-tip: You can still gain control of the window by clicking it's taskbar icon.
 
 You can change the following options:
     
-    size = (in pixels)
+	size = (in pixels)
 
 and
     
-    color = '#aarrggbb'
+	color = '#aarrggbb'
 
 You need to enable transparency for the shadows to work.
 
