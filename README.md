@@ -275,6 +275,8 @@ If you see latency issues, ie. visualizer not reacting on time, try turning off 
 
 If your audio device has a huge buffer, you might experience that xava is actually faster than the audio you hear. This reduces the experience of the visualization. To fix this, try decreasing the buffer settings in your audio playing software.
 
+For Windows users, I haven't tested the WASAPI code throughly, so there might be still bugs inside. Also Windows timers are poor so you'll get inconsitent framerates no matter what. Unless I somehow figure out how to implement "multimedia timers".
+
 Usage
 -----
 
@@ -353,8 +355,6 @@ Toggle window border:
     
 	border = 1 or 0
 
-WARNING: On ``win`` the border is always disabled.
-
 
 Change bar width/height (units are in pixels rather than characters):
     
@@ -411,6 +411,8 @@ and
 	color = '#aarrggbb'
 
 You need to enable transparency for the shadows to work.
+
+NOTE: These are still buggy as Windows interprets vertex buffers (VBOs) differently to other OS-es.
 
 
 ### Additional features
