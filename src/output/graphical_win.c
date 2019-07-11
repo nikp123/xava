@@ -17,7 +17,7 @@ TIMECAPS xavaPeriod;
 unsigned int *gradientColor;
 
 // a crappy workaround for a flawed event design
-_Bool resized=FALSE;
+_Bool resized=FALSE, quit=FALSE;
 
 LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch(msg) {
@@ -67,20 +67,20 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 			}
 			break;
 		case WM_SIZE:
-		{
 			p.w=LOWORD(lParam);
 			p.h=HIWORD(lParam);
 			resized=TRUE;
 			return 2;
-		}
 		case WM_CLOSE:
 			// Perform cleanup tasks.
 			PostQuitMessage(0); 
+			quit=TRUE;
 			return -1;
 		case WM_DESTROY:
+			quit=TRUE;
 			return -1;
 		case WM_QUIT:
-			return -1;
+			break;
 		default:
 			return DefWindowProc(hWnd,msg,wParam,lParam);
 	}
@@ -193,6 +193,10 @@ void resize_framebuffer() {
 
 int init_window_win() {
 
+	// reset event trackers
+	resized=FALSE;
+	quit=FALSE;
+
 	// get handle
 	xavaWinModule = GetModuleHandle(NULL);
 	FreeConsole();
@@ -237,15 +241,17 @@ int init_window_win() {
 	if(windowY > screenHeight - p.h) printf("Warning: Screen out of bounds (Y axis)!");
 #endif
 
+	if(!transparentFlag) interactable=1; // correct practicality error
+
 	// create window
-	xavaWinWindow = CreateWindowEx((transparentFlag?WS_EX_TRANSPARENT:0), szAppName, wcWndName, WS_CAPTION | WS_POPUPWINDOW | WS_VISIBLE | WS_THICKFRAME, windowX, windowY, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
+	xavaWinWindow = CreateWindowEx((transparentFlag?WS_EX_TRANSPARENT:0)|(interactable?0:WS_EX_LAYERED|WS_EX_COMPOSITED), szAppName, wcWndName, (interactable?WS_THICKFRAME:0) | WS_POPUP | WS_VISIBLE | (borderFlag?WS_CAPTION:0), windowX, windowY, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
 	if(xavaWinWindow == NULL) {
 		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
 	// transparency fix
 	if(transparentFlag) SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
-	//SetWindowPos(xavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_NOTOPMOST, windowX, windowY, p.w, p.h, SWP_SHOWWINDOW);
+	SetWindowPos(xavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_NOTOPMOST, windowX, windowY, p.w, p.h, SWP_SHOWWINDOW);
 
 
 	// we need the desktop window manager to enable transparent background (from Vista ...onward)
@@ -325,6 +331,15 @@ int get_window_input_win() {
 	while(PeekMessage(&xavaWinEvent, xavaWinWindow, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&xavaWinEvent);
 		int r=DispatchMessage(&xavaWinEvent);  // handle return values
+		
+		// so you may have wondered why do i do stuff like this
+		// it's because non-keyboard/mouse messages DONT pass through a return values
+		// which, guess what, completely breaks my previous design - thanks micro$oft, really appreciate it
+		
+		if(quit) {
+			quit=FALSE;
+			return -1;
+		}
 		if(resized) {
 			resized=FALSE;
 			return 2;
