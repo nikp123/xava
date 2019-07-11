@@ -434,9 +434,8 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	#if defined(__linux__)||defined(__APPLE__)||defined(__unix__)
 		outputMethod = (char *)iniparser_getstring(ini, "output:method", "x");
 	#elif defined(__WIN32__)
-		// win code is buggy on windows, but not on wine so defaulting to sdl
-		//outputMethod = (char *)iniparser_getstring(ini, "output:method", "win");
-		outputMethod = (char *)iniparser_getstring(ini, "output:method", "sdl");
+		// win code is now alpha, still working on it, missing some features but it's pretty close
+		outputMethod = (char *)iniparser_getstring(ini, "output:method", "win");
 	#else
 		outputMethod = (char *)iniparser_getstring(ini, "output:method", "sdl");
 	#endif
