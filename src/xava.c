@@ -676,7 +676,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						should_reload = 1;
 						break;
 					case 2:
-						adjust_x();	
+						adjust_x();
 						resizeWindow = TRUE;
 						break;
 					case 3:
@@ -719,7 +719,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						should_reload = 1;
 						break;
 					case 2:
-						resizeWindow = TRUE;
+						resizeWindow = true;
 						break;
 					case 3:
 						//clear_screen_win();

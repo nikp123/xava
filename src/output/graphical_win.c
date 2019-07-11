@@ -13,25 +13,83 @@ HMODULE xavaWinModule;
 WNDCLASSEX xavaWinClass;	// same thing as window classes in Xlib
 HDC xavaWinFrame;
 HGLRC xavaWinGLFrame;
+TIMECAPS xavaPeriod;
 unsigned int *gradientColor;
+
+// a crappy workaround for a flawed event design
+_Bool resized=FALSE;
 
 LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch(msg) {
-		case WM_CREATE: break;
-		case WM_DESTROY: 
+		case WM_CREATE:
+			break;
+		case WM_KEYDOWN:
+			switch(wParam) {
+				// should_reload = 1
+				// resizeTerminal = 2
+				// bail = -1
+				case 'A':
+					p.bs++;
+					return 2;
+				case 'S':
+					if(p.bs > 0) p.bs--;
+					return 2;
+				case 'F': // fullscreen
+					//fs = !fs;
+					return 2;
+				case VK_UP:
+					p.sens *= 1.05;
+					break;
+				case VK_DOWN:
+					p.sens *= 0.95;
+					break;
+				case VK_LEFT:
+					p.bw++;
+					return 2;
+				case VK_RIGHT:
+					if (p.bw > 1) p.bw--;
+					return 2;
+				case 'R': //reload config
+					return 1;
+				case 'Q':
+					return -1;
+				case VK_ESCAPE:
+					return -1;
+				case 'B':
+					if(transparentFlag) break;
+					p.bgcol = (rand()<<16)+rand();
+					return 3;
+				case 'C':
+					if(p.gradient) break;
+					p.col = (rand()<<16)+rand();
+					return 3;
+				default: break;
+			}
+			break;
+		case WM_SIZE:
+		{
+			p.w=LOWORD(lParam);
+			p.h=HIWORD(lParam);
+			resized=TRUE;
+			return 2;
+		}
+		case WM_CLOSE:
 			// Perform cleanup tasks.
 			PostQuitMessage(0); 
-			break; 
+			return -1;
+		case WM_DESTROY:
+			return -1;
+		case WM_QUIT:
+			return -1;
 		default:
 			return DefWindowProc(hWnd,msg,wParam,lParam);
 	}
-
 	return 0;
 }
 
 unsigned char register_window_win(HINSTANCE HIn) {
 	xavaWinClass.cbSize=sizeof(WNDCLASSEX);
-	xavaWinClass.style=CS_HREDRAW | CS_VREDRAW;
+	xavaWinClass.style=CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	xavaWinClass.lpfnWndProc=WindowFunc;
 	xavaWinClass.cbClsExtra=0;
 	xavaWinClass.cbWndExtra=0;
@@ -84,9 +142,9 @@ unsigned char CreateHGLRC(HWND hWnd) {
 		sizeof(PIXELFORMATDESCRIPTOR),
 		1,                                // Version Number
 		PFD_DRAW_TO_WINDOW      |         // Format Must Support Window
-			PFD_SUPPORT_OPENGL      |         // Format Must Support OpenGL
-			PFD_SUPPORT_COMPOSITION |         // Format Must Support Composition
-			PFD_DOUBLEBUFFER,                 // Must Support Double Buffering
+		PFD_SUPPORT_OPENGL      |         // Format Must Support OpenGL
+		PFD_SUPPORT_COMPOSITION |         // Format Must Support Composition
+		PFD_DOUBLEBUFFER,                 // Must Support Double Buffering
 		PFD_TYPE_RGBA,                    // Request An RGBA Format
 		32,                               // Select Our Color Depth
 		0, 0, 0, 0, 0, 0,                 // Color Bits Ignored
@@ -102,26 +160,23 @@ unsigned char CreateHGLRC(HWND hWnd) {
 		0, 0, 0                           // Layer Masks Ignored
 	};     
 
-	HDC hdc = GetDC(hWnd);
-	int PixelFormat = ChoosePixelFormat(hdc, &pfd);
+	int PixelFormat = ChoosePixelFormat(xavaWinFrame, &pfd);
 	if (PixelFormat == 0) {
 		assert(0);
 		return FALSE ;
 	}
 
-	BOOL bResult = SetPixelFormat(hdc, PixelFormat, &pfd);
+	BOOL bResult = SetPixelFormat(xavaWinFrame, PixelFormat, &pfd);
 	if (bResult==FALSE) {
 		assert(0);
 		return FALSE ;
 	}
 
-	xavaWinGLFrame = wglCreateContext(hdc);
+	xavaWinGLFrame = wglCreateContext(xavaWinFrame);
 	if (!xavaWinGLFrame){
 		assert(0);
 		return FALSE;
 	}
-
-	ReleaseDC(hWnd, hdc);
 
 	return TRUE;
 }
@@ -183,14 +238,14 @@ int init_window_win() {
 #endif
 
 	// create window
-	xavaWinWindow = CreateWindowEx(interactable ? WS_EX_APPWINDOW : WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST, szAppName, wcWndName, WS_VISIBLE | WS_POPUP, windowX, windowY, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
+	xavaWinWindow = CreateWindowEx((transparentFlag?WS_EX_TRANSPARENT:0), szAppName, wcWndName, WS_CAPTION | WS_POPUPWINDOW | WS_VISIBLE | WS_THICKFRAME, windowX, windowY, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
 	if(xavaWinWindow == NULL) {
 		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
 	// transparency fix
-	SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
-	SetWindowPos(xavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_TOPMOST, windowX, windowY, p.w, p.h, SWP_SHOWWINDOW);
+	if(transparentFlag) SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
+	//SetWindowPos(xavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_NOTOPMOST, windowX, windowY, p.w, p.h, SWP_SHOWWINDOW);
 
 
 	// we need the desktop window manager to enable transparent background (from Vista ...onward)
@@ -201,8 +256,8 @@ int init_window_win() {
 	bb.fEnable = transparentFlag;
 	DwmEnableBlurBehindWindow(xavaWinWindow, &bb);
 
-	CreateHGLRC(xavaWinWindow);
 	xavaWinFrame = GetDC(xavaWinWindow);
+	CreateHGLRC(xavaWinWindow);
 	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
 
 	// process colors
@@ -245,12 +300,20 @@ int init_window_win() {
 
 	// set up opengl and stuff
 	init_opengl_win();
+
+	// set up precise timers (otherwise unstable framerate)
+	if(timeGetDevCaps(&xavaPeriod, sizeof(TIMECAPS))!=MMSYSERR_NOERROR) {
+		MessageBox(NULL, "Failed setting up precise timers", "Error", MB_OK | MB_ICONERROR);
+		return 1;
+	}
+	timeBeginPeriod(xavaPeriod.wPeriodMin);
+
 	return 0;
 }
 
 void apply_win_settings() {
 	resize_framebuffer(p.w, p.h);
-	ReleaseDC(xavaWinWindow, xavaWinFrame);
+	//ReleaseDC(xavaWinWindow, xavaWinFrame);
 
 	if(!transparentFlag) glClearColor(((p.bgcol>>16)%256)/255.0, ((p.bgcol>>8)%256)/255.0,(p.bgcol%256)/255.0, 0.0f);
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = wglGetProcAddress("wglSwapIntervalEXT"); 
@@ -259,76 +322,20 @@ void apply_win_settings() {
 }
 
 int get_window_input_win() {
-	while(PeekMessage(&xavaWinEvent, NULL, WM_KEYFIRST, WM_MOUSELAST, PM_REMOVE)) {	
+	while(PeekMessage(&xavaWinEvent, xavaWinWindow, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&xavaWinEvent);
-		DispatchMessage(&xavaWinEvent);	// windows handles the rest
-		switch(xavaWinEvent.message) {
-			case WM_KEYDOWN:
-				switch(xavaWinEvent.wParam) {
-					// should_reload = 1
-					// resizeTerminal = 2
-					// bail = -1
-					case 'A':
-						p.bs++;
-						return 2;
-					case 'S':
-						if(p.bs > 0) p.bs--;
-						return 2;
-					case 'F': // fullscreen
-						//fs = !fs;
-						return 2;
-					case VK_UP:
-						p.sens *= 1.05;
-						break;
-					case VK_DOWN:
-						p.sens *= 0.95;
-						break;
-					case VK_LEFT:
-						p.bw++;
-						return 2;
-					case VK_RIGHT:
-						if (p.bw > 1) p.bw--;
-						return 2;
-					case 'R': //reload config
-						return 1;
-					case 'Q':
-						return -1;
-					case VK_ESCAPE:
-						return -1;
-					case 'B':
-						if(transparentFlag) break;
-						p.bgcol = (rand()<<16)+rand();
-						return 3;
-					case 'C':
-						if(p.gradient) break;
-						p.col = (rand()<<16)+rand();
-						return 3;
-					default: break;
-				}
-				break;
-			case WM_CLOSE:
-				return -1;
-			case WM_DESTROY:
-				return -1;
-			case WM_QUIT:
-				return -1;
-			case WM_SIZE:
-				{
-					RECT rect;
-					if(GetWindowRect(xavaWinWindow, &rect)) {
-						p.w = rect.right - rect.left;
-						p.h = rect.bottom - rect.top;
-					}
-					return 2;
-				}
+		int r=DispatchMessage(&xavaWinEvent);  // handle return values
+		if(resized) {
+			resized=FALSE;
+			return 2;
 		}
+		if(r) return r;
 	}
 	return 0;
 }
 
 void draw_graphical_win(int bars, int rest, int f[200]) {
-	HDC hdc = GetDC(xavaWinWindow);
-	wglMakeCurrent(hdc, xavaWinGLFrame);
+	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
 
 	// clear color and calculate pixel witdh in double
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -342,15 +349,16 @@ void draw_graphical_win(int bars, int rest, int f[200]) {
 		gradColors[i*3+2] = (gradientColor[i]%256)/255.0;;
 	}
 
-	if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);	
-	//glFlush();
+	if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
 
-	// swap buffers	
-	SwapBuffers(hdc);
-	//ReleaseDC(xavaWinWindow, hdc);
+	glFlush();
+
+	// swap buffers
+	SwapBuffers(xavaWinFrame);
 }
 
 void cleanup_graphical_win(void) {
+	timeEndPeriod(xavaPeriod.wPeriodMin);
 	free(gradientColor);
 	wglMakeCurrent(NULL, NULL);
 	wglDeleteContext(xavaWinGLFrame);
