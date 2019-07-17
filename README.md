@@ -31,6 +31,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Controls](#controls)
 - [Configuration](#configuration)
   - [Output modes](#output-modes)
+  - [Vsync](#vsync)
   - [OpenGL](#opengl)
   - [Window options](#window-options)
   - [Shadow](#shadow)
@@ -190,7 +191,7 @@ On Windows, you should have 'Stereo Mix' as a option on the Recording tab in Aud
 
 If you don't, install better drivers or get a better sound card.
 
-Once you figured that out, continue below.
+Once you figured that out, try again.
 
 
 
@@ -333,6 +334,26 @@ By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, `$
 ### Output modes
 
 XAVA supports outputing as `raw`, `x`, `sdl` and `win`.
+
+
+### Vsync
+
+To just enable basic Vsync put the following in the ``[general]`` section:
+      
+	vsync = 1
+
+Or if you want adaptive Vsync (G-Sync, FreeSync and other brand trademarks):
+      
+	vsync = -1
+
+To disable:
+      
+	vsync = 0
+
+Or if you want REFRESH_RATE/VALUE (fxp. 60/2 = 30fps)
+      
+	vsync = 2 (replace with desired divider)
+
 
 ### OpenGL
 
