@@ -311,9 +311,8 @@ int apply_window_settings_x()
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 
-		// Vsync disabled by default because this program is so light on the GPU that tearing is improbable
-		// but if you DO experience issues with tearing please notify me
-		glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, 0);
+		// Vsync causes problems on NVIDIA GPUs, looking for possible workarounds/fixes
+		glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p.vsync);
         #endif
 	} else clear_screen_x();
 

@@ -56,6 +56,7 @@ int init_window_sdl()
 	Uint32 windowFlags = SDL_WINDOW_RESIZABLE;
 	if(fs) windowFlags |= SDL_WINDOW_FULLSCREEN;
 	if(!borderFlag) windowFlags |= SDL_WINDOW_BORDERLESS;
+	if(p.vsync) windowFlags |= SDL_RENDERER_PRESENTVSYNC;
 	xavaSDLWindow = SDL_CreateWindow("XAVA", windowX, windowY, p.w, p.h, windowFlags);
 	if(!xavaSDLWindow)
 	{

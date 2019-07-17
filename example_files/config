@@ -9,6 +9,12 @@
 # Accepts only non-negative values.
 ; framerate = 60
 
+# Keep the application in sync with the monitor to prevent tearing
+# This is usually a good idea to enable on Windows because it's system timers are REALLY inaccurate,
+# so just letting Windows manage my frametimes does the job just fine
+# -1 = adaptive Vsync (G-Sync. FreeSync, etc.), 0 = off, 1 up to refresh rate = Vsync at monitor_refresh_rate/the_value_below
+; vsync = 1
+
 # 'autosens' will attempt to decrease sensitivity if the bars peak. 1 = on, 0 = off
 # new as of 0.6.0 autosens of low values (dynamic range)
 # 'overshoot' allows bars to overshoot (in % of display height) without initiating autosens. DEPRECATED as of 0.6.0

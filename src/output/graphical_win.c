@@ -317,6 +317,7 @@ int init_window_win() {
 		MessageBox(NULL, "Failed setting up precise timers", "Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
+	timeEndPeriod(0);
 	timeBeginPeriod(xavaPeriod.wPeriodMin);
 
 	return 0;
@@ -328,7 +329,7 @@ void apply_win_settings() {
 
 	if(!transparentFlag) glClearColor(((p.bgcol>>16)%256)/255.0, ((p.bgcol>>8)%256)/255.0,(p.bgcol%256)/255.0, 0.0f);
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = wglGetProcAddress("wglSwapIntervalEXT"); 
-	wglSwapIntervalEXT(0);
+	wglSwapIntervalEXT(p.vsync);
 	return;
 }
 

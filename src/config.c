@@ -216,6 +216,13 @@ void validate_config(char supportedInput[255], void* params)
 		exit(EXIT_FAILURE);
 	}
 	
+	// validate: framerate
+	if (p->vsync <= -1) {
+		fprintf(stderr,
+			"Vsync cannot be below -1, no such Vsync mode exists!\n");
+		exit(EXIT_FAILURE);
+	}
+	
 	// validate: color
 	if (!validate_color(p->color, p->om)) {
 		fprintf(stderr, "The value for 'foreground' is invalid. It can be either one of the 7 named colors or a HTML color of the form '#xxxxxx'.\n");
@@ -483,6 +490,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->bw = iniparser_getint(ini, "general:bar_width", 13);
 	p->bs = iniparser_getint(ini, "general:bar_spacing", 5);
 	p->framerate = iniparser_getint(ini, "general:framerate", 60);
+	p->vsync = iniparser_getint(ini, "general:vsync", 1);
 	p->sens = iniparser_getint(ini, "general:sensitivity", 100);
 	p->autosens = iniparser_getint(ini, "general:autosens", 1);
 	p->overshoot = iniparser_getint(ini, "general:overshoot", 0);

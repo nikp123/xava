@@ -124,14 +124,15 @@ unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 		SYSTEMTIME time;
 		GetSystemTime(&time);
 		newTime = time.wSecond*1000+time.wMilliseconds;
-		if(newTime-oldTime<1000/framerate&&newTime>oldTime) Sleep(1000/framerate-(newTime-oldTime));
+		if(newTime-oldTime<1000/framerate&&newTime>oldTime && p.vsync)
+			Sleep(1000/framerate-(newTime-oldTime));
 		GetSystemTime(&time);
 		return time.wSecond*1000+time.wMilliseconds;
 	#else
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 		newTime = tv.tv_sec*1000+tv.tv_usec/1000;
-		if(oldTime+1000/framerate>newTime)
+		if(oldTime+1000/framerate>newTime && p.vsync)
 			usleep((1000/framerate+oldTime-newTime)*1000);
 		gettimeofday(&tv, NULL);
 		return tv.tv_sec*1000+tv.tv_usec/1000;
