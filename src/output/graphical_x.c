@@ -144,6 +144,11 @@ void calculateColors() {
 
 int init_window_x(char **argv, int argc)
 {
+	// NVIDIA CPU cap utilization in Vsync fix
+	setenv("__GL_YIELD", "USLEEP", 0);
+
+	// workarounds go above if they're required to run before anything else
+
 	// connect to the X server
 	xavaXDisplay = XOpenDisplay(NULL);
 	if(xavaXDisplay == NULL) {
