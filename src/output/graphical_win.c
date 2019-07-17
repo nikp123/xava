@@ -81,6 +81,11 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 			return -1;
 		case WM_QUIT:
 			break;
+		case WM_NCHITTEST: {
+			LRESULT hit = DefWindowProc(hWnd, msg, wParam, lParam);
+			if (hit == HTCLIENT) hit = HTCAPTION;
+			return hit;
+		}
 		default:
 			return DefWindowProc(hWnd,msg,wParam,lParam);
 	}
@@ -244,7 +249,7 @@ int init_window_win() {
 	if(!transparentFlag) interactable=1; // correct practicality error
 
 	// create window
-	xavaWinWindow = CreateWindowEx((transparentFlag?WS_EX_TRANSPARENT:0)|(interactable?0:WS_EX_LAYERED|WS_EX_COMPOSITED), szAppName, wcWndName, (interactable?WS_THICKFRAME:0) | WS_POPUP | WS_VISIBLE | (borderFlag?WS_CAPTION:0), windowX, windowY, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
+	xavaWinWindow = CreateWindowEx((transparentFlag?WS_EX_TRANSPARENT:0)|(interactable?0:WS_EX_LAYERED|WS_EX_COMPOSITED), szAppName, wcWndName, WS_POPUP | WS_VISIBLE | (borderFlag?WS_CAPTION:0), windowX, windowY, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
 	if(xavaWinWindow == NULL) {
 		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;
