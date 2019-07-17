@@ -79,7 +79,7 @@ Fedora:
 
 Iniparser is also required, but if it is not already installed, it will clone the [repository](https://github.com/ndevilla/iniparser).
 
-For compilation you will also need `gcc` or `clang`, `make`, `cmake` and `git`.
+For compilation you will also need `g++` or `clang++`, `make`, `cmake` and `git`.
 
 
 Getting started
