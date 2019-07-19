@@ -36,8 +36,8 @@
 # the bandwidth of the visualizer.
 # Note: there is a minimum total bandwidth of 43Mhz x number of bars.
 # Xava will automatically increase the higher cutoff if a too low band is specified.
-; lower_cutoff_freq = 20
-; higher_cutoff_freq = 20000
+; lower_cutoff_freq = 26
+; higher_cutoff_freq = 15000
 
 
 
@@ -51,13 +51,13 @@
 ; fullscreen = 0
 
 # Enables or disables window borders (1 = on, 0 = off)
-; border = 1
+; border = 0
 
 # Window transparency toggle (your system must have a compositing WM)
-; transparency = 0
+; transparency = 1
 
 # Keeps the window under any other (works under X only)
-; keep_below = 0
+; keep_below = 1
 
 # Set window properties like WM_CLASS (works under X only)
 ; set_win_props = 0
@@ -104,6 +104,9 @@
 ; method = portaudio
 ; source = auto
 
+; method = wasapi
+; soruce = loopback
+
 
 [output]
 
@@ -143,7 +146,7 @@
 ; input_size = 11
 
 # Adjusts the FFT buffer size (calculated by 2^fft_size)
-; fft_size = 16
+; fft_size = 14
 
 
 [color]
@@ -170,10 +173,10 @@
 
 # Percentage value for integral smoothing. Takes values from 0 - 100.
 # Higher values means smoother, but less precise. 0 to disable.
-; integral = 70
+; integral = 85
 
 # Disables or enables the so-called "Monstercat smoothing" with or without "waves". Set to 0 to disable. 
-; monstercat = 0
+; monstercat = 1.2
 ; waves = 0
 
 # Set gravity percentage for "drop off". Higher values means bars will drop faster.
@@ -184,19 +187,19 @@
 ; ignore = 0
 
 # Variable logarithm (the higher the value, the more intense) 
-; log = 1.0
+; log = 1.5
 
 # Average out the value of each odd bar (just like the monstercat visualizer)
 ; oddoneout = 1
 
 # Balances the eq towards higher or lower frequencies (lower value->lower frequencies, higher value->higher frequencies)
-; eq_balance = 0.64
+; eq_balance = 0.65
 
 [shadow]
 
 # Fake shadow effect (works with transparency only)
 # Make sure that the shadow size is NOT larger then the bar spacing
-; size = 0
+; size = 7
 
 # Color format is #aarrggbb
 ; color = "#ff000000"

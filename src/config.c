@@ -459,15 +459,15 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	#endif
 
 	p->inputsize = (int)exp2((float)iniparser_getint(ini, "smoothing:input_size", 11));
-	p->fftsize = (int)exp2((float)iniparser_getint(ini, "smoothing:fft_size", 16));
-	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 0);
+	p->fftsize = (int)exp2((float)iniparser_getint(ini, "smoothing:fft_size", 14));
+	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 1.2);
 	p->waves = iniparser_getint(ini, "smoothing:waves", 0);
-	p->integral = iniparser_getdouble(ini, "smoothing:integral", 90);
-	p->gravity = iniparser_getdouble(ini, "smoothing:gravity", 100);
+	p->integral = iniparser_getdouble(ini, "smoothing:integral", 85);
+	p->gravity = 50*iniparser_getdouble(ini, "smoothing:gravity", 100);
 	p->ignore = iniparser_getdouble(ini, "smoothing:ignore", 0);
-	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.0);
+	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.5);
 	p->oddoneout = iniparser_getdouble(ini, "smoothing:oddoneout", 1);
-	p->eqBalance = iniparser_getdouble(ini, "smoothing:eq_balance", 0.64);
+	p->eqBalance = iniparser_getdouble(ini, "smoothing:eq_balance", 0.65);
 
 	p->color = (char *)iniparser_getstring(ini, "color:foreground", "default");
 	p->bcolor = (char *)iniparser_getstring(ini, "color:background", "default");
@@ -504,11 +504,11 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->sens = iniparser_getint(ini, "general:sensitivity", 100);
 	p->autosens = iniparser_getint(ini, "general:autosens", 1);
 	p->overshoot = iniparser_getint(ini, "general:overshoot", 0);
-	p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 20);
-	p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 20000);
+	p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 26);
+	p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 15000);
 
 	// config: window
-	#ifdef GLX
+	#ifdef GL
 		GLXmode = iniparser_getint(ini, "window:opengl", 1);
 	#endif
 
@@ -519,9 +519,9 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->wx = iniparser_getint(ini, "window:x_padding", 0);
 	p->wy = iniparser_getint(ini, "window:y_padding", 0);
 	p->fullF = iniparser_getboolean(ini, "window:fullscreen", 0);
-	p->transF = iniparser_getboolean(ini, "window:transparency", 0);
-	p->borderF = iniparser_getboolean(ini, "window:border", 1);
-	p->bottomF = iniparser_getboolean(ini, "window:keep_below", 0);
+	p->transF = iniparser_getboolean(ini, "window:transparency", 1);
+	p->borderF = iniparser_getboolean(ini, "window:border", 0);
+	p->bottomF = iniparser_getboolean(ini, "window:keep_below", 1);
 	p->interactF = iniparser_getboolean(ini, "window:interactable", 1);
 	p->winPropF = iniparser_getint(ini, "window:set_win_props", 0);
 
@@ -535,7 +535,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->bit_format = iniparser_getint(ini, "output:bit_format", 16);
 
 	// config: shadow
-	p->shdw = iniparser_getint(ini, "shadow:size", 0);
+	p->shdw = iniparser_getint(ini, "shadow:size", 7);
 	p->shadow_color = (char *)iniparser_getstring(ini, "shadow:color", "#ff000000");	
 	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
 	{
