@@ -31,11 +31,16 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Controls](#controls)
 - [Configuration](#configuration)
   - [Output modes](#output-modes)
-  - [Vsync](#vsync)
+  - [Basic window options](#basic-window-options)
+  - [Window position](#window-position)
+  - [Advanced window options](#advanced-window-options)
   - [OpenGL](#opengl)
-  - [Window options](#window-options)
+  - [Vsync](#vsync)
+  - [Bars](#bars)
+  - [Colors and gradients](#colors-and-gradients)
   - [Shadow](#shadow)
-  - [Additional features](#additional-features)
+  - [Accent colors](#accent-colors)
+  - [Additional options](#additional-options)
 - [Contribution](#contribution)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -64,19 +69,19 @@ All the requirements can be installed easily in all major distros:
 
 Debian/Raspbian:
 
-    apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake
+    apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake git
 
 ArchLinux:
 
-    pacman -S base-devel fftw alsa-lib iniparser pulseaudio libx11 sdl2 portaudio cmake
+    pacman -S base-devel fftw alsa-lib iniparser pulseaudio libx11 sdl2 portaudio cmake git
 
 openSUSE:
 
-    zypper install alsa-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake
+    zypper install alsa-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake git
 
 Fedora:
 
-    dnf install alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake
+    dnf install alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake git
 
 Iniparser is also required, but if it is not already installed, it will clone the [repository](https://github.com/ndevilla/iniparser).
 
@@ -88,10 +93,12 @@ Getting started
 
     mkdir build (if it doesn't already exist)
     cd build
-    cmake ..
-    make -j4
+    cmake .. -DCMAKE_BUILD_TYPE=Release ( or Debug if you're into that type ;) )
+    make -j$(nproc) (or whatever number)
 
 ### Installing manually
+
+Windows users, just download the installer from the Releases page on this repository.
 
 Install `xava` to default `/usr/local`:
 
@@ -101,8 +108,11 @@ Or you can change `PREFIX`, for example:
 
     cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/usr
 
+If you're building from source, please don't delete the source files as you would be able to uninstall.
+
 ### Uninstalling
 
+    cd $where_is_xava_located/build
     xargs rm < install_manifest.txt
 
 ### Arch
@@ -110,6 +120,11 @@ Or you can change `PREFIX`, for example:
 XAVA is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
 
     pacaur -S xava-git
+
+or
+
+    pacaur -S xava
+
 
 ### VoidLinux
 
@@ -121,15 +136,13 @@ XAVA is available in the Void repos:
 
 ### Windows
 
-There should be an installer in the Releases page of this repository. (However most of the time it's really outdated and best to rely on compilation).
+There should be an installer in the Releases page of this repository. Just download, install and run it. 
+
+The configuration file is located in ``%appdata%\xava\config.cfg``
+
+Technical info/notes:
 
 Please use minGW for compilation. I haven't tested MSVC, however the code has a bit of GCC specific features so it may not work.
-
-I strongly recommend cross-compilation on ArchLinux because, well I'm not sure how portable CMake is actually.
-
-Windows uses WASAPI by default, because it's THE WAY it's meant to record audio on Windows. However my WGL implementation is a buggy mess (for now) so I made SDL default (it doesnt support transparency, but I prefer stability over functionality)
-
-If you do want features from X11 like transparency and shadows, prepare for inconsitent framerates and frequent freezes. In the ``output`` section set ``method = win``.
 
 #### Additional info
 
@@ -138,7 +151,7 @@ This version doesn't include compatibility for the raw mode (since they depend o
 To get raw functionality, compile this package with cygwin. But it still probably won't work.
 
 
-All distro specific instalation sources might be out of date.
+All installers/distro specific instalation sources might be out of date.
 
 
 Capturing audio
@@ -192,6 +205,8 @@ On Windows, you should have 'Stereo Mix' as a option on the Recording tab in Aud
 If you don't, install better drivers or get a better sound card.
 
 Once you figured that out, try again.
+
+Or just use [WASAPI](#from-wasapi-windows-only-super-easy).
 
 
 
@@ -260,7 +275,8 @@ $ AUDIODEVICE=snd/0.monitor xava
 ```
 
 ### squeezelite
-[squeezelite](https://en.wikipedia.org/wiki/Squeezelite) is one of several software clients available for the Logitech Media Server. Squeezelite can export it's audio data as shared memory, which is what this input module uses.
+[squeezelite](https://en.wikipedia.org/wiki/Squeezelite) is one of several software clients available for the Logitech Media Server.
+Squeezelite can export it's audio data as shared memory, which is what this input module uses.
 Configure X.A.V.A. with the `-DSHMEM=ON` option, then adapt your config:
 ```
 method = shmem
@@ -272,11 +288,14 @@ Note: squeezelite must be started with the `-v` flag to enable visualizer suppor
 Latency notes
 -------------
 
-If you see latency issues, ie. visualizer not reacting on time, try turning off demanding graphical effect and/or shrinking the window, or just lower the ``fft_size``.
+If you see latency issues, ie. visualizer not reacting on time, try turning off demanding graphical effects and/or shrinking the window, 
+or just lower the ``fft_size`` and ``input_size`` (as increasing capture time creates a delay).
 
-If your audio device has a huge buffer, you might experience that xava is actually faster than the audio you hear. This reduces the experience of the visualization. To fix this, try decreasing the buffer settings in your audio playing software.
+If your audio device has a huge buffer, you might experience that xava is actually faster than the audio you hear. 
+This reduces the experience of the visualization. To fix this, try decreasing the buffer settings in your audio playing software.
 
-For Windows users, I haven't tested the WASAPI code throughly, so there might be still bugs inside. Also Windows timers are poor so you'll get inconsitent framerates no matter what. Unless I somehow figure out how to implement "multimedia timers".
+If you are getting lag spikes on Windows, just know that the Windows scheduler for some reason likes to slow down processes on user activity.
+There isn't much there you can do.
 
 Usage
 -----
@@ -285,10 +304,8 @@ Usage
 	Visualize audio input in terminal. 
 
 	Options:
-			-p          path to config file
-			-v          print version
-
-
+		-p	path to config file
+		-v	print version
 
 Exit by pressing Q, ESC or by closing the window ;)
 
@@ -299,10 +316,10 @@ Exit by pressing Q, ESC or by closing the window ;)
 | <kbd>up</kbd> / <kbd>down</kbd>| increase/decrease sensitivity |
 | <kbd>left</kbd> / <kbd>right</kbd>| increase/decrease bar width |
 | <kbd>a</kbd> / <kbd>s</kbd> | increase/decrease bar spacing |
-| <kbd>f</kbd> | toggle fullscreen (only in window modes, besides win32) |
+| <kbd>f</kbd> | toggle fullscreen (not supported on Windows) |
 | <kbd>c</kbd> / <kbd>b</kbd>| change forground/background color |
 | <kbd>r</kbd> | Reload configuration |
-| <kbd>q</kbd> or <kbd>ESC</kbd>| Quit C.A.V.A. |
+| <kbd>q</kbd> or <kbd>ESC</kbd>| Quit X.A.V.A. |
 
 Configuration
 -------------
@@ -335,122 +352,145 @@ By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, `$
 
 XAVA supports outputing as `raw`, `x`, `sdl` and `win`.
 
+You can change the output in the ``general`` section.
 
-### Vsync
+### Basic window options
 
-To just enable basic Vsync put the following in the ``[general]`` section:
-      
-	vsync = 1
+You can find these in the ``window`` section of the configuration file:
 
-Or if you want adaptive Vsync (G-Sync, FreeSync and other brand trademarks):
-      
-	vsync = -1
+Window size:
 
-To disable:
-      
-	vsync = 0
-
-Or if you want REFRESH_RATE/VALUE (fxp. 60/2 = 30fps)
-      
-	vsync = 2 (replace with desired divider)
-
-
-### OpenGL
-
-To run XAVA in OpenGL:
-      
-	opengl = true
-
-WARNING: OpenGL isn't supported on ``sdl``.
-
-### Window options
+	width = *number of pixels*
+	height = *number of pixels*
 
 Toggle fullscreen:
-     
-	fullscreen = 1 or 0
+
+	fullscreen = *1 or 0*
 
 WARNING: On ``win`` it isn't supported.
 
-
 Toggle window border:
-    
-	border = 1 or 0
 
+	border = *1 or 0*
 
-Change bar width/height (units are in pixels rather than characters):
-    
-	bar_width = (width in pixels)
-    
-	bar_spacing = (width in pixels)
-
-NOTE: It's located in the ```window``` category.
-
+### Window position
 
 Move the window on startup to a specific part of the screen:
 
 	alignment = 'top_left', 'top', 'top_right'. 'left', 'center', 'right', 'bottom_left', 'bottom', 'bottom_right' and by default 'none'
 
-
 In addition to window aligment you can adjust the window position further with:
-    
+
 	x_padding = (specify value)
-    
+
 	y_padding = (specify value)
 
+### Advanced window options
+
+The following features enable options that come with recent OSes 
+and may introduce problems on older software/hardware (fxp. Windows XP),
+ but in return they may look really nice if you configure them properly.
 
 You can enable transparent windows:
      
 	transparency = 1
 
-WARNING: ``sdl`` doesn't have transparency.
+WARNING: ``sdl`` support transparency.
 
+And with transparency comes the ability to change the opacity of the background and the bars:
 
-Force the window to be behind any window (works only under Xlib):
+	foreground_opacity = *range from 0.0 to 1.0*
+	background_opacity = *range from 0.0 to 1.0*
+
+Force the window to be behind any window (may not work):
     
 	keep_below = 1
 
-Set window properties (Window Class):
+Set window properties (Window Class, X11 only) :
 
 	set_win_props = 1
 
-This helps with removing blur and shadows from behind the window, but also removes the ability to interact with the window.
+This helps with removing blur and shadows from behind the window, 
+but also removes the ability to interact with the window.
 
-Make window click-proof (as in the window is totally ignored when clicked and clicks behind it):
+Make the window not react on mouse input (it just lets the click go through the window):
     
 	interactable = 0
 
-Pro-tip: You can still gain control of the window by clicking it's taskbar icon.
+Pro-tip: You can still gain control of the window by clicking it's taskbar icon or
+by alt-tabbing into it.
+
+### OpenGL
+
+To run XAVA in OpenGL:
+
+	opengl = true
+
+WARNING: OpenGL isn't supported on ``sdl``. And also on Windows OpenGL is always enabled.
+
+### Vsync
+
+VSync is enabled by default on XAVA.
+
+You can change it's behaviour or outright just disable it.
+
+To do that open the configuration file and in the ``general`` section you'll find:
+
+	vsync = 1 (1 means its enabled)
+	vsync = -1 (enable variable refresh rate)
+	vsync = 0 (disable Vsync)
+	vsync = 2 (custom framerate, the number is a divider of the refresh rate of your display)
+
+### Bars
+
+In XAVA you can customize the look of the visualizer.
+
+In the ``general`` section you'll find two options that let you change the size of the bars 
+and the space between them:
+
+	bar_width = *width in pixels*
+	bar_spacing = *width in pixels*
+
+To limit the number of bars displayed on the window, set the following in the ``general`` category:
+
+	bars = *insert number here*
+
+### Colors and gradients
+
+In the ``color`` section of the config file you can find:
+
+	background = *predefined colors in listed in the config file or a hex number in quotes*
+	foreground = *same as above*
+
+But if you want to have gradients on the bars instead of static colors, you can enable them by changing:
+
+	gradient_count = *number of colors higher than 1*
+	
+	gradient_color_1 = *same rule as colors*
+	gradient_color_2 = *same as above*
+	...
 
 ### Shadow
 
-You can change the following options:
-    
-	size = (in pixels)
+XAVA can render shadows around the bars so to make the visualizer look like it's floating on your desktop.
+In the ``shadow`` section you'll find these two options:
 
-and
-    
-	color = '#aarrggbb'
+	size = *in pixels*
+	color = *hex color string in the following format '#aarrggbb'*
 
 You need to enable transparency for the shadows to work.
 
 NOTE: These are still buggy as Windows interprets vertex buffers (VBOs) differently to other OS-es.
 
 
-### Additional features
+### Accent colors
 
-Setting foreground color to `default` will cause in Xlib to average out the color in the desktop. 
+This is enabled by default.
 
-On Windows it will grab the accent color (aka. your theme) instead.
+Setting foreground or background color to `default` will make XAVA attempt to color itself after the OS theme. 
 
-To enable this you just have to change:
-    
-    foreground = 'default'
-    
-Set foreground opacity:
 
-    foreground_opacity = (from 0.0 to 1.0)
-
-You need OpenGL and transparency support in order for it to work.
+### Additional options
 
 For additional options, look them up in the config file.
 

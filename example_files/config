@@ -3,9 +3,6 @@
 
 [general]
 
-# Smoothing mode. Can be 'normal', 'scientific' or 'waves'. DEPRECATED as of 0.6.0
-; mode = normal
- 
 # Accepts only non-negative values.
 ; framerate = 60
 
@@ -158,6 +155,9 @@
 
 # This adjusts the opacity of the bars (must have transparency and OpenGL in order for it to work)
 ; foreground_opacity = 1.0
+
+# And this does the same but for the background 
+; background_opacity = 0.0
 
 # Gradient mode, only hex defined colors are supported, background must also be defined in hex
 # or remain commented out.
