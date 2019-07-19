@@ -508,7 +508,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 15000);
 
 	// config: window
-	#ifdef GL
+	#ifdef GLX
 		GLXmode = iniparser_getint(ini, "window:opengl", 1);
 	#endif
 
