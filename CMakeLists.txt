@@ -3,13 +3,16 @@ cmake_minimum_required(VERSION 3.1)
 
 option(SHMEM "SHMEM" OFF)
 
-set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-g ")
-set(CMAKE_BUILD_TYPE Debug)
+
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE Debug)
+endif()
+
 set(CMAKE_C_STANDARD 11)
 set(xava_VERSION_MAJOR 0)
 set(xava_VERSION_MINOR 6)
-set(xava_VERSION_PATCH 1)
-set(xava_VERSION_TWEAK 2)
+set(xava_VERSION_PATCH 2)
+set(xava_VERSION_TWEAK 0)
 
 add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
 add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
