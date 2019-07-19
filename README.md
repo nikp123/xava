@@ -452,6 +452,8 @@ Set foreground opacity:
 
 You need OpenGL and transparency support in order for it to work.
 
+For additional options, look them up in the config file.
+
 
 Contribution
 ------------
