@@ -28,44 +28,38 @@ void* input_fifo(void* data)
 	int t = 0;
 	//int size = 1024;
 	int bytes = 0;
-	int16_t buf[BUFSIZE / 2];
+	int16_t buf[audio->inputsize];
 	struct timespec req = { .tv_sec = 0, .tv_nsec = 10000000 };
-
-
-
 
 	fd = open_fifo(audio->source);
 
 	while (1) {
-
 		bytes = read(fd, buf, sizeof(buf));
 
 		if (bytes < 1) { //if no bytes read sleep 10ms and zero shared buffer
 			nanosleep (&req, NULL);
 			t++;
 			if (t > 10) {
-				for (i = 0; i < 2048; i++)audio->audio_out_l[i] = 0;
-				for (i = 0; i < 2048; i++)audio->audio_out_r[i] = 0;
+				for (i = 0; i < audio->inputsize; i++)audio->audio_out_l[i] = 0;
+				for (i = 0; i < audio->inputsize; i++)audio->audio_out_r[i] = 0;
 				close(fd);
 				fd = open_fifo(audio->source);
 				t = 0;
 			}
 		} else { //if bytes read go ahead
 			t = 0;
+			for (i = 0; i < audio->inputsize; i += 2) {
+				if (audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
 
-            for (i = 0; i < BUFSIZE / 2; i += 2) {
+				//stereo storing channels in buffer
+				if (audio->channels == 2) {
+					audio->audio_out_l[n] = buf[i];
+					audio->audio_out_r[n] = buf[i + 1];
+				}
 
-                if (audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
-
-                //stereo storing channels in buffer
-                if (audio->channels == 2) {
-                        audio->audio_out_l[n] = buf[i];
-                        audio->audio_out_r[n] = buf[i + 1];
-                        }
-
-                n++;
-                if (n == 2048 - 1) n = 0;
-        }
+				n++;
+				if (n == audio->inputsize-1) n = 0;
+			}
 
 /*
 			for (q = 0; q < (size / 4); q++) {
@@ -107,8 +101,6 @@ templ) /
 			close(fd);
 			break;
 		}
-
 	}
-
 	return 0;
 }

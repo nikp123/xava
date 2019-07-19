@@ -16,8 +16,13 @@ HGLRC xavaWinGLFrame;
 TIMECAPS xavaPeriod;
 unsigned int *gradientColor;
 
+static double glColors[8];
+static double gradColors[24];
+
+BOOL WINAPI wglSwapIntervalEXT (int interval);
+
 // a crappy workaround for a flawed event design
-_Bool resized=FALSE, quit=FALSE;
+static _Bool resized=FALSE, quit=FALSE;
 
 LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch(msg) {
@@ -35,7 +40,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 					if(p.bs > 0) p.bs--;
 					return 2;
 				case 'F': // fullscreen
-					//fs = !fs;
+					//p.fullF = !p.fullF;
 					return 2;
 				case VK_UP:
 					p.sens *= 1.05;
@@ -56,12 +61,11 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 				case VK_ESCAPE:
 					return -1;
 				case 'B':
-					if(transparentFlag) break;
-					p.bgcol = (rand()<<16)+rand();
+					p.bgcol = (rand()<<16)|rand();
 					return 3;
 				case 'C':
-					if(p.gradient) break;
-					p.col = (rand()<<16)+rand();
+					if(p.gradients) break;
+					p.col = (rand()<<16)|rand();
 					return 3;
 				default: break;
 			}
@@ -90,6 +94,25 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 			return DefWindowProc(hWnd,msg,wParam,lParam);
 	}
 	return 0;
+}
+
+void clear_screen_win() {
+	glColors[0] = ARGB_R_32(p.col)/255.0;
+	glColors[1] = ARGB_G_32(p.col)/255.0;
+	glColors[2] = ARGB_B_32(p.col)/255.0;
+	glColors[3] = p.transF ? p.foreground_opacity : 1.0;
+	glColors[4] = ARGB_A_32(p.shdw_col)/255.0;
+	glColors[5] = ARGB_R_32(p.shdw_col)/255.0;
+	glColors[6] = ARGB_G_32(p.shdw_col)/255.0;
+	glColors[7] = ARGB_B_32(p.shdw_col)/255.0;
+
+	for(int i=0; i<p.gradients; i++) {
+		gradColors[i*3] = ARGB_R_32(gradientColor[i])/255.0;
+		gradColors[i*3+1] = ARGB_G_32(gradientColor[i])/255.0;
+		gradColors[i*3+2] = ARGB_B_32(gradientColor[i])/255.0;;
+	}
+
+	//glClearColor(ARGB_R_32(p.bgcol)/255.0, ARGB_G_32(p.bgcol)/255.0, ARGB_B_32(p.bgcol)/255.0, 0.0);
 }
 
 unsigned char register_window_win(HINSTANCE HIn) {
@@ -134,7 +157,7 @@ void init_opengl_win() {
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
-	if(transparentFlag) {
+	if(p.transF) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
@@ -217,46 +240,48 @@ int init_window_win() {
 	GetDesktopResolution(&screenWidth, &screenHeight);
 
 	// adjust window position etc...
-	if(!strcmp(windowAlignment, "top")){
-		windowX = (screenWidth - p.w) / 2 + windowX;
-	}else if(!strcmp(windowAlignment, "bottom")){
-		windowX = (screenWidth - p.w) / 2 + windowX;
-		windowY = (screenHeight - p.h) + (-1*windowY);
-	}else if(!strcmp(windowAlignment, "top_left")){
+	if(!strcmp(p.winA, "top")){
+		p.wx = (screenWidth - p.w) / 2 + p.wx;
+	}else if(!strcmp(p.winA, "bottom")){
+		p.wx = (screenWidth - p.w) / 2 + p.wx;
+		p.wy = (screenHeight - p.h) + (-1*p.wy);
+	}else if(!strcmp(p.winA, "top_left")){
 		// Nothing to do here :P
-	}else if(!strcmp(windowAlignment, "top_right")){
-		windowX = (screenHeight - p.w) + (-1*windowX);
-	}else if(!strcmp(windowAlignment, "left")){
-		windowY = (screenHeight - p.h) / 2;
-	}else if(!strcmp(windowAlignment, "right")){
-		windowX = (screenWidth - p.w) + (-1*windowX);
-		windowY = (screenHeight - p.h) / 2 + windowY;
-	}else if(!strcmp(windowAlignment, "bottom_left")){
-		windowY = (screenHeight - p.h) + (-1*windowY);
-	}else if(!strcmp(windowAlignment, "bottom_right")){
-		windowX = (screenWidth - p.w) + (-1*windowX);
-		windowY = (screenHeight - p.h) + (-1*windowY);
-	}else if(!strcmp(windowAlignment, "center")){
-		windowX = (screenWidth - p.w) / 2 + windowX;
-		windowY = (screenHeight - p.h) / 2 + windowY;
+	}else if(!strcmp(p.winA, "top_right")){
+		p.wx = (screenHeight - p.w) + (-1*p.wx);
+	}else if(!strcmp(p.winA, "left")){
+		p.wy = (screenHeight - p.h) / 2;
+	}else if(!strcmp(p.winA, "right")){
+		p.wx = (screenWidth - p.w) + (-1*p.wx);
+		p.wy = (screenHeight - p.h) / 2 + p.wy;
+	}else if(!strcmp(p.winA, "bottom_left")){
+		p.wy = (screenHeight - p.h) + (-1*p.wy);
+	}else if(!strcmp(p.winA, "bottom_right")){
+		p.wx = (screenWidth - p.w) + (-1*p.wx);
+		p.wy = (screenHeight - p.h) + (-1*p.wy);
+	}else if(!strcmp(p.winA, "center")){
+		p.wx = (screenWidth - p.w) / 2 + p.wx;
+		p.wy = (screenHeight - p.h) / 2 + p.wy;
 	}
 	// Some error checking
 #ifdef DEBUG
-	if(windowX > screenWidth - p.w) printf("Warning: Screen out of bounds (X axis)!");
-	if(windowY > screenHeight - p.h) printf("Warning: Screen out of bounds (Y axis)!");
+	if(p.wx > screenWidth - p.w) printf("Warning: Screen out of bounds (X axis)!");
+	if(p.wy > screenHeight - p.h) printf("Warning: Screen out of bounds (Y axis)!");
 #endif
 
-	if(!transparentFlag) interactable=1; // correct practicality error
+	if(!p.transF) p.interactF=1; // correct practicality error
 
 	// create window
-	xavaWinWindow = CreateWindowEx((transparentFlag?WS_EX_TRANSPARENT:0)|(interactable?0:WS_EX_LAYERED|WS_EX_COMPOSITED), szAppName, wcWndName, WS_POPUP | WS_VISIBLE | (borderFlag?WS_CAPTION:0), windowX, windowY, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
+	xavaWinWindow = CreateWindowEx((p.transF?WS_EX_TRANSPARENT:0)|(p.interactF?0:WS_EX_LAYERED|WS_EX_COMPOSITED), 
+		szAppName, wcWndName, WS_POPUP | WS_VISIBLE | (p.borderF?WS_CAPTION:0), p.wx, p.wy, p.w, p.h, 
+		NULL, NULL, xavaWinModule, NULL);
 	if(xavaWinWindow == NULL) {
 		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
 	// transparency fix
-	if(transparentFlag) SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
-	SetWindowPos(xavaWinWindow, keepInBottom ? HWND_BOTTOM : HWND_NOTOPMOST, windowX, windowY, p.w, p.h, SWP_SHOWWINDOW);
+	if(p.transF) SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
+	SetWindowPos(xavaWinWindow, p.bottomF ? HWND_BOTTOM : HWND_NOTOPMOST, p.wx, p.wy, p.w, p.h, SWP_SHOWWINDOW);
 
 
 	// we need the desktop window manager to enable transparent background (from Vista ...onward)
@@ -264,7 +289,7 @@ int init_window_win() {
 	HRGN hRgn = CreateRectRgn(0, 0, -1, -1);
 	bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
 	bb.hRgnBlur = hRgn;
-	bb.fEnable = transparentFlag;
+	bb.fEnable = p.transF;
 	DwmEnableBlurBehindWindow(xavaWinWindow, &bb);
 
 	xavaWinFrame = GetDC(xavaWinWindow);
@@ -305,8 +330,8 @@ int init_window_win() {
 	else sscanf(p.bcolor, "#%x", &p.bgcol);
 
 	// parse all of the values
-	gradientColor = malloc(sizeof(int)*p.gradient_count);
-	for(int i=0; i<p.gradient_count; i++)
+	gradientColor = malloc(sizeof(int)*p.gradients);
+	for(int i=0; i<p.gradients; i++)
 		sscanf(p.gradient_colors[i], "#%06x", &gradientColor[i]);
 
 	// set up opengl and stuff
@@ -324,11 +349,11 @@ int init_window_win() {
 }
 
 void apply_win_settings() {
+	clear_screen_win();
 	resize_framebuffer(p.w, p.h);
 	//ReleaseDC(xavaWinWindow, xavaWinFrame);
 
-	if(!transparentFlag) glClearColor(((p.bgcol>>16)%256)/255.0, ((p.bgcol>>8)%256)/255.0,(p.bgcol%256)/255.0, 0.0f);
-	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = wglGetProcAddress("wglSwapIntervalEXT"); 
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT"); 
 	wglSwapIntervalEXT(p.vsync);
 	return;
 }
@@ -361,16 +386,16 @@ void draw_graphical_win(int bars, int rest, int f[200]) {
 	// clear color and calculate pixel witdh in double
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	double glColors[8] = {((p.col>>16)%256)/255.0, ((p.col>>8)%256)/255.0, (p.col%256)/255.0, p.foreground_opacity, ((unsigned int)p.shadow_color>>24)%256/255.0,
-		((unsigned int)p.shadow_color>>16)%256/255.0, ((unsigned int)p.shadow_color>>8)%256/255.0, (unsigned int)p.shadow_color%256/255.0};
-	double gradColors[24] = {0.0};
-	for(int i=0; i<p.gradient_count; i++) {
-		gradColors[i*3] = ((gradientColor[i]>>16)%256)/255.0;
-		gradColors[i*3+1] = ((gradientColor[i]>>8)%256)/255.0;
-		gradColors[i*3+2] = (gradientColor[i]%256)/255.0;;
-	}
-
 	if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
+
+	// dumb workarounds for dumb OSes
+	glBegin(GL_QUADS);
+		glColor4d(ARGB_R_32(p.bgcol)/255.0, ARGB_G_32(p.bgcol)/255.0, ARGB_B_32(p.bgcol)/255.0, p.background_opacity);
+		glVertex2d(0.0, 0.0);
+		glVertex2d(0.0, p.h);
+		glVertex2d(p.w, p.h);
+		glVertex2d(p.w, 0.0);
+	glEnd();
 
 	glFlush();
 

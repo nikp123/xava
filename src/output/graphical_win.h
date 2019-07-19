@@ -18,6 +18,7 @@
 
 // define functions
 int init_window_win();
+void clear_screen_win();
 void apply_win_settings();
 int get_window_input_win();
 void draw_graphical_win(int bars, int rest, int f[200]);

@@ -17,22 +17,22 @@
 #include "graphical.h"
 #include "../config.h"
 
-Pixmap gradientBox = 0;
-XColor xbgcol, xcol, *xgrad;
+static Pixmap gradientBox = 0;
+static XColor xbgcol, xcol, *xgrad;
 
-XEvent xavaXEvent;
-Colormap xavaXColormap;
-Display *xavaXDisplay;
-Screen *xavaXScreen;
-Window xavaXWindow, xavaXRoot;
-GC xavaXGraphics;
+static XEvent xavaXEvent;
+static Colormap xavaXColormap;
+static Display *xavaXDisplay;
+static Screen *xavaXScreen;
+static Window xavaXWindow, xavaXRoot;
+static GC xavaXGraphics;
 
-XVisualInfo xavaVInfo;
-XSetWindowAttributes xavaAttr;
-Atom wm_delete_window, wmState, fullScreen, mwmHintsProperty, wmStateBelow;
-XClassHint xavaXClassHint;
-XWMHints xavaXWMHints;
-XEvent xev;
+static XVisualInfo xavaVInfo;
+static XSetWindowAttributes xavaAttr;
+static Atom wm_delete_window, wmState, fullScreen, mwmHintsProperty, wmStateBelow;
+static XClassHint xavaXClassHint;
+static XWMHints xavaXWMHints;
+static XEvent xev;
 
 #ifdef GLX
 static int VisData[] = {
@@ -46,10 +46,13 @@ GLX_ALPHA_SIZE, 8,
 GLX_DEPTH_SIZE, 16,
 None
 };
+static double glColors[8], gradColors[24];
 static XRenderPictFormat *pict_format;
 
 static GLXFBConfig *fbconfigs, fbconfig;
 static int numfbconfigs;
+
+void glXSwapIntervalEXT (Display *dpy, GLXDrawable drawable, int interval);
 #endif
 
 
@@ -62,7 +65,8 @@ struct mwmHints {
     unsigned long status;
 };
 
-int xavaXScreenNumber, GLXmode;
+static int xavaXScreenNumber;
+int GLXmode;
 
 // Some window manager definitions
 enum {
@@ -86,7 +90,7 @@ int XGLInit() {
 	// we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
 	xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
 	glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
-	if(transparentFlag) {
+	if(p.transF) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
@@ -99,7 +103,7 @@ int XGLInit() {
 
 void calculateColors() {
 	char tempColorStr[8];
-	
+
 	// Generate a sum of colors
 	if(!strcmp(p.color, "default")) {
 		unsigned long redSum = 0, greenSum = 0, blueSum = 0;
@@ -107,7 +111,7 @@ void calculateColors() {
 		int xPrecision = 20, yPrecision = 20;	
 		while(1){ if(((double)xavaXScreen->width / (double)xPrecision) == ((int)xavaXScreen->width / (int)xPrecision)) break; else xPrecision++; }
 		while(1){ if(((double)xavaXScreen->height / (double)yPrecision) == ((int)xavaXScreen->height / (int)yPrecision)) break; else yPrecision++; }
-		
+
 		// we need a source for that
 		XImage *background = XGetImage(xavaXDisplay, xavaXRoot, 0, 0, xavaXScreen->width, xavaXScreen->height, AllPlanes, XYPixmap);
 		for(unsigned short i = 0; i < xavaXScreen->width; i+=(xavaXScreen->width / xPrecision)) {
@@ -116,34 +120,36 @@ void calculateColors() {
 				// because Xorg says so..... and is really slow, so we make compromises
 				tempColor.pixel = XGetPixel(background, i, I);
 				XQueryColor(xavaXDisplay, xavaXColormap, &tempColor);	
-				
-				redSum += tempColor.red/256;
-				greenSum += tempColor.green/256;
-				blueSum += tempColor.blue/256;
+
+				redSum += tempColor.red;
+				greenSum += tempColor.green;
+				blueSum += tempColor.blue;
 			}
 		}
-		redSum /= xPrecision*yPrecision;
-		greenSum /= xPrecision*yPrecision;
-		blueSum /= xPrecision*yPrecision;
+		redSum /= xPrecision*yPrecision<<8;
+		greenSum /= xPrecision*yPrecision<<8;
+		blueSum /= xPrecision*yPrecision<<8;
 
 		XDestroyImage(background);
 		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(redSum), (unsigned char)(greenSum), (unsigned char)(blueSum));
 	} else if(p.color[0] != '#')
 		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)((definedColors[p.col]>>16)%256), (unsigned char)((definedColors[p.col]>>8)%256), (unsigned char)(definedColors[p.col]));
-	
+
 	XParseColor(xavaXDisplay, xavaXColormap, p.color[0]=='#' ? p.color:tempColorStr, &xcol);
 	XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
 
-	
 	if(p.bcolor[0] != '#')
 		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(definedColors[p.bgcol]>>16), (unsigned char)(definedColors[p.bgcol]>>8), (unsigned char)(definedColors[p.bgcol]));
-	
+
 	XParseColor(xavaXDisplay, xavaXColormap, p.bcolor[0]=='#' ? p.bcolor : tempColorStr, &xbgcol);
 	XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
 }
 
 int init_window_x(char **argv, int argc)
 {
+	// shadows are meant for the bars only
+	if(p.background_opacity != 0.0) p.shdw = 0;
+
 	// NVIDIA CPU cap utilization in Vsync fix
 	setenv("__GL_YIELD", "USLEEP", 0);
 
@@ -155,16 +161,16 @@ int init_window_x(char **argv, int argc)
 		fprintf(stderr, "cannot open X display\n");
 		return 1;
 	}
-	
+
 	xavaXScreen = DefaultScreenOfDisplay(xavaXDisplay);
 	xavaXScreenNumber = DefaultScreen(xavaXDisplay);
 	xavaXRoot = RootWindow(xavaXDisplay, xavaXScreenNumber);
-	
-	calculate_win_pos(&windowX, &windowY, p.w, p.h, xavaXScreen->width, xavaXScreen->height, windowAlignment);
-	
+
+	calculate_win_pos(&p.wx, &p.wy, p.w, p.h, xavaXScreen->width, xavaXScreen->height, p.winA);
+
 	// 32 bit color means alpha channel support
 	#ifdef GLX
-	if(transparentFlag) {
+	if(p.transF) {
 		fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
 		fbconfig = 0;
 		for(int i = 0; i<numfbconfigs; i++) {
@@ -181,22 +187,22 @@ int init_window_x(char **argv, int argc)
 		}
 	} else
 	#endif
-		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, transparentFlag ? 32 : 24, TrueColor, &xavaVInfo);
+		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, 32, TrueColor, &xavaVInfo);
 
 	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 	xavaXColormap = xavaAttr.colormap;
 	calculateColors();
-	xavaAttr.background_pixel = transparentFlag ? 0 : xbgcol.pixel;
+	xavaAttr.background_pixel = p.transF ? 0 : xbgcol.pixel;
 	xavaAttr.border_pixel = xcol.pixel;
 	
-	xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, windowX, windowY, (unsigned int)p.w, (unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, CWEventMask | CWColormap | CWBorderPixel | CWBackPixel, &xavaAttr);
+	xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p.wx, p.wy, (unsigned int)p.w, (unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, CWEventMask | CWColormap | CWBorderPixel | CWBackPixel, &xavaAttr);
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
 	// The "X" button is handled by the window manager and not Xorg, so we set up a Atom
 	wm_delete_window = XInternAtom (xavaXDisplay, "WM_DELETE_WINDOW", 0);
 	XSetWMProtocols(xavaXDisplay, xavaXWindow, &wm_delete_window, 1);
 	
-	if(p.set_win_props) {
+	if(p.winPropF) {
 		xavaXWMHints.flags = InputHint | StateHint;
 		xavaXWMHints.initial_state = NormalState;
 		xavaXClassHint.res_name = (char *)"XAVA";
@@ -213,11 +219,11 @@ int init_window_x(char **argv, int argc)
 	XMapWindow(xavaXDisplay, xavaXWindow);
 	xavaXGraphics = XCreateGC(xavaXDisplay, xavaXWindow, 0, 0);
 	
-	if(p.gradient) {
-		xgrad = malloc((p.gradient_count+1)*sizeof(XColor));
-		XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[0], &xgrad[p.gradient_count]);
-		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p.gradient_count]);
-		for(unsigned int i=0; i<p.gradient_count; i++) {
+	if(p.gradients) {
+		xgrad = malloc((p.gradients+1)*sizeof(XColor));
+		XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[0], &xgrad[p.gradients]);
+		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p.gradients]);
+		for(unsigned int i=0; i<p.gradients; i++) {
 			XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[i], &xgrad[i]);
 			XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[i]);
 		}
@@ -229,7 +235,7 @@ int init_window_x(char **argv, int argc)
 	mwmHintsProperty = XInternAtom(xavaXDisplay, "_MOTIF_WM_HINTS", 0);
 	wmStateBelow = XInternAtom(xavaXDisplay, "_NET_WM_STATE_BELOW", 1);
 
-	if(keepInBottom){
+	if(p.bottomF){
 	/**
 		window  = the respective client window
 		message_type = _NET_WM_STATE
@@ -255,28 +261,73 @@ int init_window_x(char **argv, int argc)
 	// Setting window options			
 	struct mwmHints hints;
 	hints.flags = (1L << 1);
-	hints.decorations = borderFlag;
+	hints.decorations = p.borderF;
 	XChangeProperty(xavaXDisplay, xavaXWindow, mwmHintsProperty, mwmHintsProperty, 32, PropModeReplace, (unsigned char *)&hints, 5);
-	
+
 	// move the window in case it didn't by default
 	XWindowAttributes xwa;
 	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &xwa);
-	if(strcmp(windowAlignment, "none"))
-		XMoveWindow(xavaXDisplay, xavaXWindow, windowX, windowY);
-	
+	if(strcmp(p.winA, "none"))
+		XMoveWindow(xavaXDisplay, xavaXWindow, p.wx, p.wy);
+
+	return 0;
+}
+
+int render_gradient_x() {
+	if(gradientBox != 0) XFreePixmap(xavaXDisplay, gradientBox);
+
+	gradientBox = XCreatePixmap(xavaXDisplay, xavaXWindow, (unsigned int)p.bw, (unsigned int)p.h, 32);
+	// TODO: Error checks
+
+	for(unsigned int I = 0; I < (unsigned int)p.h; I++) {
+		// don't touch +1.0/w_h at the end fixes some math problems
+		double step = (double)(I%((unsigned int)p.h/(p.gradients-1)))/(double)((unsigned int)p.h/(p.gradients-1))+2.0/p.h;
+
+		// to future devs: this isnt ARGB. this is something internal that cannot be changed by simple means
+
+		unsigned int gcPhase = (p.gradients-1)*I/(unsigned int)p.h;
+		xgrad[p.gradients].red   = UNSIGNED_TRANS(xgrad[gcPhase].red, xgrad[gcPhase+1].red, step);
+		xgrad[p.gradients].green = UNSIGNED_TRANS(xgrad[gcPhase].green, xgrad[gcPhase+1].green, step);
+		xgrad[p.gradients].blue  = UNSIGNED_TRANS(xgrad[gcPhase].blue, xgrad[gcPhase+1].blue, step);
+		xgrad[p.gradients].flags = DoRed | DoGreen | DoBlue;
+		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p.gradients]);
+
+		XSetForeground(xavaXDisplay, xavaXGraphics, xgrad[p.gradients].pixel);
+		XFillRectangle(xavaXDisplay, gradientBox, xavaXGraphics, 0, p.h - (int)I, (unsigned int)p.w, 1);
+	}
 	return 0;
 }
 
 void clear_screen_x() {
-	if(GLXmode) return;	
-	XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
-	XClearWindow(xavaXDisplay, xavaXWindow);
+	#ifdef GLX
+	if(GLXmode) {
+		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p.transF ? 1.0*p.background_opacity : 1.0); // TODO BG transparency
+		glColors[0] = xcol.red/65535.0;
+		glColors[1] = xcol.green/65535.0;
+		glColors[2] = xcol.blue/65535.0;
+		glColors[3] = p.transF ? p.foreground_opacity : 1.0;
+
+		if(p.shdw) {
+			glColors[4] = ARGB_A_32(p.shdw_col);
+			glColors[5] = ARGB_R_32(p.shdw_col);
+			glColors[6] = ARGB_G_32(p.shdw_col);
+			glColors[7] = ARGB_B_32(p.shdw_col);
+		}
+	} else {
+	#endif
+		XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
+		XClearWindow(xavaXDisplay, xavaXWindow);
+		
+		if(p.gradients) render_gradient_x();
+	#ifdef GLX
+	}			// you figure out a less dumb to do this
+	#endif
 }
 
 int apply_window_settings_x()
 {
 	// Gets the monitors resolution
-	if(fs){
+	if(p.fullF){
 		p.w = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
 		p.h = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
 	}
@@ -300,13 +351,13 @@ int apply_window_settings_x()
 	xev.xclient.window = xavaXWindow;
 	xev.xclient.message_type = wmState;
 	xev.xclient.format = 32;
-	xev.xclient.data.l[0] = fs ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+	xev.xclient.data.l[0] = p.fullF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
 	xev.xclient.data.l[1] = fullScreen;
 	xev.xclient.data.l[2] = 0;
 	XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-	
+
 	// do the usual stuff :P
-	if(GLXmode){	
+	if(GLXmode){
 		#ifdef GLX
 		glViewport(0, 0, p.w, p.h);
 		glMatrixMode(GL_PROJECTION);
@@ -318,10 +369,10 @@ int apply_window_settings_x()
 
 		// Vsync causes problems on NVIDIA GPUs, looking for possible workarounds/fixes
 		glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p.vsync);
-        #endif
+		#endif
 	} else clear_screen_x();
 
-	if(!interactable){	
+	if(!p.interactF){
 		XRectangle rect;
 		XserverRegion region = XFixesCreateRegion(xavaXDisplay, &rect, 1);
 		XFixesSetWindowShapeRegion(xavaXDisplay, xavaXWindow, ShapeInput, 0, 0, region);
@@ -334,7 +385,7 @@ int apply_window_settings_x()
 int get_window_input_x() {
 	while(XPending(xavaXDisplay)) {
 		XNextEvent(xavaXDisplay, &xavaXEvent);
-		
+
 		switch(xavaXEvent.type) {
 			case KeyPress:
 			{
@@ -351,7 +402,7 @@ int get_window_input_x() {
 						if(p.bs > 0) p.bs--;
 						return 2;
 					case XK_f: // fullscreen
-						fs = !fs;
+						p.fullF = !p.fullF;
 						return 2;
 					case XK_Up:
 						p.sens *= 1.05;
@@ -372,19 +423,18 @@ int get_window_input_x() {
 					case XK_Escape:
 						return -1;
 					case XK_b:
-						if(transparentFlag) break;
-						if(p.bcolor[0] == '#' && strlen(p.bcolor) == 7) free(p.bcolor);
-						p.bcolor = (char *) malloc(8*sizeof(char));
-						sprintf(p.bcolor, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
-						XParseColor(xavaXDisplay, xavaXColormap, p.bcolor, &xbgcol);
+						xbgcol.red   = rand();
+						xbgcol.green = rand();
+						xbgcol.blue  = rand();
+						xbgcol.flags = DoRed | DoGreen | DoBlue;
 						XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
 						return 3;
 					case XK_c:
-						if(p.gradient) break;
-						if(p.color[0] == '#' && strlen(p.color) == 7) free(p.color);
-						p.color = (char *) malloc(8*sizeof(char));
-						sprintf(p.color, "#%hhx%hhx%hhx", (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100), (unsigned char)(rand() % 0x100));
-						XParseColor(xavaXDisplay, xavaXColormap, p.color, &xcol);
+						if(p.gradients) break;
+						xcol.red   = rand();
+						xcol.green = rand();
+						xcol.blue  = rand();
+						xcol.flags = DoRed | DoGreen | DoBlue;
 						XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
 						return 3;
 				}
@@ -416,78 +466,32 @@ int get_window_input_x() {
 	return 0;
 }
 
-int render_gradient_x() {
-	if(gradientBox != 0) XFreePixmap(xavaXDisplay, gradientBox);
-
-	gradientBox = XCreatePixmap(xavaXDisplay, xavaXWindow, (unsigned int)p.bw, (unsigned int)p.h, 32);
-	// TODO: Error checks
-
-	for(unsigned int I = 0; I < (unsigned int)p.h; I++) {
-		// don't touch +1.0/w_h at the end fixes some math problems
-		double step = (double)(I%((unsigned int)p.h/(p.gradient_count-1)))/(double)((unsigned int)p.h/(p.gradient_count-1))+2.0/p.h;
-
-		// gradients break compatibility with non ARGB displays.
-		// if you could fix this without allocating bilions of colors, please do so
-
-		unsigned int gcPhase = (p.gradient_count-1)*I/(unsigned int)p.h;
-		xgrad[p.gradient_count].pixel ^= xgrad[p.gradient_count].pixel;
-		if(xgrad[gcPhase].red != 0 || xgrad[gcPhase+1].red != 0) {
-			if(xgrad[gcPhase].red < xgrad[gcPhase+1].red) 
-				xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].red + ((xgrad[gcPhase+1].red - xgrad[gcPhase].red) * step)) / 256 << 16;
-			else xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].red - ((xgrad[gcPhase].red - xgrad[gcPhase+1].red) * step)) / 256 << 16;
-		}
-		
-		if(xgrad[gcPhase].green != 0 || xgrad[gcPhase+1].green != 0) {
-			if(xgrad[gcPhase].green < xgrad[gcPhase+1].green) 
-				xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].green + ((xgrad[gcPhase+1].green - xgrad[gcPhase].green) * step)) / 256 << 8;
-			else xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].green - ((xgrad[gcPhase].green - xgrad[gcPhase+1].green) * step)) / 256 << 8;
-		}
-		
-		if(xgrad[gcPhase].blue != 0 || xgrad[gcPhase+1].blue != 0) {
-			if(xgrad[gcPhase].blue < xgrad[gcPhase+1].blue) 
-				xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].blue + ((xgrad[gcPhase+1].blue - xgrad[gcPhase].blue) * step)) / 256;
-			else xgrad[p.gradient_count].pixel |= (unsigned long)(xgrad[gcPhase].blue - ((xgrad[gcPhase].blue - xgrad[gcPhase+1].blue) * step)) / 256;
-		}
-		
-		xgrad[p.gradient_count].pixel |= (unsigned int)((unsigned char)(0xFF * p.foreground_opacity) << 24);	// set window opacity
-
-		XSetForeground(xavaXDisplay, xavaXGraphics, xgrad[p.gradient_count].pixel);
-		XFillRectangle(xavaXDisplay, gradientBox, xavaXGraphics, 0, p.h - (int)I, (unsigned int)p.w, 1);
-	}
-	return 0;
-}
-
 void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 {
 	if(GLXmode) {
 		#ifdef GLX
-		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, (!transparentFlag)*1.0); // TODO BG transparency
 		glClear(GL_COLOR_BUFFER_BIT);
 		#endif
 	} else {
-		if(p.gradient&&!gradientBox&&transparentFlag) render_gradient_x();
 	}
-	
+
 	if(GLXmode) {
 		#ifdef GLX
-		double glColors[8] = {xcol.red/65535.0, xcol.green/65535.0, xcol.blue/65535.0, p.foreground_opacity, ((unsigned int)p.shdw_col>>24)%256/255.0,
-		((unsigned int)p.shdw_col>>16)%256/255.0, ((unsigned int)p.shdw_col>>8)%256/255.0, (unsigned int)p.shdw_col%256/255.0};
-		double gradColors[24] = {0.0};
-		for(int i=0; i<p.gradient_count; i++) {
+		for(int i=0; i<p.gradients; i++) {
 			gradColors[i*3] = xgrad[i].red/65535.0;
 			gradColors[i*3+1] = xgrad[i].green/65535.0;
 			gradColors[i*3+2] = xgrad[i].blue/65535.0;
 		}
 		if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
 		#endif
-	} else {	
+	} else {
 		// draw bars on the X11 window
 		for(int i = 0; i < bars; i++) {
 			// this fixes a rendering bug
 			if(f[i] > p.h) f[i] = p.h;
-				
+
 			if(f[i] > flastd[i]) {
-				if(p.gradient)
+				if(p.gradients)
 					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 0, p.h - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]), rest + i*(p.bs+p.bw), p.h - f[i]);
 				else {
 					XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
@@ -498,7 +502,7 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 				XClearArea(xavaXDisplay, xavaXWindow, rest + i*(p.bs+p.bw), p.h - flastd[i], (unsigned int)p.bw, (unsigned int)(flastd[i]-f[i]), 0);
 		}
 	}
-	
+
 	#ifdef GLX
 	if(GLXmode) {
 		glXSwapBuffers(xavaXDisplay, xavaXWindow);
@@ -506,22 +510,18 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 		glXWaitGL();
 	}
 	#endif
-	
+
 	XSync(xavaXDisplay, 0);
 	return;
-}
-
-void adjust_x(void){
-	if(gradientBox != 0) { XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0; };
 }
 
 void cleanup_graphical_x(void)
 {
 	// make sure that all events are dead by this point
-	XSync(xavaXDisplay, 0);
-	
-	adjust_x();
-	 
+	XSync(xavaXDisplay, 1);
+
+	if(gradientBox != 0) { XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0; };
+ 
 	#ifdef GLX
 		glXMakeCurrent(xavaXDisplay, 0, 0);
 		if(GLXmode) glXDestroyContext(xavaXDisplay, xavaGLXContext);

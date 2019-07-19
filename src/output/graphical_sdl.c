@@ -29,35 +29,14 @@ int init_window_sdl()
 		fprintf(stderr, "Error opening display! %s\n", SDL_GetError());
 		return 1;
 	}
-	if(!strcmp(windowAlignment, "top")){
-		windowX = (xavaSDLVInfo.w - p.w) / 2 + windowX;
-	}else if(!strcmp(windowAlignment, "bottom")){
-		windowX = (xavaSDLVInfo.w - p.w) / 2 + windowX;
-		windowY = (xavaSDLVInfo.h - p.h) + (-1*windowY);
-	}else if(!strcmp(windowAlignment, "top_left")){
-		// Nothing to do here :P
-	}else if(!strcmp(windowAlignment, "top_right")){
-		windowX = (xavaSDLVInfo.w - p.w) + (-1*windowX);
-	}else if(!strcmp(windowAlignment, "left")){
-		windowY = (xavaSDLVInfo.h - p.h) / 2;
-	}else if(!strcmp(windowAlignment, "right")){
-		windowX = (xavaSDLVInfo.w - p.w) + (-1*windowX);
-		windowY = (xavaSDLVInfo.h - p.h) / 2 + windowY;
-	}else if(!strcmp(windowAlignment, "bottom_left")){
-		windowY = (xavaSDLVInfo.h - p.h) + (-1*windowY);
-	}else if(!strcmp(windowAlignment, "bottom_right")){
-		windowX = (xavaSDLVInfo.w - p.w) + (-1*windowX);
-		windowY = (xavaSDLVInfo.h - p.h) + (-1*windowY);
-	}else if(!strcmp(windowAlignment, "center")){
-		windowX = (xavaSDLVInfo.w - p.w) / 2 + windowX;
-		windowY = (xavaSDLVInfo.h - p.h) / 2 + windowY;
-	}
+	calculate_win_pos(&(p.wx), &(p.wy), p.w, p.h, xavaSDLVInfo.w, xavaSDLVInfo.h, p.winA);
+
 	// creating a window
 	Uint32 windowFlags = SDL_WINDOW_RESIZABLE;
-	if(fs) windowFlags |= SDL_WINDOW_FULLSCREEN;
-	if(!borderFlag) windowFlags |= SDL_WINDOW_BORDERLESS;
+	if(p.fullF) windowFlags |= SDL_WINDOW_FULLSCREEN;
+	if(!p.borderF) windowFlags |= SDL_WINDOW_BORDERLESS;
 	if(p.vsync) windowFlags |= SDL_RENDERER_PRESENTVSYNC;
-	xavaSDLWindow = SDL_CreateWindow("XAVA", windowX, windowY, p.w, p.h, windowFlags);
+	xavaSDLWindow = SDL_CreateWindow("XAVA", p.wx, p.wy, p.w, p.h, windowFlags);
 	if(!xavaSDLWindow)
 	{
 		fprintf(stderr, "SDL window cannot be created: %s\n", SDL_GetError());
@@ -71,9 +50,9 @@ int init_window_sdl()
 	if(p.bcolor[0] != '#') p.bgcol = definedColors[p.bgcol];
 	else sscanf(p.bcolor, "#%x", &p.bgcol);
 
-	if(p.gradient) {
-		gradCol = malloc(sizeof(int)*p.gradient_count);
-		for(unsigned int i=0; i<p.gradient_count; i++)
+	if(p.gradients) {
+		gradCol = malloc(sizeof(int)*p.gradients);
+		for(unsigned int i=0; i<p.gradients; i++)
 			sscanf(p.gradient_colors[i], "#%x", &gradCol[i]);
 	}
 	return 0;
@@ -85,14 +64,14 @@ void clear_screen_sdl() {
 
 void apply_window_settings_sdl() {
 	// toggle fullscreen
-	SDL_SetWindowFullscreen(xavaSDLWindow, SDL_WINDOW_FULLSCREEN & fs);
+	SDL_SetWindowFullscreen(xavaSDLWindow, SDL_WINDOW_FULLSCREEN & p.fullF);
 
 	xavaSDLWindowSurface = SDL_GetWindowSurface(xavaSDLWindow);
 	// Appearently SDL uses multithreading so this avoids invalid access
 	// If I had a job, here's what I would be fired for xD
 	SDL_Delay(100);
 	clear_screen_sdl();
-	
+
 	// Window size patch, because xava wipes w and h for some reason.
 	p.w = xavaSDLWindowSurface->w;
 	p.h = xavaSDLWindowSurface->h;
@@ -117,7 +96,7 @@ int get_window_input_sdl() {
 					case SDLK_ESCAPE:
 						return -1;
 					case SDLK_f: // fullscreen
-						fs = !fs;
+						p.fullF = !p.fullF;
 						return 2;
 					case SDLK_UP: // key up
 						p.sens *= 1.05;
@@ -134,7 +113,7 @@ int get_window_input_sdl() {
 					case SDLK_r: // reload config
 						return 1;
 					case SDLK_c: // change foreground color
-						if(p.gradient) break;
+						if(p.gradients) break;
 						p.col = rand() % 0x100;
 						p.col = p.col << 16;
 						p.col += (unsigned int)rand();
@@ -166,30 +145,19 @@ void draw_graphical_sdl(int bars, int rest, int *f, int *flastd) {
 	for(int i = 0; i < bars; i++) {
 		SDL_Rect current_bar;
 		if(f[i] > flastd[i]){ 
-			if(!p.gradient) {
+			if(!p.gradients) {
 				current_bar = (SDL_Rect) {rest + i*(p.bs+p.bw), p.h - f[i], p.bw, f[i] - flastd[i]};
 				SDL_FillRect(xavaSDLWindowSurface, &current_bar, SDL_MapRGB(xavaSDLWindowSurface->format, p.col/0x10000%0x100, p.col/0x100%0x100, p.col%0x100));
 			} else {
 				for(unsigned int I = (unsigned int)flastd[i]; I < (unsigned int)f[i]; I++) {
-					Uint32 color = 0xFF;
-					double step = (double)(I%((unsigned int)p.h/(p.gradient_count-1)))/(double)((double)p.h/(p.gradient_count-1));
-					color = color << 8;
-					
-					unsigned int gcPhase = (p.gradient_count-1)*I/(unsigned int)p.h;
-					if(gradCol[gcPhase] / 0x10000 % 0x100 < gradCol[gcPhase+1] / 0x10000 % 0x100)
-						color += step*(gradCol[gcPhase+1] / 0x10000 % 0x100 - gradCol[gcPhase] / 0x10000 % 0x100) + gradCol[gcPhase] / 0x10000 % 0x100;
-					else
-						color += -1*step*(gradCol[gcPhase] / 0x10000 % 0x100 - gradCol[gcPhase+1] / 0x10000 % 0x100) + gradCol[gcPhase] / 0x10000 % 0x100;
-					color = color << 8;
-					if(gradCol[gcPhase] / 0x100 % 0x100 < gradCol[gcPhase+1] / 0x100 % 0x100)
-						color += step*(gradCol[gcPhase+1] / 0x100 % 0x100 - gradCol[gcPhase] / 0x100 % 0x100) + gradCol[gcPhase] / 0x100 % 0x100;
-					else
-						color += -1*step*(gradCol[gcPhase] / 0x100 % 0x100 - gradCol[gcPhase+1] / 0x100 % 0x100) + gradCol[gcPhase] / 0x100 % 0x100;
-					color = color << 8;
-					if(gradCol[gcPhase] % 0x100 < gradCol[gcPhase+1] % 0x100)
-						color += step*(gradCol[gcPhase+1] % 0x100 - gradCol[gcPhase] % 0x100) + gradCol[gcPhase] % 0x100;
-					else
-						color += -1*step*(gradCol[gcPhase] % 0x100 - gradCol[gcPhase+1] % 0x100) + gradCol[gcPhase] % 0x100;
+					Uint32 color = 0x0;
+					double step = (double)(I%((unsigned int)p.h/(p.gradients-1)))/(double)((double)p.h/(p.gradients-1));
+
+					unsigned int gcPhase = (p.gradients-1)*I/(unsigned int)p.h;
+					color |= R_ARGB_32(UNSIGNED_TRANS(ARGB_R_32(gradCol[gcPhase]), ARGB_R_32(gradCol[gcPhase+1]), step));
+					color |= G_ARGB_32(UNSIGNED_TRANS(ARGB_G_32(gradCol[gcPhase]), ARGB_G_32(gradCol[gcPhase+1]), step));
+					color |= B_ARGB_32(UNSIGNED_TRANS(ARGB_B_32(gradCol[gcPhase]), ARGB_B_32(gradCol[gcPhase+1]), step));
+
 					current_bar = (SDL_Rect) {rest + i*(p.bs+p.bw), p.h - (int)I, p.bw, 1};
 					SDL_FillRect(xavaSDLWindowSurface, &current_bar, SDL_MapRGB(xavaSDLWindowSurface->format, color/0x10000%0x100, color/0x100%0x100, color%0x100));
 				}

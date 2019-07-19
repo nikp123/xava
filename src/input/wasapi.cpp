@@ -21,8 +21,7 @@ const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 static struct audio_data *audio;
 static int n;
 
-HRESULT sinkSetFormat(WAVEFORMATEX * pWF)
-{
+HRESULT sinkSetFormat(WAVEFORMATEX * pWF) {
 	// For the time being, just return OK.
 	pWF->wFormatTag = WAVE_FORMAT_PCM;
 	pWF->nChannels = audio->channels;
@@ -33,11 +32,9 @@ HRESULT sinkSetFormat(WAVEFORMATEX * pWF)
 	return ( S_OK ) ;
 }
 
-HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames)
-{
+HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
 	int *pBuffer = (int*)pData;
 	for(UINT32 i=0; i<NumFrames; i++) {
-		
 		// convert binary offset to two's complement
 		if(pBuffer[0]&0x80000000) {
 			pBuffer[0]^=0x7FFFFFFF;
@@ -75,8 +72,7 @@ HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames)
 #define REFTIMES_PER_SEC  10000000
 #define REFTIMES_PER_MILLISEC  10000
 
-void* input_wasapi(void *audiodata)
-{
+void* input_wasapi(void *audiodata) {
 	HRESULT hr;
 	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
 	UINT32 bufferFrameCount;
@@ -175,8 +171,7 @@ void* input_wasapi(void *audiodata)
 	LONG lTimeBetweenFires = (LONG)hnsDefaultDevicePeriod / 2 / (10 * 1000); // convert to milliseconds
 
 	// Each loop fills about half of the shared buffer.
-	while (!audio->terminate)
-	{
+	while (!audio->terminate) {
 		Sleep(lTimeBetweenFires);
 
 		hr = pCaptureClient->GetNextPacketSize(&packetLength);
@@ -185,8 +180,7 @@ void* input_wasapi(void *audiodata)
 			exit(EXIT_FAILURE);
 		}
 
-		while (packetLength != 0)
-		{
+		while (packetLength != 0) {
 			// Get the available data in the shared buffer.
 			hr = pCaptureClient->GetBuffer(
 					&pData,

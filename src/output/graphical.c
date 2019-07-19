@@ -76,10 +76,10 @@ int drawGLBars(int rest, int bars, double colors[8], double gradColors[24], int 
 				glVertex2d(point[1]+p.shdw, point[3]-p.shdw);
 			}
 		
-			if(p.gradient) {
+			if(p.gradients) {
 				double progress = (double)(point[2]-p.shdw)/(double)((unsigned int)p.h-p.shdw);
-				int gcMax = ceil((p.gradient_count-1.0)*progress);
-				double cutLenght = ((unsigned int)p.h-p.shdw)/(double)(p.gradient_count-1.0);
+				int gcMax = ceil((p.gradients-1.0)*progress);
+				double cutLenght = ((unsigned int)p.h-p.shdw)/(double)(p.gradients-1.0);
 				for(int gcPhase=0; gcPhase<gcMax; gcPhase++) {
 					if(gcPhase==gcMax-1) {
 						double barProgress = fmod(point[2]-1.0-(double)p.shdw, cutLenght)/cutLenght;

@@ -138,6 +138,10 @@
 ; bar_delimiter = 59
 ; frame_delimiter = 10
 
+# Adjusts the input buffer size (in samples, calculated by 2^input_size)
+# Keep in mind that chaging this increases the latency
+; input_size = 11
+
 # Adjusts the FFT buffer size (calculated by 2^fft_size)
 ; fft_size = 16
 
@@ -153,10 +157,10 @@
 ; foreground_opacity = 1.0
 
 # Gradient mode, only hex defined colors are supported, background must also be defined in hex
-# or remain commented out. 1 = on, 0 = off.
-# You need to enable transparency in order for this to work.
-; gradient = 1
-; gradient_count = 2
+# or remain commented out.
+# To enable gradients, just change gradient_count to the number of colors you have specified
+# You need to enable transparency in order for this to work on X
+; gradient_count = 0
 ; gradient_color_1 = '#0099ff'
 ; gradient_color_2 = '#ff3399'
 

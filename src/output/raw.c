@@ -8,22 +8,23 @@ int8_t buf_8;
 
 int print_raw_out(int bars_count, int fd, int is_binary, int bit_format,
 int ascii_range, char bar_delim, char frame_delim, const int f[200]) {
-	if (is_binary) {
-        for (int i = 0; i < bars_count; i++) {
-            int f_limited = f[i];
-            if (f_limited > (pow(2, bit_format) - 1)) f_limited = pow(2, bit_format) - 1;
+	if(is_binary) {
+		for(int i = 0; i < bars_count; i++) {
+			int f_limited = f[i];
+			if(f_limited > (pow(2, bit_format) - 1))
+				f_limited = pow(2, bit_format) - 1;
 
-		    switch (bit_format) {
-		    case 16:
-                buf_16 = f_limited;
-			    write(fd, &buf_16, sizeof(int16_t));
-			    break;
-		    case 8:
-                buf_8 = f_limited;
-			    write(fd, &buf_8, sizeof(int8_t));
-			    break;
-		    }
-        }
+			switch (bit_format) {
+				case 16:
+					buf_16 = f_limited;
+					write(fd, &buf_16, sizeof(int16_t));
+					break;
+				case 8:
+					buf_8 = f_limited;
+					write(fd, &buf_8, sizeof(int8_t));
+					break;
+			}
+		}
 	} else { // ascii
 		for (int i = 0; i < bars_count; i++) {
 			int f_ranged = f[i];
@@ -39,7 +40,7 @@ int ascii_range, char bar_delim, char frame_delim, const int f[200]) {
 			write(fd, bar_height, bar_height_size - 1);
 			write(fd, &bar_delim, sizeof(bar_delim));
 		}
-	write(fd, &frame_delim, sizeof(frame_delim));
+		write(fd, &frame_delim, sizeof(frame_delim));
 	}
 	return 0;
 }

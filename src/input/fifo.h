@@ -1,5 +1,3 @@
-#define BUFSIZE 4096
-
 struct audio_data {
 	int *audio_out_r;
 	int *audio_out_l;
@@ -10,7 +8,7 @@ struct audio_data {
 	int channels;
 	int terminate;				// shared variable used to terminate audio thread
 	char error_message[1024];
-	int fftsize;
+	int inputsize, fftsize;
 };
 
 // header files for fifo, part of xava
