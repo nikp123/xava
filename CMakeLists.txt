@@ -133,6 +133,11 @@ if(MSYS OR MINGW OR MSVC)
 	else()
 		message(STATUS "GDI library not found")
 	endif()
+	
+	if(CMAKE_BUILD_TYPE STREQUAL "Release")
+		message(STATUS "Since release build, console is being disabled")
+		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -mwindows")
+	endif()
 endif()
 
 # alsa

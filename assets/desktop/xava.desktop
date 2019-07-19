@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Version=0.6.1
-Name=XAVA visualizer
+Version=0.6.2
+Name=X.A.V.A. visualizer
 Comment=Audio spectrum visualizer for Windows/macOS/Linux/BSD
 Exec=xava
 Icon=hdspmixer
