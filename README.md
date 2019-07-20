@@ -3,13 +3,9 @@ X.A.V.A.
 
 **X**11 **A**udio **V**isualizer for **A**LSA
 
-also supports audio input from Portaudio, Pulseaudio, shmem, fifo (MPD) and sndio.
+also supports audio input from WASAPI (Windows), PortAudio, Pulseaudio, shmem, fifo (MPD) and sndio.
 
 a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://github.com/karlstav/cava) by [Nikola Pavlica](mailto:pavlica.nikola@gmail.com)
-
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [What it is](#what-it-is)
 - [Build requirements](#build-requirements)
@@ -30,6 +26,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
 - [Usage](#usage)
   - [Controls](#controls)
 - [Configuration](#configuration)
+  - [Equalizer](#equalizer)
   - [Output modes](#output-modes)
   - [Basic window options](#basic-window-options)
   - [Window position](#window-position)
@@ -120,11 +117,6 @@ If you're building from source, please don't delete the source files as you woul
 XAVA is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
 
     pacaur -S xava-git
-
-or
-
-    pacaur -S xava
-
 
 ### VoidLinux
 
@@ -326,7 +318,22 @@ Configuration
 
 As of version 0.4.0 all options are done in the config file, no more command-line arguments!
 
-By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, `$HOME/.config/xava/config` or on Windows `%APPDATA%\xava\config`
+By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, 
+`$HOME/.config/xava/config` or on Windows `%APPDATA%\xava\config`
+
+The configurations are seperated into different categories such as ``[general]`` or ``[window]`` 
+which correspond with their own options.
+
+By default the configurations are commented by a semi-colon ``;`` in front of the option. 
+You'll need to change this for the configuration changes to be effective. 
+
+### Equalizer
+
+To change the amplitude of certain frequencies, XAVA features an equalizer
+in the ``eq`` section of the config file to do so.
+
+The equalizer works by setting an amplitude value to a incremental 
+which refers to the part of the frequency spectrum.
 
 **Examples on how the equalizer works:**
 
@@ -339,6 +346,10 @@ By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, `$
 
 ![3_138](https://cloud.githubusercontent.com/assets/6376571/8670183/a54a851e-29e8-11e5-9eff-346bf6ed91e0.png)
 
+In this example the frequency spectrum is divided in 5 parts. 
+You may be able to see that the 1st, 3rd and 5th parts have been totally disabled and 
+you can see the result of it on the screenshot above.
+
     [eq]
     1=2
     2=2
@@ -347,6 +358,10 @@ By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, `$
     5=0.5
 
 ![3_139](https://cloud.githubusercontent.com/assets/6376571/8670181/9db0ef50-29e8-11e5-81bc-3e2bb9892da0.png)
+
+And in this example you can see that the lower parts (1 and 2) have been amplified while 5 is being lowered.
+
+This will make the visulizer amplified on the lower frequency part while decreasing the high frequencies.
 
 ### Output modes
 
