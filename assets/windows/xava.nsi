@@ -3,8 +3,8 @@
 # Set project name
 Name "X.A.V.A."
 
-!define PRODUCT_VERSION "0.6.2.0"
-!define VERSION "0.6.2.0"
+!define PRODUCT_VERSION "0.6.2.1"
+!define VERSION "0.6.2.1"
 
 VIProductVersion "${PRODUCT_VERSION}"
 VIFileVersion "${VERSION}"
@@ -28,6 +28,7 @@ Section
 
     # include these files
     File xava.exe
+    File xava.ico
     File README.md
     File LICENSE.txt
     File config.cfg
@@ -40,15 +41,16 @@ Section
  
     # create a shortcut named "new shortcut" in the start menu programs directory
     # point the new shortcut at the program uninstaller
-    CreateShortCut "$SMPROGRAMS\XAVA.lnk" "$INSTDIR\xava.exe"
-    CreateShortCut "$SMPROGRAMS\Uninstall XAVA.lnk" "$INSTDIR\uninstall.exe"
+    CreateDirectory "$SMPROGRAMS\XAVA"
+    CreateShortCut "$SMPROGRAMS\XAVA\XAVA.lnk" "$INSTDIR\xava.exe" "" "$INSTDIR\xava.ico"
+    CreateShortCut "$SMPROGRAMS\XAVA\Configure XAVA.lnk" "notepad.exe" "%APPDATA%\xava\config.cfg"
+    CreateShortCut "$SMPROGRAMS\XAVA\Uninstall XAVA.lnk" "$INSTDIR\uninstall.exe"
 SectionEnd
 
 # uninstaller section start
 Section "uninstall"
     # first, remove the link from the start menu
-    Delete "$SMPROGRAMS\XAVA.lnk"
-    Delete "$SMPROGRAMS\Uninstall XAVA.lnk"
+    RMDir /r "$SMPROGRAMS\XAVA"
  
     # second, delete the program
     RMDir /r "$INSTDIR"

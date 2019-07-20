@@ -321,6 +321,8 @@ As of version 0.4.0 all options are done in the config file, no more command-lin
 By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, 
 `$HOME/.config/xava/config` or on Windows `%APPDATA%\xava\config`
 
+On Windows if you used the installer, you'll find a "Configure XAVA" shortcut.
+
 The configurations are seperated into different categories such as ``[general]`` or ``[window]`` 
 which correspond with their own options.
 

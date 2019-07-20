@@ -463,7 +463,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 1.2);
 	p->waves = iniparser_getint(ini, "smoothing:waves", 0);
 	p->integral = iniparser_getdouble(ini, "smoothing:integral", 85);
-	p->gravity = 50*iniparser_getdouble(ini, "smoothing:gravity", 100);
+	p->gravity = iniparser_getdouble(ini, "smoothing:gravity", 100);
 	p->ignore = iniparser_getdouble(ini, "smoothing:ignore", 0);
 	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.5);
 	p->oddoneout = iniparser_getdouble(ini, "smoothing:oddoneout", 1);
