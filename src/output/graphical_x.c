@@ -202,13 +202,13 @@ int init_window_x(char **argv, int argc)
 	wm_delete_window = XInternAtom (xavaXDisplay, "WM_DELETE_WINDOW", 0);
 	XSetWMProtocols(xavaXDisplay, xavaXWindow, &wm_delete_window, 1);
 	
+	xavaXClassHint.res_name = (char *)"XAVA";
 	if(p.winPropF) {
 		//xavaXWMHints.flags = InputHint | StateHint;
 		//xavaXWMHints.initial_state = NormalState;
-		xavaXClassHint.res_name = (char *)"XAVA";
 		xavaXClassHint.res_class = (char *)"XAVA";
-		XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, argv, argc, NULL, &xavaXWMHints, &xavaXClassHint);
 	}
+	XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, argv, argc, NULL, &xavaXWMHints, &xavaXClassHint);
 
 	XSelectInput(xavaXDisplay, xavaXWindow, VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
 	

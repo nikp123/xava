@@ -57,7 +57,7 @@
 ; keep_below = 1
 
 # Set window properties like WM_CLASS (works under X only)
-; set_win_props = 1
+; set_win_props = 0
 
 # This allows for the window to be 'aligned' to a part of a screen
 # The following positions are supported:
