@@ -37,6 +37,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Colors and gradients](#colors-and-gradients)
   - [Shadow](#shadow)
   - [Accent colors](#accent-colors)
+  - [Autostart](#autostart)
   - [Additional options](#additional-options)
 - [Contribution](#contribution)
 
@@ -506,6 +507,13 @@ This is enabled by default.
 
 Setting foreground or background color to `default` will make XAVA attempt to color itself after the OS theme. 
 
+### Autostart
+
+On Windows create a shortcut of the ``xava.exe`` (which is in the install directory) and copy it to 
+``C:\Users\you\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\``
+
+On Linux/BSD (or any X11 compatible OS) just copy the ``assets/linux/xava.desktop`` file to 
+``~/.config/autostart/``. Unless you're on a tiling WM in which case why are you even reading this.
 
 ### Additional options
 
