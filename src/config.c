@@ -523,7 +523,8 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->borderF = iniparser_getboolean(ini, "window:border", 0);
 	p->bottomF = iniparser_getboolean(ini, "window:keep_below", 1);
 	p->interactF = iniparser_getboolean(ini, "window:interactable", 1);
-	p->winPropF = iniparser_getint(ini, "window:set_win_props", 0);
+	p->winPropF = iniparser_getboolean(ini, "window:set_win_props", 1);
+	p->taskbarF = iniparser_getboolean(ini, "window:taskbar_icon", 1);
 
 	// config: output
 	channels =  (char *)iniparser_getstring(ini, "output:channels", "mono");

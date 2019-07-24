@@ -281,10 +281,15 @@ int init_window_win() {
 
 	if(!p.transF) p.interactF=1; // correct practicality error
 
+	// extended and standard window styles
+	DWORD dwExStyle=0, dwStyle=0;
+	if(p.transF) dwExStyle|=WS_EX_TRANSPARENT;
+	if(!p.interactF) dwExStyle|=WS_EX_LAYERED|WS_EX_COMPOSITED;
+	if(!p.taskbarF) dwExStyle|=WS_EX_TOOLWINDOW;
+	if(p.borderF) dwStyle|=WS_CAPTION;
 	// create window
-	xavaWinWindow = CreateWindowEx((p.transF?WS_EX_TRANSPARENT:0)|(p.interactF?0:WS_EX_LAYERED|WS_EX_COMPOSITED), 
-		szAppName, wcWndName, WS_POPUP | WS_VISIBLE | (p.borderF?WS_CAPTION:0), p.wx, p.wy, p.w, p.h, 
-		NULL, NULL, xavaWinModule, NULL);
+	xavaWinWindow = CreateWindowEx(dwExStyle, szAppName, wcWndName, WS_POPUP | WS_VISIBLE | dwStyle,
+		p.wx, p.wy, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
 	if(xavaWinWindow == NULL) {
 		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;

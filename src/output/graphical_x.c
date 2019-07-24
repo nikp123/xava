@@ -29,7 +29,7 @@ static GC xavaXGraphics;
 
 static XVisualInfo xavaVInfo;
 static XSetWindowAttributes xavaAttr;
-static Atom wm_delete_window, wmState, fullScreen, mwmHintsProperty, wmStateBelow;
+static Atom wm_delete_window, wmState, fullScreen, mwmHintsProperty, wmStateBelow, taskbar;
 static XClassHint xavaXClassHint;
 static XWMHints xavaXWMHints;
 static XEvent xev;
@@ -58,11 +58,11 @@ void glXSwapIntervalEXT (Display *dpy, GLXDrawable drawable, int interval);
 
 // mwmHints helps us comunicate with the window manager
 struct mwmHints {
-    unsigned long flags;
-    unsigned long functions;
-    unsigned long decorations;
-    long input_mode;
-    unsigned long status;
+	unsigned long flags;
+	unsigned long functions;
+	unsigned long decorations;
+	long input_mode;
+	unsigned long status;
 };
 
 static int xavaXScreenNumber;
@@ -70,15 +70,15 @@ int GLXmode;
 
 // Some window manager definitions
 enum {
-    MWM_HINTS_FUNCTIONS = (1L << 0),
-    MWM_HINTS_DECORATIONS =  (1L << 1),
+	MWM_HINTS_FUNCTIONS = (1L << 0),
+	MWM_HINTS_DECORATIONS =  (1L << 1),
 
-    MWM_FUNC_ALL = (1L << 0),
-    MWM_FUNC_RESIZE = (1L << 1),
-    MWM_FUNC_MOVE = (1L << 2),
-    MWM_FUNC_MINIMIZE = (1L << 3),
-    MWM_FUNC_MAXIMIZE = (1L << 4),
-    MWM_FUNC_CLOSE = (1L << 5)
+	MWM_FUNC_ALL = (1L << 0),
+	MWM_FUNC_RESIZE = (1L << 1),
+	MWM_FUNC_MOVE = (1L << 2),
+	MWM_FUNC_MINIMIZE = (1L << 3),
+	MWM_FUNC_MAXIMIZE = (1L << 4),
+	MWM_FUNC_CLOSE = (1L << 5)
 };
 #define _NET_WM_STATE_REMOVE 0
 #define _NET_WM_STATE_ADD 1
@@ -194,7 +194,7 @@ int init_window_x(char **argv, int argc)
 	calculateColors();
 	xavaAttr.background_pixel = p.transF ? 0 : xbgcol.pixel;
 	xavaAttr.border_pixel = xcol.pixel;
-	
+
 	xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p.wx, p.wy, (unsigned int)p.w, (unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, CWEventMask | CWColormap | CWBorderPixel | CWBackPixel, &xavaAttr);
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
@@ -203,8 +203,8 @@ int init_window_x(char **argv, int argc)
 	XSetWMProtocols(xavaXDisplay, xavaXWindow, &wm_delete_window, 1);
 	
 	if(p.winPropF) {
-		xavaXWMHints.flags = InputHint | StateHint;
-		xavaXWMHints.initial_state = NormalState;
+		//xavaXWMHints.flags = InputHint | StateHint;
+		//xavaXWMHints.initial_state = NormalState;
 		xavaXClassHint.res_name = (char *)"XAVA";
 		xavaXClassHint.res_class = (char *)"XAVA";
 		XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, argv, argc, NULL, &xavaXWMHints, &xavaXClassHint);
@@ -231,34 +231,43 @@ int init_window_x(char **argv, int argc)
 	
 	// Set up atoms
 	wmState = XInternAtom(xavaXDisplay, "_NET_WM_STATE", 0);
+	taskbar = XInternAtom(xavaXDisplay, "_NET_WM_STATE_SKIP_TASKBAR", 0);
 	fullScreen = XInternAtom(xavaXDisplay, "_NET_WM_STATE_FULLSCREEN", 0);
 	mwmHintsProperty = XInternAtom(xavaXDisplay, "_MOTIF_WM_HINTS", 0);
 	wmStateBelow = XInternAtom(xavaXDisplay, "_NET_WM_STATE_BELOW", 1);
 
-	if(p.bottomF){
 	/**
-		window  = the respective client window
-		message_type = _NET_WM_STATE
-		format = 32
-		data.l[0] = the action, as listed below
-		data.l[1] = first property to alter
-		data.l[2] = second property to alter
-		data.l[3] = source indication (0-unk,1-normal app,2-pager)
-		other data.l[] elements = 0
+	 * Set up window properties through Atoms,
+	 * 
+	 * XSendEvent requests the following format:
+	 *  window  = the respective client window
+	 *  message_type = _NET_WM_STATE
+	 *  format = 32
+	 *  data.l[0] = the action, as listed below
+	 *  data.l[1] = first property to alter
+	 *  data.l[2] = second property to alter
+	 *  data.l[3] = source indication (0-unk,1-normal app,2-pager)
+	 *  other data.l[] elements = 0
 	**/
-		xev.xclient.type = ClientMessage;
-		xev.xclient.window = xavaXWindow;
-		xev.xclient.message_type = wmState;
-		xev.xclient.format = 32;
-		xev.xclient.data.l[0] = _NET_WM_STATE_ADD;
-		xev.xclient.data.l[1] = wmStateBelow; // Keeps the window below duh
-		xev.xclient.data.l[2] = 0;
-		xev.xclient.data.l[3] = 0;
-		xev.xclient.data.l[4] = 0;
-		XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-	}
+	xev.xclient.type = ClientMessage;
+	xev.xclient.window = xavaXWindow;
+	xev.xclient.message_type = wmState;
+	xev.xclient.format = 32;
+	xev.xclient.data.l[2] = 0;
+	xev.xclient.data.l[3] = 0;
+	xev.xclient.data.l[4] = 0;
 
-	// Setting window options			
+	// keep window in bottom property
+	xev.xclient.data.l[0] = p.bottomF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+	xev.xclient.data.l[1] = wmStateBelow;
+	XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+
+	// remove window from taskbar
+	xev.xclient.data.l[0] = p.taskbarF ? _NET_WM_STATE_REMOVE : _NET_WM_STATE_ADD;
+	xev.xclient.data.l[1] = taskbar;
+	XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+
+	// Setting window options
 	struct mwmHints hints;
 	hints.flags = (1L << 1);
 	hints.decorations = p.borderF;
