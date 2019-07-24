@@ -1,94 +1,89 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
 
-    <title>cava by karlstav</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/remarkable/1.7.1/remarkable.min.js"></script>
+    <script src="javascripts/main.js"></script>
+
+    <title>xava by nikp123</title>
   </head>
 
   <body>
 
     <header>
       <div class="container">
-        <h1>cava</h1>
-        <h2>Console-based Audio Visualizer for Alsa, MPD and Pulseaudio</h2>
+        <h1>xava</h1>
+        <h2>X11 Audio Visualizer for Alsa</h2>
 
         <section id="downloads">
-          <a href="https://github.com/karlstav/cava/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/karlstav/cava/tarball/master" class="btn">Download as .tar.gz</a>
-          <a href="https://github.com/karlstav/cava" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+          <a href="https://github.com/nikp123/xava/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/nikp123/xava/tarball/master" class="btn">Download as .tar.gz</a>
+          <a class="download btn btn-windows" href=""><span class="icon"></span>Download installer</a>
+          <a href="https://github.com/nikp123/xava" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
     </header>
 
     <div class="container">
       <section id="main_content">
-        <h1>
-<a id="cava-mp" class="anchor" href="#cava-mp" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>C.A.V.A. (M.P.)</h1>
+        <p>XAVA by <a href="mailto:pavlica.nikola@gmail.com">Nikola Pavlica</a></p>
 
-<p><strong>C</strong>onsole-based <strong>A</strong>udio <strong>V</strong>isualizer for <strong>A</strong>LSA (<strong>M</strong>PD and <strong>P</strong>ulseaudio)</p>
+        <p>Demo video:<br>
+        <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/Ggd5Q0d8C1o" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </p>
+        <h1>Recent releases</h1>
+          <p class="changelog"></p>
 
-<p>by <a href="mailto:karl@stavestrand.no">Karl Stavestrand</a></p>
-
-<p><img src="https://cloud.githubusercontent.com/assets/5231746/7368413/7d7ca93e-ed9f-11e4-842f-61c54fc03dbe.gif" alt="spectrum" title="spectrum"></p>
-
-<h1>
-<a id="2016-09-24---042" class="anchor" href="#2016-09-24---042" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>2016-09-24 - 0.4.2</h1>
-
-<p>new features:</p>
-
-<ul>
-<li>raw-output mode</li>
-<li>autosens for low values at start-up</li>
-<li>Reload config file on SIGUSR1</li>
-<li>config option for building with iniparser version 3.1</li>
-</ul>
-
-<h1>
-<a id="2016-02-10---041" class="anchor" href="#2016-02-10---041" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>2016-02-10 - 0.4.1</h1>
-
-<p>new features:</p>
-
-<ul>
-<li>added auto pulseaudio source mode</li>
-<li>pulsaudio is now default</li>
-<li>pushing 'r' now reloads audio</li>
-<li>Added console title</li>
-</ul>
-
-<p>bugfixes:</p>
-
-<ul>
-<li>Fixed error on Raspbian at run-time when running from installed path</li>
-</ul>
-
-<p>considering namechange: cavamp (console based audio visualizer for alsa, mpd and pulseaudio)</p>
-
-<h1>
-<a id="2015-11-22---040" class="anchor" href="#2015-11-22---040" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>2015-11-22 - 0.4.0</h1>
-
-<p>config-script branch is now master branch</p>
-
-<p>major changes from old master:</p>
-
-<ul>
-<li>added pulseadio support</li>
-<li>added confg script</li>
-<li>removed commanline argumets</li>
-<li>added optional config path</li>
-<li>added autosens feature</li>
-<li>bugfixes</li>
-</ul>
-
-<p>moved old master in new branch "legacy-0.3.5" just in case.</p>
+        <h1>FAQ</h1>
+          <h2>What is XAVA?</h2>
+            <p>XAVA is an audio visualizer for your desktop</p>
+          <h2>What does XAVA mean?</h2>
+            <p>It's an acronym: <strong>X</strong>11 <strong>A</strong>udio <strong>V</strong>isualizer for <strong>A</strong>LSA</p>
+            <p>However it also supports: Windows, SDL2, MPD, FIFO, Pulseaudio, PortAudio, WASAPI (Windows) and SHMEM</p>         
+          <h2>Who made it?</h2>
+            <p>XAVA was originally a fork of 
+            <a href="https://github.com/karlstav/cava">karlstav's cava</a> 
+            with graphical features, but since has grown into it's own thing. <br>
+            It's written and maintained by 
+            <a href="https://github.com/nikp123">Nikola Pavlica</a> and various other contributors</p>
+          <h2>How do I get started?</h2>
+            <p>On the top of this webpage you'll find "Download" buttons, click to download and install it.</p>
+          <h2>Where are the non-Windows builds/installers?!?</h2>
+            <p>If you aren't on Windows, you'll have to compile it.<br>
+            Don't worry, it's litreally just 5 commands.<br>
+            One to install the dependencies and the other to compile XAVA.<br>
+            Just follow the <a href="https://github.com/nikp123/xava#build-requirements">compilation guide</a>
+            on the readme of this repository.</p>
+          <h2>Can I change how the visualizer behaves?</h2>
+            <p>Yes, just follow the
+            <a href="https://github.com/nikp123/xava#configuration">configuration guide</a>.</p>
+          <h2>HELP, it doesn't work/compile or something's broken!</h2>
+            <p>Sorry to hear that, but you may have to find out that by yourself.<br>
+            You should check if you had missed anything in the 
+            <a href="https://github.com/nikp123/xava">README</a>.
+            Also make sure that your configuration/system is even supported.</p>
+            <p>If your troubleshooting skills have lead you nowhere, please check out the 
+            <a href="https://github.com/nikp123/xava/issues">issues page</a>
+            if somebody had encountered the same problem, otherwise 
+            <a href="https://github.com/nikp123/xava/issues/new">file an issue</a> 
+            and make sure the problem is described in detail otherwise it will get discarded immediately 
+            (I have a life, you know)</p>
+          <h2>My system/configuration is not supported.</h2>
+            <p><a href="https://github.com/nikp123/xava/issues/new">Create an issue</a> 
+            and describe what is it you want to get supported and in detail. 
+            I will reject lazily-written features requests. 
+            Also expect that your feature request gets delayed or simply denied for any reason.</p>
+          <h2>How do I contribute?</h2>
+            <p>Follow the
+            <a href="https://github.com/nikp123/xava/blob/master/CONTRIBUTING.md">contibution guide</a>
+            </p>
       </section>
     </div>
-
-    
   </body>
 </html>
