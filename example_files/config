@@ -202,6 +202,7 @@
 
 # Fake shadow effect (works with transparency only)
 # Make sure that the shadow size is NOT larger then the bar spacing
+# To disable shadows, set size to 0
 ; size = 7
 
 # Color format is #aarrggbb
