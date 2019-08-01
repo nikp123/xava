@@ -589,7 +589,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			}
 
 			// process [smoothing]: calculate gravity
-			g = p.gravity * ((float)height / 2160) * pow((60 / (float)p.framerate), 2.5);
+			g = p.gravity * ((float)height / 2160) * (60 / (float)p.framerate);
 
 			//checks if there is stil extra room, will use this to center
 			rest = (p.w - bars * p.bw - bars * p.bs + p.bs) / 2;
