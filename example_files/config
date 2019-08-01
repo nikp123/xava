@@ -66,6 +66,9 @@
 ; alignment = 'none'
 
 # Additionally we can further adjust the positions if needed (in pixels)
+# It moves the window the opposite direction of whats in alignment
+# FXP. if alignment is set to right and x_padding is 20, 
+# it will move the window left 20 pixels and so on for every direction 
 ; x_padding = 0
 ; y_padding = 0
 
