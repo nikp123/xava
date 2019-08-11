@@ -393,8 +393,25 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 				char targetFile[255];
 				sprintf(targetFile, "%s/share/%s/%s", PREFIX, PACKAGE, configFile);
 				FILE *source = fopen(targetFile, "r");
-			#else
-				FILE *source = fopen(configFile, "r");
+			#elif defined(__WIN32__)
+				// widechars, why?!?
+				WCHAR wpath[MAX_PATH];
+				char path[MAX_PATH];
+
+				// get diretory path
+				HMODULE hModule = GetModuleHandleW(NULL);
+				GetModuleFileNameW(hModule, wpath, MAX_PATH);
+				wcstombs(path, wpath, MAX_PATH);
+
+				// hardcoded things pain me, but writing a 100 line-long
+				// string replace function for windows is a no-no.
+				//
+				// This is why you use C++ for code like this.
+				//
+				// xava.exe => config.cfg
+				strcpy(&path[strlen(path)-8], configFile);
+
+				FILE *source = fopen(path, "r");
 			#endif
 			if(!source)
 				fprintf(stderr, "FAIL\nDefault configuration file doesnt exist. "
