@@ -40,15 +40,24 @@ void* input_fifo(void* data)
 			nanosleep (&req, NULL);
 			t++;
 			if (t > 10) {
-				for (i = 0; i < audio->inputsize; i++)audio->audio_out_l[i] = 0;
-				for (i = 0; i < audio->inputsize; i++)audio->audio_out_r[i] = 0;
+				for (i = 0; i < audio->inputsize; i++)
+					audio->audio_out_l[i] = 0;
+
+				// prevents filling a invalid buffer whilst in mono mode
+				if (audio->channels == 2) {
+					for (i = 0; i < audio->inputsize; i++) 
+						audio->audio_out_r[i] = 0;
+				}
 				close(fd);
 				fd = open_fifo(audio->source);
 				t = 0;
 			}
 		} else { //if bytes read go ahead
 			t = 0;
-			for (i = 0; i < audio->inputsize; i += 2) {
+
+			// assuming samples are 16bit (as per example)
+			// also reading more than the retrieved buffer is considered memory corruption
+			for (i = 0; i < bytes/2; i += 2) {
 				if (audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
 
 				//stereo storing channels in buffer
