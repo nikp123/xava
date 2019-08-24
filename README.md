@@ -1,6 +1,8 @@
 X.A.V.A.
 ====================
 
+[![Build Status](https://travis-ci.org/nikp123/xava.svg?branch=master)](https://travis-ci.org/nikp123/xava)
+
 **X**11 **A**udio **V**isualizer for **A**LSA
 
 also supports audio input from WASAPI (Windows), PortAudio, Pulseaudio, shmem, fifo (MPD) and sndio.
