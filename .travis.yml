@@ -1,0 +1,28 @@
+language: cpp
+
+dist: bionic
+
+matrix:
+    include:
+      - os: linux
+        compiler: gcc
+        addons:
+          apt:
+            update: true
+            packages:
+              - libfftw3-dev
+              - libasound2-dev
+              - libpulse-dev
+              - libx11-dev
+              - libsdl2-dev
+              - portaudio19-dev
+              - cmake
+              - git
+
+git:
+ depth: false
+ submodules: true
+
+script:
+ - mkdir build&&cd build&&cmake ..&&make
+
