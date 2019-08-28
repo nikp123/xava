@@ -847,6 +847,10 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					for(i=1; i<bars; i+=2) {
 						f[i] = f[i+1]/2 + f[i-1]/2;
 					}
+					for(i=bars-1; i>1; i-=2) {
+						int sum = f[i+1]/2 + f[i-1]/2;
+						if(sum>f[i]) f[i] = sum;
+					}
 				}
 
 
