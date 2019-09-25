@@ -3,8 +3,8 @@
 # Set project name
 Name "X.A.V.A."
 
-!define PRODUCT_VERSION "0.6.2.2"
-!define VERSION "0.6.2.2"
+!define PRODUCT_VERSION "0.6.2.3"
+!define VERSION "0.6.2.3"
 
 VIProductVersion "${PRODUCT_VERSION}"
 VIFileVersion "${VERSION}"
