@@ -114,7 +114,12 @@ void* input_pulse(void* data)
 		.maxlength = (uint32_t) -1, //BUFSIZE * 2,
 		.fragsize = 0
 	};
-	pb.fragsize = audio->inputsize;
+
+	// the following code reduces the time needed for a buffer update, 
+	// so you can have a high audio input size whilst the buffer update
+	// still being recent enough
+	// tl;dr: reduces delay, don't touch
+	pb.fragsize = audio->inputsize>1024? 1024 : audio->inputsize;
 
 	pa_simple *s = NULL;
 	int error;
