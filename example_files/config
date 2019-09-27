@@ -144,13 +144,6 @@
 ; bar_delimiter = 59
 ; frame_delimiter = 10
 
-# Adjusts the input buffer size (in samples, calculated by 2^input_size)
-# Keep in mind that chaging this increases the latency
-; input_size = 11
-
-# Adjusts the FFT buffer size (calculated by 2^fft_size)
-; fft_size = 14
-
 
 [color]
 
@@ -200,6 +193,14 @@
 
 # Balances the eq towards higher or lower frequencies (lower value->lower frequencies, higher value->higher frequencies)
 ; eq_balance = 0.65
+
+# Adjusts the input buffer size (in samples, calculated by 2^input_size)
+# Keep in mind that chaging this increases the latency
+; input_size = 11
+
+# Adjusts the FFT buffer size (calculated by 2^fft_size)
+; fft_size = 14
+
 
 [shadow]
 
