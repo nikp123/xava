@@ -11,8 +11,6 @@
 
 using namespace std;
 
-#define BUFSIZE 4096
-
 const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
 const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
@@ -55,9 +53,9 @@ HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
 				break;
 		}
 		n++;
-		if(n == 2048-1) n = 0; // tfw fucking bugs make software better
+		if(n == audio->inputsize) n = 0;
 	}
-	return S_OK ;
+	return S_OK;
 }
 
 //-----------------------------------------------------------
