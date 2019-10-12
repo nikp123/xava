@@ -475,16 +475,16 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		outputMethod = (char *)iniparser_getstring(ini, "output:method", "sdl");
 	#endif
 
-	p->inputsize = (int)exp2((float)iniparser_getint(ini, "smoothing:input_size", 11));
+	p->inputsize = (int)exp2((float)iniparser_getint(ini, "smoothing:input_size", 12));
 	p->fftsize = (int)exp2((float)iniparser_getint(ini, "smoothing:fft_size", 14));
 	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 1.2);
 	p->waves = iniparser_getint(ini, "smoothing:waves", 0);
 	p->integral = iniparser_getdouble(ini, "smoothing:integral", 85);
-	p->gravity = iniparser_getdouble(ini, "smoothing:gravity", 100);
+	p->gravity = 50.0 * iniparser_getdouble(ini, "smoothing:gravity", 100);
 	p->ignore = iniparser_getdouble(ini, "smoothing:ignore", 0);
-	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.5);
+	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.55);
 	p->oddoneout = iniparser_getdouble(ini, "smoothing:oddoneout", 1);
-	p->eqBalance = iniparser_getdouble(ini, "smoothing:eq_balance", 0.65);
+	p->eqBalance = iniparser_getdouble(ini, "smoothing:eq_balance", 0.67);
 
 	p->color = (char *)iniparser_getstring(ini, "color:foreground", "default");
 	p->bcolor = (char *)iniparser_getstring(ini, "color:background", "default");

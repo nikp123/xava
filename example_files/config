@@ -186,17 +186,16 @@
 ; ignore = 0
 
 # Variable logarithm (the higher the value, the more intense) 
-; log = 1.5
+; log = 1.55
 
 # Average out the value of each odd bar (just like the monstercat visualizer)
 ; oddoneout = 1
 
 # Balances the eq towards higher or lower frequencies (lower value->lower frequencies, higher value->higher frequencies)
-; eq_balance = 0.65
+; eq_balance = 0.67
 
 # Adjusts the input buffer size (in samples, calculated by 2^input_size)
-# Keep in mind that chaging this increases the latency
-; input_size = 11
+; input_size = 12
 
 # Adjusts the FFT buffer size (calculated by 2^fft_size)
 ; fft_size = 14
