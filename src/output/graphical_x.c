@@ -106,32 +106,37 @@ void calculateColors() {
 
 	// Generate a sum of colors
 	if(!strcmp(p.color, "default")) {
-		unsigned long redSum = 0, greenSum = 0, blueSum = 0;
-		XColor tempColor;
-		int xPrecision = 20, yPrecision = 20;	
-		while(1){ if(((double)xavaXScreen->width / (double)xPrecision) == ((int)xavaXScreen->width / (int)xPrecision)) break; else xPrecision++; }
-		while(1){ if(((double)xavaXScreen->height / (double)yPrecision) == ((int)xavaXScreen->height / (int)yPrecision)) break; else yPrecision++; }
+		if(xavaXRoot == 927) {			// waylands magic number, don't ask where i got it
+			// Xwayland doesn't have a RootWindow
+			strcpy(tempColorStr, "#ffffff");
+		} else {
+			unsigned long redSum = 0, greenSum = 0, blueSum = 0;
+			XColor tempColor;
+			int xPrecision = 20, yPrecision = 20;
+			while(1){ if(((double)xavaXScreen->width / (double)xPrecision) == ((int)xavaXScreen->width / (int)xPrecision)) break; else xPrecision++; }
+			while(1){ if(((double)xavaXScreen->height / (double)yPrecision) == ((int)xavaXScreen->height / (int)yPrecision)) break; else yPrecision++; }
 
-		// we need a source for that
-		XImage *background = XGetImage(xavaXDisplay, xavaXRoot, 0, 0, xavaXScreen->width, xavaXScreen->height, AllPlanes, XYPixmap);
-		for(unsigned short i = 0; i < xavaXScreen->width; i+=(xavaXScreen->width / xPrecision)) {
-			for(unsigned short I = 0; I < xavaXScreen->height; I+=(xavaXScreen->height / yPrecision)) {
-				// we validate each and EVERY pixel value,
-				// because Xorg says so..... and is really slow, so we make compromises
-				tempColor.pixel = XGetPixel(background, i, I);
-				XQueryColor(xavaXDisplay, xavaXColormap, &tempColor);	
+			// we need a source for that
+			XImage *background = XGetImage(xavaXDisplay, xavaXRoot, 0, 0, xavaXScreen->width, xavaXScreen->height, AllPlanes, XYPixmap);
+			for(unsigned short i = 0; i < xavaXScreen->width; i+=(xavaXScreen->width / xPrecision)) {
+				for(unsigned short I = 0; I < xavaXScreen->height; I+=(xavaXScreen->height / yPrecision)) {
+					// we validate each and EVERY pixel value,
+					// because Xorg says so..... and is really slow, so we make compromises
+					tempColor.pixel = XGetPixel(background, i, I);
+					XQueryColor(xavaXDisplay, xavaXColormap, &tempColor);	
 
-				redSum += tempColor.red;
-				greenSum += tempColor.green;
-				blueSum += tempColor.blue;
+					redSum += tempColor.red;
+					greenSum += tempColor.green;
+					blueSum += tempColor.blue;
+				}
 			}
-		}
-		redSum /= xPrecision*yPrecision<<8;
-		greenSum /= xPrecision*yPrecision<<8;
-		blueSum /= xPrecision*yPrecision<<8;
+			redSum /= xPrecision*yPrecision<<8;
+			greenSum /= xPrecision*yPrecision<<8;
+			blueSum /= xPrecision*yPrecision<<8;
 
-		XDestroyImage(background);
-		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(redSum), (unsigned char)(greenSum), (unsigned char)(blueSum));
+			XDestroyImage(background);
+			sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(redSum), (unsigned char)(greenSum), (unsigned char)(blueSum));
+		}
 	} else if(p.color[0] != '#')
 		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)((definedColors[p.col]>>16)%256), (unsigned char)((definedColors[p.col]>>8)%256), (unsigned char)(definedColors[p.col]));
 
