@@ -12,6 +12,6 @@ struct config_params {
  w, h;
 	char *winA;
 	int wx, wy;
-	_Bool fullF, transF, borderF, bottomF, winPropF, interactF, taskbarF;
+	_Bool fullF, transF, borderF, bottomF, winPropF, interactF, taskbarF, iAmRoot;
 } p;
 void load_config(char configPath[255], char supportedInput[255], void* p);

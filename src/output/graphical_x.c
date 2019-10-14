@@ -200,7 +200,8 @@ int init_window_x(char **argv, int argc)
 	xavaAttr.background_pixel = p.transF ? 0 : xbgcol.pixel;
 	xavaAttr.border_pixel = xcol.pixel;
 
-	xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p.wx, p.wy, (unsigned int)p.w, (unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, CWEventMask | CWColormap | CWBorderPixel | CWBackPixel, &xavaAttr);
+	if(p.iAmRoot) xavaXWindow = xavaXRoot;
+	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p.wx, p.wy, (unsigned int)p.w, (unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, CWEventMask | CWColormap | CWBorderPixel | CWBackPixel, &xavaAttr);
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
 	// The "X" button is handled by the window manager and not Xorg, so we set up a Atom
@@ -482,11 +483,16 @@ int get_window_input_x() {
 
 void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 {
+	// im lazy, but i just wanna make it work
+	int xoffset = rest, yoffset = p.h;
+	if(p.iAmRoot) {
+		xoffset+=p.wx;
+		yoffset+=p.wy;
+	}
 	if(GLXmode) {
 		#ifdef GLX
 		glClear(GL_COLOR_BUFFER_BIT);
 		#endif
-	} else {
 	}
 
 	if(GLXmode) {
@@ -509,11 +515,11 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 0, p.h - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]), rest + i*(p.bs+p.bw), p.h - f[i]);
 				else {
 					XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
-					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, rest + i*(p.bs+p.bw), p.h - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]));
+					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, xoffset + i*(p.bs+p.bw), yoffset - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]));
 				}
 			}
 			else if (f[i] < flastd[i])
-				XClearArea(xavaXDisplay, xavaXWindow, rest + i*(p.bs+p.bw), p.h - flastd[i], (unsigned int)p.bw, (unsigned int)(flastd[i]-f[i]), 0);
+				XClearArea(xavaXDisplay, xavaXWindow, xoffset + i*(p.bs+p.bw), yoffset - flastd[i], (unsigned int)p.bw, (unsigned int)(flastd[i]-f[i]), 0);
 		}
 	}
 
@@ -531,6 +537,9 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 
 void cleanup_graphical_x(void)
 {
+	// Root mode leaves artifacts on screen even though the window is dead
+	XClearWindow(xavaXDisplay, xavaXWindow);
+
 	// make sure that all events are dead by this point
 	XSync(xavaXDisplay, 1);
 

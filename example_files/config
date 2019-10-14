@@ -81,6 +81,10 @@
 # Crate taskbar icon
 ; taskbar_icon = 1
 
+# Draw directly on the display itself (Xorg ONLY), VERY UNPREDICTABLE
+# You need to stop any form of compositing for this to even work properly
+; rootwindow = 0
+
 
 [input]
 

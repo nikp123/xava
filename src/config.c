@@ -332,6 +332,16 @@ void validate_config(char supportedInput[255], void* params)
 		// TUI used x8 height, let's fix that
 		p->sens /= 8;
 	}
+	if(p->om == 5) {
+		if(p->iAmRoot && p->gradients) {
+			fprintf(stderr, "rootwindow and gradients don't work!\n");
+			exit(EXIT_FAILURE);
+		}
+		if(p->iAmRoot && GLXmode) {
+			fprintf(stderr, "rootwindow and OpenGL don't work!\n");
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	// validate: shadow
 	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
@@ -528,6 +538,12 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	#ifdef GLX
 		GLXmode = iniparser_getint(ini, "window:opengl", 1);
 	#endif
+
+	#ifdef XLIB
+		// nikp123 causes a nuclear disaster 2019 (colorized)
+		p->iAmRoot = iniparser_getboolean(ini, "window:rootwindow", 0);
+	#endif
+
 
 	p->w = iniparser_getint(ini, "window:width", 1180);
 	p->h = iniparser_getint(ini, "window:height", 300);
