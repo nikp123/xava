@@ -78,7 +78,7 @@
 # This option removes the ability to interact with the window (works under Xorg only)
 ; interactable = 1
 
-# Crate taskbar icon
+# Create taskbar icon
 ; taskbar_icon = 1
 
 # Draw directly on the display itself (Xorg ONLY), VERY UNPREDICTABLE
@@ -117,7 +117,7 @@
 
 [output]
 
-# Ouput method. Can be any of the following (if supported):
+# Output method. Can be any of the following (if supported):
 # By default it's the window that is recommended for your platform/OS.
 # 'raw' is a 16 bit data stream of the bar heights that can be used to send to other applications.
 # 'raw' defaults to 200 bars, which can be adjusted in the 'bars' option above.

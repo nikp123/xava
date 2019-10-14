@@ -536,7 +536,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 
 	// config: window
 	#ifdef GLX
-		GLXmode = iniparser_getint(ini, "window:opengl", 1);
+		GLXmode = iniparser_getboolean(ini, "window:opengl", 1);
 	#endif
 
 	#ifdef XLIB
