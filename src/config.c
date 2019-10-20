@@ -332,16 +332,20 @@ void validate_config(char supportedInput[255], void* params)
 		// TUI used x8 height, let's fix that
 		p->sens /= 8;
 	}
+#ifdef XLIB
 	if(p->om == 5) {
 		if(p->iAmRoot && p->gradients) {
 			fprintf(stderr, "rootwindow and gradients don't work!\n");
 			exit(EXIT_FAILURE);
 		}
+	#ifdef GLX
 		if(p->iAmRoot && GLXmode) {
 			fprintf(stderr, "rootwindow and OpenGL don't work!\n");
 			exit(EXIT_FAILURE);
 		}
+	#endif
 	}
+#endif
 
 	// validate: shadow
 	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
