@@ -457,6 +457,9 @@ int get_window_input_x() {
 			}
 			case ConfigureNotify:
 			{
+				// the window should not be resized when it IS the monitor
+				if(p.iAmRoot) break;
+
 				// This is needed to track the window size
 				XConfigureEvent trackedXavaXWindow;
 				trackedXavaXWindow = xavaXEvent.xconfigure;
