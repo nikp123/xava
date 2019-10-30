@@ -450,7 +450,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		}
 		fclose(fp);
 	} else { //opening specified file
-		fp = fopen(configPath, "rb+");	
+		fp = fopen(configPath, "rb+");
 		if (fp) {
 			fclose(fp);
 		} else {
@@ -537,9 +537,9 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->bw = iniparser_getint(ini, "general:bar_width", 13);
 	p->bs = iniparser_getint(ini, "general:bar_spacing", 5);
 	p->framerate = iniparser_getint(ini, "general:framerate", 60);
-	p->vsync = iniparser_getint(ini, "general:vsync", 1);
+	p->vsync = iniparser_getboolean(ini, "general:vsync", 1);
 	p->sens = iniparser_getint(ini, "general:sensitivity", 100);
-	p->autosens = iniparser_getint(ini, "general:autosens", 1);
+	p->autosens = iniparser_getboolean(ini, "general:autosens", 1);
 	p->overshoot = iniparser_getint(ini, "general:overshoot", 0);
 	p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 26);
 	p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 15000);
@@ -580,7 +580,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 
 	// config: shadow
 	p->shdw = iniparser_getint(ini, "shadow:size", 7);
-	p->shadow_color = (char *)iniparser_getstring(ini, "shadow:color", "#ff000000");	
+	p->shadow_color = (char *)iniparser_getstring(ini, "shadow:color", "#ff000000");
 	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
 	{
 		fprintf(stderr, "shadow color is improperly formatted!\n");
