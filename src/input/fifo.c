@@ -33,6 +33,11 @@ void* input_fifo(void* data)
 
 	fd = open_fifo(audio->source);
 
+	// first read to remove any latency that may happen
+	while(!bytes) {
+		bytes = read(fd, buf, sizeof(buf));
+	}
+
 	while (1) {
 		bytes = read(fd, buf, sizeof(buf));
 
