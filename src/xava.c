@@ -158,10 +158,15 @@ unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 #if defined(__unix__)||defined(__APPLE__)
 // general: handle signals
 void sig_handler(int sig_no) {
-	if (sig_no == SIGINT) {
-		printf("CTRL-C pressed -- goodbye\n");
-		kys=1;
-		return;
+	switch(sig_no) {
+		case SIGINT:
+			printf("CTRL-C pressed -- goodbye\n");
+			kys=1;
+			return;
+		case SIGTERM:
+			printf("Process termination requested -- goodbye\n");
+			kys=1;
+			return;
 	}
 }
 #endif
@@ -322,6 +327,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	memset(&action, 0, sizeof(action));
 	action.sa_handler = &sig_handler;
 	sigaction(SIGINT, &action, NULL);
+	sigaction(SIGTERM, &action, NULL);
 	#endif
 
 	// general: handle command-line arguments
