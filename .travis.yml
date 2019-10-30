@@ -18,6 +18,7 @@ matrix:
               - portaudio19-dev
               - cmake
               - git
+        cache: ccache
 
 git:
  depth: false
