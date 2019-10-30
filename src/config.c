@@ -17,6 +17,12 @@
 #include "output/graphical.h"
 #include "config.h"
 
+// inode watching is a Linux(TM) feature
+// so watch out when you're compiling it
+#ifdef __linux__
+#include "misc/inode_watcher.h"
+#endif
+
 char *inputMethod, *outputMethod, *channels;
 
 int validate_color(char *checkColor, int om)
@@ -641,4 +647,10 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 
 	validate_config(supportedInput, params);
 	//iniparser_freedict(ini);
+	
+	#ifdef __linux__
+		// spawn a thread which will check if the file had been changed in any way
+		// to inform the main process that it needs to reload
+		watchFile(configPath);
+	#endif
 }

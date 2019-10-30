@@ -192,6 +192,14 @@ else()
 	message(STATUS "portaudio library not found")
 endif()
 
+# Shitty workaround that doesnt work for BSD, Minix or anything with any amount of POSIX compatibility
+# Blame: https://stackoverflow.com/questions/9160335/os-specific-instructions-in-cmake-how-to
+# Also CMAKE_SYSTEM_NAME doesn't work, so I've tried my options. 
+# Please fix this whoever has time and reads this.
+if(UNIX AND NOT APPLE)
+	list(APPEND ADDITIONAL_SOURCES "src/misc/inode_watcher.c")
+endif()
+
 # Build executable
 add_executable(
 	xava

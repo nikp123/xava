@@ -69,6 +69,10 @@
 	#include <iniparser.h>
 #endif
 
+#ifdef __linux__
+	#include "misc/inode_watcher.h"
+#endif
+
 #include "output/graphical.h"
 #include "output/raw.h"
 #include "input/fifo.h"
@@ -97,6 +101,11 @@ int should_reload = 0;
 
 // general: cleanup
 void cleanup() {
+	#ifdef __linux__
+		// we need to do this since the inode watcher is a seperate thread
+		destroyFileWatcher();
+	#endif
+
 	switch(p.om) {
 		#ifdef XLIB
 		case 5:
@@ -716,6 +725,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 							break;
 					}
 				}
+				#endif
+
+				#ifdef __linux__
+					// check for updates in the config file
+					should_reload = getFileStatus();
 				#endif
 
 				if (should_reload) {
