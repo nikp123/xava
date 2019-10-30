@@ -4,6 +4,7 @@
 	#include <sys/types.h>
 	#include <sys/inotify.h>
 	#include <errno.h>
+	#include <unistd.h>
 	#define EVENT_SIZE  (sizeof(struct inotify_event))
 	#define BUF_LEN     (1024 * (EVENT_SIZE + 16))
 #endif
@@ -23,7 +24,7 @@
 #endif
 
 #ifdef __linux__
-void watchFileProcess(void *name) {
+void *watchFileProcess(void *name) {
 	alive = 1;
 	char *fname = (char*)name;
 	filename = malloc(strlen(fname));
@@ -32,7 +33,7 @@ void watchFileProcess(void *name) {
 	if(fd<0) {
 		perror("inotify_init");
 	}
-	
+
 	// we need to split the filename accordingly
 	for(i=strlen(filename); i>0; i--) {
 		if(filename[i-1]=='/') break;
@@ -52,13 +53,13 @@ void watchFileProcess(void *name) {
 			struct inotify_event *event = (struct inotify_event *) &buffer[i];
 			if(event->mask & IN_CREATE) if(!strcmp(event->name, &filename[separator])) found = 1;
 			if(event->mask & IN_MODIFY) if(!strcmp(event->name, &filename[separator])) found = 1;
-			i += EVENT_SIZE + event->len;	
+			i += EVENT_SIZE + event->len;
 		}
 	}
 	free(filename);
 	inotify_rm_watch(fd, wd);
-  close(fd);
-	alive = 0;	
+	close(fd);
+	alive = 0;
 }
 #endif
 
@@ -76,7 +77,7 @@ int getFileStatus() {
 #endif
 	
 	// if the OS is not supported, just act as it is
-	return 0;	
+	return 0;
 }
 void destroyFileWatcher() {
 #ifdef __linux__
@@ -85,7 +86,7 @@ void destroyFileWatcher() {
 		free(filename);
 		pthread_cancel(p_thread);
 		inotify_rm_watch(fd, wd);
-  	close(fd);
+		close(fd);
 		alive = 0;
 	}
 #endif	
