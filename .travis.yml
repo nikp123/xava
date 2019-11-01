@@ -19,6 +19,16 @@ matrix:
               - cmake
               - git
         cache: ccache
+      - os: linux
+        compiler: gcc
+        addons:
+          apt:
+            update: true
+            packages:
+              - libfftw3-dev
+              - cmake
+              - git
+        cache: ccache
 
 git:
  depth: false
