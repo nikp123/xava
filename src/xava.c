@@ -288,7 +288,7 @@ Usage : " PACKAGE " [options]\n\
 Visualize audio input in a window. \n\
 \n\
 Options:\n\
-	-p          path to config file\n\
+	-p          specify path to the config file\n\
 	-v          print version\n\
 \n\
 Keys:\n\
@@ -373,7 +373,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	// general: main loop
 	while (1) {
-
 		//config: load
 		load_config(configPath, supportedInput, (void *)&p);
 
@@ -666,9 +665,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			if (p.stereo) bars = bars * 2;
 
 			bool resizeWindow = false;
+			bool redrawWindow = false;
 
 			while  (!resizeWindow) {
-				if(should_reload) break;
 				#ifdef XLIB
 				if(p.om == 5)
 				{
@@ -684,8 +683,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 							resizeWindow = TRUE;
 							break;
 						case 3:
-							clear_screen_x();
-							memset(flastd, 0x00, sizeof(int)*200);
+							redrawWindow = TRUE; 
 							break;
 					}
 				}
@@ -705,8 +703,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 							resizeWindow = 1;
 							break;
 						case 3:
-							clear_screen_sdl();
-							memset(flastd, 0x00, sizeof(int)*200);
+							redrawWindow = TRUE; 
 							break;
 					}
 				}
@@ -726,8 +723,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 							resizeWindow = true;
 							break;
 						case 3:
-							clear_screen_win();
-							//memset(flastd, 0x00, sizeof(int)*200);
+							redrawWindow = TRUE; 
 							break;
 					}
 				}
@@ -786,7 +782,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					}
 				} else { //**if in sleep mode wait and continue**//
 					#ifdef DEBUG
-						printw("no sound detected for 3 sec, going to sleep mode\n");
+						printw("no sound detected for 5 sec, going to sleep mode\n");
 					#endif
 					//wait 1 sec, then check sound again.
 					xavaSleep(1000, 0);
@@ -914,6 +910,14 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 							#ifdef XLIB
 							// this prevents invalid access
 							if(should_reload||reloadConf) break;
+							if(redrawWindow) {
+								if(p.iAmRoot) {
+									memset(flastd, p.h, sizeof(int)*200);
+									draw_graphical_x(bars, rest, f, flastd);
+								} else clear_screen_x();
+								memset(flastd, 0x00, sizeof(int)*200);
+								redrawWindow = FALSE;
+							}
 							draw_graphical_x(bars, rest, f, flastd);
 							break;
 							#endif
@@ -922,6 +926,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						{
 							#ifdef SDL
 							if(reloadConf) break;
+							if(redrawWindow) {
+								clear_screen_sdl();
+								memset(flastd, 0x00, sizeof(int)*200);
+								redrawWindow = FALSE;
+							}
 							draw_graphical_sdl(bars, rest, f, flastd);
 							break;
 							#endif
@@ -930,6 +939,10 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						{
 							#ifdef WIN
 							if(reloadConf) break;
+							if(redrawWindow) {
+								//clear_screen_win(); // placeholder
+								redrawWindow = FALSE;
+							}
 							draw_graphical_win(bars, rest, f);
 							break;
 							#endif
@@ -942,16 +955,15 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					oldTime = xavaSleep(oldTime, p.framerate);
 				#endif
 
-				for (o = 0; o < bars; o++) {
-					flastd[o] = f[o];
-				}
+				// save previous bar values
+				memcpy(flastd, f, sizeof(int)*200);
 
 				if(kys) {
 					resizeWindow=1;
 					reloadConf=1;
 				}
 
-				//checking if audio thread has exited unexpectedly
+				// checking if audio thread has exited unexpectedly
 				if(audio.terminate == 1) {
 					cleanup();
 					fprintf(stderr,
@@ -959,29 +971,37 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					exit(EXIT_FAILURE); 
 				} 
 			}//resize window
-
 		}//reloading config
+
+		// telling audio thread to terminate 
+		audio.terminate = 1;
+
+		// waiting for all background threads and other stuff to terminate properly
 		xavaSleep(100, 0);
 
-		//**telling audio thread to terminate**//
-		audio.terminate = 1;
+		// kill the audio thread
 		pthread_join( p_thread, NULL);
 
-		free(p.smooth);
-		if (sourceIsAuto) free(audio.source);
-
-		// cleanup remaining FFT buffers
-		if(audio.channels==2) {
-			free(audio.audio_out_r);
-			free(inr);
-		}
-		free(audio.audio_out_l);
-		free(inl);
-   
+		// get rid of everything else  
 		cleanup();
 
-		if(kys) exit(EXIT_SUCCESS);
+		// internal variables
+		free(p.smooth);
+		if(sourceIsAuto) free(audio.source);
 
-		//fclose(fp);
+		// cleanup remaining FFT buffers (abusing C here)
+		switch(audio.channels) {
+			case 2:
+				free(audio.audio_out_r);
+				free(inr);
+			default:
+				free(audio.audio_out_l);
+				free(inl);
+				break;
+		}
+
+		// since this is an infinite loop we need to break out of it
+		if(kys) break;
 	}
+	return 0;
 }

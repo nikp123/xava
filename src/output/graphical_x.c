@@ -34,6 +34,8 @@ static XClassHint xavaXClassHint;
 static XWMHints xavaXWMHints;
 static XEvent xev;
 
+static int startFrameCounter;
+
 #ifdef GLX
 static int VisData[] = {
 GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -148,6 +150,8 @@ void calculateColors() {
 
 	XParseColor(xavaXDisplay, xavaXColormap, p.bcolor[0]=='#' ? p.bcolor : tempColorStr, &xbgcol);
 	XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
+
+	startFrameCounter = 0;
 }
 
 int init_window_x(char **argv, int argc)
@@ -314,8 +318,8 @@ int render_gradient_x() {
 }
 
 void clear_screen_x() {
-	#ifdef GLX
 	if(GLXmode) {
+	#ifdef GLX
 		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p.transF ? 1.0*p.background_opacity : 1.0); // TODO BG transparency
 		glColors[0] = xcol.red/65535.0;
 		glColors[1] = xcol.green/65535.0;
@@ -328,15 +332,13 @@ void clear_screen_x() {
 			glColors[6] = ARGB_G_32(p.shdw_col);
 			glColors[7] = ARGB_B_32(p.shdw_col);
 		}
-	} else {
 	#endif
+	} else {
 		XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
 		XClearWindow(xavaXDisplay, xavaXWindow);
-		
+
 		if(p.gradients) render_gradient_x();
-	#ifdef GLX
 	}			// you figure out a less dumb to do this
-	#endif
 }
 
 int apply_window_settings_x()
@@ -398,6 +400,9 @@ int apply_window_settings_x()
 }
 
 int get_window_input_x() {
+	// this way we avoid event stacking which requires a full frame to process a single event
+	int action = 0;
+
 	while(XPending(xavaXDisplay)) {
 		XNextEvent(xavaXDisplay, &xavaXEvent);
 
@@ -466,14 +471,15 @@ int get_window_input_x() {
 				if(p.w != trackedXavaXWindow.width || p.h != trackedXavaXWindow.height) {
 					p.w = trackedXavaXWindow.width;
 					p.h = trackedXavaXWindow.height;
-					return 2;
 				}
+				action = 2;
 				break;
 			}
 			case Expose:
-				return 3;
+				if(action != 2) action = 3;
+				break;
 			case VisibilityNotify:
-				if(xavaXEvent.xvisibility.state == VisibilityUnobscured) return 2;
+				if(xavaXEvent.xvisibility.state == VisibilityUnobscured) action = 2;
 				break;
 			case ClientMessage:
 				if((Atom)xavaXEvent.xclient.data.l[0] == wm_delete_window)
@@ -481,7 +487,7 @@ int get_window_input_x() {
 				break;
 		}
 	}
-	return 0;
+	return action;
 }
 
 void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
@@ -492,20 +498,24 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 		xoffset+=p.wx;
 		yoffset+=p.wy;
 	}
-	if(GLXmode) {
-		#ifdef GLX
-		glClear(GL_COLOR_BUFFER_BIT);
-		#endif
-	}
+
+	if(startFrameCounter<3*p.framerate)
+		startFrameCounter++;
 
 	if(GLXmode) {
 		#ifdef GLX
+		glClear(GL_COLOR_BUFFER_BIT);
+
 		for(int i=0; i<p.gradients; i++) {
 			gradColors[i*3] = xgrad[i].red/65535.0;
 			gradColors[i*3+1] = xgrad[i].green/65535.0;
 			gradColors[i*3+2] = xgrad[i].blue/65535.0;
 		}
 		if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
+		
+		glXSwapBuffers(xavaXDisplay, xavaXWindow);
+		glFinish();
+		glXWaitGL();
 		#endif
 	} else {
 		// draw bars on the X11 window
@@ -514,6 +524,12 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 			if(f[i] > p.h) f[i] = p.h;
 
 			if(f[i] > flastd[i]) {
+				// workaround for updating wallpaper in wpgtk
+				// since there are no events called from SetXRoot 
+				// if you know how to capture these, I would gladly
+				// make this work less messy
+				if(startFrameCounter<p.framerate*3) flastd[i] = 0;
+
 				if(p.gradients)
 					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 0, p.h - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]), rest + i*(p.bs+p.bw), p.h - f[i]);
 				else {
@@ -524,17 +540,8 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 			else if (f[i] < flastd[i])
 				XClearArea(xavaXDisplay, xavaXWindow, xoffset + i*(p.bs+p.bw), yoffset - flastd[i], (unsigned int)p.bw, (unsigned int)(flastd[i]-f[i]), 0);
 		}
+		XSync(xavaXDisplay, 0);
 	}
-
-	#ifdef GLX
-	if(GLXmode) {
-		glXSwapBuffers(xavaXDisplay, xavaXWindow);
-		glFinish();
-		glXWaitGL();
-	}
-	#endif
-
-	XSync(xavaXDisplay, 0);
 	return;
 }
 
