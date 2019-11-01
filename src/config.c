@@ -227,10 +227,17 @@ void validate_config(char supportedInput[255], void* params)
 	}
 	
 	// validate: framerate
-	if (p->vsync < -1) {
-		fprintf(stderr,
-			"Vsync cannot be below -1, no such Vsync mode exists!\n");
-		exit(EXIT_FAILURE);
+	if (p->vsync != 0) {
+		if (!(p->om==7||(p->om==6&&GLXmode))) {
+			fprintf(stderr,
+				"Vsync works only when OpenGL is present!\n");
+			p->vsync = 0;
+		}
+		if (p->vsync < -1) {
+			fprintf(stderr,
+				"Vsync cannot be below -1, no such Vsync mode exists!\n");
+			exit(EXIT_FAILURE);
+		}
 	}
 	
 	// validate: color
