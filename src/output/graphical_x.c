@@ -387,7 +387,8 @@ int apply_window_settings_x()
 		// Vsync causes problems on NVIDIA GPUs, looking for possible workarounds/fixes
 		glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p.vsync);
 		#endif
-	} else clear_screen_x();
+	}
+	clear_screen_x();
 
 	if(!p.interactF){
 		XRectangle rect;
