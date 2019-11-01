@@ -228,7 +228,11 @@ void validate_config(char supportedInput[255], void* params)
 	
 	// validate: framerate
 	if (p->vsync != 0) {
-		if (!(p->om==7||(p->om==6&&GLXmode))) {
+		if (!(p->om==7
+#ifdef GLX
+			||(p->om==6&&GLXmode)
+#endif
+			)) {
 			fprintf(stderr,
 				"Vsync works only when OpenGL is present!\n");
 			p->vsync = 0;
