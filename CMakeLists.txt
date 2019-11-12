@@ -219,4 +219,4 @@ target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m ${FFTW3_LIBRARIES} pthread 
 # Install
 install (TARGETS xava DESTINATION bin)
 install (FILES LICENSE DESTINATION share/licenses/xava)
-install (FILES assets/desktop/xava.desktop DESTINATION share/applications)
+install (FILES assets/linux/xava.desktop DESTINATION share/applications)
