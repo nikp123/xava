@@ -196,7 +196,7 @@ int init_window_x(char **argv, int argc)
 		}
 	} else
 	#endif
-		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, 32, TrueColor, &xavaVInfo);
+		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p.transF ? 32 : 24, TrueColor, &xavaVInfo);
 
 	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 	xavaXColormap = xavaAttr.colormap;
