@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Version=@xava_VERSION_MAJOR@.@xava_VERSION_MINOR@.@xava_VERSION_PATCH@.@xava_VERSION_TWEAK@
+Version=@xava_VERSION@
 Name=XAVA
 Comment=X11 Audio Visualizer for ALSA + Pulseaudio,FIFO...
 Exec=xava

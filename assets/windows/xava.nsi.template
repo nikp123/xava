@@ -3,12 +3,12 @@
 # Set project name
 Name "X.A.V.A."
 
-!define PRODUCT_VERSION "@xava_VERSION_MAJOR@.@xava_VERSION_MINOR@.@xava_VERSION_PATCH@.@xava_VERSION_TWEAK@"
-!define VERSION "@xava_VERSION_MAJOR@.@xava_VERSION_MINOR@.@xava_VERSION_PATCH@.@xava_VERSION_TWEAK@"
+!define PRODUCT_VERSION "@xava_VERSION@"
+!define VERSION "@xava_VERSION@"
 
-VIProductVersion "${PRODUCT_VERSION}"
-VIFileVersion "${VERSION}"
-VIAddVersionKey "FileVersion" "${VERSION}"
+VIProductVersion "@xava_VERSION@"
+VIFileVersion "@xava_VERSION@"
+VIAddVersionKey "FileVersion" "@xava_VERSION@"
 VIAddVersionKey "LegalCopyright" "(C) Nikola Pavlica."
 VIAddVersionKey "FileDescription" "Graphical audio visualizer"
 

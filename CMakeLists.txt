@@ -14,7 +14,9 @@ set(xava_VERSION_MINOR 6)
 set(xava_VERSION_PATCH 2)
 set(xava_VERSION_TWEAK 3)
 
-add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
+set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
+
+add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION}")
 add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
 
 find_package(PkgConfig REQUIRED)
