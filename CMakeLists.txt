@@ -227,4 +227,5 @@ install (TARGETS xava DESTINATION bin)
 install (FILES LICENSE DESTINATION share/licenses/xava)
 install (FILES example_files/config RENAME config.example DESTINATION share/xava)
 install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
+install (FILES assets/linux/xava.svg DESTINATION share/icons/hicolor/scalable/apps)
 

@@ -4,7 +4,7 @@ Version=@xava_VERSION_MAJOR@.@xava_VERSION_MINOR@.@xava_VERSION_PATCH@.@xava_VER
 Name=XAVA
 Comment=Audio spectrum visualizer for Windows/macOS/Linux/BSD
 Exec=xava
-Icon=hdspmixer
+Icon=xava
 Terminal=false
 Categories=Audio;
 
