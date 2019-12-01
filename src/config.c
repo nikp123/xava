@@ -232,7 +232,7 @@ void validate_config(char supportedInput[255], void* params)
 	if (p->vsync != 0) {
 		if (!(p->om==7
 #ifdef GLX
-			||(p->om==6&&GLXmode)
+			||((p->om==5)&&GLXmode)
 #endif
 			)) {
 			fprintf(stderr,
