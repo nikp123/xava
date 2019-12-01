@@ -143,6 +143,9 @@ if(MSYS OR MINGW OR MSVC)
 	if(CMAKE_BUILD_TYPE STREQUAL "Release")
 		message(STATUS "Since release build, console is being disabled")
 		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -mwindows")
+
+		# Prepare NSI file for compilation
+		configure_file("assets/windows/xava.nsi.template" "xava.nsi" NEWLINE_STYLE CRLF)
 	endif()
 endif()
 
