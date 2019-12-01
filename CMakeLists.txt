@@ -198,6 +198,9 @@ endif()
 # Please fix this whoever has time and reads this.
 if(UNIX AND NOT APPLE)
 	list(APPEND ADDITIONAL_SOURCES "src/misc/inode_watcher.c")
+
+	# Add proper version info to the desktop shortcut file
+	configure_file("assets/linux/xava.desktop.template" "xava.desktop" NEWLINE_STYLE UNIX)
 endif()
 
 # Build executable
@@ -219,4 +222,5 @@ target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m ${FFTW3_LIBRARIES} pthread 
 # Install
 install (TARGETS xava DESTINATION bin)
 install (FILES LICENSE DESTINATION share/licenses/xava)
-install (FILES assets/linux/xava.desktop DESTINATION share/applications)
+install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
+

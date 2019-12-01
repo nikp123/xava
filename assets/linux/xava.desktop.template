@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Version=0.6.2
+Version=@xava_VERSION_MAJOR@.@xava_VERSION_MINOR@.@xava_VERSION_PATCH@.@xava_VERSION_TWEAK@
 Name=XAVA
 Comment=Audio spectrum visualizer for Windows/macOS/Linux/BSD
 Exec=xava
