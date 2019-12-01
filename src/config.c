@@ -25,6 +25,8 @@
 
 char *inputMethod, *outputMethod, *channels;
 
+static char generateDefault = 0;
+
 int validate_color(char *checkColor, int om)
 {
 	int validColor = 0;
@@ -412,29 +414,31 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 
 		fp = fopen(configPath, "rb+");
 		if (!fp) {
-			printf("Default config doesn't exist!\nCreating new one...");
+			printf("Default config doesn't exist!\n"
+					"Trying to find a default config file...");
 
-			fp = fopen(configPath, "w");
-			if(!fp) {
-				fprintf(stderr, "FAIL\nThe file/directory is unwritable. The program will now end.\n");
-				exit(EXIT_FAILURE);
-			}
-
+			// Finding the config file path
 			#if defined(__unix__)||defined(__APPLE__)
+				// UNIX-like OS-es, but not Apple
 				char targetFile[255];
 				sprintf(targetFile, "%s/share/%s/%s", PREFIX, PACKAGE, configFile);
 				FILE *source = fopen(targetFile, "r");
 			#elif defined(__WIN32__)
-				// widechars, why?!?
+				// Windows
+
+				// Windows uses widechars internally
 				WCHAR wpath[MAX_PATH];
 				char path[MAX_PATH];
 
-				// get diretory path
+				// Get path of where the executable is installed
+				// Assuming that the user has installed the program 
+				// and that the config file is in the same directory
+				// as the program
 				HMODULE hModule = GetModuleHandleW(NULL);
 				GetModuleFileNameW(hModule, wpath, MAX_PATH);
 				wcstombs(path, wpath, MAX_PATH);
 
-				// hardcoded things pain me, but writing a 100 line-long
+				// Hardcoded things pain me, but writing a 100 line-long
 				// string replace function for windows is a no-no.
 				//
 				// This is why you use C++ for code like this.
@@ -442,24 +446,33 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 				// xava.exe => config.cfg
 				strcpy(&path[strlen(path)-8], configFile);
 
+				// because the program is not priviledged, read-only only
 				FILE *source = fopen(path, "r");
 			#endif
-			if(!source)
-				fprintf(stderr, "FAIL\nDefault configuration file doesnt exist. "
-					"Please provide one if you can!\nContinuing without default config...\n");
-			else {
-				// Copy file 
+
+			if(!source) {
+				// inipaser magic time triggered here
+				fprintf(stderr, "FAIL\nDefault configuration file doesn't exist. "
+					"Please provide one if you can!\n");
+			} else {
+				fp = fopen(configPath, "w");
+				if(!fp) {
+					fprintf(stderr, "FAIL\n"
+						"Couldn't create config file! The program will now end.\n");
+					exit(EXIT_FAILURE);
+				}
+
+				// Copy file in the most C way possible
 				short c = fgetc(source); 
 				while (c != EOF) { 
 					fputc(c, fp); 
 					c = fgetc(source); 
 				}
-
 				fclose(source);
+				fclose(fp);
 				printf("DONE\n");
 			}
 		}
-		fclose(fp);
 	} else { //opening specified file
 		fp = fopen(configPath, "rb+");
 		if (fp) {
@@ -658,7 +671,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 
 	validate_config(supportedInput, params);
 	//iniparser_freedict(ini);
-	
+
 	#ifdef __linux__
 		// spawn a thread which will check if the file had been changed in any way
 		// to inform the main process that it needs to reload
