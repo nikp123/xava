@@ -414,6 +414,9 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 
 		fp = fopen(configPath, "rb+");
 		if (!fp) {
+			#if defined(__unix__)||defined(__APPLE__)
+				char *configFile = "config.example";
+			#endif
 			printf("Default config doesn't exist!\n"
 					"Trying to find a default config file...");
 
