@@ -25,6 +25,7 @@ matrix:
           apt:
             update: true
             packages:
+              - libsdl2-dev
               - libfftw3-dev
               - cmake
               - git
