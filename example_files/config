@@ -88,8 +88,10 @@
 
 [input]
 
-# Audio capturing method. Possible methods are: 'pulse', 'alsa', 'fifo' or 'sndio'.
-# Defaults to 'pulse', 'alsa' or 'fifo', in that order, dependent on what support xava was built with.
+# Audio capturing method. Possible methods are the ones listed below.
+# If one doesn't work, it might not be supported by your system or it just wasn't compiled with it.
+# 
+# Defaults to the order shown below ('pulse', 'portaudio', 'alsa'...)
 #
 # All input methods uses the same config variable 'source'
 # to define where it should get the audio.
@@ -97,19 +99,27 @@
 # For pulseaudio 'source' will be the source. Default: 'auto', which uses the monitor source of the default sink
 # (all pulseaudio sinks(outputs) have 'monitor' sources(inputs) associated with them).
 # 
-# For alsa 'source' will be the capture device.
+# For alsa, wasapi and portaudio 'source' will be the capture device.
 # For fifo 'source' will be the path to fifo-file.
+#
+# You can also specify 'list' as the source to portaudio to list all available audio devices
 ; method = pulse
+; source = auto
+
+; method = portaudio
 ; source = auto
 
 ; method = alsa
 ; source = hw:Loopback,1
 
+; method = sndio
+; source = 
+
+; method = shmem
+; source = /squeezelite-00:00:00:00:00:00 
+
 ; method = fifo
 ; source = /tmp/mpd.fifo
-
-; method = portaudio
-; source = auto
 
 ; method = wasapi
 ; soruce = loopback
@@ -119,8 +129,6 @@
 
 # Output method. Can be any of the following (if supported):
 # By default it's the window that is recommended for your platform/OS.
-# 'raw' is a 16 bit data stream of the bar heights that can be used to send to other applications.
-# 'raw' defaults to 200 bars, which can be adjusted in the 'bars' option above.
 # 'sdl' is for a graphical window using OpenGL
 # 'x' is for a graphical window using XRender (usually faster, unsupported in wayland however)
 # 'win' is a win32 graphical window (which embedded into the NT kernel)

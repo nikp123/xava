@@ -1,3 +1,6 @@
+#define FIFO_INPUT_NUM 2
+#define FIFO_INPUT_NAME "fifo"
+
 struct audio_data {
 	int *audio_out_r;
 	int *audio_out_l;

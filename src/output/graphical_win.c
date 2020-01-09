@@ -364,7 +364,7 @@ int init_window_win(void) {
 
 void apply_win_settings(void) {
 	clear_screen_win();
-	resize_framebuffer(p.w, p.h);
+	resize_framebuffer();
 	//ReleaseDC(xavaWinWindow, xavaWinFrame);
 
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT"); 

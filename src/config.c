@@ -17,15 +17,31 @@
 #include "output/graphical.h"
 #include "config.h"
 
-// display output imports
+#ifdef ALSA
+#include "input/alsa.h"
+#endif
+#include "input/fifo.h"
+#ifdef PULSE
+#include "input/pulse.h"
+#endif
+#ifdef SNDIO
+#include "input/sndio.h"
+#endif
+#ifdef PORTAUDIO
+#include "input/portaudio.h"
+#endif
+#ifdef SHMEM
+#include "input/shmem.h"
+#endif
+#ifdef WIN
+#include "output/graphical_win.h"
+#include "input/wasapi.h"
+#endif
 #ifdef XLIB
 #include "output/graphical_x.h"
 #endif
 #ifdef SDL
 #include "output/graphical_sdl.h"
-#endif
-#ifdef WIN
-#include "output/graphical_win.h"
 #endif
 
 // inode watching is a Linux(TM) feature
@@ -96,67 +112,52 @@ int validate_color(char *checkColor)
 	return validColor;
 }
 
-void validate_config(void* params)
+void validate_config(void* params, dictionary *ini)
 {
 	struct config_params *p = (struct config_params *)params;
 	
 	// validate: input method
 	p->im = 0;
-	if (strcmp(inputMethod, "alsa") == 0) {
-		p->im = 1;
-		#ifndef ALSA
-			fprintf(stderr,
-				"xava was built without alsa support, install alsa dev files\n"
-				"and run make clean && ./configure && make again\n");
-			exit(EXIT_FAILURE);
-		#endif
+	support = createSupported();
+	#ifdef ALSA
+		appendSupported(&support, ALSA_INPUT_NAME, ALSA_INPUT_NUM);
+		appendSupported(&support, "Loopback,1", ALSA_INPUT_NUM);
+	#endif
+	appendSupported(&support, FIFO_INPUT_NAME, FIFO_INPUT_NUM);
+	appendSupported(&support, "/tmp/mpd.fifo", FIFO_INPUT_NUM);
+	#ifdef PULSE
+		appendSupported(&support, PULSE_INPUT_NAME, PULSE_INPUT_NUM);
+		appendSupported(&support, "auto", PULSE_INPUT_NUM);
+	#endif
+	#ifdef SNDIO
+		appendSupported(&support, SNDIO_INPUT_NAME, SNDIO_INPUT_NUM);
+		appendSupported(&support, SIO_DEVANY, SNDIO_INPUT_NUM);
+	#endif
+	#ifdef PORTAUDIO
+		appendSupported(&support, PORTAUDIO_INPUT_NAME, PORTAUDIO_INPUT_NUM);
+		appendSupported(&support, "auto", PORTAUDIO_INPUT_NUM);
+	#endif
+	#ifdef SHMEM
+		appendSupported(&support, SHMEM_INPUT_NAME, SHMEM_INPUT_NUM);
+		appendSupported(&support, "/squeezelite-00:00:00:00:00:00", SHMEM_INPUT_NUM);
+	#endif
+	#ifdef WIN
+		appendSupported(&support, WASAPI_INPUT_NAME, WASAPI_INPUT_NUM);
+		appendSupported(&support, "loopback", WASAPI_INPUT_NUM);
+	#endif
+	for(size_t i = 0; i < support.count; i+=2) {
+		if(!strcmp(inputMethod, support.names[i])) {
+			p->im = support.numbers[i];
+			p->audio_source = (char *)iniparser_getstring(ini, "input:source", support.names[i+1]);
+			break;
+		}
 	}
-	if (strcmp(inputMethod, "fifo") == 0) {
-		p->im = 2;
-	}
-	if (strcmp(inputMethod, "pulse") == 0) {
-		p->im = 3;
-		#ifndef PULSE
-			fprintf(stderr,
-				"xava was built without pulseaudio support, install pulseaudio dev files\n"
-				"and run make clean && ./configure && make again\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if (strcmp(inputMethod, "sndio") == 0) {
-		p->im = 4;
-		#ifndef SNDIO
-			fprintf(stderr, "xava was built without sndio support\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if (strcmp(inputMethod, "portaudio") == 0) {
-		p->im = 5;
-		#ifndef PORTAUDIO
-			fprintf(stderr, "xava was built without portaudio support\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if (strcmp(inputMethod, "shmem") == 0) {
-		p->im = 6;
-		#ifndef SHMEM
-			fprintf(stderr, "xava was built without shmem support\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if (strcmp(inputMethod, "wasapi") == 0) {
-		p->im = 7;
-		#ifndef WIN
-			fprintf(stderr, "xava was built without WASAPI support\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if (p->im == 0) {
-		fprintf(stderr,
-			"input method '%s' is not supported, supported methods are: %s\n",
-						inputMethod);
+	if(!p->im) {
+		fprintf(stderr, "Input method %s doesn't exist in this build of "PACKAGE"\n"
+						"Change it or recompile with the proper dependencies installed!\n", inputMethod);
 		exit(EXIT_FAILURE);
 	}
+	deleteSupported(&support);
 
 	// validate: output method
 	p->om = 0;
@@ -453,29 +454,24 @@ void load_config(char *configPath, void* params)
 	dictionary* ini;
 	ini = iniparser_load(configPath);
 
-	// setting fifo to default if no other input modes supported
-	inputMethod = (char *)iniparser_getstring(ini, "input:method", "fifo"); 
-
-	// setting alsa to default if supported
-	#ifdef ALSA
-		inputMethod = (char *)iniparser_getstring(ini, "input:method", "alsa"); 
+	#if defined(__linux__)||defined(__APPLE__)||defined(__unix__)
+		#ifdef PULSE
+			#define DEFAULT_INPUT PULSE_INPUT_NAME
+		#elif defined(PORTAUDIO)
+			#define DEFAULT_INPUT PORTAUDIO_INPUT_NAME
+		#elif defined(ALSA)
+			#define DEFAULT_INPUT ALSA_INPUT_NAME
+		#elif defined(SNDIO)
+			#define DEFAULT_INPUT SNDIO_INPUT_NAME
+		#elif defined(SHMEM)
+			#define DEFAULT_INPUT SHMEM_INPUT_NAME
+		#else
+			#define DEFAULT_INPUT FIFO_INPUT_NAME
+		#endif
+	#elif defined(WIN)
+		#define DEFAULT_INPUT WASAPI_INPUT_NAME
 	#endif
-
-	// portaudio is priority 2 (sorted by difficulty)
-	#ifdef PORTAUDIO
-		inputMethod = (char *)iniparser_getstring(ini, "input:method", "portaudio");
-	#endif
-
-	// pulse is basically autoconfig (so priority 1)
-	#ifdef PULSE
-		inputMethod = (char *)iniparser_getstring(ini, "input:method", "pulse");
-	#endif
-
-	// WASAPI is basically the best for windows (sorted by difficulty)
-	#ifdef WIN
-		inputMethod = (char *)iniparser_getstring(ini, "input:method", "wasapi");
-	#endif
-
+	inputMethod = (char *)iniparser_getstring(ini, "input:method", DEFAULT_INPUT);
 
 	// config: output
 	// use macros to define the default output
@@ -594,45 +590,7 @@ void load_config(char *configPath, void* params)
 	}
 
 	// config: input
-	p->im = 0;
-	if (strcmp(inputMethod, "alsa") == 0) {
-		p->im = 1;
-		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "hw:Loopback,1");
-	}
-	if (strcmp(inputMethod, "fifo") == 0) {
-		p->im = 2;
-		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "/tmp/mpd.fifo");
-	}
-	if (strcmp(inputMethod, "pulse") == 0) {
-		p->im = 3;
-		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "auto");
-	}
-	#ifdef SNDIO
-	if (strcmp(inputMethod, "sndio") == 0) {
-		p->im = 4;
-		p->audio_source = (char *)iniparser_getstring(ini, "input:source", SIO_DEVANY);
-	}
-	#endif
-	#ifdef PORTAUDIO
-	if (strcmp(inputMethod, "portaudio") == 0) {
-		p->im = 5;
-		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "auto");
-	}
-	#endif
-	#ifdef SHMEM
-	if (strcmp(inputMethod, "shmem") == 0) {
-		p->im = 6;
-		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "/squeezelite-00:00:00:00:00:00");
-	}
-	#endif
-	#ifdef WIN
-	if (strcmp(inputMethod, "wasapi") == 0) {
-		p->im = 7;
-		p->audio_source = (char *)iniparser_getstring(ini, "input:source", "loopback");
-	}
-	#endif
-
-	validate_config(params);
+	validate_config(params, ini);
 	//iniparser_freedict(ini);
 
 	#ifdef __linux__

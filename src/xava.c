@@ -86,6 +86,8 @@
 #define GCC_UNUSED /* nothing */
 #endif
 
+static void* (*xavaInput)(void*);
+
 static int (*xavaInitOutput)(void);
 static void (*xavaOutputClear)(void);
 static int (*xavaOutputApply)(void);
@@ -119,24 +121,6 @@ void sig_handler(int sig_no) {
 			return;
 	}
 }
-#endif
-
-
-#ifdef ALSA
-static bool is_loop_device_for_sure(const char * text) {
-	const char * const LOOPBACK_DEVICE_PREFIX = "hw:Loopback,";
-	return strncmp(text, LOOPBACK_DEVICE_PREFIX, strlen(LOOPBACK_DEVICE_PREFIX)) == 0;
-}
-
-static bool directory_exists(const char * path) {
-	DIR * const dir = opendir(path);
-	bool exists;// = dir != NULL;
-	if (dir == NULL) exists = false;
-	else exists = true;
-	closedir(dir);
-	return exists;
-}
-
 #endif
 
 int * separate_freq_bands(fftw_complex *out, int bars, int lcf[200],
@@ -319,6 +303,67 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		audio.terminate = 0;
 		audio.channels = 1+p.stereo;
 
+		if(p.stereo) {
+			for (i = 0; i < audio.fftsize; i++) {
+				audio.audio_out_l[i] = 0;
+				audio.audio_out_r[i] = 0;
+			}
+		} else for(i=0; i < audio.fftsize; i++) audio.audio_out_l[i] = 0;
+
+		//fft: planning to rock
+		fftw_complex outl[audio.fftsize/2+1], outr[audio.fftsize/2+1];
+		fftw_plan pl = fftw_plan_dft_r2c_1d(audio.fftsize, inl, outl, FFTW_MEASURE), pr;
+		if(p.stereo) pr = fftw_plan_dft_r2c_1d(audio.fftsize, inr, outr, FFTW_MEASURE);
+
+		switch(p.im) {
+			#ifdef ALSA
+			case ALSA_INPUT_NUM:
+				xavaInput = &input_alsa;
+				break;
+			#endif
+			#if defined(__unix__)||defined(__APPLE__)
+			case FIFO_INPUT_NUM:
+				audio.rate = 44100;
+				xavaInput = &input_fifo;
+				break;
+			#endif
+			#ifdef PULSE
+			case PULSE_INPUT_NUM:
+				if(strcmp(audio.source, "auto") == 0) {
+					getPulseDefaultSink((void*)&audio);
+					sourceIsAuto = 1;
+				} else sourceIsAuto = 0;
+				audio.rate = 44100;
+				xavaInput = &input_pulse;
+				break;
+			#endif
+			#ifdef SNDIO
+			case SNDIO_INPUT_NUM:
+				audio.rate = 44100;
+				xavaInput = &input_sndio;
+				break;
+			#endif
+			#ifdef PORTAUDIO
+			case PORTAUDIO_INPUT_NUM:
+				audio.rate = 44100;
+				xavaInput = input_portaudio;
+				break;
+			#endif
+			#ifdef SHMEM
+			case SHMEM_INPUT_NUM:
+				audio.rate = 44100;
+				xavaInput = input_shmem;
+				break;
+			#endif
+			#ifdef WIN
+			case WASAPI_INPUT_NUM:
+				audio.rate = 44100;
+				xavaInput = input_wasapi;
+				break;
+			#endif
+
+		}
+
 		switch(p.om) {
 			#ifdef XLIB
 			case X11_DISPLAY_NUM:
@@ -342,108 +387,17 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			#endif
 			#ifdef WIN
 			case WIN32_DISPLAY_NUM:
+				xavaInitOutput = &init_window_win;
+				xavaOutputClear = &clear_screen_win;
+				xavaOutputApply = &apply_win_settings;
+				xavaOutputHandleInput = &get_window_input_win;
+				xavaOutputDraw = &draw_graphical_win;
+				xavaOutputCleanup = &cleanup_graphical_win;
 				break;
 			#endif
 		}
 
-		if(p.stereo) {
-			for (i = 0; i < audio.fftsize; i++) {
-				audio.audio_out_l[i] = 0;
-				audio.audio_out_r[i] = 0;
-			}
-		} else for(i=0; i < audio.fftsize; i++) audio.audio_out_l[i] = 0;
-
-		//fft: planning to rock
-		fftw_complex outl[audio.fftsize/2+1], outr[audio.fftsize/2+1];
-		fftw_plan pl = fftw_plan_dft_r2c_1d(audio.fftsize, inl, outl, FFTW_MEASURE), pr;
-		if(p.stereo) pr = fftw_plan_dft_r2c_1d(audio.fftsize, inr, outr, FFTW_MEASURE);
-
-		#ifdef ALSA
-		// input_alsa: wait for the input to be ready
-		if (p.im == 1) {
-			if (is_loop_device_for_sure(audio.source)) {
-				if (directory_exists("/sys/")) {
-					if (! directory_exists("/sys/module/snd_aloop/")) {
-						cleanup();
-						fprintf(stderr,
-						"Linux kernel module \"snd_aloop\" does not seem to  be loaded.\n"
-						"Maybe run \"sudo modprobe snd_aloop\".\n");
-						exit(EXIT_FAILURE);
-					}
-				}
-			}
-
-			thr_id = pthread_create(&p_thread, NULL, input_alsa, (void *)&audio); //starting alsamusic listener
-
-			n = 0;
-
-			while (audio.format == -1 || audio.rate == 0) {
-				xavaSleep(1000, 0);
-				n++;
-				if (n > 2000) {
-				#ifdef DEBUG
-					cleanup();
-					fprintf(stderr,
-					"could not get rate and/or format, problems with audio thread? quiting...\n");
-					exit(EXIT_FAILURE);
-				#endif
-				}
-			}
-		#ifdef DEBUG
-			printf("got format: %d and rate %d\n", audio.format, audio.rate);
-		#endif
-		}
-		#endif
-
-		#if defined(__unix__)||defined(__APPLE__)
-		if (p.im == 2) {
-			//starting fifomusic listener
-			thr_id = pthread_create(&p_thread, NULL, input_fifo, (void*)&audio); 
-			audio.rate = 44100;
-		}
-		#endif
-
-		#ifdef PULSE
-		if (p.im == 3) {
-			if (strcmp(audio.source, "auto") == 0) {
-				getPulseDefaultSink((void*)&audio);
-				sourceIsAuto = 1;
-				}
-			else sourceIsAuto = 0;
-			//starting pulsemusic listener
-			thr_id = pthread_create(&p_thread, NULL, input_pulse, (void*)&audio); 
-			audio.rate = 44100;
-		}
-		#endif
-
-		#ifdef SNDIO
-		if (p.im == 4) {
-			thr_id = pthread_create(&p_thread, NULL, input_sndio, (void*)&audio);
-			audio.rate = 44100;
-		}
-		#endif
-
-		#ifdef PORTAUDIO
-		if (p.im == 5) {
-			thr_id = pthread_create(&p_thread, NULL, input_portaudio, (void*)&audio);
-			audio.rate = 44100;
-		}
-		#endif
-
-		#ifdef SHMEM
-		if (p.im == 6) {
-			thr_id = pthread_create(&p_thread, NULL, input_shmem, (void*)&audio);
-			audio.rate = 44100;
-		}
-		#endif
-
-		#ifdef WIN
-		if (p.im == 7) {
-			thr_id = pthread_create(&p_thread, NULL, input_wasapi, (void*)&audio);
-			audio.rate = 44100;
-		}
-		#endif
-
+		thr_id = pthread_create(&p_thread, NULL, xavaInput, (void*)&audio);
 		if (p.highcf > audio.rate / 2) {
 			cleanup();
 			fprintf(stderr,
@@ -744,7 +698,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 				xavaOutputDraw(bars, rest, f, flastd);
 
-				oldTime = xavaSleep(oldTime, p.framerate);
+				if(!p.vsync) // the window handles frametimes instead of XAVA
+					oldTime = xavaSleep(oldTime, p.framerate);
 
 				// save previous bar values
 				memcpy(flastd, f, sizeof(int)*200);

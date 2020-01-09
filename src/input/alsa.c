@@ -1,6 +1,9 @@
 #include "fifo.h"
 #include <alsa/asoundlib.h>
 
+#include <sys/types.h>
+#include <dirent.h>
+
 // input: ALSA
 
 // assuming stereo
@@ -100,6 +103,20 @@ static void fill_audio_outs(struct audio_data* audio, signed char* buffer,
 	}
 }
 
+static _Bool is_loop_device_for_sure(const char * text) {
+	const char * const LOOPBACK_DEVICE_PREFIX = "hw:Loopback,";
+	return strncmp(text, LOOPBACK_DEVICE_PREFIX, strlen(LOOPBACK_DEVICE_PREFIX)) == 0;
+}
+
+static _Bool directory_exists(const char * path) {
+	DIR * const dir = opendir(path);
+	_Bool exists;// = dir != NULL;
+	if (dir == NULL) exists = 0;
+	else exists = 1;
+	closedir(dir);
+	return exists;
+}
+
 void* input_alsa(void* data) {
 	int err;
 	struct audio_data* audio = (struct audio_data*)data;
@@ -107,6 +124,17 @@ void* input_alsa(void* data) {
 	snd_pcm_uframes_t buffer_size;
 	snd_pcm_uframes_t period_size;
 	snd_pcm_uframes_t frames = audio->inputsize;
+
+	if(is_loop_device_for_sure(audio->source)) {
+		if(directory_exists("/sys/")) {
+			if(!directory_exists("/sys/module/snd_aloop/")) {
+				fprintf(stderr,
+				"Linux kernel module \"snd_aloop\" does not seem to  be loaded.\n"
+				"Maybe run \"sudo modprobe snd_aloop\".\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
 
 	initialize_audio_parameters(&handle, audio, &frames);
 	snd_pcm_get_params(handle, &buffer_size, &period_size);
