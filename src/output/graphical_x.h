@@ -1,3 +1,6 @@
+#define X11_DISPLAY_NUM 1
+#define X11_DISPLAY_NAME "x11"
+
 int init_window_x(void);
 void clear_screen_x(void);
 int apply_window_settings_x(void);

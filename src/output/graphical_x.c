@@ -38,15 +38,15 @@ static int startFrameCounter;
 
 #ifdef GLX
 static int VisData[] = {
-GLX_RENDER_TYPE, GLX_RGBA_BIT,
-GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
-GLX_DOUBLEBUFFER, True,
-GLX_RED_SIZE, 8,
-GLX_GREEN_SIZE, 8,
-GLX_BLUE_SIZE, 8,
-GLX_ALPHA_SIZE, 8,
-GLX_DEPTH_SIZE, 16,
-None
+	GLX_RENDER_TYPE, GLX_RGBA_BIT,
+	GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+	GLX_DOUBLEBUFFER, True,
+	GLX_RED_SIZE, 8,
+	GLX_GREEN_SIZE, 8,
+	GLX_BLUE_SIZE, 8,
+	GLX_ALPHA_SIZE, 8,
+	GLX_DEPTH_SIZE, 16,
+	None
 };
 static double glColors[8], gradColors[24];
 static XRenderPictFormat *pict_format;

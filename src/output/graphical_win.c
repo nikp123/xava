@@ -12,7 +12,7 @@ const char wcWndName[] = "XAVA";
 HWND xavaWinWindow;
 MSG xavaWinEvent;
 HMODULE xavaWinModule;
-WNDCLASSEX xavaWinClass;	// same thing as window classes in Xlib
+WNDCLASSEX xavaWinClass;
 HDC xavaWinFrame;
 HGLRC xavaWinGLFrame;
 TIMECAPS xavaPeriod;

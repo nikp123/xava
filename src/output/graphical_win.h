@@ -1,3 +1,6 @@
+#define WIN32_DISPLAY_NUM 3
+#define WIN32_DISPLAY_NAME "win"
+
 #include <windows.h>
 #include <windowsx.h>
 #include <GL/gl.h>

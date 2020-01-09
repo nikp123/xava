@@ -213,7 +213,7 @@ add_executable(
 	xava
 	${ADDITIONAL_SOURCES}
 	src/output/graphical.c
-	src/output/raw.c
+	src/shared.c
 	src/config.c
 	src/xava.c
 )

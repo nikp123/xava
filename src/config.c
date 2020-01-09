@@ -17,17 +17,55 @@
 #include "output/graphical.h"
 #include "config.h"
 
+// display output imports
+#ifdef XLIB
+#include "output/graphical_x.h"
+#endif
+#ifdef SDL
+#include "output/graphical_sdl.h"
+#endif
+#ifdef WIN
+#include "output/graphical_win.h"
+#endif
+
 // inode watching is a Linux(TM) feature
 // so watch out when you're compiling it
 #ifdef __linux__
 #include "misc/inode_watcher.h"
 #endif
 
-char *inputMethod, *outputMethod, *channels;
+static struct supported {
+	size_t count;
+	int *numbers;
+	const char **names;
+} support;
 
-static char generateDefault = 0;
+struct supported createSupported(void) {
+	struct supported new;
+	new.names = malloc(1);
+	new.numbers = malloc(1);
+	new.count = 0;
+	return new;
+}
 
-int validate_color(char *checkColor, int om)
+void appendSupported(struct supported *support, char *appendName, int appendNum) {
+	const char **names = realloc(support->names, (++support->count)*sizeof(char*));
+	names[support->count-1] = appendName;
+	support->names=names;
+	int *numbers = realloc(support->numbers, support->count*sizeof(int*));
+	numbers[support->count-1] = appendNum;
+	support->numbers=numbers;
+}
+
+void deleteSupported(struct supported *support) {
+	free(support->names);
+	free(support->numbers);
+	support->count = 0;
+}
+
+static char *inputMethod, *outputMethod, *channels;
+
+int validate_color(char *checkColor)
 {
 	int validColor = 0;
 	if (checkColor[0] == '#' && strlen(checkColor) == 7) {
@@ -58,7 +96,7 @@ int validate_color(char *checkColor, int om)
 	return validColor;
 }
 
-void validate_config(char supportedInput[255], void* params)
+void validate_config(void* params)
 {
 	struct config_params *p = (struct config_params *)params;
 	
@@ -116,93 +154,35 @@ void validate_config(char supportedInput[255], void* params)
 	if (p->im == 0) {
 		fprintf(stderr,
 			"input method '%s' is not supported, supported methods are: %s\n",
-						inputMethod, supportedInput);
+						inputMethod);
 		exit(EXIT_FAILURE);
 	}
-	
+
 	// validate: output method
 	p->om = 0;
-	if (strcmp(outputMethod, "raw") == 0) {//raw:
-		p->om = 4;
-		p->bs = 0;
-		p->bw = 1;
-
-		//checking data format
-		p->is_bin = -1;
-		if (strcmp(p->data_format, "binary") == 0) {
-			p->is_bin = 1;
-			//checking bit format:
-			if (p->bit_format != 8 && p->bit_format != 16 ) {
-			fprintf(stderr,
-				"bit format  %d is not supported, supported data formats are: '8' and '16'\n",
-							p->bit_format );
-			exit(EXIT_FAILURE);
-		
-			}
-		} else if (strcmp(p->data_format, "ascii") == 0) {
-			p->is_bin = 0;
-			if (p->ascii_range < 1 ) {
-			fprintf(stderr,
-				"ascii max value must be a positive integer\n");
-			exit(EXIT_FAILURE);
-			}
-		} else {
-		fprintf(stderr,
-			"data format %s is not supported, supported data formats are: 'binary' and 'ascii'\n",
-						p->data_format);
-		exit(EXIT_FAILURE);
-		
+	support = createSupported();
+	#ifdef XLIB
+		appendSupported(&support, X11_DISPLAY_NAME, X11_DISPLAY_NUM);
+	#endif
+	#ifdef SDL
+		appendSupported(&support, SDL_DISPLAY_NAME, SDL_DISPLAY_NUM);
+	#endif
+	#ifdef WIN
+		appendSupported(&support, WIN32_DISPLAY_NAME, WIN32_DISPLAY_NUM);
+	#endif
+	for(size_t i = 0; i < support.count; i++) {
+		if(!strcmp(outputMethod, support.names[i])) {
+			p->om = support.numbers[i];
+			break;
 		}
-	
 	}
-	if(strcmp(outputMethod, "x") == 0)
-	{
-		p->om = 5;
-		#ifndef XLIB
-			fprintf(stderr,
-				"xava was built without Xlib support, install Xlib dev files\n"
-				"and run make clean && ./configure && make again\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if(strcmp(outputMethod, "sdl") == 0)
-	{
-		p->om = 6;
-		#ifndef SDL
-			fprintf(stderr,
-				"xava was build without SDL2 support, install SDL2 dev files\n"
-				"and run make clean && ./configure && make again\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if(strcmp(outputMethod, "win") == 0)
-	{
-		p->om = 7;
-		#ifndef WIN
-			fprintf(stderr,
-				"xava was build without win32 support, you need to be running Windows"
-				"in order for win32 to work :P\n");
-			exit(EXIT_FAILURE);
-		#endif
-	}
-	if (p->om == 0) {
-		fprintf(stderr,
-			"output method %s is not supported, supported methods are: 'raw'",
-						outputMethod);
-		#ifdef XLIB
-			fprintf(stderr, ", 'x'");
-		#endif
-		#ifdef SDL
-			fprintf(stderr, ", 'sdl'");
-		#endif
-		#ifdef WIN
-			fprintf(stderr, ", 'win'");
-		#endif
-		// Just a quick question, should you add 'circle' and 'raw' here?
-		fprintf(stderr, "\n");
-	
+	if(!p->om) {
+		fprintf(stderr, "Output method %s doesn't exist in this build of "PACKAGE"\n"
+						"Change it or recompile with the proper dependencies installed!\n", outputMethod);
 		exit(EXIT_FAILURE);
 	}
+	deleteSupported(&support);
+
 	// validate: output channels
 	p->stereo = -1;
 	if (strcmp(channels, "mono") == 0) p->stereo = 0;
@@ -230,14 +210,17 @@ void validate_config(char supportedInput[255], void* params)
 	
 	// validate: framerate
 	if (p->vsync != 0) {
-		if (!(p->om==7
-#ifdef GLX
-			||((p->om==5)&&GLXmode)
-#endif
-			)) {
-			fprintf(stderr,
-				"Vsync works only when OpenGL is present!\n");
-			p->vsync = 0;
+		switch(p->om) {
+		#ifdef SDL
+			case SDL_DISPLAY_NUM:
+				p->vsync = 0;
+				break;
+		#endif
+		#ifdef XLIB
+			case X11_DISPLAY_NUM:
+				if(!GLXmode) p->vsync = 0;
+				break;
+		#endif
 		}
 		if (p->vsync < -1) {
 			fprintf(stderr,
@@ -247,21 +230,21 @@ void validate_config(char supportedInput[255], void* params)
 	}
 	
 	// validate: color
-	if (!validate_color(p->color, p->om)) {
+	if (!validate_color(p->color)) {
 		fprintf(stderr, "The value for 'foreground' is invalid.\n"
 			"It can be either one of the 7 named colors or a HTML color of the form '#xxxxxx'.\n");
 		exit(EXIT_FAILURE);
 	}
 	
 	// validate: background color
-	if (!validate_color(p->bcolor, p->om)) {
+	if (!validate_color(p->bcolor)) {
 		fprintf(stderr, "The value for 'background' is invalid.\n"
 			"It can be either one of the 7 named colors or a HTML color of the form '#xxxxxx'.\n");
 		exit(EXIT_FAILURE);
 	}
 	
-	for(int i = 0;i < p->gradients;i++){
-		if (!validate_color(p->gradient_colors[i], p->om)) {
+	for(unsigned int i = 0; i < p->gradients; i++){
+		if (!validate_color(p->gradient_colors[i])) {
 			fprintf(stderr, "The first gradient color is invalid.\n"
 				"It must be HTML color of the form '#xxxxxx'.\n");
 			exit(EXIT_FAILURE);
@@ -269,29 +252,23 @@ void validate_config(char supportedInput[255], void* params)
 	}
 	
 	// In case color is not html format set bgcol and col to predefinedint values
-	p->col = 6;
-	if (strcmp(p->color, "black") == 0) p->col = 0;
-	if (strcmp(p->color, "red") == 0) p->col = 1;
-	if (strcmp(p->color, "green") == 0) p->col = 2;
-	if (strcmp(p->color, "yellow") == 0) p->col = 3;
-	if (strcmp(p->color, "blue") == 0) p->col = 4;
-	if (strcmp(p->color, "magenta") == 0) p->col = 5;
-	if (strcmp(p->color, "cyan") == 0) p->col = 6;
-	if (strcmp(p->color, "white") == 0) p->col = 7;
-	// default if invalid
-	
-	// validate: background color
-	if (strcmp(p->bcolor, "black") == 0) p->bgcol = 0;
-	if (strcmp(p->bcolor, "red") == 0) p->bgcol = 1;
-	if (strcmp(p->bcolor, "green") == 0) p->bgcol = 2;
-	if (strcmp(p->bcolor, "yellow") == 0) p->bgcol = 3;
-	if (strcmp(p->bcolor, "blue") == 0) p->bgcol = 4;
-	if (strcmp(p->bcolor, "magenta") == 0) p->bgcol = 5;
-	if (strcmp(p->bcolor, "cyan") == 0) p->bgcol = 6;
-	if (strcmp(p->bcolor, "white") == 0) p->bgcol = 7;
-	// default if invalid
-	
-	
+	p->col = 6; // default cyan if invalid
+
+	const char *colors[8] = {"black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"};
+	for(unsigned int i = 0; i < 8; i++) {
+		if(!strcmp(p->color, colors[0])) p->col = i;
+		if(!strcmp(p->bcolor, colors[0])) p->bgcol = i;
+	}
+
+	if(p->foreground_opacity > 1.0 || p->foreground_opacity < 0.0) {
+		fprintf(stderr, "foreground_opacity cannot be above 1.0 or below 0.0\n");
+		exit(EXIT_FAILURE);
+	}
+	if(p->background_opacity > 1.0 || p->foreground_opacity < 0.0) {
+		fprintf(stderr, "background_opacity cannot be above 1.0 or below 0.0\n");
+		exit(EXIT_FAILURE);
+	}
+
 	// validate: gravity
 	p->gravity = p->gravity / 100;
 	if (p->gravity < 0) {
@@ -320,51 +297,37 @@ void validate_config(char supportedInput[255], void* params)
 		exit(EXIT_FAILURE);
 	}
 
-	//setting sens
+	// setting sens
 	p->sens = p->sens / 100;
 
 	// validate: window settings
-	if(p->om == 5 || p->om == 6 || p->om == 7) {
-		// validate: alignment
-		if(strcmp(p->winA, "top_left"))
-		if(strcmp(p->winA, "top_right"))
-		if(strcmp(p->winA, "bottom_left"))
-		if(strcmp(p->winA, "bottom_right"))
-		if(strcmp(p->winA, "left"))
-		if(strcmp(p->winA, "right"))
-		if(strcmp(p->winA, "top"))
-		if(strcmp(p->winA, "bottom"))
-		if(strcmp(p->winA, "center"))
-		if(strcmp(p->winA, "none"))
-			fprintf(stderr, "The value for alignment is invalid, '%s'!", p->winA);
-
-		if(p->foreground_opacity > 1.0 || p->foreground_opacity < 0.0) {
-			fprintf(stderr, "foreground_opacity cannot be above 1.0 or below 0.0\n");
-			exit(EXIT_FAILURE);
+	// validate: alignment
+	_Bool foundAlignment = 0;
+	const char *alignments[13] = {"top_left", "top_right", "bottom_left", "bottom_right", "left",
+								 "right", "top", "bottom", "center", "none"};
+	for(int i = 0; i < 10; i++) {
+		if(!strcmp(p->winA, alignments[i])) {
+			foundAlignment = 1;
+			break;
 		}
-
-		if(p->background_opacity > 1.0 || p->foreground_opacity < 0.0) {
-			fprintf(stderr, "background_opacity cannot be above 1.0 or below 0.0\n");
-			exit(EXIT_FAILURE);
-		}
-
-		// TUI used x8 height, let's fix that
-		p->sens /= 8;
 	}
-#ifdef XLIB
-	if(p->om == 5) {
+	if(!foundAlignment)
+		fprintf(stderr, "The value for alignment is invalid, '%s'!", p->winA);
+
+	#ifdef XLIB
+	if(p->om == X11_DISPLAY_NUM) {
 		if(p->iAmRoot && p->gradients) {
 			fprintf(stderr, "rootwindow and gradients don't work!\n");
 			exit(EXIT_FAILURE);
 		}
-	#ifdef GLX
+		#ifdef GLX
 		if(p->iAmRoot && GLXmode) {
 			fprintf(stderr, "rootwindow and OpenGL don't work!\n");
 			exit(EXIT_FAILURE);
 		}
-	#endif
+		#endif
 	}
-#endif
+	#endif
 
 	// validate: shadow
 	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
@@ -374,7 +337,7 @@ void validate_config(char supportedInput[255], void* params)
 	}
 }
 
-void load_config(char configPath[255], char supportedInput[255], void* params)
+void load_config(char *configPath, void* params)
 {
 	struct config_params *p = (struct config_params *)params;
 	FILE *fp;
@@ -513,14 +476,20 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 		inputMethod = (char *)iniparser_getstring(ini, "input:method", "wasapi");
 	#endif
 
+
+	// config: output
+	// use macros to define the default output
 	#if defined(__linux__)||defined(__APPLE__)||defined(__unix__)
-		outputMethod = (char *)iniparser_getstring(ini, "output:method", "x");
+		#if defined(XLIB)
+			#define DEFAULT_OUTPUT X11_DISPLAY_NAME
+		#elif defined(SDL)
+			#define DEFAULT_OUTPUT SDL_DISPLAY_NAME
+		#endif
 	#elif defined(__WIN32__)
-		// win code is now alpha, still working on it, missing some features but it's pretty close
-		outputMethod = (char *)iniparser_getstring(ini, "output:method", "win");
-	#else
-		outputMethod = (char *)iniparser_getstring(ini, "output:method", "sdl");
+		#define DEFAULT_OUTPUT WIN32_DISPLAY_NAME
 	#endif
+	outputMethod = (char *)iniparser_getstring(ini, "output:method", DEFAULT_OUTPUT);
+	channels =  (char *)iniparser_getstring(ini, "output:channels", "mono");
 
 	p->inputsize = (int)exp2((float)iniparser_getint(ini, "smoothing:input_size", 12));
 	p->fftsize = (int)exp2((float)iniparser_getint(ini, "smoothing:fft_size", 14));
@@ -530,7 +499,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->gravity = 50.0 * iniparser_getdouble(ini, "smoothing:gravity", 100);
 	p->ignore = iniparser_getdouble(ini, "smoothing:ignore", 0);
 	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.55);
-	p->oddoneout = iniparser_getdouble(ini, "smoothing:oddoneout", 1);
+	p->oddoneout = iniparser_getboolean(ini, "smoothing:oddoneout", 1);
 	p->eqBalance = iniparser_getdouble(ini, "smoothing:eq_balance", 0.67);
 
 	p->color = (char *)iniparser_getstring(ini, "color:foreground", "default");
@@ -595,15 +564,6 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	p->interactF = iniparser_getboolean(ini, "window:interactable", 1);
 	p->winPropF = iniparser_getboolean(ini, "window:set_win_props", 0);
 	p->taskbarF = iniparser_getboolean(ini, "window:taskbar_icon", 1);
-
-	// config: output
-	channels =  (char *)iniparser_getstring(ini, "output:channels", "mono");
-	p->raw_target = (char *)iniparser_getstring(ini, "output:raw_target", "/dev/stdout");
-	p->data_format = (char *)iniparser_getstring(ini, "output:data_format", "binary");
-	p->bar_delim = (char)iniparser_getint(ini, "output:bar_delimiter", 59);
-	p->frame_delim = (char)iniparser_getint(ini, "output:frame_delimiter", 10);
-	p->ascii_range = iniparser_getint(ini, "output:ascii_max_range", 1000);
-	p->bit_format = iniparser_getint(ini, "output:bit_format", 16);
 
 	// config: shadow
 	p->shdw = iniparser_getint(ini, "shadow:size", 7);
@@ -672,7 +632,7 @@ void load_config(char configPath[255], char supportedInput[255], void* params)
 	}
 	#endif
 
-	validate_config(supportedInput, params);
+	validate_config(params);
 	//iniparser_freedict(ini);
 
 	#ifdef __linux__

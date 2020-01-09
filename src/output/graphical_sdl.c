@@ -58,11 +58,11 @@ int init_window_sdl()
 	return 0;
 }
 
-void clear_screen_sdl() {
+void clear_screen_sdl(void) {
 	SDL_FillRect(xavaSDLWindowSurface, NULL, SDL_MapRGB(xavaSDLWindowSurface->format, p.bgcol/0x10000%0x100, p.bgcol/0x100%0x100, p.bgcol%0x100));
 }
 
-void apply_window_settings_sdl() {
+int apply_window_settings_sdl(void) {
 	// toggle fullscreen
 	SDL_SetWindowFullscreen(xavaSDLWindow, SDL_WINDOW_FULLSCREEN & p.fullF);
 
@@ -75,7 +75,7 @@ void apply_window_settings_sdl() {
 	// Window size patch, because xava wipes w and h for some reason.
 	p.w = xavaSDLWindowSurface->w;
 	p.h = xavaSDLWindowSurface->h;
-	return;
+	return 0;
 }
 
 int get_window_input_sdl() {

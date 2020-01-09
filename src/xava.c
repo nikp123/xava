@@ -74,9 +74,9 @@
 #endif
 
 #include "output/graphical.h"
-#include "output/raw.h"
 #include "input/fifo.h"
 #include "config.h"
+#include "shared.h"
 
 #ifdef __GNUC__
 // curses.h or other sources may already define
@@ -86,18 +86,14 @@
 #define GCC_UNUSED /* nothing */
 #endif
 
-#if defined(__unix__)||defined(__APPLE__)
-	struct termios oldtio, newtio;
-#endif
+static int (*xavaInitOutput)(void);
+static void (*xavaOutputClear)(void);
+static int (*xavaOutputApply)(void);
+static int (*xavaOutputHandleInput)(void);
+static void (*xavaOutputDraw)(int, int, int*, int*);
+static void (*xavaOutputCleanup)(void);
 
-long oldTime; // used to calculate frame times
-
-int rc;
-int M;
-int kys = 0;
-
-// whether we should reload the config or not
-int should_reload = 0;
+static _Bool kys = 0, should_reload = 0;
 
 // general: cleanup
 void cleanup() {
@@ -106,53 +102,7 @@ void cleanup() {
 		destroyFileWatcher();
 	#endif
 
-	switch(p.om) {
-		#ifdef XLIB
-		case 5:
-			cleanup_graphical_x();
-			break;
-		#endif
-		#ifdef SDL
-		case 6:
-			cleanup_graphical_sdl();
-			break;
-		#endif
-		#ifdef WIN
-		case 7:
-			cleanup_graphical_win();
-			break;
-		#endif
-		default: break;
-	}
-}
-
-unsigned long xavaSleep(unsigned long oldTime, int framerate) {
-	unsigned long newTime = 0;
-	if(framerate) {
-	#ifdef WIN
-		SYSTEMTIME time;
-		GetSystemTime(&time);
-		newTime = time.wSecond*1000+time.wMilliseconds;
-		if(newTime-oldTime<1000/framerate&&newTime>oldTime && (!p.vsync))
-			Sleep(1000/framerate-(newTime-oldTime));
-		GetSystemTime(&time);
-		return time.wSecond*1000+time.wMilliseconds;
-	#else
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-		newTime = tv.tv_sec*1000+tv.tv_usec/1000;
-		if(oldTime+1000/framerate>newTime && (!p.vsync))
-			usleep((1000/framerate+oldTime-newTime)*1000);
-		gettimeofday(&tv, NULL);
-		return tv.tv_sec*1000+tv.tv_usec/1000;
-	#endif
-	}
-	#ifdef WIN
-	Sleep(oldTime);
-	#else
-	usleep(oldTime*1000);
-	#endif
-	return 0;
+	xavaOutputCleanup();
 }
 
 #if defined(__unix__)||defined(__APPLE__)
@@ -211,7 +161,7 @@ int * separate_freq_bands(fftw_complex *out, int bars, int lcf[200],
 
 
 		peak[o] = peak[o] / (hcf[o]-lcf[o] + 1); //getting average
-		temp = peak[o] * sens * k[o] / 100000; //multiplying with k and sens
+		temp = peak[o] * sens * k[o] / 800000; //multiplying with k and sens
 		if (temp <= ignore) temp = 0;
 		if (channel == 1) fl[o] = temp;
 		else fr[o] = temp;
@@ -272,10 +222,7 @@ int main(int argc, char **argv)
 	int flast[200];
 	int flastd[200];
 	int sleep = 0;
-	int i, n, o, height, c, rest, inAtty, silence;
-	#if defined(__unix__)||defined(__APPLE__)
-		int fp, fptest;
-	#endif
+	int i, n, o, height, c, rest, silence;
 	//int cont = 1;
 	int fall[200];
 	//float temp;
@@ -288,8 +235,8 @@ Usage : " PACKAGE " [options]\n\
 Visualize audio input in a window. \n\
 \n\
 Options:\n\
-	-p          specify path to the config file\n\
-	-v          print version\n\
+    -p          specify path to the config file\n\
+    -v          print version\n\
 \n\
 Keys:\n\
         Up        Increase sensitivity\n\
@@ -303,9 +250,7 @@ Keys:\n\
 \n\
 as of 0.4.0 all options are specified in config file, see in '/home/username/.config/xava/' \n";
 
-	char ch = '\0';
 	int bars = 25;
-	char supportedInput[255] = "'fifo'";
 	int sourceIsAuto = 1;
 	double smh;
 	double *inl,*inr;
@@ -352,29 +297,10 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		n = 0;
 	}
 
-	#ifdef ALSA
-	strcat(supportedInput,", 'alsa'");
-	#endif
-	#ifdef PULSE
-	strcat(supportedInput,", 'pulse'");
-	#endif
-	#ifdef SNDIO
-	strcat(supportedInput,", 'sndio'");
-	#endif
-	#ifdef PORTAUDIO
-	strcat(supportedInput,", 'portaudio'");
-	#endif
-	#ifdef SHMEM
-	strcat(supportedInput,", 'shmem'");
-	#endif
-	#ifdef WIN
-	strcat(supportedInput,", 'wasapi'");
-	#endif
-
 	// general: main loop
 	while (1) {
 		//config: load
-		load_config(configPath, supportedInput, (void *)&p);
+		load_config(configPath, (void *)&p);
 
 		//input: init
 		audio.source = malloc(1 +  strlen(p.audio_source));
@@ -388,23 +314,49 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			audio.audio_out_r = malloc(sizeof(int)*p.fftsize+1);
 			inr = malloc(sizeof(double)*(p.fftsize+2));	
 		}
-		M = p.fftsize;
 		audio.format = -1;
 		audio.rate = 0;
 		audio.terminate = 0;
 		audio.channels = 1+p.stereo;
 
+		switch(p.om) {
+			#ifdef XLIB
+			case X11_DISPLAY_NUM:
+				xavaInitOutput = &init_window_x;
+				xavaOutputClear = &clear_screen_x;
+				xavaOutputApply = &apply_window_settings_x;
+				xavaOutputHandleInput = &get_window_input_x;
+				xavaOutputDraw = &draw_graphical_x;
+				xavaOutputCleanup = &cleanup_graphical_x;
+				break;
+			#endif
+			#ifdef SDL
+			case SDL_DISPLAY_NUM:
+				xavaInitOutput = &init_window_sdl;
+				xavaOutputClear = &clear_screen_sdl;
+				xavaOutputApply = &apply_window_settings_sdl;
+				xavaOutputHandleInput = &get_window_input_sdl;
+				xavaOutputDraw = &draw_graphical_sdl;
+				xavaOutputCleanup = &cleanup_graphical_sdl;
+				break;
+			#endif
+			#ifdef WIN
+			case WIN32_DISPLAY_NUM:
+				break;
+			#endif
+		}
+
 		if(p.stereo) {
-			for (i = 0; i < M; i++) {
+			for (i = 0; i < audio.fftsize; i++) {
 				audio.audio_out_l[i] = 0;
 				audio.audio_out_r[i] = 0;
 			}
-		} else for(i=0; i<M; i++) audio.audio_out_l[i] = 0;
+		} else for(i=0; i < audio.fftsize; i++) audio.audio_out_l[i] = 0;
 
 		//fft: planning to rock
-		fftw_complex outl[M/2+1], outr[M/2+1];
-		fftw_plan pl = fftw_plan_dft_r2c_1d(M, inl, outl, FFTW_MEASURE), pr;
-		if(p.stereo) pr = fftw_plan_dft_r2c_1d(M, inr, outr, FFTW_MEASURE);
+		fftw_complex outl[audio.fftsize/2+1], outr[audio.fftsize/2+1];
+		fftw_plan pl = fftw_plan_dft_r2c_1d(audio.fftsize, inl, outl, FFTW_MEASURE), pr;
+		if(p.stereo) pr = fftw_plan_dft_r2c_1d(audio.fftsize, inr, outr, FFTW_MEASURE);
 
 		#ifdef ALSA
 		// input_alsa: wait for the input to be ready
@@ -503,19 +455,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		bool reloadConf = false;
 		bool senseLow = true;
 
-		// open XLIB window and set everything up
-		#ifdef XLIB
-		if(p.om == 5) if(init_window_x()) exit(EXIT_FAILURE);
-		#endif
-
-		// setting up sdl
-		#ifdef SDL
-		if(p.om == 6) if(init_window_sdl()) exit(EXIT_FAILURE);
-		#endif
-
-		#ifdef WIN
-		if(p.om == 7) if(init_window_win()) exit(EXIT_FAILURE);
-		#endif
+		if(xavaInitOutput())
+			exit(EXIT_FAILURE);
 
 		while(!reloadConf) {//jumbing back to this loop means that you resized the screen
 			for (i = 0; i < 200; i++) {
@@ -527,58 +468,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				f[i] = 0;
 			}
 
-			height = (p.h - 1) * (1+7*(p.om==4));
+			height = (p.h - 1);
 
-			#if defined(__unix__)||defined(__APPLE__)
-			// output open file/fifo for raw output
-			if (p.om == 4) {
-				if (strcmp(p.raw_target,"/dev/stdout") != 0) {
-
-					//checking if file exists
-					if(access(p.raw_target, F_OK) != -1) {
-						//testopening in case it's a fifo
-						fptest = open(p.raw_target, O_RDONLY | O_NONBLOCK, 0644);
-						if (fptest == -1) {
-							printf("could not open file %s for writing\n", p.raw_target);
-							exit(1);
-						}
-					} else {
-						printf("creating fifo %s\n",p.raw_target);
-						if (mkfifo(p.raw_target, 0664) == -1) {
-							printf("could not create fifo %s\n", p.raw_target);
-							exit(1);
-						}
-						//fifo needs to be open for reading in order to write to it
-						fptest = open(p.raw_target, O_RDONLY | O_NONBLOCK, 0644); 
-					}
-				}
-
-				fp = open(p.raw_target, O_WRONLY | O_NONBLOCK | O_CREAT, 0644);
-				if (fp == -1) {
-					printf("could not open file %s for writing\n",p.raw_target);
-					exit(1);
-				}
-				printf("open file %s for writing raw ouput\n",p.raw_target);
-
-				//width must be hardcoded for raw output.
-				p.w = 200;
-
-				if (strcmp(p.data_format, "binary") == 0)
-					height = pow(2, p.bit_format) - 1;
-				else height = p.ascii_range;
-			}
-			#endif
-
-			// draw X11 background
-			#ifdef XLIB
-			if(p.om == 5) apply_window_settings_x();
-			#endif
-			#ifdef SDL
-			if(p.om == 6) apply_window_settings_sdl();
-			#endif
-			#ifdef WIN
-			if(p.om == 7) apply_win_settings();
-			#endif
+			xavaOutputApply();
 
 			//handle for user setting too many bars
 			if (p.fixedbars) {
@@ -638,7 +530,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				//or maybe the nq freq is in M/4
 
 				//lfc stores the lower cut frequency foo each bar in the fft out buffer
-				lcf[n] = fre[n] * (M /2);
+				lcf[n] = fre[n] * (audio.fftsize /2);
 
 				if (n != 0) {
 					//hfc holds the high cut frequency for each bar
@@ -653,14 +545,14 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 							}
 				#endif
 			}
-			hcf[n-1] = p.highcf*M/audio.rate;
+			hcf[n-1] = p.highcf*audio.fftsize/audio.rate;
 
 			// process: weigh signal to frequencies height and EQ
 			for (n = 0; n < calcbars; n++) {
 				k[n] = pow(fc[n], p.eqBalance);
-				k[n] *= (float)height /  100; 
+				k[n] *= (float)height / 100;
 				k[n] *= p.smooth[(int)floor(((double)n) * smh)];
-				}
+			}
 
 			if (p.stereo) bars = bars * 2;
 
@@ -668,67 +560,20 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			bool redrawWindow = false;
 
 			while  (!resizeWindow) {
-				#ifdef XLIB
-				if(p.om == 5)
-				{
-					switch(get_window_input_x())
-					{
-						case -1:
-							cleanup(); 
-							return EXIT_SUCCESS;
-						case 1:
-							should_reload = 1;
-							break;
-						case 2:
-							resizeWindow = TRUE;
-							break;
-						case 3:
-							redrawWindow = TRUE; 
-							break;
-					}
+				switch(xavaOutputHandleInput()) {
+					case -1:
+						cleanup();
+						return EXIT_SUCCESS;
+					case 1:
+						should_reload = 1;
+						break;
+					case 2:
+						resizeWindow = TRUE;
+						break;
+					case 3:
+						redrawWindow = TRUE;
+						break;
 				}
-				#endif
-				#ifdef SDL
-				if(p.om == 6)
-				{
-					switch(get_window_input_sdl())
-					{
-						case -1:
-							cleanup(); 
-							return EXIT_SUCCESS;
-						case 1:
-							should_reload = 1;
-							break;
-						case 2:
-							resizeWindow = 1;
-							break;
-						case 3:
-							redrawWindow = TRUE; 
-							break;
-					}
-				}
-				#endif
-				#ifdef WIN
-				if(p.om == 7)
-				{
-					switch(get_window_input_win())
-					{
-						case -1:
-							cleanup(); 
-							return EXIT_SUCCESS;
-						case 1:
-							should_reload = 1;
-							break;
-						case 2:
-							resizeWindow = true;
-							break;
-						case 3:
-							redrawWindow = TRUE; 
-							break;
-					}
-				}
-				#endif
-
 				#ifdef __linux__
 					// check for updates in the config file
 					should_reload = getFileStatus();
@@ -749,8 +594,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 				// process: populate input buffer and check if input is present
 				silence = 1;
-				for (i = 0; i < (2 * (M / 2 + 1)); i++) {
-					if (i < M) {
+				for (i = 0; i < (2 * (audio.fftsize / 2 + 1)); i++) {
+					if (i < audio.fftsize) {
 						inl[i] = audio.audio_out_l[i];
 						if (p.stereo) inr[i] = audio.audio_out_r[i];
 						if (p.stereo ? inl[i] || inr[i] : inl[i]) silence = 0;
@@ -772,13 +617,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						fftw_execute(pr);
 
 						fl = separate_freq_bands(outl,calcbars,lcf,hcf, k, 1, 
-							p.sens, p.ignore, M);
+							p.sens, p.ignore, audio.fftsize);
 						fr = separate_freq_bands(outr,calcbars,lcf,hcf, k, 2, 
-							p.sens, p.ignore, M);
+							p.sens, p.ignore, audio.fftsize);
 					} else {
 						fftw_execute(pl);
 						fl = separate_freq_bands(outl,calcbars,lcf,hcf, k, 1, 
-							p.sens, p.ignore, M);
+							p.sens, p.ignore, audio.fftsize);
 					}
 				} else { //**if in sleep mode wait and continue**//
 					#ifdef DEBUG
@@ -871,16 +716,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 
 				// zero values causes divided by zero segfault
+				// and set max height
 				for (o = 0; o < bars; o++) {
-					if (f[o] < 1) {
-						f[o] = 1;
-						if (p.om == 4) f[o] = 0;
-					}
-					//if(f[o] > maxvalue) maxvalue = f[o];
+					if(f[o] < 1) f[o] = 1;
+					if(f[o] > p.h) f[o] = p.h;
 				}
-
-				//checking maxvalue I keep forgetting its about 10000
-				//printf("%d\n",maxvalue); 
 
 				//autmatic sens adjustment
 				if (p.autosens) {
@@ -896,64 +736,15 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 
 				// output: draw processed input
-				#ifndef DEBUG
-					switch (p.om) {
-						case 4:
-							#if defined(__unix__)||defined(__APPLE__)
-							rc = print_raw_out(bars, fp, p.is_bin, 
-								p.bit_format, p.ascii_range, p.bar_delim,
-								 p.frame_delim,f);
-							break;
-							#endif
-						case 5:
-						{
-							#ifdef XLIB
-							// this prevents invalid access
-							if(should_reload||reloadConf) break;
-							if(redrawWindow) {
-								if(p.iAmRoot) {
-									memset(flastd, p.h, sizeof(int)*200);
-									draw_graphical_x(bars, rest, f, flastd);
-								} else clear_screen_x();
-								memset(flastd, 0x00, sizeof(int)*200);
-								redrawWindow = FALSE;
-							}
-							draw_graphical_x(bars, rest, f, flastd);
-							break;
-							#endif
-						}
-						case 6:
-						{
-							#ifdef SDL
-							if(reloadConf) break;
-							if(redrawWindow) {
-								clear_screen_sdl();
-								memset(flastd, 0x00, sizeof(int)*200);
-								redrawWindow = FALSE;
-							}
-							draw_graphical_sdl(bars, rest, f, flastd);
-							break;
-							#endif
-						}
-						case 7:
-						{
-							#ifdef WIN
-							if(reloadConf) break;
-							if(redrawWindow) {
-								//clear_screen_win(); // placeholder
-								redrawWindow = FALSE;
-							}
-							draw_graphical_win(bars, rest, f);
-							break;
-							#endif
-						}
-					}
+				if(should_reload||reloadConf) break;
+				if(redrawWindow) {
+					xavaOutputClear();
+					memset(flastd, 0x00, sizeof(int)*200);
+					redrawWindow = FALSE;
+				}
+				xavaOutputDraw(bars, rest, f, flastd);
 
-					// window has been resized breaking to recalibrating values
-					if (rc == -1) resizeWindow = true;
-
-					oldTime = xavaSleep(oldTime, p.framerate);
-				#endif
+				oldTime = xavaSleep(oldTime, p.framerate);
 
 				// save previous bar values
 				memcpy(flastd, f, sizeof(int)*200);
