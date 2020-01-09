@@ -88,7 +88,7 @@ enum {
 
 
 #ifdef GLX
-int XGLInit() {
+int XGLInit(void) {
 	// we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
 	xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
 	glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
@@ -103,7 +103,7 @@ int XGLInit() {
 }
 #endif
 
-void calculateColors() {
+void calculateColors(void) {
 	char tempColorStr[8];
 
 	// Generate a sum of colors
@@ -154,7 +154,7 @@ void calculateColors() {
 	startFrameCounter = 0;
 }
 
-int init_window_x(char **argv, int argc)
+int init_window_x(void)
 {
 	// shadows are meant for the bars only
 	if(p.background_opacity != 0.0) p.shdw = 0;
@@ -218,7 +218,7 @@ int init_window_x(char **argv, int argc)
 		//xavaXWMHints.initial_state = NormalState;
 		xavaXClassHint.res_class = (char *)"XAVA";
 	}
-	XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, argv, argc, NULL, &xavaXWMHints, &xavaXClassHint);
+	XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, NULL, 0, NULL, &xavaXWMHints, &xavaXClassHint);
 
 	XSelectInput(xavaXDisplay, xavaXWindow, VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
 	
@@ -292,7 +292,7 @@ int init_window_x(char **argv, int argc)
 	return 0;
 }
 
-int render_gradient_x() {
+int render_gradient_x(void) {
 	if(gradientBox != 0) XFreePixmap(xavaXDisplay, gradientBox);
 
 	gradientBox = XCreatePixmap(xavaXDisplay, xavaXWindow, (unsigned int)p.bw, (unsigned int)p.h, 32);
@@ -317,7 +317,7 @@ int render_gradient_x() {
 	return 0;
 }
 
-void clear_screen_x() {
+void clear_screen_x(void) {
 	if(GLXmode) {
 	#ifdef GLX
 		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p.transF ? 1.0*p.background_opacity : 1.0); // TODO BG transparency
@@ -341,7 +341,7 @@ void clear_screen_x() {
 	}			// you figure out a less dumb to do this
 }
 
-int apply_window_settings_x()
+int apply_window_settings_x(void)
 {
 	// Gets the monitors resolution
 	if(p.fullF){
@@ -400,7 +400,7 @@ int apply_window_settings_x()
 	return 0;
 }
 
-int get_window_input_x() {
+int get_window_input_x(void) {
 	// this way we avoid event stacking which requires a full frame to process a single event
 	int action = 0;
 

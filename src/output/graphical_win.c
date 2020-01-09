@@ -98,7 +98,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 
-void clear_screen_win() {
+void clear_screen_win(void) {
 	glColors[0] = ARGB_R_32(p.col)/255.0;
 	glColors[1] = ARGB_G_32(p.col)/255.0;
 	glColors[2] = ARGB_B_32(p.col)/255.0;
@@ -158,7 +158,7 @@ void GetDesktopResolution(int *horizontal, int *vertical) {
 	return;
 }
 
-void init_opengl_win() {
+void init_opengl_win(void) {
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL);
@@ -219,7 +219,7 @@ unsigned char CreateHGLRC(HWND hWnd) {
 	return TRUE;
 }
 
-void resize_framebuffer() {
+void resize_framebuffer(void) {
 	glViewport(0, 0, p.w, p.h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -229,8 +229,7 @@ void resize_framebuffer() {
 	glLoadIdentity();
 }
 
-int init_window_win() {
-
+int init_window_win(void) {
 	// reset event trackers
 	resized=FALSE;
 	quit=FALSE;
@@ -363,7 +362,7 @@ int init_window_win() {
 	return 0;
 }
 
-void apply_win_settings() {
+void apply_win_settings(void) {
 	clear_screen_win();
 	resize_framebuffer(p.w, p.h);
 	//ReleaseDC(xavaWinWindow, xavaWinFrame);
@@ -373,7 +372,7 @@ void apply_win_settings() {
 	return;
 }
 
-int get_window_input_win() {
+int get_window_input_win(void) {
 	while(PeekMessage(&xavaWinEvent, xavaWinWindow, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&xavaWinEvent);
 		int r=DispatchMessage(&xavaWinEvent);  // handle return values
@@ -395,7 +394,7 @@ int get_window_input_win() {
 	return 0;
 }
 
-void draw_graphical_win(int bars, int rest, int f[200]) {
+void draw_graphical_win(int bars, int rest, int f[200], int flastd[200]) {
 	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
 
 	// clear color and calculate pixel witdh in double

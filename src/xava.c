@@ -505,7 +505,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		// open XLIB window and set everything up
 		#ifdef XLIB
-		if(p.om == 5) if(init_window_x(argv, argc)) exit(EXIT_FAILURE);
+		if(p.om == 5) if(init_window_x()) exit(EXIT_FAILURE);
 		#endif
 
 		// setting up sdl
