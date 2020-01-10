@@ -17,6 +17,7 @@ HDC xavaWinFrame;
 HGLRC xavaWinGLFrame;
 TIMECAPS xavaPeriod;
 unsigned int *gradientColor;
+unsigned int shadowSize;
 
 static double glColors[8];
 static double gradColors[24];
@@ -351,6 +352,8 @@ int init_window_win(void) {
 	timeEndPeriod(0);
 	timeBeginPeriod(xavaPeriod.wPeriodMin);
 
+	shadowSize = p.shdw;
+
 	return 0;
 }
 
@@ -358,6 +361,11 @@ int apply_win_settings(void) {
 	clear_screen_win();
 	resize_framebuffer();
 	//ReleaseDC(xavaWinWindow, xavaWinFrame);
+
+	// TODO: find a better solution, original issue:
+	// transparent polys draw over opaque ones on windows
+	if(shadowSize > p.bw)
+		p.shdw = p.bw;
 
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT"); 
 	wglSwapIntervalEXT(p.vsync);
