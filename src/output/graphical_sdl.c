@@ -45,11 +45,6 @@ int init_window_sdl()
 		return 1;
 	}
 
-	if(p.color[0] != '#') p.col = definedColors[p.col];
-	else sscanf(p.color, "#%x", &p.col);
-	if(p.bcolor[0] != '#') p.bgcol = definedColors[p.bgcol];
-	else sscanf(p.bcolor, "#%x", &p.bgcol);
-
 	if(p.gradients) {
 		gradCol = malloc(sizeof(int)*p.gradients);
 		for(unsigned int i=0; i<p.gradients; i++)

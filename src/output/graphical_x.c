@@ -34,8 +34,6 @@ static XClassHint xavaXClassHint;
 static XWMHints xavaXWMHints;
 static XEvent xev;
 
-static int startFrameCounter;
-
 #ifdef GLX
 static int VisData[] = {
 	GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -103,55 +101,27 @@ int XGLInit(void) {
 }
 #endif
 
+// Pull from the terminal colors, and afterwards, do the usual
+#define snatchColor(name, colorStr, colorNum, colorObj)  \
+	if(!strcmp(colorStr, "default")&&XrmGetResource(xavaXResDB, name, NULL, &type, &value)) \
+		XParseColor(xavaXDisplay, xavaXColormap, value.addr, &colorObj); \
+	else { \
+		char tempColorStr[8]; \
+		sprintf(tempColorStr, "#%x", colorNum); \
+		XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, &colorObj); \
+	} \
+	XAllocColor(xavaXDisplay, xavaXColormap, &colorObj); \
+
 void calculateColors(void) {
-	char tempColorStr[8];
+	char *type;
+	XrmValue value;
+	XrmDatabase xavaXResDB = XrmGetStringDatabase(XResourceManagerString(xavaXDisplay));
 
-	// Generate a sum of colors
-	if(!strcmp(p.color, "default")) {
-		if(xavaXRoot == 927) {			// waylands magic number, don't ask where i got it
-			// Xwayland doesn't have a RootWindow
-			strcpy(tempColorStr, "#ffffff");
-		} else {
-			unsigned long redSum = 0, greenSum = 0, blueSum = 0;
-			XColor tempColor;
-			int xPrecision = 20, yPrecision = 20;
-			while(1){ if(((double)xavaXScreen->width / (double)xPrecision) == ((int)xavaXScreen->width / (int)xPrecision)) break; else xPrecision++; }
-			while(1){ if(((double)xavaXScreen->height / (double)yPrecision) == ((int)xavaXScreen->height / (int)yPrecision)) break; else yPrecision++; }
+	XrmInitialize();
 
-			// we need a source for that
-			XImage *background = XGetImage(xavaXDisplay, xavaXRoot, 0, 0, xavaXScreen->width, xavaXScreen->height, AllPlanes, XYPixmap);
-			for(unsigned short i = 0; i < xavaXScreen->width; i+=(xavaXScreen->width / xPrecision)) {
-				for(unsigned short I = 0; I < xavaXScreen->height; I+=(xavaXScreen->height / yPrecision)) {
-					// we validate each and EVERY pixel value,
-					// because Xorg says so..... and is really slow, so we make compromises
-					tempColor.pixel = XGetPixel(background, i, I);
-					XQueryColor(xavaXDisplay, xavaXColormap, &tempColor);	
-
-					redSum += tempColor.red;
-					greenSum += tempColor.green;
-					blueSum += tempColor.blue;
-				}
-			}
-			redSum /= xPrecision*yPrecision<<8;
-			greenSum /= xPrecision*yPrecision<<8;
-			blueSum /= xPrecision*yPrecision<<8;
-
-			XDestroyImage(background);
-			sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(redSum), (unsigned char)(greenSum), (unsigned char)(blueSum));
-		}
-	} else if(p.color[0] != '#')
-		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)((definedColors[p.col]>>16)%256), (unsigned char)((definedColors[p.col]>>8)%256), (unsigned char)(definedColors[p.col]));
-
-	XParseColor(xavaXDisplay, xavaXColormap, p.color[0]=='#' ? p.color:tempColorStr, &xcol);
-	XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
-
-	if(p.bcolor[0] != '#')
-		sprintf(tempColorStr, "#%02hhx%02hhx%02hhx", (unsigned char)(definedColors[p.bgcol]>>16), (unsigned char)(definedColors[p.bgcol]>>8), (unsigned char)(definedColors[p.bgcol]));
-
-	XParseColor(xavaXDisplay, xavaXColormap, p.bcolor[0]=='#' ? p.bcolor : tempColorStr, &xbgcol);
-	XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
-
-	startFrameCounter = 0;
+	snatchColor("color1", p.color, p.col, xcol);
+	//printf("%s\n", value.addr);
+	snatchColor("color0", p.bcolor, p.bgcol, xbgcol);
 }
 
 int init_window_x(void)
@@ -500,9 +470,6 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 		yoffset+=p.wy;
 	}
 
-	if(startFrameCounter<3*p.framerate)
-		startFrameCounter++;
-
 	if(GLXmode) {
 		#ifdef GLX
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -525,12 +492,6 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 			if(f[i] > p.h) f[i] = p.h;
 
 			if(f[i] > flastd[i]) {
-				// workaround for updating wallpaper in wpgtk
-				// since there are no events called from SetXRoot 
-				// if you know how to capture these, I would gladly
-				// make this work less messy
-				if(startFrameCounter<p.framerate*3) flastd[i] = 0;
-
 				if(p.gradients)
 					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 0, p.h - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]), rest + i*(p.bs+p.bw), p.h - f[i]);
 				else {

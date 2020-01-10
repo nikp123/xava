@@ -22,7 +22,7 @@
 // define functions
 int init_window_win(void);
 void clear_screen_win(void);
-void apply_win_settings(void);
+int apply_win_settings(void);
 int get_window_input_win(void);
 void draw_graphical_win(int bars, int rest, int f[200], int flastd[200]);
 void cleanup_graphical_win(void);

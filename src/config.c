@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <limits.h>
 
 #include "output/graphical.h"
 #include "config.h"
@@ -110,6 +111,25 @@ int validate_color(char *checkColor)
 			(strcmp(checkColor, "default") == 0)) validColor = 1;
 	}
 	return validColor;
+}
+
+unsigned int parse_color(char *colorStr, int defaultColor) {
+	unsigned int retColor = INT_MAX;
+	if(colorStr[0] == '#') {
+		sscanf(colorStr, "#%x", &retColor);
+	} else {
+		if(!strcmp(colorStr, "default"))
+			return colorNumbers[defaultColor];
+
+		for(size_t i = 0; i < COLOR_NUM; i++) {
+			if(!strcmp(colorStr, colorStrings[i])) {
+				retColor = i;
+				break;
+			}
+		}
+		retColor = colorNumbers[retColor];
+	}
+	return retColor;
 }
 
 void validate_config(void* params, dictionary *ini)
@@ -229,21 +249,22 @@ void validate_config(void* params, dictionary *ini)
 			exit(EXIT_FAILURE);
 		}
 	}
-	
+
 	// validate: color
 	if (!validate_color(p->color)) {
 		fprintf(stderr, "The value for 'foreground' is invalid.\n"
 			"It can be either one of the 7 named colors or a HTML color of the form '#xxxxxx'.\n");
 		exit(EXIT_FAILURE);
 	}
-	
+
 	// validate: background color
 	if (!validate_color(p->bcolor)) {
 		fprintf(stderr, "The value for 'background' is invalid.\n"
 			"It can be either one of the 7 named colors or a HTML color of the form '#xxxxxx'.\n");
 		exit(EXIT_FAILURE);
 	}
-	
+
+	// validate: gradient colors
 	for(unsigned int i = 0; i < p->gradients; i++){
 		if (!validate_color(p->gradient_colors[i])) {
 			fprintf(stderr, "The first gradient color is invalid.\n"
@@ -251,15 +272,10 @@ void validate_config(void* params, dictionary *ini)
 			exit(EXIT_FAILURE);
 		}
 	}
-	
-	// In case color is not html format set bgcol and col to predefinedint values
-	p->col = 6; // default cyan if invalid
 
-	const char *colors[8] = {"black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"};
-	for(unsigned int i = 0; i < 8; i++) {
-		if(!strcmp(p->color, colors[0])) p->col = i;
-		if(!strcmp(p->bcolor, colors[0])) p->bgcol = i;
-	}
+	// actually parse colors
+	p->col = parse_color(p->color, DEF_FG_COL);    // default cyan if invalid
+	p->bgcol = parse_color(p->bcolor, DEF_BG_COL); // default black if invalid
 
 	if(p->foreground_opacity > 1.0 || p->foreground_opacity < 0.0) {
 		fprintf(stderr, "foreground_opacity cannot be above 1.0 or below 0.0\n");

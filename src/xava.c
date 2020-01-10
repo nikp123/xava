@@ -111,6 +111,9 @@ void cleanup() {
 // general: handle signals
 void sig_handler(int sig_no) {
 	switch(sig_no) {
+		case SIGUSR1:
+			should_reload = true;
+			break;
 		case SIGINT:
 			printf("CTRL-C pressed -- goodbye\n");
 			kys=1;
@@ -257,6 +260,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	action.sa_handler = &sig_handler;
 	sigaction(SIGINT, &action, NULL);
 	sigaction(SIGTERM, &action, NULL);
+	sigaction(SIGUSR1, &action, NULL);
 	#endif
 
 	// general: handle command-line arguments
@@ -412,7 +416,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		if(xavaInitOutput())
 			exit(EXIT_FAILURE);
 
-		while(!reloadConf) {//jumbing back to this loop means that you resized the screen
+		while(!reloadConf) { //jumbing back to this loop means that you resized the screen
 			for (i = 0; i < 200; i++) {
 				flast[i] = 0;
 				flastd[i] = 0;
@@ -530,7 +534,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 				#ifdef __linux__
 					// check for updates in the config file
-					should_reload = getFileStatus();
+					if(!should_reload)
+						should_reload = getFileStatus();
 				#endif
 
 				if (should_reload) {
@@ -690,7 +695,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 
 				// output: draw processed input
-				if(should_reload||reloadConf) break;
 				if(redrawWindow) {
 					xavaOutputClear();
 					memset(flastd, 0x00, sizeof(int)*200);

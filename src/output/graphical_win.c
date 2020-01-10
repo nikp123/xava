@@ -312,9 +312,7 @@ int init_window_win(void) {
 
 	// process colors
 	if(!strcmp(p.color, "default")) {
-		// instead of messing around with average colors like on Xlib
 		// we'll just get the accent color (which is way easier and an better thing to do)
-
 		WINBOOL opaque = 1;
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
@@ -323,14 +321,10 @@ int init_window_win(void) {
 			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
 			return 1;
 		}
-	} else if(p.color[0] != '#')
-		p.col = definedColors[p.col];
-	else sscanf(p.color, "#%x", &p.col);
+	} // as for the other case, we don't have to do any more processing
 
 	if(!strcmp(p.bcolor, "default")) {
-		// instead of messing around with average colors like on Xlib
 		// we'll just get the accent color (which is way easier and a better thing to do)
-
 		WINBOOL opaque = 1;
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
@@ -339,9 +333,7 @@ int init_window_win(void) {
 			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
 			return 1;
 		}
-	} else if(p.bcolor[0] != '#') 
-		p.bgcol = definedColors[p.bgcol];
-	else sscanf(p.bcolor, "#%x", &p.bgcol);
+	}
 
 	// parse all of the values
 	gradientColor = malloc(sizeof(int)*p.gradients);
@@ -362,14 +354,14 @@ int init_window_win(void) {
 	return 0;
 }
 
-void apply_win_settings(void) {
+int apply_win_settings(void) {
 	clear_screen_win();
 	resize_framebuffer();
 	//ReleaseDC(xavaWinWindow, xavaWinFrame);
 
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT"); 
 	wglSwapIntervalEXT(p.vsync);
-	return;
+	return 0;
 }
 
 int get_window_input_win(void) {
