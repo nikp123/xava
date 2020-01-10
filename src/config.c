@@ -17,6 +17,7 @@
 
 #include "output/graphical.h"
 #include "config.h"
+#include "shared.h"
 
 #ifdef ALSA
 #include "input/alsa.h"
@@ -363,31 +364,17 @@ void load_config(char *configPath, void* params)
 	if (configPath[0] == '\0') {
 		#if defined(__unix__)||defined(__APPLE__)
 			char *configFile = "config";
-			char *configHome = getenv("XDG_CONFIG_HOME");
 		#elif defined(WIN)
 			// editing files without an extension on windows is a pain
 			char *configFile = "config.cfg";
-			char *configHome = getenv("APPDATA");
 		#endif
-		// don't worry, this will never happen on windows unless you are running like 98
-		if (configHome != NULL) {
-			sprintf(configPath,"%s/%s/", configHome, PACKAGE);
-		} else {
-			configHome = getenv("HOME");
-			if (configHome != NULL) {
-				sprintf(configPath,"%s/%s/%s/", configHome, ".config", PACKAGE);
-			} else {
-				printf("No HOME found (ERR_HOMELESS), exiting...");
-				exit(EXIT_FAILURE);
-			}
+		if(xavaGetConfigDir(configPath)) {
+			fprintf(stderr, "No HOME found (ERR_HOMELESS), exiting...");
+			exit(EXIT_FAILURE);
 		}
 
 		// config: create directory
-		#if defined(__unix__)||defined(__APPLE__)
-			mkdir(configPath, 0770);
-		#else
-			mkdir(configPath);
-		#endif
+		xavaMkdir(configPath);
 
 		// config: adding default filename file
 		strcat(configPath, configFile);
@@ -400,38 +387,13 @@ void load_config(char *configPath, void* params)
 			printf("Default config doesn't exist!\n"
 					"Trying to find a default config file...");
 
-			// Finding the config file path
-			#if defined(__unix__)||defined(__APPLE__)
-				// UNIX-like OS-es, but not Apple
-				char targetFile[255];
-				sprintf(targetFile, "%s/share/%s/%s", PREFIX, PACKAGE, configFile);
-				FILE *source = fopen(targetFile, "r");
-			#elif defined(__WIN32__)
-				// Windows
+			const char *installPath = xavaGetInstallDir();
+			char *targetFile = malloc(sizeof(installPath)+sizeof(configFile));
+			strcpy(targetFile, installPath);
+			strcpy(targetFile, configFile);
 
-				// Windows uses widechars internally
-				WCHAR wpath[MAX_PATH];
-				char path[MAX_PATH];
-
-				// Get path of where the executable is installed
-				// Assuming that the user has installed the program 
-				// and that the config file is in the same directory
-				// as the program
-				HMODULE hModule = GetModuleHandleW(NULL);
-				GetModuleFileNameW(hModule, wpath, MAX_PATH);
-				wcstombs(path, wpath, MAX_PATH);
-
-				// Hardcoded things pain me, but writing a 100 line-long
-				// string replace function for windows is a no-no.
-				//
-				// This is why you use C++ for code like this.
-				//
-				// xava.exe => config.cfg
-				strcpy(&path[strlen(path)-8], configFile);
-
-				// because the program is not priviledged, read-only only
-				FILE *source = fopen(path, "r");
-			#endif
+			// because the program is not priviledged, read-only only
+			FILE *source = fopen(targetFile, "r");
 
 			if(!source) {
 				// inipaser magic time triggered here
