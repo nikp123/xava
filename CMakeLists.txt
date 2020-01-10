@@ -11,8 +11,8 @@ endif()
 set(CMAKE_C_STANDARD 11)
 set(xava_VERSION_MAJOR 0)
 set(xava_VERSION_MINOR 6)
-set(xava_VERSION_PATCH 2)
-set(xava_VERSION_TWEAK 3)
+set(xava_VERSION_PATCH 3)
+set(xava_VERSION_TWEAK 0)
 
 set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
 
