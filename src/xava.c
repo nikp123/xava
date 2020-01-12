@@ -590,6 +590,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					#endif
 					//wait 1 sec, then check sound again.
 					xavaSleep(1000, 0);
+
+					// unless the user requested that the program ends
+					if(kys||should_reload) sleep = 0;
 					continue;
 				}
 
