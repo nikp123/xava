@@ -126,8 +126,8 @@ void sig_handler(int sig_no) {
 }
 #endif
 
-int * separate_freq_bands(fftw_complex *out, int bars, int lcf[200],
-			 int hcf[200], float k[200], int channel, double sens, double ignore, int fftsize) {
+int * separate_freq_bands(fftw_complex *out, int bars, int *lcf,
+			 int *hcf, float *k, int channel, double sens, double ignore, int fftsize) {
 	int o,i;
 	double peak[201];
 	static int fl[200];
