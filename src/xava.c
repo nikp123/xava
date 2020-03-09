@@ -588,8 +588,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					#ifdef DEBUG
 						printw("no sound detected for 5 sec, going to sleep mode\n");
 					#endif
-					//wait 1 sec, then check sound again.
-					xavaSleep(1000, 0);
+					// wait 100ms, then check sound again.
+					xavaSleep(100, 0);
 
 					// unless the user requested that the program ends
 					if(kys||should_reload) sleep = 0;
