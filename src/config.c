@@ -379,7 +379,7 @@ void load_config(char *configPath, void* params)
 		// config: adding default filename file
 		strcat(configPath, configFile);
 
-		fp = fopen(configPath, "rb+");
+		fp = fopen(configPath, "r");
 		if (!fp) {
 			#if defined(__unix__)||defined(__APPLE__)
 				char *configFile = "config.example";
@@ -388,9 +388,10 @@ void load_config(char *configPath, void* params)
 					"Trying to find a default config file...");
 
 			const char *installPath = xavaGetInstallDir();
-			char *targetFile = malloc(sizeof(installPath)+sizeof(configFile));
+			// don't trust sizeof(), it's evil
+			char *targetFile = malloc(strlen(installPath)+strlen(configFile)+1);
 			strcpy(targetFile, installPath);
-			strcpy(targetFile, configFile);
+			strcat(targetFile, configFile);
 
 			// because the program is not priviledged, read-only only
 			FILE *source = fopen(targetFile, "r");
@@ -415,6 +416,7 @@ void load_config(char *configPath, void* params)
 				}
 				fclose(source);
 				fclose(fp);
+				free(targetFile);
 				printf("DONE\n");
 			}
 		}

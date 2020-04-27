@@ -27,7 +27,7 @@
 void *watchFileProcess(void *name) {
 	alive = 1;
 	char *fname = (char*)name;
-	filename = malloc(strlen(fname));
+	filename = malloc(strlen(fname)+1);
 	strcpy(filename, fname);
 	fd = inotify_init();
 	if(fd<0) {
