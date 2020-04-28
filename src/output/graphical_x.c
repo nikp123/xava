@@ -107,7 +107,7 @@ int XGLInit(void) {
 		XParseColor(xavaXDisplay, xavaXColormap, value.addr, &colorObj); \
 	else { \
 		char tempColorStr[8]; \
-		sprintf(tempColorStr, "#%x", colorNum); \
+		sprintf(tempColorStr, "#%06x", colorNum); \
 		XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, &colorObj); \
 	} \
 	XAllocColor(xavaXDisplay, xavaXColormap, &colorObj); \
