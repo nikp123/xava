@@ -122,7 +122,7 @@
 ; source = /tmp/mpd.fifo
 
 ; method = wasapi
-; soruce = loopback
+; source = loopback
 
 
 [output]
