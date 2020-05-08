@@ -29,7 +29,11 @@ int xavaGetConfigDir(char *configPath) {
 	#endif
 	// don't worry, this will never happen on windows unless you are running like 98
 	if (configHome != NULL) {
-		sprintf(configPath,"%s/%s/", configHome, PACKAGE);
+		#ifdef __WIN32__
+			sprintf(configPath,"%s\\%s\\", configHome, PACKAGE);
+		#else
+			sprintf(configPath,"%s/%s/", configHome, PACKAGE);
+		#endif
 	} else {
 		configHome = getenv("HOME");
 		if (configHome != NULL)
