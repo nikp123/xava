@@ -36,6 +36,15 @@ if(NOT INIPARSER)
 is not being built inside a git repository.\nIf you want iniparser \
 to be built automatically, clone this repository instead of downloading it.")
 	endif()
+else()
+	# certain distros like ubuntu put iniparser in a subdirectory "iniparser"
+	# this is just a non-destructive way to accomidate that case
+
+	find_file(INIPARSER_INCLUDE_FILE iniparser/iniparser.h ${CMAKE_SYSTEM_INCLUDE_PATH})
+	if(NOT ${INIPARSER_INCLUDE_FILE} STREQUAL "INIPARSER_INCLUDE_FILE-NOTFOUND")
+		string(REGEX REPLACE "iniparser.h" "" INIPARSER_INCLUDE_DIR ${INIPARSER_INCLUDE_FILE})
+		list(APPEND INCLUDE_DIRS ${INIPARSER_INCLUDE_DIR})
+	endif()
 endif()
 
 if(DEFINE_LEGACYINIPARSER AND INIPARSER)
