@@ -573,7 +573,7 @@ void load_config(char *configPath, void* params)
 	validate_config(params, ini);
 	//iniparser_freedict(ini);
 
-	#ifdef __linux__
+	#if defined(__linux__)||defined(__WIN32__)
 		// spawn a thread which will check if the file had been changed in any way
 		// to inform the main process that it needs to reload
 		watchFile(configPath);

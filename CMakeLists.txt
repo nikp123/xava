@@ -210,7 +210,7 @@ endif()
 # Blame: https://stackoverflow.com/questions/9160335/os-specific-instructions-in-cmake-how-to
 # Also CMAKE_SYSTEM_NAME doesn't work, so I've tried my options. 
 # Please fix this whoever has time and reads this.
-if(UNIX AND NOT APPLE)
+if((UNIX AND NOT APPLE) OR (MSYS OR MINGW OR MSVC))
 	list(APPEND ADDITIONAL_SOURCES "src/misc/inode_watcher.c")
 
 	# Add proper version info to the desktop shortcut file

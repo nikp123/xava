@@ -9,6 +9,11 @@
 	#define BUF_LEN     (1024 * (EVENT_SIZE + 16))
 #endif
 
+#ifdef __WIN32__
+	#include <windows.h>
+	#include <tchar.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,10 +23,16 @@
 	int fd, wd, lenght, i;
 	char buffer[BUF_LEN];
 	char *filename;
-	pthread_t  p_thread;
-	int thr_id;
-	int alive = 0;
 #endif
+
+#ifdef __WIN32__
+	HANDLE dwFileChange;
+	TCHAR *filename;
+#endif
+
+pthread_t  p_thread;
+int thr_id;
+int alive = 0;
 
 #ifdef __linux__
 void *watchFileProcess(void *name) {
@@ -63,22 +74,45 @@ void *watchFileProcess(void *name) {
 }
 #endif
 
-void watchFile(char *name) {
-#ifdef __linux__
-	thr_id = pthread_create(&p_thread, NULL, watchFileProcess,
-	(void *)name);
+#ifdef __WIN32__
+void *watchFileProcess(void *name) {
+	filename = malloc(strlen((char*)name)+1);
+	strcpy(filename, (char*)name);
+
+	// remove filename from config file path
+	for(int i=strlen(name)-1; i>0; i--) {
+		if(filename[i] == '\\') {
+			filename[i] = '\0';
+			break;
+		}
+	}
+
+	char found = 0;
+	alive = 1;
+
+	dwFileChange = FindFirstChangeNotification(filename, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
+	while(!found) {
+		DWORD dwWaitStatus = WaitForSingleObject(dwFileChange, INFINITE);
+		switch(dwWaitStatus) {
+			case WAIT_OBJECT_0:
+				found = 1;
+				break;
+		}
+	}
+	free(name);
+	alive = 0;
+}
 #endif
+
+void watchFile(char *name) {
+	thr_id = pthread_create(&p_thread, NULL, watchFileProcess, (void *)name);
 }
 
 int getFileStatus() {
-#ifdef __linux__
 	// using the current implementation we can determine if the process has died it must mean the file has been changed
 	return !alive;
-#endif
-	
-	// if the OS is not supported, just act as it is
-	return 0;
 }
+
 void destroyFileWatcher() {
 #ifdef __linux__
 	// even though people don't like this, I'm going to do it like this anyway
@@ -89,5 +123,12 @@ void destroyFileWatcher() {
 		close(fd);
 		alive = 0;
 	}
-#endif	
+#endif
+#ifdef __WIN32__
+	if(alive) {
+		free(filename);
+		pthread_cancel(p_thread);
+		alive = 0;
+	}
+#endif
 }

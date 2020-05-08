@@ -99,7 +99,7 @@ static _Bool kys = 0, should_reload = 0;
 
 // general: cleanup
 void cleanup() {
-	#ifdef __linux__
+	#if defined(__linux__)||defined(__WIN32__)
 		// we need to do this since the inode watcher is a seperate thread
 		destroyFileWatcher();
 	#endif
@@ -532,7 +532,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						redrawWindow = TRUE;
 						break;
 				}
-				#ifdef __linux__
+				#if defined(__linux__)||defined(__WIN32__)
 					// check for updates in the config file
 					if(!should_reload)
 						should_reload = getFileStatus();
