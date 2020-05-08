@@ -1,4 +1,4 @@
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <time.h>
 #include "graphical.h"
 #include "../config.h"
