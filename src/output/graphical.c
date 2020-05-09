@@ -49,37 +49,37 @@ int drawGLBars(int rest, int bars, double colors[8], double gradColors[24], int 
 			if(p.shdw) {
 				// left side
 				glColor4d(colors[5], colors[6], colors[7], colors[4]);
-				glVertex2d(point[0], point[2]);
-				glVertex2d(point[0], point[3]);
+				glVertex3d(point[0], point[2], 1.0);
+				glVertex3d(point[0], point[3], 1.0);
 				glColor4d(0.0, 0.0, 0.0, 0.0);
-				glVertex2d(point[0]-p.shdw/2, point[3]-p.shdw);
-				glVertex2d(point[0]-p.shdw/2, point[2]+p.shdw/2);
+				glVertex3d(point[0]-p.shdw/2, point[3]-p.shdw, 1.0);
+				glVertex3d(point[0]-p.shdw/2, point[2]+p.shdw/2, 1.0);
 				
 				// right side
 				glColor4d(colors[5], colors[6], colors[7], colors[4]);
-				glVertex2d(point[1], point[2]);
-				glVertex2d(point[1], point[3]);
+				glVertex3d(point[1], point[2], 1.0);
+				glVertex3d(point[1], point[3], 1.0);
 				glColor4d(0.0, 0.0, 0.0, 0.0);
-				glVertex2d(point[1]+p.shdw, point[3]-p.shdw);
-				glVertex2d(point[1]+p.shdw, point[2]+p.shdw/2);
+				glVertex3d(point[1]+p.shdw, point[3]-p.shdw, 0.9);
+				glVertex3d(point[1]+p.shdw, point[2]+p.shdw/2, 0.9);
 				
 				// top side
 				glColor4d(colors[5], colors[6], colors[7], colors[4]);
-				glVertex2d(point[1], point[2]);
-				glVertex2d(point[0], point[2]);
+				glVertex3d(point[1], point[2], 1.0);
+				glVertex3d(point[0], point[2], 1.0);
 				glColor4d(0.0, 0.0, 0.0, 0.0);
-				glVertex2d(point[0]-p.shdw/2, point[2]+p.shdw/2);
-				glVertex2d(point[1]+p.shdw, point[2]+p.shdw/2);
+				glVertex3d(point[0]-p.shdw/2, point[2]+p.shdw/2, 0.9);
+				glVertex3d(point[1]+p.shdw, point[2]+p.shdw/2, 0.9);
 
 				// bottom side
 				glColor4d(colors[5], colors[6], colors[7], colors[4]);
-				glVertex2d(point[1], point[3]);
-				glVertex2d(point[0], point[3]);
+				glVertex3d(point[1], point[3], 1.0);
+				glVertex3d(point[0], point[3], 1.0);
 				glColor4d(0.0, 0.0, 0.0, 0.0);
-				glVertex2d(point[0]-p.shdw/2, point[3]-p.shdw);
-				glVertex2d(point[1]+p.shdw, point[3]-p.shdw);
+				glVertex3d(point[0]-p.shdw/2, point[3]-p.shdw, 0.9);
+				glVertex3d(point[1]+p.shdw, point[3]-p.shdw, 0.9);
 			}
-		
+
 			if(p.gradients) {
 				double progress = (double)(point[2]-p.shdw)/(double)((unsigned int)p.h-p.shdw);
 				int gcMax = ceil((p.gradients-1.0)*progress);
@@ -91,27 +91,27 @@ int drawGLBars(int rest, int bars, double colors[8], double gradColors[24], int 
 							gradColors[gcPhase*3]+(gradColors[gcPhase*3+3]-gradColors[gcPhase*3])*barProgress, 
 							gradColors[gcPhase*3+1]+(gradColors[gcPhase*3+4]-gradColors[gcPhase*3+1])*barProgress,
 							gradColors[gcPhase*3+2]+(gradColors[gcPhase*3+5]-gradColors[gcPhase*3+2])*barProgress, colors[3]);
-						glVertex2d(point[0], point[2]);
-						glVertex2d(point[1], point[2]);
+						glVertex3d(point[0], point[2], 1.0);
+						glVertex3d(point[1], point[2], 1.0);
 					} else {
 						glColor4d(gradColors[gcPhase*3+3], gradColors[gcPhase*3+4],
 							gradColors[gcPhase*3+5], colors[3]);
-						glVertex2d(point[0], cutLenght*(gcPhase+1)+point[3]);
-						glVertex2d(point[1], cutLenght*(gcPhase+1)+point[3]);
+						glVertex3d(point[0], cutLenght*(gcPhase+1)+point[3], 1.0);
+						glVertex3d(point[1], cutLenght*(gcPhase+1)+point[3], 1.0);
 					}
 					
 					glColor4d(gradColors[gcPhase*3], gradColors[gcPhase*3+1], gradColors[gcPhase*3+2], colors[3]);
-					glVertex2d(point[1], cutLenght*gcPhase+point[3]);
-					glVertex2d(point[0], cutLenght*gcPhase+point[3]);
+					glVertex3d(point[1], cutLenght*gcPhase+point[3], 1.0);
+					glVertex3d(point[0], cutLenght*gcPhase+point[3], 1.0);
 				}
-		} else {
+			} else {
 				glColor4d(colors[0],colors[1],colors[2],colors[3]);
-				glVertex2d(point[0], point[2]);
-				glVertex2d(point[1], point[2]);
-				
+				glVertex3d(point[0], point[2], 1.0);
+				glVertex3d(point[1], point[2], 1.0);
+
 				glColor4d(colors[0], colors[1], colors[2], colors[3]);
-				glVertex2d(point[1], point[3]);
-				glVertex2d(point[0], point[3]);
+				glVertex3d(point[1], point[3], 1.0);
+				glVertex3d(point[0], point[3], 1.0);
 			}
 		glEnd();
 	}
