@@ -22,9 +22,13 @@ unsigned int shadowSize;
 static double glColors[8];
 static double gradColors[24];
 
+// These hold the size and position of the window if you're switching to fullscreen mode
+// because Windows (or rather WIN32) doesn't do it internally
+DWORD oldX, oldY, oldW, oldH;
+
 BOOL WINAPI wglSwapIntervalEXT (int interval);
 
-// a crappy workaround for a flawed event design
+// a crappy workaround for a flawed event-loop design
 static _Bool resized=FALSE, quit=FALSE;
 
 LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -43,7 +47,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 					if(p.bs > 0) p.bs--;
 					return 2;
 				case 'F': // fullscreen
-					//p.fullF = !p.fullF;
+					p.fullF = !p.fullF;
 					return 2;
 				case VK_UP:
 					p.sens *= 1.05;
@@ -235,6 +239,9 @@ int init_window_win(void) {
 	resized=FALSE;
 	quit=FALSE;
 
+	// never assume that memory is clean
+	oldX = 0; oldY = 0; oldW = 0; oldH = 0;
+
 	// get handle
 	xavaWinModule = GetModuleHandle(NULL);
 	FreeConsole();
@@ -337,9 +344,47 @@ int init_window_win(void) {
 }
 
 int apply_win_settings(void) {
+	//ReleaseDC(xavaWinWindow, xavaWinFrame);
+
+	if(p.fullF) {
+		POINT Point = {0};
+		HMONITOR Monitor = MonitorFromPoint(Point, MONITOR_DEFAULTTONEAREST);
+		MONITORINFO MonitorInfo = { sizeof(MonitorInfo) };
+		if (GetMonitorInfo(Monitor, &MonitorInfo)) {
+			DWORD Style = WS_POPUP | WS_VISIBLE;
+			SetWindowLongPtr(xavaWinWindow, GWL_STYLE, Style);
+
+			// dont overwrite old size on accident if already fullscreen
+			if(!(oldX||oldH||oldX||oldY)) {
+				oldX = p.wx; oldY = p.wy;
+				oldW = p.w; oldH = p.h;
+			}
+
+			// resizing to full screen
+			SetWindowPos(xavaWinWindow, 0, MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top,
+				MonitorInfo.rcMonitor.right-MonitorInfo.rcMonitor.left,
+				MonitorInfo.rcMonitor.bottom-MonitorInfo.rcMonitor.top,
+				SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+		}
+		// check if the window has been already resized
+	} else if(oldW||oldH||oldX||oldY) {
+		p.wx = oldX; p.wy = oldY;
+		p.w = oldW; p.h = oldH;
+
+		// reset to default if restoring
+		oldX = 0; oldY = 0;
+		oldW = 0; oldH = 0;
+
+		// restore window properties
+		DWORD Style = WS_POPUP | WS_VISIBLE | (p.borderF?WS_CAPTION:0);
+		SetWindowLongPtr(xavaWinWindow, GWL_STYLE, Style);
+
+		SetWindowPos(xavaWinWindow, 0, p.wx, p.wy, p.w, p.h,
+			SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+	}
+
 	clear_screen_win();
 	resize_framebuffer();
-	//ReleaseDC(xavaWinWindow, xavaWinFrame);
 
 	// TODO: find a better solution, original issue:
 	// transparent polys draw over opaque ones on windows
@@ -357,7 +402,7 @@ int get_window_input_win(void) {
 		int r=DispatchMessage(&xavaWinEvent);  // handle return values
 		
 		// so you may have wondered why do i do stuff like this
-		// it's because non-keyboard/mouse messages DONT pass through a return values
+		// it's because non-keyboard/mouse messages DONT pass through return values
 		// which, guess what, completely breaks my previous design - thanks micro$oft, really appreciate it
 		
 		if(quit) {
@@ -403,6 +448,6 @@ void cleanup_graphical_win(void) {
 	wglDeleteContext(xavaWinGLFrame);
 	ReleaseDC(xavaWinWindow, xavaWinFrame);
 	DestroyWindow(xavaWinWindow);
-	UnregisterClass(szAppName, xavaWinModule);	
+	UnregisterClass(szAppName, xavaWinModule);
 	//CloseHandle(xavaWinModule);
 }
