@@ -425,5 +425,5 @@ void cleanup_graphical_win(void) {
 	ReleaseDC(xavaWinWindow, xavaWinFrame);
 	DestroyWindow(xavaWinWindow);
 	UnregisterClass(szAppName, xavaWinModule);	
-	CloseHandle(xavaWinModule);
+	//CloseHandle(xavaWinModule);
 }
