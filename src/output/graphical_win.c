@@ -250,29 +250,8 @@ int init_window_win(void) {
 	GetDesktopResolution(&screenWidth, &screenHeight);
 
 	// adjust window position etc...
-	if(!strcmp(p.winA, "top")){
-		p.wx = (screenWidth - p.w) / 2 + p.wx;
-	}else if(!strcmp(p.winA, "bottom")){
-		p.wx = (screenWidth - p.w) / 2 + p.wx;
-		p.wy = (screenHeight - p.h) + (-1*p.wy);
-	}else if(!strcmp(p.winA, "top_left")){
-		// Nothing to do here :P
-	}else if(!strcmp(p.winA, "top_right")){
-		p.wx = (screenHeight - p.w) + (-1*p.wx);
-	}else if(!strcmp(p.winA, "left")){
-		p.wy = (screenHeight - p.h) / 2;
-	}else if(!strcmp(p.winA, "right")){
-		p.wx = (screenWidth - p.w) + (-1*p.wx);
-		p.wy = (screenHeight - p.h) / 2 + p.wy;
-	}else if(!strcmp(p.winA, "bottom_left")){
-		p.wy = (screenHeight - p.h) + (-1*p.wy);
-	}else if(!strcmp(p.winA, "bottom_right")){
-		p.wx = (screenWidth - p.w) + (-1*p.wx);
-		p.wy = (screenHeight - p.h) + (-1*p.wy);
-	}else if(!strcmp(p.winA, "center")){
-		p.wx = (screenWidth - p.w) / 2 + p.wx;
-		p.wy = (screenHeight - p.h) / 2 + p.wy;
-	}
+	calculate_win_pos(&p.wx, &p.wy, p.w, p.h, screenWidth, screenHeight, p.winA);
+
 	// Some error checking
 #ifdef DEBUG
 	if(p.wx > screenWidth - p.w) printf("Warning: Screen out of bounds (X axis)!");
