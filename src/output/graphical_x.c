@@ -181,24 +181,22 @@ int init_window_x(void)
 	// The "X" button is handled by the window manager and not Xorg, so we set up a Atom
 	wm_delete_window = XInternAtom (xavaXDisplay, "WM_DELETE_WINDOW", 0);
 	XSetWMProtocols(xavaXDisplay, xavaXWindow, &wm_delete_window, 1);
-	
+
 	xavaXClassHint.res_name = (char *)"XAVA";
-	if(p.winPropF) {
-		//xavaXWMHints.flags = InputHint | StateHint;
-		//xavaXWMHints.initial_state = NormalState;
-		xavaXClassHint.res_class = (char *)"XAVA";
-	}
+	//xavaXWMHints.flags = InputHint | StateHint;
+	//xavaXWMHints.initial_state = NormalState;
+	xavaXClassHint.res_class = (char *)"XAVA";
 	XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, NULL, 0, NULL, &xavaXWMHints, &xavaXClassHint);
 
 	XSelectInput(xavaXDisplay, xavaXWindow, VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
-	
+
 	#ifdef GLX
 		if(GLXmode) if(XGLInit()) return 1;
 	#endif
-	
+
 	XMapWindow(xavaXDisplay, xavaXWindow);
 	xavaXGraphics = XCreateGC(xavaXDisplay, xavaXWindow, 0, 0);
-	
+
 	if(p.gradients) {
 		xgrad = malloc((p.gradients+1)*sizeof(XColor));
 		XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[0], &xgrad[p.gradients]);
@@ -208,7 +206,7 @@ int init_window_x(void)
 			XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[i]);
 		}
 	}
-	
+
 	// Set up atoms
 	wmState = XInternAtom(xavaXDisplay, "_NET_WM_STATE", 0);
 	taskbar = XInternAtom(xavaXDisplay, "_NET_WM_STATE_SKIP_TASKBAR", 0);

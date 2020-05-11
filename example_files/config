@@ -53,9 +53,6 @@
 # Keeps the window under any other (doesn't work in SDL)
 ; keep_below = true
 
-# Sets WM_CLASS under X11 for WM tweaking
-; set_win_props = false
-
 # This option aligns the window with a certain part of the screen
 # The following positions are supported:
 # top_left, top, top_right, left, center, right, bottom_left,

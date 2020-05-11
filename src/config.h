@@ -9,6 +9,6 @@ struct config_params {
  autosens, overshoot, waves, w, h;
 	char *winA;
 	int wx, wy;
-	_Bool oddoneout, fullF, transF, borderF, bottomF, winPropF, interactF, taskbarF, iAmRoot;
+	_Bool oddoneout, fullF, transF, borderF, bottomF, interactF, taskbarF, iAmRoot;
 } p;
 void load_config(char *configPath, void* p);
