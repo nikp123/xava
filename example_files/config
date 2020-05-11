@@ -7,32 +7,29 @@
 ; framerate = 60
 
 # Keep the application in sync with the monitor to prevent tearing
-# This is usually a good idea to enable on Windows because it's system timers are REALLY inaccurate,
-# so just letting Windows manage my frametimes does the job just fine
-# -1 = adaptive Vsync (G-Sync. FreeSync, etc.), 0 = off, 1 up to refresh rate = Vsync at monitor_refresh_rate/the_value_below
+# It's generally recommended to keep it on, as different framerates may lead to unstable frametimes
+# -1 = adaptive Vsync (G-Sync. FreeSync, etc.)
+# 0 = off
+# 1 up to refresh rate = refresh at the refresh rate of the monitor divided by the number given
 ; vsync = 1
 
-# 'autosens' will attempt to decrease sensitivity if the bars peak. 1 = on, 0 = off
-# new as of 0.6.0 autosens of low values (dynamic range)
-# 'overshoot' allows bars to overshoot (in % of display height) without initiating autosens. DEPRECATED as of 0.6.0
-; autosens = 1
-; overshoot = 0
+# 'autosens' will attempt to balance the sensitivity to keep the amplitude of the bars 
+# within a reasonable range
+; autosens = true
 
 # Manual sensitivity in %. Autosens must be turned off for this to take effect.
-# 200 means double height. Accepts only non-negative values.
+# 200 means double height and so on. Accepts only non-negative values.
 ; sensitivity = 100
 
 # The number of bars (0-200). 0 sets it to auto (put as many as you can).
-# Bars' width and space between bars in number of characters.
-# These options DO NOT apply if you're using 'sdl' or 'x' modes.
+# Bars' width and space between bars in number of pixels on screen.
 ; bars = 0
 ; bar_width = 13
 ; bar_spacing = 5
 
 # Lower and higher cutoff frequencies for lowest and highest bars
 # the bandwidth of the visualizer.
-# Note: there is a minimum total bandwidth of 43Mhz x number of bars.
-# Xava will automatically increase the higher cutoff if a too low band is specified.
+# XAVA will automatically increase the higher cutoff if a too low band is specified.
 ; lower_cutoff_freq = 26
 ; higher_cutoff_freq = 15000
 
@@ -44,44 +41,45 @@
 ; width = 1180
 ; height = 300
 
-# Fullscreen toggle (1 = on, 0 = off)
-; fullscreen = 0
+# Fullscreen toggle
+; fullscreen = false
 
-# Enables or disables window borders (1 = on, 0 = off)
-; border = 0
+# Enables or disables window borders 
+; border = false
 
-# Window transparency toggle (your system must have a compositing WM)
-; transparency = 1
+# Window transparency toggle (your system must support transparent windows)
+; transparency = true
 
-# Keeps the window under any other (works under X only)
-; keep_below = 1
+# Keeps the window under any other (doesn't work in SDL)
+; keep_below = true
 
-# Set window properties like WM_CLASS (works under X only)
-; set_win_props = 0
+# Sets WM_CLASS under X11 for WM tweaking
+; set_win_props = false
 
-# This allows for the window to be 'aligned' to a part of a screen
+# This option aligns the window with a certain part of the screen
 # The following positions are supported:
 # top_left, top, top_right, left, center, right, bottom_left,
 # bottom, bottom_right and none if you don't want manual positioning
 ; alignment = 'none'
 
-# Additionally we can further adjust the positions if needed (in pixels)
+# Additionally we can further adjust the position if needed (in pixels)
 # It moves the window the opposite direction of whats in alignment
 # FXP. if alignment is set to right and x_padding is 20, 
 # it will move the window left 20 pixels and so on for every direction 
 ; x_padding = 0
 ; y_padding = 0
 
-# This option will drastically increase performance (in most cases).
+# Enables the OpenGL renderer (not available on all output modes)
 ; opengl = 1
 
-# This option removes the ability to interact with the window (works under Xorg only)
+# This option removes the ability to interact with the window
+# NOTE: It does not work with SDL2 
 ; interactable = 1
 
-# Create taskbar icon
+# Create an taskbar icon
 ; taskbar_icon = 1
 
-# Draw directly on the display itself (Xorg ONLY), VERY UNPREDICTABLE
+# Draw directly on the root window (or wallpaper) itself (Xorg ONLY), VERY UNPREDICTABLE
 # You need to stop any form of compositing for this to even work properly
 ; rootwindow = 0
 
@@ -101,6 +99,9 @@
 # 
 # For alsa, wasapi and portaudio 'source' will be the capture device.
 # For fifo 'source' will be the path to fifo-file.
+#
+# In case of wasapi, specify 'loopback' to capture audio from the system or anything else 
+# to capture from an input device, such as a microphone
 #
 # You can also specify 'list' as the source to portaudio to list all available audio devices
 ; method = pulse
@@ -129,9 +130,9 @@
 
 # Output method. Can be any of the following (if supported):
 # By default it's the window that is recommended for your platform/OS.
-# 'sdl' is for a graphical window using OpenGL
-# 'x' is for a graphical window using XRender (usually faster, unsupported in wayland however)
-# 'win' is a win32 graphical window (which embedded into the NT kernel)
+# 'sdl' is for a graphical window using SDL2
+# 'x' is for a graphical window using X11 (usually faster, unsupported in wayland however)
+# 'win' is for a win32 graphical window
 ; method = x
 
 # Visual channels. Can be 'stereo' or 'mono'.
@@ -144,19 +145,22 @@
 
 # Colors can be one of seven predefined: black, blue, cyan, green, magenta, red, white, yellow.
 # Or defined by hex code '#xxxxxx' (hex code must be within '').
-; background = black
-; foreground = cyan
+# It can also be 'default' at which point under X11 it reads the color off of Xrdb
+# Under Windows it uses your system accent color
+# And on SDL2 it's just black and cyan (default colorscheme)
+; background = default
+; foreground = default
 
 # This adjusts the opacity of the bars (must have transparency and OpenGL in order for it to work)
 ; foreground_opacity = 1.0
 
-# And this does the same but for the background 
+# And this does the same but for the background (previous rule applies here as well) 
 ; background_opacity = 0.0
 
 # Gradient mode, only hex defined colors are supported, background must also be defined in hex
 # or remain commented out.
 # To enable gradients, just change gradient_count to the number of colors you have specified
-# You need to enable transparency in order for this to work on X
+# (0 = disabled)
 ; gradient_count = 0
 ; gradient_color_1 = '#0099ff'
 ; gradient_color_2 = '#ff3399'
@@ -177,16 +181,18 @@
 # Accepts only non-negative values. 50 means half gravity, 200 means double. Set to 0 to disable "drop off".
 ; gravity = 100
 
-# In bar height, bars that would have been lower that this will not be drawn.
+# In bar height, bars that would have been lower that this (in pixels) will not be drawn.
 ; ignore = 0
 
-# Variable logarithm (the higher the value, the more intense) 
+# Adjust the logarithmic scale of the frequency band (the lower the value, 
+# the less difference between bars in frequency)
 ; log = 1.55
 
 # Average out the value of each odd bar (just like the monstercat visualizer)
-; oddoneout = 1
+; oddoneout = true
 
-# Balances the eq towards higher or lower frequencies (lower value->lower frequencies, higher value->higher frequencies)
+# Balances the eq towards higher or lower frequencies
+# lower value->lower frequencies, higher value->higher frequencies
 ; eq_balance = 0.67
 
 # Adjusts the input buffer size (in samples, calculated by 2^input_size)
@@ -199,7 +205,6 @@
 [shadow]
 
 # Fake shadow effect (works with transparency only)
-# Make sure that the shadow size is NOT larger then the bar spacing
 # To disable shadows, set size to 0
 ; size = 7
 
