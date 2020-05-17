@@ -130,7 +130,7 @@
 # 'sdl' is for a graphical window using SDL2
 # 'x11' is for a graphical window using X11 (usually faster, unsupported in wayland however)
 # 'win' is for a win32 graphical window
-; method = x
+; method = x11
 
 # Visual channels. Can be 'stereo' or 'mono'.
 # 'stereo' mirrors both channels with low frequencies in center.
