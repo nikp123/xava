@@ -78,14 +78,6 @@
 #include "config.h"
 #include "shared.h"
 
-#ifdef __GNUC__
-// curses.h or other sources may already define
-#undef  GCC_UNUSED
-#define GCC_UNUSED __attribute__((unused))
-#else
-#define GCC_UNUSED /* nothing */
-#endif
-
 static void* (*xavaInput)(void*);
 
 static int (*xavaInitOutput)(void);
@@ -97,6 +89,12 @@ static void (*xavaOutputCleanup)(void);
 
 static _Bool kys = 0, should_reload = 0;
 
+// XAVA magic variables, too many of them indeed
+static float *fc = NULL, *fre, *fpeak, *k;
+static int *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;
+
+static double *peak;
+
 // general: cleanup
 void cleanup() {
 	#if defined(__linux__)||defined(__WIN32__)
@@ -105,6 +103,23 @@ void cleanup() {
 	#endif
 
 	xavaOutputCleanup();
+
+	// clean up XAVA internal variables
+	free(fc);
+	free(fre);
+	free(fpeak);
+	free(k);
+	free(f);
+	free(lcf);
+	free(hcf);
+	free(fmem);
+	free(flast);
+	free(flastd);
+	free(fall);
+	free(fl);
+	free(fr);
+	free(peak);
+	fc = NULL;
 }
 
 #if defined(__unix__)||defined(__APPLE__)
@@ -126,12 +141,8 @@ void sig_handler(int sig_no) {
 }
 #endif
 
-int * separate_freq_bands(fftw_complex *out, int bars, int *lcf,
-			 int *hcf, float *k, int channel, double sens, double ignore, int fftsize) {
+void separate_freq_bands(fftw_complex *out, int bars, int channel, double sens, double ignore, int fftsize) {
 	int o,i;
-	double peak[201];
-	static int fl[200];
-	static int fr[200];
 	double y[fftsize / 2 + 1];
 	double temp;
 
@@ -153,28 +164,25 @@ int * separate_freq_bands(fftw_complex *out, int bars, int *lcf,
 		if (channel == 1) fl[o] = temp;
 		else fr[o] = temp;
 	}
-
-	if (channel == 1) return fl;
-	else return fr;
 } 
 
 
-int * monstercat_filter (int * f, int bars, int waves, double monstercat) {
+void monstercat_filter(int bars, int waves, double monstercat, int *data) {
 	int z;
 
 	// process [smoothing]: monstercat-style "average"
 	int m_y, de;
 	if (waves > 0) {
 		for (z = 0; z < bars; z++) { // waves
-			f[z] = f[z] / 1.25;
+			data[z] = data[z] / 1.25;
 			//if (f[z] < 1) f[z] = 1;
 			for (m_y = z - 1; m_y >= 0; m_y--) {
 				de = z - m_y;
-				f[m_y] = max(f[z] - pow(de, 2), f[m_y]);
+				data[m_y] = max(data[z] - pow(de, 2), data[m_y]);
 			}
 			for (m_y = z + 1; m_y < bars; m_y++) {
 				de = m_y - z;
-				f[m_y] = max(f[z] - pow(de, 2), f[m_y]);
+				data[m_y] = max(data[z] - pow(de, 2), data[m_y]);
 			}
 		}
 	} else if (monstercat > 0) {
@@ -182,16 +190,14 @@ int * monstercat_filter (int * f, int bars, int waves, double monstercat) {
 			//if (f[z] < 1)f[z] = 1;
 			for (m_y = z - 1; m_y >= 0; m_y--) {
 				de = z - m_y;
-				f[m_y] = max(f[z] / pow(monstercat, de), f[m_y]);
+				data[m_y] = max(data[z] / pow(monstercat, de), data[m_y]);
 			}
 			for (m_y = z + 1; m_y < bars; m_y++) {
 				de = m_y - z;
-				f[m_y] = max(f[z] / pow(monstercat, de), f[m_y]);
+				data[m_y] = max(data[z] / pow(monstercat, de), data[m_y]);
 			}
 		}
 	}
-
-	return f;
 }
 
 
@@ -200,21 +206,12 @@ int main(int argc, char **argv)
 {
 	// general: define variables
 	pthread_t  p_thread;
-	int thr_id GCC_UNUSED;
-	float fc[200];
-	float fre[200];
-	int f[200], lcf[200], hcf[200];
-	int *fl, *fr;
-	int fmem[200];
-	int flast[200];
-	int flastd[200];
+	int thr_id;
+
 	int sleep = 0;
 	int i, n, o, height, c, rest, silence;
 	//int cont = 1;
-	int fall[200];
 	//float temp;
-	float fpeak[200];
-	float k[200];
 	float g;
 	char configPath[255];
 	char *usage = "\n\
@@ -242,7 +239,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	double smh;
 	double *inl,*inr;
 	unsigned long oldTime = 0;
-	
+
 	//int maxvalue = 0;
 
 	struct audio_data audio;
@@ -365,7 +362,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				xavaInput = input_wasapi;
 				break;
 			#endif
-
 		}
 
 		switch(p.om) {
@@ -417,20 +413,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			exit(EXIT_FAILURE);
 
 		while(!reloadConf) { //jumbing back to this loop means that you resized the screen
-			for (i = 0; i < 200; i++) {
-				flast[i] = 0;
-				flastd[i] = 0;
-				fall[i] = 0;
-				fpeak[i] = 0;
-				fmem[i] = 0;
-				f[i] = 0;
-			}
-
 			height = (p.h - 1);
 
-			xavaOutputApply();
-
-			//handle for user setting too many bars
+			// handle for user setting too many bars
 			if (p.fixedbars) {
 				p.autobars = 0;
 				if (p.fixedbars * p.bw + p.fixedbars * p.bs - p.bs > p.w) p.autobars = 1;
@@ -444,18 +429,71 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			} else bars = p.fixedbars;
 
 			if (bars < 1) bars = 1; // must have at least 1 bars
-			if (bars > 200) bars = 200; // cant have more than 200 bars
 
-			if (p.stereo) { //stereo must have even numbers of bars
-				if (bars%2 != 0) bars--;
-			} else if(p.oddoneout) { // and oddoneout nees to have odd number of bars
-				if (bars%2 == 0) bars--;
+			if (p.stereo) { // stereo must have even numbers of bars
+				if (bars%2) bars--;
+			} else if(p.oddoneout) { // and oddoneout needs to have odd number of bars
+				if (!(bars%2)) bars--;
 			}
+
+			// if fc is not cleared that means that the variables are not initialized
+			if(fc) {
+				// reallocation time
+				void *temp;
+				temp = realloc(fc,sizeof(float)*bars+1);fc=temp;
+				temp = realloc(fre,sizeof(float)*bars+1);fre=temp;
+				temp = realloc(fpeak,sizeof(float)*bars+1);fpeak=temp;
+				temp = realloc(k,sizeof(float)*bars+1);k=temp;
+				temp = realloc(f,sizeof(int)*bars+1);f=temp;
+				temp = realloc(lcf,sizeof(int)*bars+1);lcf=temp;
+				temp = realloc(hcf,sizeof(int)*bars+1);hcf=temp;
+				temp = realloc(fmem,sizeof(int)*bars+1);fmem=temp;
+				temp = realloc(flast,sizeof(int)*bars+1);flast=temp;
+				temp = realloc(flastd,sizeof(int)*bars+1);flastd=temp;
+				temp = realloc(fall,sizeof(int)*bars+1);fall=temp;
+				temp = realloc(fl,sizeof(int)*bars+1);fl=temp;
+				temp = realloc(fr,sizeof(int)*bars+1);fr=temp;
+				temp = malloc(sizeof(double)*(bars+1)+1);peak=temp;
+			} else {
+				fc = malloc(sizeof(float)*bars+1);
+				fre = malloc(sizeof(float)*bars+1);
+				fpeak = malloc(sizeof(float)*bars+1);
+				k = malloc(sizeof(float)*bars+1);
+				f = malloc(sizeof(int)*bars+1);
+				lcf = malloc(sizeof(int)*bars+1);
+				hcf = malloc(sizeof(int)*bars+1);
+				fmem = malloc(sizeof(int)*bars+1);
+				flast = malloc(sizeof(int)*bars+1);
+				flastd = malloc(sizeof(int)*bars+1);
+				fall = malloc(sizeof(int)*bars+1);
+				fl = malloc(sizeof(int)*bars+1);
+				fr = malloc(sizeof(int)*bars+1);
+				peak = malloc(sizeof(double)*(bars+1)+1);
+			} 
+
+			for (i = 0; i < bars; i++) {
+				flast[i] = 0;
+				flastd[i] = 0;
+				fall[i] = 0;
+				fpeak[i] = 0;
+				fmem[i] = 0;
+				f[i] = 0;
+				lcf[i] = 0;
+				hcf[i] = 0;
+				fl[i] = 0;
+				fr[i] = 0;
+				fc[i] = .0;
+				fre[i] = .0;
+				fpeak[i] = .0;
+				k[i] = .0;
+			}
+
+			xavaOutputApply();
 
 			// process [smoothing]: calculate gravity
 			g = p.gravity * ((float)height / 2160) * (60 / (float)p.framerate);
 
-			//checks if there is stil extra room, will use this to center
+			// checks if there is stil extra room, will use this to center
 			rest = (p.w - bars * p.bw - bars * p.bs + p.bs) / 2;
 			if (rest < 0)rest = 0;
 
@@ -472,7 +510,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			}
 
 			// since oddoneout requires every odd bar, why not split them in half?
-			const int calcbars = p.oddoneout ? bars/2+bars%2 : bars;
+			const int calcbars = p.oddoneout ? bars/2+1 : bars;
 
 			// frequency constant that we'll use for logarithmic progression of frequencies
 			double freqconst = log(p.highcf-p.lowcf)/log(pow(calcbars, p.logScale));
@@ -575,14 +613,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						fftw_execute(pl);
 						fftw_execute(pr);
 
-						fl = separate_freq_bands(outl,calcbars,lcf,hcf, k, 1, 
-							p.sens, p.ignore, audio.fftsize);
-						fr = separate_freq_bands(outr,calcbars,lcf,hcf, k, 2, 
-							p.sens, p.ignore, audio.fftsize);
+						separate_freq_bands(outl, calcbars, 1, p.sens, p.ignore, audio.fftsize);
+						separate_freq_bands(outr, calcbars, 2, p.sens, p.ignore, audio.fftsize);
 					} else {
 						fftw_execute(pl);
-						fl = separate_freq_bands(outl,calcbars,lcf,hcf, k, 1, 
-							p.sens, p.ignore, audio.fftsize);
+						separate_freq_bands(outl, calcbars, 1, p.sens, p.ignore, audio.fftsize);
 					}
 				} else { //**if in sleep mode wait and continue**//
 					#ifdef DEBUG
@@ -598,23 +633,19 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 				if(p.oddoneout) {
 					//memset(fl+sizeof(float)*(bars/2), 0.0f, sizeof(float)*bars);
-					i=bars/2+1;
-					do {
-						i--;
+					for(i=bars/2; i>0; i--) {
 						fl[i*2-1+bars%2]=fl[i];
-						if(i!=0) fl[i]=0;
-					} while(i!=0);
+						fl[i]=0;
+					}
 				}
 
 				// process [smoothing]
 				if (p.monstercat) {
 					if (p.stereo) {
-						fl = monstercat_filter(fl, bars / 2, p.waves,
-							p.monstercat);
-						fr = monstercat_filter(fr, bars / 2, p.waves,
-							p.monstercat);
+						monstercat_filter(bars / 2, p.waves, p.monstercat, fl);
+						monstercat_filter(bars / 2, p.waves, p.monstercat, fr);
 					} else {
-						fl = monstercat_filter(fl, calcbars, p.waves, p.monstercat);
+						monstercat_filter(calcbars, p.waves, p.monstercat, fl);
 					}
 				}
 
@@ -667,10 +698,10 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 				// process [oddoneout]
 				if(p.oddoneout) {
-					for(i=1; i<bars; i+=2) {
+					for(i=1; i<bars-1; i+=2) {
 						f[i] = f[i+1]/2 + f[i-1]/2;
 					}
-					for(i=bars-1; i>1; i-=2) {
+					for(i=bars-2; i>1; i-=2) {
 						int sum = f[i+1]/2 + f[i-1]/2;
 						if(sum>f[i]) f[i] = sum;
 					}
@@ -700,7 +731,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				// output: draw processed input
 				if(redrawWindow) {
 					xavaOutputClear();
-					memset(flastd, 0x00, sizeof(int)*200);
+					memset(flastd, 0x00, sizeof(int)*bars);
 					redrawWindow = FALSE;
 				}
 				xavaOutputDraw(bars, rest, f, flastd);
@@ -709,7 +740,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					oldTime = xavaSleep(oldTime, p.framerate);
 
 				// save previous bar values
-				memcpy(flastd, f, sizeof(int)*200);
+				memcpy(flastd, f, sizeof(int)*bars);
 
 				if(kys) {
 					resizeWindow=1;
