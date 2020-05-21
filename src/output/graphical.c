@@ -3,6 +3,12 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef GLX
+	GLXContext xavaGLXContext;
+	GLXFBConfig* xavaFBConfig;
+	int GLXmode;
+#endif
+
 void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int scrH, char *winPos) {
 	if(!strcmp(winPos, "top")){
 		(*winX) = (scrW - winW) / 2 + (*winX);

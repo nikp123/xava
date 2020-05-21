@@ -58,6 +58,8 @@ static struct supported {
 	const char **names;
 } support;
 
+struct config_params p;
+
 struct supported createSupported(void) {
 	struct supported new;
 	new.names = malloc(1);

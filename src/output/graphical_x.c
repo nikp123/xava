@@ -66,7 +66,6 @@ struct mwmHints {
 };
 
 static int xavaXScreenNumber;
-int GLXmode;
 
 // Some window manager definitions
 enum {
