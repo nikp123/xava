@@ -102,9 +102,16 @@ int XGLInit(void) {
 
 // Pull from the terminal colors, and afterwards, do the usual
 #define snatchColor(name, colorStr, colorNum, colorObj)  \
-	if(!strcmp(colorStr, "default")&&XrmGetResource(xavaXResDB, name, NULL, &type, &value)) \
-		XParseColor(xavaXDisplay, xavaXColormap, value.addr, &colorObj); \
-	else { \
+	if(!strcmp(colorStr, "default")) { \
+		if(databaseName) { \
+			if(XrmGetResource(xavaXResDB, name, NULL, &type, &value)) \
+				XParseColor(xavaXDisplay, xavaXColormap, value.addr, &colorObj); \
+		} else { \
+			char tempColorStr[8]; \
+			sprintf(tempColorStr, "#%06x", colorNum); \
+			XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, &colorObj); \
+		} \
+	} else { \
 		char tempColorStr[8]; \
 		sprintf(tempColorStr, "#%06x", colorNum); \
 		XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, &colorObj); \
@@ -114,12 +121,13 @@ int XGLInit(void) {
 void calculateColors(void) {
 	char *type;
 	XrmValue value;
-	XrmDatabase xavaXResDB = XrmGetStringDatabase(XResourceManagerString(xavaXDisplay));
-
-	XrmInitialize();
-
+	XrmDatabase xavaXResDB;
+	char *databaseName = XResourceManagerString(xavaXDisplay);
+	if(databaseName) {
+		xavaXResDB = XrmGetStringDatabase(databaseName);
+		XrmInitialize();
+	}
 	snatchColor("color1", p.color, p.col, xcol);
-	//printf("%s\n", value.addr);
 	snatchColor("color0", p.bcolor, p.bgcol, xbgcol);
 }
 
