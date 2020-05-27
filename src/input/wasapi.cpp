@@ -36,7 +36,7 @@ HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
 		// convert 32-bit float to something usable
 		switch(audio->channels) {
 			case 1:
-				audio->audio_out_l[n] = (*pBuffer++ + *pBuffer++)*32767.0f;
+				audio->audio_out_l[n] = (*pBuffer++ + *pBuffer++)*16383.5f;
 				break;
 			case 2:
 				audio->audio_out_l[n] = (*pBuffer++)*32767.0f;
