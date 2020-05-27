@@ -31,25 +31,16 @@ HRESULT sinkSetFormat(WAVEFORMATEX * pWF) {
 }
 
 HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
-	int *pBuffer = (int*)pData;
+	float *pBuffer = (float*)pData;
 	for(UINT32 i=0; i<NumFrames; i++) {
-		// convert binary offset to two's complement
-		if(pBuffer[0]&0x80000000) {
-			pBuffer[0]^=0x7FFFFFFF;
-			pBuffer[0]++;
-		}
-		if(pBuffer[1]&0x80000000) {
-			pBuffer[1]^=0x7FFFFFFF;
-			pBuffer[1]++;
-		}
-		
+		// convert 32-bit float to something usable
 		switch(audio->channels) {
 			case 1:
-				audio->audio_out_l[n] = (*pBuffer++ + *pBuffer++) >> 17;
+				audio->audio_out_l[n] = (*pBuffer++ + *pBuffer++)*32767.0f;
 				break;
 			case 2:
-				audio->audio_out_l[n] = *pBuffer++ >> 16;
-				audio->audio_out_r[n] = *pBuffer++ >> 16;
+				audio->audio_out_l[n] = (*pBuffer++)*32767.0f;
+				audio->audio_out_r[n] = (*pBuffer++)*32767.0f;
 				break;
 		}
 		n++;
