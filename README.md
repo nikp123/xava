@@ -77,6 +77,8 @@ On Ubuntu 20.04+:
 
     apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio2 cmake git
 
+Meanwhile on previous Ubuntu releases swap ``libportaudio2`` with ``libportaudio-dev``
+
 ArchLinux:
 
     pacman -S base-devel fftw alsa-lib iniparser pulseaudio libx11 sdl2 portaudio cmake git
