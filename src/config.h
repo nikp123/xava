@@ -11,7 +11,7 @@
 	 autosens, overshoot, waves, w, h;
 		char *winA;
 		int wx, wy;
-		_Bool oddoneout, fullF, transF, borderF, bottomF, interactF, taskbarF, iAmRoot;
+		_Bool oddoneout, fullF, transF, borderF, bottomF, interactF, taskbarF, iAmRoot, overrideRedirect;
 	} p;
 	void load_config(char *configPath, void* p);
 #endif
