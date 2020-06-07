@@ -175,15 +175,21 @@ int init_window_x(void)
 	#endif
 		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p.transF ? 32 : 24, TrueColor, &xavaVInfo);
 
-	xavaAttr.override_redirect = p.overrideRedirect;
 	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 	xavaXColormap = xavaAttr.colormap;
 	calculateColors();
 	xavaAttr.background_pixel = p.transF ? 0 : xbgcol.pixel;
 	xavaAttr.border_pixel = xcol.pixel;
 
+	xavaAttr.backing_store = Always;
+	// make it so that the window CANNOT be reordered by the WM
+	xavaAttr.override_redirect = p.overrideRedirect;
+
+	int xavaWindowFlags = CWOverrideRedirect | CWBackingStore |  CWEventMask | CWColormap | CWBorderPixel | CWBackPixel;
+
 	if(p.iAmRoot) xavaXWindow = xavaXRoot;
-	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p.wx, p.wy, (unsigned int)p.w, (unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, CWEventMask | CWColormap | CWBorderPixel | CWBackPixel, &xavaAttr);
+	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p.wx, p.wy, (unsigned int)p.w,
+		(unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
 	// The "X" button is handled by the window manager and not Xorg, so we set up a Atom
@@ -247,6 +253,7 @@ int init_window_x(void)
 	xev.xclient.data.l[0] = p.bottomF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
 	xev.xclient.data.l[1] = wmStateBelow;
 	XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+	if(p.bottomF) XLowerWindow(xavaXDisplay, xavaXWindow);
 
 	// remove window from taskbar
 	xev.xclient.data.l[0] = p.taskbarF ? _NET_WM_STATE_REMOVE : _NET_WM_STATE_ADD;
@@ -471,7 +478,7 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 {
 	// im lazy, but i just wanna make it work
 	int xoffset = rest, yoffset = p.h;
-	if(p.iAmRoot||p.overrideRedirect) {
+	if(p.iAmRoot) {
 		xoffset+=p.wx;
 		yoffset+=p.wy;
 	}

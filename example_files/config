@@ -80,8 +80,10 @@
 # You need to stop any form of compositing for this to even work properly
 ; rootwindow = false
 
-# Draw behind any windows (X11 only) - same as override window type in Conky
-# Makes the window permanently attached to the background and cannot be moved
+# Sets the override any redirection by the host WM, that is the window cannot change
+# the it's order in the window stack
+# This option also disables any form of interaction with the window - same as when:
+#    interacable = false
 ; override_redirect = false
 
 
