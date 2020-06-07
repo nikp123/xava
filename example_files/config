@@ -67,18 +67,22 @@
 ; y_padding = 0
 
 # Enables the OpenGL renderer (not available on all output modes)
-; opengl = 1
+; opengl = true
 
 # This option removes the ability to interact with the window
 # NOTE: It does not work with SDL2 
-; interactable = 1
+; interactable = true
 
 # Create an taskbar icon
-; taskbar_icon = 1
+; taskbar_icon = true
 
 # Draw directly on the root window (or wallpaper) itself (Xorg ONLY), VERY UNPREDICTABLE
 # You need to stop any form of compositing for this to even work properly
-; rootwindow = 0
+; rootwindow = false
+
+# Draw behind any windows (X11 only) - same as override window type in Conky
+# Makes the window permanently attached to the background and cannot be moved
+; override_redirect = false
 
 
 [input]

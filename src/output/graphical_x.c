@@ -175,6 +175,7 @@ int init_window_x(void)
 	#endif
 		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p.transF ? 32 : 24, TrueColor, &xavaVInfo);
 
+	xavaAttr.override_redirect = p.overrideRedirect;
 	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 	xavaXColormap = xavaAttr.colormap;
 	calculateColors();
@@ -439,7 +440,7 @@ int get_window_input_x(void) {
 			case ConfigureNotify:
 			{
 				// the window should not be resized when it IS the monitor
-				if(p.iAmRoot) break;
+				if(p.iAmRoot||p.overrideRedirect) break;
 
 				// This is needed to track the window size
 				XConfigureEvent trackedXavaXWindow;
@@ -470,7 +471,7 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 {
 	// im lazy, but i just wanna make it work
 	int xoffset = rest, yoffset = p.h;
-	if(p.iAmRoot) {
+	if(p.iAmRoot||p.overrideRedirect) {
 		xoffset+=p.wx;
 		yoffset+=p.wy;
 	}
