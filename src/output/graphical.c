@@ -78,9 +78,9 @@ static const char* dumpAFile(char *filename, size_t *size) {
 	return content;
 }
 
-static unsigned int CompileShader(unsigned int type, char *source) {
+static unsigned int CompileShader(unsigned int type, const char *source) {
 	unsigned int id = glCreateShader(type);
-	glShaderSource(id, 1, &source, NULL);
+	glShaderSource(id, 1, (const GLchar* const*)&source, NULL);
 	glCompileShader(id);
 
 	int result;
