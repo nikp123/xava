@@ -3,9 +3,7 @@
 
 #include <windows.h>
 #include <windowsx.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#define WGL_WGLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/wglext.h>
 #include <dwmapi.h>
 #include <assert.h>

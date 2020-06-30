@@ -46,7 +46,7 @@ static int VisData[] = {
 	GLX_DEPTH_SIZE, 16,
 	None
 };
-static double glColors[8], gradColors[24];
+static float glColors[12], gradColors[24];
 static XRenderPictFormat *pict_format;
 
 static GLXFBConfig *fbconfigs, fbconfig;
@@ -96,27 +96,29 @@ int XGLInit(void) {
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
+
+	VBOGLsetup();
 	return 0;
 }
 #endif
 
 // Pull from the terminal colors, and afterwards, do the usual
-#define snatchColor(name, colorStr, colorNum, colorObj)  \
+#define snatchColor(name, colorStr, colorNum, colorObj)  { \
+	char tempColorStr[8]; \
 	if(!strcmp(colorStr, "default")) { \
 		if(databaseName) { \
 			if(XrmGetResource(xavaXResDB, name, NULL, &type, &value)) \
 				XParseColor(xavaXDisplay, xavaXColormap, value.addr, &colorObj); \
 		} else { \
-			char tempColorStr[8]; \
 			sprintf(tempColorStr, "#%06x", colorNum); \
 			XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, &colorObj); \
 		} \
 	} else { \
-		char tempColorStr[8]; \
 		sprintf(tempColorStr, "#%06x", colorNum); \
 		XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, &colorObj); \
 	} \
 	XAllocColor(xavaXDisplay, xavaXColormap, &colorObj); \
+}
 
 void calculateColors(void) {
 	char *type;
@@ -134,7 +136,7 @@ void calculateColors(void) {
 int init_window_x(void)
 {
 	// shadows are meant for the bars only
-	if(p.background_opacity != 0.0) p.shdw = 0;
+	//if(p.background_opacity != 0.0) p.shdw = 0;
 
 	// NVIDIA CPU cap utilization in Vsync fix
 	setenv("__GL_YIELD", "USLEEP", 0);
@@ -213,8 +215,6 @@ int init_window_x(void)
 
 	if(p.gradients) {
 		xgrad = malloc((p.gradients+1)*sizeof(XColor));
-		XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[0], &xgrad[p.gradients]);
-		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p.gradients]);
 		for(unsigned int i=0; i<p.gradients; i++) {
 			XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[i], &xgrad[i]);
 			XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[i]);
@@ -303,18 +303,30 @@ int render_gradient_x(void) {
 void clear_screen_x(void) {
 	if(GLXmode) {
 	#ifdef GLX
-		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p.transF ? 1.0*p.background_opacity : 1.0); // TODO BG transparency
+		//glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p.transF ? p.background_opacity : 1.0);
 		glColors[0] = xcol.red/65535.0;
 		glColors[1] = xcol.green/65535.0;
 		glColors[2] = xcol.blue/65535.0;
 		glColors[3] = p.transF ? p.foreground_opacity : 1.0;
 
 		if(p.shdw) {
-			glColors[4] = ARGB_A_32(p.shdw_col);
-			glColors[5] = ARGB_R_32(p.shdw_col);
-			glColors[6] = ARGB_G_32(p.shdw_col);
-			glColors[7] = ARGB_B_32(p.shdw_col);
+			glColors[4] = ARGB_R_32(p.shdw_col)/255.0;
+			glColors[5] = ARGB_G_32(p.shdw_col)/255.0;
+			glColors[6] = ARGB_B_32(p.shdw_col)/255.0;
+			glColors[7] = ARGB_A_32(p.shdw_col)/255.0;
 		}
+
+		glColors[8] =  xbgcol.red/65535.0;
+		glColors[9] =  xbgcol.green/65535.0;
+		glColors[10] = xbgcol.blue/65535.0;
+		glColors[11] = p.transF ? p.background_opacity : 1.0;
+
+		for(int i=0; i<p.gradients; i++) {
+			gradColors[i*3] = xgrad[i].red/65535.0;
+			gradColors[i*3+1] = xgrad[i].green/65535.0;
+			gradColors[i*3+2] = xgrad[i].blue/65535.0;
+		}
+
 	#endif
 	} else {
 		XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
@@ -362,7 +374,7 @@ int apply_window_settings_x(void)
 		glViewport(0, 0, p.w, p.h);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		
+
 		glOrtho(0, (double)p.w, 0, (double)p.h, -1, 1);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
@@ -439,6 +451,7 @@ int get_window_input_x(void) {
 						xcol.green = rand();
 						xcol.blue  = rand();
 						xcol.flags = DoRed | DoGreen | DoBlue;
+						p.col = 
 						XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
 						return 3;
 				}
@@ -487,11 +500,6 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 		#ifdef GLX
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		for(int i=0; i<p.gradients; i++) {
-			gradColors[i*3] = xgrad[i].red/65535.0;
-			gradColors[i*3+1] = xgrad[i].green/65535.0;
-			gradColors[i*3+2] = xgrad[i].blue/65535.0;
-		}
 		if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
 		
 		glXSwapBuffers(xavaXDisplay, xavaXWindow);
@@ -528,7 +536,8 @@ void cleanup_graphical_x(void)
 	// make sure that all events are dead by this point
 	XSync(xavaXDisplay, 1);
 
-	if(gradientBox != 0) { XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0; };
+	if(gradientBox != 0)
+		XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0;
  
 	#ifdef GLX
 		glXMakeCurrent(xavaXDisplay, 0, 0);

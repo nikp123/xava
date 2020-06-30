@@ -1,5 +1,7 @@
 #include "graphical.h"
 #include "../config.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -43,84 +45,133 @@ void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int s
 }
 
 #ifdef GL
-int drawGLBars(int rest, int bars, double colors[8], double gradColors[24], int *f) {
-	for(int i = 0; i < bars; i++) {
-		double point[4];
-		point[0] = rest+(p.bw+p.bs)*i;
-		point[1] = rest+(p.bw+p.bs)*i+p.bw;
-		point[2] = (unsigned int)f[i]+p.shdw> (unsigned int)p.h-p.shdw ? (unsigned int)p.h-p.shdw : (unsigned int)f[i]+p.shdw;
-		point[3] = p.shdw;
-		
-		glBegin(GL_QUADS);
-			if(p.shdw) {
-				// left side
-				glColor4d(colors[5], colors[6], colors[7], colors[4]);
-				glVertex3d(point[0], point[2], 1.0);
-				glVertex3d(point[0], point[3], 1.0);
-				glColor4d(0.0, 0.0, 0.0, 0.0);
-				glVertex3d(point[0]-p.shdw/2, point[3]-p.shdw, 1.0);
-				glVertex3d(point[0]-p.shdw/2, point[2]+p.shdw/2, 1.0);
-				
-				// right side
-				glColor4d(colors[5], colors[6], colors[7], colors[4]);
-				glVertex3d(point[1], point[2], 1.0);
-				glVertex3d(point[1], point[3], 1.0);
-				glColor4d(0.0, 0.0, 0.0, 0.0);
-				glVertex3d(point[1]+p.shdw, point[3]-p.shdw, 0.9);
-				glVertex3d(point[1]+p.shdw, point[2]+p.shdw/2, 0.9);
-				
-				// top side
-				glColor4d(colors[5], colors[6], colors[7], colors[4]);
-				glVertex3d(point[1], point[2], 1.0);
-				glVertex3d(point[0], point[2], 1.0);
-				glColor4d(0.0, 0.0, 0.0, 0.0);
-				glVertex3d(point[0]-p.shdw/2, point[2]+p.shdw/2, 0.9);
-				glVertex3d(point[1]+p.shdw, point[2]+p.shdw/2, 0.9);
+static unsigned int VBObuffer;
+static unsigned int shader;
+static float glBars[8];
 
-				// bottom side
-				glColor4d(colors[5], colors[6], colors[7], colors[4]);
-				glVertex3d(point[1], point[3], 1.0);
-				glVertex3d(point[0], point[3], 1.0);
-				glColor4d(0.0, 0.0, 0.0, 0.0);
-				glVertex3d(point[0]-p.shdw/2, point[3]-p.shdw, 0.9);
-				glVertex3d(point[1]+p.shdw, point[3]-p.shdw, 0.9);
-			}
-
-			if(p.gradients) {
-				double progress = (double)(point[2]-p.shdw)/(double)((unsigned int)p.h-p.shdw);
-				int gcMax = ceil((p.gradients-1.0)*progress);
-				double cutLenght = ((unsigned int)p.h-p.shdw)/(double)(p.gradients-1.0);
-				for(int gcPhase=0; gcPhase<gcMax; gcPhase++) {
-					if(gcPhase==gcMax-1) {
-						double barProgress = fmod(point[2]-1.0-(double)p.shdw, cutLenght)/cutLenght;
-						glColor4d(
-							gradColors[gcPhase*3]+(gradColors[gcPhase*3+3]-gradColors[gcPhase*3])*barProgress, 
-							gradColors[gcPhase*3+1]+(gradColors[gcPhase*3+4]-gradColors[gcPhase*3+1])*barProgress,
-							gradColors[gcPhase*3+2]+(gradColors[gcPhase*3+5]-gradColors[gcPhase*3+2])*barProgress, colors[3]);
-						glVertex3d(point[0], point[2], 1.0);
-						glVertex3d(point[1], point[2], 1.0);
-					} else {
-						glColor4d(gradColors[gcPhase*3+3], gradColors[gcPhase*3+4],
-							gradColors[gcPhase*3+5], colors[3]);
-						glVertex3d(point[0], cutLenght*(gcPhase+1)+point[3], 1.0);
-						glVertex3d(point[1], cutLenght*(gcPhase+1)+point[3], 1.0);
-					}
-					
-					glColor4d(gradColors[gcPhase*3], gradColors[gcPhase*3+1], gradColors[gcPhase*3+2], colors[3]);
-					glVertex3d(point[1], cutLenght*gcPhase+point[3], 1.0);
-					glVertex3d(point[0], cutLenght*gcPhase+point[3], 1.0);
-				}
-			} else {
-				glColor4d(colors[0],colors[1],colors[2],colors[3]);
-				glVertex3d(point[0], point[2], 1.0);
-				glVertex3d(point[1], point[2], 1.0);
-
-				glColor4d(colors[0], colors[1], colors[2], colors[3]);
-				glVertex3d(point[1], point[3], 1.0);
-				glVertex3d(point[0], point[3], 1.0);
-			}
-		glEnd();
+// yolo
+static const char* dumpAFile(char *filename, size_t *size) {
+	FILE *fp = fopen(filename, "ro");
+	if(!fp) {
+		fprintf(stderr, "this file broke lmao: %s\n", filename);
+		return NULL; // this crashes any misuse or mistreating programmer
 	}
+
+	// get the file size
+	fseek(fp, 0, SEEK_END);
+	(*size) = ftell(fp);
+	rewind(fp);
+
+	// muh memory allocation
+	char *content = malloc((*size)+1);
+	if(!content) {
+		fprintf(stderr, "computer is broken or user/programmer doesn't know what's (s)he doing!\n");
+		return NULL;
+	}
+
+	// read the damn file
+	fread(content, (*size), 1, fp);
+
+	// muh memory leaks
+	fclose(fp);
+
+	return content;
+}
+
+static unsigned int CompileShader(unsigned int type, char *source) {
+	unsigned int id = glCreateShader(type);
+	glShaderSource(id, 1, &source, NULL);
+	glCompileShader(id);
+
+	int result;
+	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+	if(result == GL_FALSE) {
+		int length;
+		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+		char *message = (char*)alloca(length*sizeof(char));
+		glGetShaderInfoLog(id, length, &length, message);
+		fprintf(stderr, "Failed to compile %s shader: %s\n", type==GL_VERTEX_SHADER? "vertex" : "fragment", message);
+
+		glDeleteShader(id);
+		return 0;
+	}
+
+	return id;
+}
+
+static unsigned int CreateShader(const char* vertexShader,
+								 const char* fragmentShader) {
+	unsigned int program = glCreateProgram();
+	unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+	unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+
+	glAttachShader(program, vs);
+	glAttachShader(program, fs);
+	glLinkProgram(program);
+	glValidateProgram(program);
+
+	glDeleteShader(vs);
+	glDeleteShader(fs);
+
+	return program;
+}
+
+void VBOGLsetup() {
+	glewInit();
+
+	glGenBuffers(1, &VBObuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, VBObuffer);
+
+	// draw over the entire screen essentially
+	// and let the shader do the actual work
+	glBars[0] = 0.0; glBars[1] = 0.0;
+	glBars[2] = p.w; glBars[3] = 0.0;
+	glBars[4] = p.w; glBars[5] = p.h;
+	glBars[6] = 0.0; glBars[7] = p.h;
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*8, glBars, GL_STATIC_READ);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_TRUE, sizeof(float)*2, 0);
+
+	size_t iDontCare;
+	const char *vertex = dumpAFile("default.vert", &iDontCare);
+	const char *fragment = dumpAFile("default.frag", &iDontCare);
+
+	shader = CreateShader(vertex, fragment);
+	glUseProgram(shader);
+}
+
+void VBOGLdestroy() {
+	//free(glBars);
+}
+
+int drawGLBars(int rest, int bars, float colors[12], float gradColors[24], int *f) {
+	glUniform4f(glGetUniformLocation(shader, "foreground_color"), 
+		colors[0], colors[1], colors[2], colors[3]);
+	glUniform4f(glGetUniformLocation(shader, "background_color"),
+		colors[8], colors[9], colors[10], colors[11]);
+	glUniform4f(glGetUniformLocation(shader, "shadow_color"), 
+		colors[4], colors[5], colors[6], colors[7]);
+	glUniform1i(glGetUniformLocation(shader, "shadow_size"), p.shdw);
+	glUniform3fv(glGetUniformLocation(shader, "gradient_color"), p.gradients, gradColors);
+	glUniform1i(glGetUniformLocation(shader, "gradients"), p.gradients);
+
+	glUniform1i(glGetUniformLocation(shader, "bars"), bars);
+	glUniform1i(glGetUniformLocation(shader, "rest"), rest);
+	glUniform1i(glGetUniformLocation(shader, "bar_width"), p.bw);
+	glUniform1i(glGetUniformLocation(shader, "bar_spacing"), p.bs);
+	glUniform1i(glGetUniformLocation(shader, "window_width"), p.w);
+	glUniform1i(glGetUniformLocation(shader, "window_height"), p.h);
+
+	for(int i=0; i<bars; i++) {
+		int a = p.h-p.shdw*2;
+		if(f[i]>a) f[i] = a;
+	}
+	glUniform1iv(glGetUniformLocation(shader, "f"), bars, f);
+
+	glBufferSubData(GL_ARRAY_BUFFER, 0, 8*sizeof(float), glBars);
+	glDrawArrays(GL_QUADS, 0, 4);
 	return 0;
 }
 #endif

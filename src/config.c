@@ -15,6 +15,10 @@
 #include <math.h>
 #include <limits.h>
 
+#ifdef WIN
+	#include <windows.h>
+#endif
+
 #include "output/graphical.h"
 #include "config.h"
 #include "shared.h"

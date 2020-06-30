@@ -421,7 +421,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				if (p.fixedbars * p.bw + p.fixedbars * p.bs - p.bs > p.w) p.autobars = 1;
 			}
 
-			//getting orignial numbers of barss incase of resize
+			//getting orignial numbers of bars incase of resize
 			if (p.autobars == 1)  {
 				bars = (p.w + p.bs) / (p.bw + p.bs);
 

@@ -1,6 +1,11 @@
 #ifndef H_GRAPHICAL
 #define H_GRAPHICAL
 
+#ifdef GL
+	#include <GL/glew.h>
+	int drawGLBars(int rest, int bars, float colors[12], float gradColors[24], int *f);
+#endif
+
 #ifdef GLX
 	#include <GL/glx.h>
 	extern GLXContext xavaGLXContext;
@@ -8,12 +13,9 @@
 	extern int GLXmode;
 #endif
 
-#ifdef GL
-	#include <GL/gl.h>
-	int drawGLBars(int rest, int bars, double colors[8], double gradColors[24], int *f);
-#endif
-
 void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int scrH, char *winPos);
+
+void VBOGLsetup();
 
 #define DEF_FG_COL 6
 #define DEF_BG_COL 0
