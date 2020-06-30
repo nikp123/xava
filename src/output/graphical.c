@@ -110,7 +110,8 @@ void VBOGLsetup() {
 }
 
 void VBOGLdestroy() {
-	//free(glBars);
+	free(p.vertex);
+	free(p.fragment);
 }
 
 int drawGLBars(int rest, int bars, float colors[12], float gradColors[24], int *f) {
