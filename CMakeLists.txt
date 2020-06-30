@@ -265,6 +265,8 @@ target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m ${FFTW3_LIBRARIES} pthread 
 install (TARGETS xava DESTINATION bin)
 install (FILES LICENSE DESTINATION share/licenses/xava)
 install (FILES example_files/config RENAME config.example DESTINATION share/xava)
+install (FILES assets/opengl/shaders/default.vert DESTINATION share/xava/opengl/shaders)
+install (FILES assets/opengl/shaders/default.frag DESTINATION share/xava/opengl/shaders)
 install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
 install (FILES assets/linux/xava.svg DESTINATION share/icons/hicolor/scalable/apps)
 
