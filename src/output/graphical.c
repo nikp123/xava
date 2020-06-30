@@ -49,35 +49,6 @@ static unsigned int VBObuffer;
 static unsigned int shader;
 static float glBars[8];
 
-// yolo
-static const char* dumpAFile(char *filename, size_t *size) {
-	FILE *fp = fopen(filename, "ro");
-	if(!fp) {
-		fprintf(stderr, "this file broke lmao: %s\n", filename);
-		return NULL; // this crashes any misuse or mistreating programmer
-	}
-
-	// get the file size
-	fseek(fp, 0, SEEK_END);
-	(*size) = ftell(fp);
-	rewind(fp);
-
-	// muh memory allocation
-	char *content = malloc((*size)+1);
-	if(!content) {
-		fprintf(stderr, "computer is broken or user/programmer doesn't know what's (s)he doing!\n");
-		return NULL;
-	}
-
-	// read the damn file
-	fread(content, (*size), 1, fp);
-
-	// muh memory leaks
-	fclose(fp);
-
-	return content;
-}
-
 static unsigned int CompileShader(unsigned int type, const char *source) {
 	unsigned int id = glCreateShader(type);
 	glShaderSource(id, 1, (const GLchar* const*)&source, NULL);
@@ -134,11 +105,7 @@ void VBOGLsetup() {
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_TRUE, sizeof(float)*2, 0);
 
-	size_t iDontCare;
-	const char *vertex = dumpAFile("default.vert", &iDontCare);
-	const char *fragment = dumpAFile("default.frag", &iDontCare);
-
-	shader = CreateShader(vertex, fragment);
+	shader = CreateShader(p.vertex, p.fragment);
 	glUseProgram(shader);
 }
 

@@ -143,6 +143,10 @@
 # 'mono' averages both channels and outputs left to right lowest to highest frequencies.
 ; channels = mono
 
+# Specify shader program that will render the visualizer
+# OpenGL currently supported only
+; shader = default
+
 
 [color]
 

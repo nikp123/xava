@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -10,12 +11,54 @@
 #include <windows.h>
 #endif
 
+#ifdef __linux__
+	#include <linux/limits.h>
+	#define MAX_PATH PATH_MAX
+#endif
+
+#if defined(__unix__)||defined(__APPLE__)
+	#define mkdir(dir) mkdir(dir, 0770)
+#else
+	#define mkdir(dir) mkdir(dir)
+#endif
+
+#include <errno.h>
+
 int xavaMkdir(char *dir) {
-	#if defined(__unix__)||defined(__APPLE__)
-		return mkdir(dir, 0770);
-	#else
-		return mkdir(dir);
-	#endif
+	/* Stolen from: https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950 */
+	/* Adapted from http://stackoverflow.com/a/2336245/119527 */
+	const size_t len = strlen(dir);
+	char _path[MAX_PATH];
+	char *p;
+
+	errno = 0;
+
+	/* Copy string so its mutable */
+	if (len > sizeof(_path)-1) {
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+	strcpy(_path, dir);
+
+	/* Iterate the string */
+	for (p = _path + 1; *p; p++) {
+		if (*p == '/') {
+			/* Temporarily truncate */
+			*p = '\0';
+
+			if (mkdir(_path) != 0) {
+				if (errno != EEXIST)
+					return -1;
+			}
+
+			*p = '/';
+		}
+	}
+
+	if (mkdir(_path) != 0) {
+		if (errno != EEXIST)
+			return -1;
+	}
 }
 
 int xavaGetConfigDir(char *configPath) {
@@ -95,3 +138,115 @@ unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 	#endif
 	return 0;
 }
+
+// size_t* is the filesize after reading
+char* readTextFile(char *filename, size_t *size) {
+	size_t k;
+
+	FILE *fp = fopen(filename, "ro");
+	if(!fp) {
+		fprintf(stderr, "%s is not readable/openable!\n", filename);
+		return NULL;
+	}
+
+	// get the file size
+	fseek(fp, 0, SEEK_END);
+	k = ftell(fp);
+	rewind(fp);
+
+	// obligatory memory allocation
+	char *content = malloc(k+1);
+	if(!content) {
+		fprintf(stderr, "!\n");
+		return NULL;
+	}
+
+	// read the damn file
+	fread(content, k, 1, fp);
+
+	// clean your memory, kids
+	fclose(fp);
+
+	// don't return file size on an invalid pointer
+	if(size!=NULL) (*size) = k;
+
+	return content;
+}
+
+// both arguments are relative to the paths within the individual folders as detected in the host OS
+_Bool loadDefaultConfigFile(char *origFile, char *destFile, char *destPath, char *subdir) {
+	FILE *fp;
+	if(xavaGetConfigDir(destPath)) {
+		fprintf(stderr, "No HOME found (ERR_HOMELESS), exiting...");
+		exit(EXIT_FAILURE);
+	}
+
+	strcat(destPath, subdir);
+
+	if(subdir[0] != '\0') {
+		#ifdef WIN
+			strcat(destPath, "\\");
+		#else
+			strcat(destPath, "/");
+		#endif
+	}
+
+
+	// config: create directory
+	xavaMkdir(destPath);
+
+	// config: adding default filename file
+	strcat(destPath, destFile);
+
+	fp = fopen(destPath, "r");
+	if (!fp) {
+		printf("Default %s doesn't exist in the current config folder. "
+			"Going to try to create the file at the correct destination...",
+			destFile);
+
+		const char *installPath = xavaGetInstallDir();
+		// don't trust sizeof(), it's evil
+		char *targetFile = malloc(strlen(installPath)+strlen(origFile)+strlen(subdir)+2);
+		strcpy(targetFile, installPath);
+		strcat(targetFile, subdir);
+		if(subdir[0] != '\0') {
+			#ifdef WIN
+				strcat(targetFile, "\\");
+			#else
+				strcat(targetFile, "/");
+			#endif
+		}
+		strcat(targetFile, origFile);
+
+		// because the program is not priviledged, read-only only
+		FILE *source = fopen(targetFile, "r");
+
+		if(!source) {
+			fprintf(stderr, "FAIL\nDefault %s doesn't exist. "
+				"Please provide one if you can!\n", targetFile);
+			free(targetFile);
+			return 1;
+		} else {
+			fp = fopen(destPath, "w");
+			if(!fp) {
+				fprintf(stderr, "FAIL\n Couldn't create %s! "
+					"Please check if you have the appopriate permissions!\n",
+					destPath);
+				return 1;
+			}
+
+			// Copy file in the most C way possible
+			short c = fgetc(source);
+			while (c != EOF) {
+				fputc(c, fp);
+				c = fgetc(source);
+			}
+			fclose(source);
+			fclose(fp);
+			free(targetFile);
+			printf("DONE\n");
+		}
+	}
+	return 0;
+}
+
