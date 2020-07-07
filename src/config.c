@@ -59,9 +59,7 @@
 
 // inode watching is a Linux(TM) feature
 // so watch out when you're compiling it
-#ifdef __linux__
 #include "misc/inode_watcher.h"
-#endif
 
 static struct supported {
 	size_t count;
@@ -219,28 +217,37 @@ void validate_config(void* params, dictionary *ini)
 	deleteSupported(&support);
 
 	// validate: shader
-	#ifdef GL
+	#if defined(GLX) 
 	if(GLXmode) {
+	#endif
+		#if defined(WIN) || defined(GLX)
 		char *fragmentShader = malloc(strlen(shader)+6);
 		char *vertexShader = malloc(strlen(shader)+6);
-		assert(!(fragmentShader&&vertexShader));
+		//assert(!(fragmentShader&&vertexShader));
 
 		sprintf(fragmentShader, "%s.frag", shader);
 		sprintf(vertexShader, "%s.vert", shader);
 
 		char path[MAX_PATH];
 
-		if(loadDefaultConfigFile(fragmentShader, fragmentShader, path, "opengl/shaders"))
+		#ifdef WIN
+			char *shaderSubPath = "opengl\\shaders";
+		#else
+			char *shaderSubPath = "opengl/shaders";
+		#endif
+		if(loadDefaultConfigFile(fragmentShader, fragmentShader, path, shaderSubPath))
 			exit(EXIT_FAILURE);
 		// this is assumed safe because of the statement above
 		p->fragment = readTextFile(path, NULL);
 
-		if(loadDefaultConfigFile(vertexShader, vertexShader, path, "opengl/shaders"))
+		if(loadDefaultConfigFile(vertexShader, vertexShader, path, shaderSubPath))
 			exit(EXIT_FAILURE);
 		p->vertex = readTextFile(path, NULL);
 
 		free(fragmentShader);
 		free(vertexShader);
+		#endif
+	#ifdef GLX
 	}
 	#endif
 

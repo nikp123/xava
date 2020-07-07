@@ -69,9 +69,7 @@
 	#include <iniparser.h>
 #endif
 
-#ifdef __linux__
-	#include "misc/inode_watcher.h"
-#endif
+#include "misc/inode_watcher.h"
 
 #include "output/graphical.h"
 #include "input/fifo.h"

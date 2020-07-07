@@ -9,6 +9,7 @@
 
 #ifdef __WIN32__
 #include <windows.h>
+#include <direct.h>
 #endif
 
 #ifdef __linux__
@@ -19,7 +20,7 @@
 #if defined(__unix__)||defined(__APPLE__)
 	#define mkdir(dir) mkdir(dir, 0770)
 #else
-	#define mkdir(dir) mkdir(dir)
+	#define mkdir(dir) _mkdir(dir)
 #endif
 
 #include <errno.h>
@@ -86,11 +87,11 @@ int xavaGetConfigDir(char *configPath) {
 	return 0;
 }
 
-const char *xavaGetInstallDir() {
+char *xavaGetInstallDir() {
 	#ifdef __WIN32__
 		// Windows uses widechars internally
 		WCHAR wpath[MAX_PATH];
-		char path[MAX_PATH];
+		char *path = malloc(MAX_PATH);
 
 		// Get path of where the executable is installed
 		HMODULE hModule = GetModuleHandleW(NULL);
@@ -143,7 +144,7 @@ unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 char* readTextFile(char *filename, size_t *size) {
 	size_t k;
 
-	FILE *fp = fopen(filename, "ro");
+	FILE *fp = fopen(filename, "r");
 	if(!fp) {
 		fprintf(stderr, "%s is not readable/openable!\n", filename);
 		return NULL;
@@ -204,10 +205,14 @@ _Bool loadDefaultConfigFile(char *origFile, char *destFile, char *destPath, char
 			"Going to try to create the file at the correct destination...",
 			destFile);
 
-		const char *installPath = xavaGetInstallDir();
+		char *installPath = xavaGetInstallDir();
 		// don't trust sizeof(), it's evil
 		char *targetFile = malloc(strlen(installPath)+strlen(origFile)+strlen(subdir)+2);
 		strcpy(targetFile, installPath);
+		#ifdef __WIN32__
+			// i hate when compilers force me into bullshit like this
+			free(installPath);
+		#endif
 		strcat(targetFile, subdir);
 		if(subdir[0] != '\0') {
 			#ifdef WIN

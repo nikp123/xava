@@ -19,8 +19,8 @@ TIMECAPS xavaPeriod;
 unsigned int *gradientColor;
 unsigned int shadowSize;
 
-static double glColors[8];
-static double gradColors[24];
+static float glColors[8];
+static float gradColors[24];
 
 // These hold the size and position of the window if you're switching to fullscreen mode
 // because Windows (or rather WIN32) doesn't do it internally
@@ -108,18 +108,22 @@ void clear_screen_win(void) {
 	glColors[1] = ARGB_G_32(p.col)/255.0;
 	glColors[2] = ARGB_B_32(p.col)/255.0;
 	glColors[3] = p.transF ? p.foreground_opacity : 1.0;
-	glColors[4] = ARGB_A_32(p.shdw_col)/255.0;
-	glColors[5] = ARGB_R_32(p.shdw_col)/255.0;
-	glColors[6] = ARGB_G_32(p.shdw_col)/255.0;
-	glColors[7] = ARGB_B_32(p.shdw_col)/255.0;
+
+	glColors[4] = ARGB_R_32(p.shdw_col)/255.0;
+	glColors[5] = ARGB_G_32(p.shdw_col)/255.0;
+	glColors[6] = ARGB_B_32(p.shdw_col)/255.0;
+	glColors[7] = ARGB_A_32(p.shdw_col)/255.0;
+
+	glColors[8] = ARGB_R_32(p.bgcol)/255.0;
+	glColors[9] = ARGB_G_32(p.bgcol)/255.0;
+	glColors[10] = ARGB_B_32(p.bgcol)/255.0;
+	glColors[11] = p.transF ? p.background_opacity : 1.0;
 
 	for(int i=0; i<p.gradients; i++) {
 		gradColors[i*3] = ARGB_R_32(gradientColor[i])/255.0;
 		gradColors[i*3+1] = ARGB_G_32(gradientColor[i])/255.0;
 		gradColors[i*3+2] = ARGB_B_32(gradientColor[i])/255.0;;
 	}
-
-	//glClearColor(ARGB_R_32(p.bgcol)/255.0, ARGB_G_32(p.bgcol)/255.0, ARGB_B_32(p.bgcol)/255.0, 0.0);
 }
 
 unsigned char register_window_win(HINSTANCE HIn) {
@@ -164,6 +168,8 @@ void GetDesktopResolution(int *horizontal, int *vertical) {
 }
 
 void init_opengl_win(void) {
+	VBOGLsetup();
+
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL);
@@ -176,7 +182,6 @@ void init_opengl_win(void) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	glClearColor(0, 0, 0, 0);
 	return;
 }
 
@@ -344,6 +349,7 @@ int init_window_win(void) {
 }
 
 int apply_win_settings(void) {
+
 	//ReleaseDC(xavaWinWindow, xavaWinFrame);
 
 	if(p.fullF) {
@@ -422,7 +428,7 @@ void draw_graphical_win(int bars, int rest, int f[200], int flastd[200]) {
 	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
 
 	// clear color and calculate pixel witdh in double
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
 
