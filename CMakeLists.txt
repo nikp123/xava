@@ -10,6 +10,12 @@ option(PULSEAUDIO "PULSEAUDIO" ON)
 option(SNDIO "SNDIO" ON)
 option(PORTAUDIO "PORTAUDIO" ON)
 
+# Fix pkg-config for cross-builds (such as MinGW on ArchLinux)
+set(CMAKE_SYSROOT "${CMAKE_INSTALL_PREFIX}")
+
+set(ENV{PKG_CONFIG_DIR} "")
+set(ENV{PKG_CONFIG_LIBDIR} "${CMAKE_SYSROOT}/lib/pkgconfig:${CMAKE_SYSROOT}/share/pkgconfig")
+set(ENV{PKG_CONFIG_SYSROOT_DIR} ${CMAKE_SYSROOT})
 
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug)
