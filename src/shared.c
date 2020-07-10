@@ -60,6 +60,7 @@ int xavaMkdir(char *dir) {
 		if (errno != EEXIST)
 			return -1;
 	}
+	return 0;
 }
 
 int xavaGetConfigDir(char *configPath) {
