@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -10,12 +13,54 @@
 #include <windows.h>
 #endif
 
+#ifdef __linux__
+	// I've gotten this from a stranger on the internet
+	#include <linux/limits.h>
+	#define MAX_PATH PATH_MAX
+#endif
+
+#if defined(__unix__)||defined(__APPLE__)
+	#define mkdir(dir) mkdir(dir, 0770)
+#else
+	#define mkdir(dir) mkdir(dir)
+#endif
+
 int xavaMkdir(char *dir) {
-	#if defined(__unix__)||defined(__APPLE__)
-		return mkdir(dir, 0770);
-	#else
-		return mkdir(dir);
-	#endif
+	/* Stolen from: https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950 */
+	/* Adapted from http://stackoverflow.com/a/2336245/119527 */
+	const size_t len = strlen(dir);
+	char _path[MAX_PATH];
+	char *p;
+
+	errno = 0;
+
+	/* Copy string so its mutable */
+	if (len > sizeof(_path)-1) {
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+	strcpy(_path, dir);
+
+	/* Iterate the string */
+	for (p = _path + 1; *p; p++) {
+		if (*p == '/') {
+			/* Temporarily truncate */
+			*p = '\0';
+
+			if (mkdir(_path) != 0) {
+				if (errno != EEXIST)
+					return -1;
+			}
+
+			*p = '/';
+		}
+	}
+
+	if (mkdir(_path) != 0) {
+		if (errno != EEXIST)
+			return -1;
+	}
+	return 0;
 }
 
 int xavaGetConfigDir(char *configPath) {

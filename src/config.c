@@ -72,7 +72,7 @@ void appendSupported(struct supported *support, char *appendName, int appendNum)
 	const char **names = realloc(support->names, (++support->count)*sizeof(char*));
 	names[support->count-1] = appendName;
 	support->names=names;
-	int *numbers = realloc(support->numbers, support->count*sizeof(int*));
+	int *numbers = realloc(support->numbers, support->count*sizeof(int));
 	numbers[support->count-1] = appendNum;
 	support->numbers=numbers;
 }
