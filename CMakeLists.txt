@@ -11,11 +11,13 @@ option(SNDIO "SNDIO" ON)
 option(PORTAUDIO "PORTAUDIO" ON)
 
 # Fix pkg-config for cross-builds (such as MinGW on ArchLinux)
-set(CMAKE_SYSROOT "${CMAKE_INSTALL_PREFIX}")
+if(CMAKE_FIND_ROOT_PATH)
+    set(CMAKE_SYSROOT "${CMAKE_FIND_ROOT_PATH}")
 
-set(ENV{PKG_CONFIG_DIR} "")
-set(ENV{PKG_CONFIG_LIBDIR} "${CMAKE_SYSROOT}/lib/pkgconfig:${CMAKE_SYSROOT}/share/pkgconfig")
-set(ENV{PKG_CONFIG_SYSROOT_DIR} ${CMAKE_SYSROOT})
+    set(ENV{PKG_CONFIG_DIR} "")
+    set(ENV{PKG_CONFIG_LIBDIR} "${CMAKE_SYSROOT}/lib/pkgconfig:${CMAKE_SYSROOT}/share/pkgconfig")
+    set(ENV{PKG_CONFIG_SYSROOT_DIR} ${CMAKE_SYSROOT})
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug)
@@ -265,6 +267,7 @@ target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m ${FFTW3_LIBRARIES} pthread 
 install (TARGETS xava DESTINATION bin)
 install (FILES LICENSE DESTINATION share/licenses/xava)
 install (FILES example_files/config RENAME config.example DESTINATION share/xava)
-install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
-install (FILES assets/linux/xava.svg DESTINATION share/icons/hicolor/scalable/apps)
-
+if(UNIX AND NOT APPLE)
+    install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
+    install (FILES assets/linux/xava.svg DESTINATION share/icons/hicolor/scalable/apps)
+endif()
