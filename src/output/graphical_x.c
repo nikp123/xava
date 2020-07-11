@@ -283,7 +283,7 @@ int render_gradient_x(void) {
 
 	for(unsigned int I = 0; I < (unsigned int)p.h; I++) {
 		// don't touch +1.0/w_h at the end fixes some math problems
-		double step = (double)(I%((unsigned int)p.h/(p.gradients-1)))/(double)((unsigned int)p.h/(p.gradients-1))+2.0/p.h;
+		double step = (double)(I%((unsigned int)p.h/(p.gradients-1)))/(double)((unsigned int)p.h/(p.gradients-1));
 
 		// to future devs: this isnt ARGB. this is something internal that cannot be changed by simple means
 
