@@ -117,7 +117,7 @@ endif()
 
 # Xorg
 if(X11)
-	pkg_check_modules(X11 QUIET x11 xfixes)
+	pkg_check_modules(X11 QUIET x11 xfixes xrandr)
 	if(X11_FOUND)
 		add_definitions(-DXLIB)
 		list(APPEND ADDITIONAL_SOURCES "src/output/graphical_x.c")
@@ -136,7 +136,7 @@ if(X11)
 			message(STATUS "GL and or Xrender library not found")
 		endif()
 	else()
-		message(STATUS "X11 and/or Xfixes library not found")
+		message(STATUS "X11, Xrandr and/or Xfixes library not found")
 	endif()
 endif()
 

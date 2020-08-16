@@ -7,6 +7,7 @@
 #include <X11/XKBlib.h>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/extensions/Xrandr.h>
 #ifdef GLX
 #include <X11/extensions/Xrender.h>
 #endif
@@ -33,6 +34,8 @@ static Atom wm_delete_window, wmState, fullScreen, mwmHintsProperty, wmStateBelo
 static XClassHint xavaXClassHint;
 static XWMHints xavaXWMHints;
 static XEvent xev;
+static Bool xavaSupportsRR;
+static int xavaRREventBase;
 
 #ifdef GLX
 static int VisData[] = {
@@ -202,7 +205,7 @@ int init_window_x(void)
 	xavaXClassHint.res_class = (char *)"XAVA";
 	XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, NULL, 0, NULL, &xavaXWMHints, &xavaXClassHint);
 
-	XSelectInput(xavaXDisplay, xavaXWindow, VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
+	XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask | VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
 
 	#ifdef GLX
 		if(GLXmode) if(XGLInit()) return 1;
@@ -271,6 +274,23 @@ int init_window_x(void)
 	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &xwa);
 	if(strcmp(p.winA, "none"))
 		XMoveWindow(xavaXDisplay, xavaXWindow, p.wx, p.wy);
+
+	// query for the RR extension in X11
+	int error;
+	xavaSupportsRR = XRRQueryExtension(xavaXDisplay, &xavaRREventBase, &error);
+	if(xavaSupportsRR) {
+		int rr_major, rr_minor;
+
+		if(XRRQueryVersion(xavaXDisplay, &rr_major, &rr_minor)) {
+			int rr_mask = RRScreenChangeNotifyMask;
+			if(rr_major == 1 && rr_minor <= 1) {
+				rr_mask &= ~(RRCrtcChangeNotifyMask |
+					RROutputChangeNotifyMask |
+					RROutputPropertyNotifyMask);
+			}
+			XRRSelectInput(xavaXDisplay, xavaXWindow, rr_mask);
+		}
+	}
 
 	return 0;
 }
@@ -389,7 +409,6 @@ int get_window_input_x(void) {
 
 	while(XPending(xavaXDisplay)) {
 		XNextEvent(xavaXDisplay, &xavaXEvent);
-
 		switch(xavaXEvent.type) {
 			case KeyPress:
 			{
@@ -469,6 +488,11 @@ int get_window_input_x(void) {
 				if((Atom)xavaXEvent.xclient.data.l[0] == wm_delete_window)
 					return -1;
 				break;
+			default:
+				if(xavaRREventBase + RRScreenChangeNotify) {
+					printf("Display change detected - Restarting...\n");
+					return 1;
+				}
 		}
 	}
 	return action;
