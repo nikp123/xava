@@ -33,6 +33,10 @@
 ; lower_cutoff_freq = 26
 ; higher_cutoff_freq = 15000
 
+# This allows XAVA to restart when the display settings are changed
+# As this can cause constant reloading (https://github.com/nikp123/xava/issues/20)
+# it is left off by default (X11 only)
+; reload_on_display_configure = false
 
 
 [window]

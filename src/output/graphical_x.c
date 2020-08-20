@@ -288,7 +288,9 @@ int init_window_x(void)
 					RROutputChangeNotifyMask |
 					RROutputPropertyNotifyMask);
 			}
-			XRRSelectInput(xavaXDisplay, xavaXWindow, rr_mask);
+
+			// listen for display configure events only if enabled
+			if(p.reloadOnDC) XRRSelectInput(xavaXDisplay, xavaXWindow, rr_mask);
 		}
 	}
 

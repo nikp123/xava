@@ -517,6 +517,7 @@ void load_config(char *configPath, void* params)
 	p->overshoot = iniparser_getint(ini, "general:overshoot", 0);
 	p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 26);
 	p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 15000);
+	p->reloadOnDC = iniparser_getboolean(ini, "general:reload_on_display_configure", 0);
 
 	// config: window
 	#ifdef GLX
