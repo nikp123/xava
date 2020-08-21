@@ -491,7 +491,7 @@ int get_window_input_x(void) {
 					return -1;
 				break;
 			default:
-				if(xavaRREventBase + RRScreenChangeNotify) {
+				if(xavaRREventBase && RRScreenChangeNotify) {
 					printf("Display change detected - Restarting...\n");
 					return 1;
 				}
