@@ -24,7 +24,7 @@ function GetLatestReleaseInfo() {
 			releaseHTML += "</h3>";
 			releaseHTML += md.render(release[i].body);
 			for (var j = 0; j < release[i].assets.length; j++) {
-				releaseHTML += "<a href=\""  + "\">Download " + release[i].assets[j].name + "</a> (downloads " + release[i].assets[j].download_count + ")<br>";
+				releaseHTML += "<a href=\"" + release[i].assets[j].browser_download_url + "\">Download " + release[i].assets[j].name + "</a> (downloads " + release[i].assets[j].download_count + ")<br>";
 			}
 			releaseHTML += "<a href=\"" + release[i].tarball_url + "\">Download as tarball</a><br>";
 			releaseHTML += "<a href=\"" + release[i].zipball_url + "\">Download as .zip</a><br>";
