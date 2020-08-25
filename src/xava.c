@@ -69,7 +69,7 @@
 	#include <iniparser.h>
 #endif
 
-#ifdef __linux__
+#if defined(__linux__)||defined(WIN)
 	#include "misc/inode_watcher.h"
 #endif
 

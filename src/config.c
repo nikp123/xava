@@ -48,7 +48,7 @@
 
 // inode watching is a Linux(TM) feature
 // so watch out when you're compiling it
-#ifdef __linux__
+#if defined(__linux__)||defined(WIN)
 #include "misc/inode_watcher.h"
 #endif
 
