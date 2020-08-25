@@ -88,11 +88,11 @@ int xavaGetConfigDir(char *configPath) {
 	return 0;
 }
 
-const char *xavaGetInstallDir() {
+char *xavaGetInstallDir() {
 	#ifdef __WIN32__
 		// Windows uses widechars internally
 		WCHAR wpath[MAX_PATH];
-		char path[MAX_PATH];
+		char *path = malloc(MAX_PATH);
 
 		// Get path of where the executable is installed
 		HMODULE hModule = GetModuleHandleW(NULL);
@@ -107,7 +107,8 @@ const char *xavaGetInstallDir() {
 		path[strlen(path)-executableNameSize] = '\0';
 	#else 
 		// everything non-windows is simple as fuck, go look at the mess above
-		const char *path = PREFIX"/share/"PACKAGE"/";
+		const char *path = malloc(strlen(PREFIX"/share/"PACKAGE"/"));
+		strcpy(path, PREFIX"/share/"PACKAGE"/");
 	#endif
 	return path;
 }

@@ -389,10 +389,11 @@ void load_config(char *configPath, void* params)
 			printf("Default config doesn't exist!\n"
 					"Trying to find a default config file...");
 
-			const char *installPath = xavaGetInstallDir();
+			char *installPath = xavaGetInstallDir();
 			// don't trust sizeof(), it's evil
 			char *targetFile = malloc(strlen(installPath)+strlen(configFile)+1);
 			strcpy(targetFile, installPath);
+			free(installPath);
 			strcat(targetFile, configFile);
 
 			// because the program is not priviledged, read-only only
