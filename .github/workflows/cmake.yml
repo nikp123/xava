@@ -1,0 +1,49 @@
+language: cpp
+
+dist: bionic
+
+matrix:
+    include:
+      - os: linux
+        compiler: gcc
+        addons:
+          apt:
+            update: true
+            packages:
+              - libfftw3-dev
+              - libasound2-dev
+              - libpulse-dev
+              - libx11-dev
+              - libsdl2-dev
+              - portaudio19-dev
+              - cmake
+              - git
+        cache: ccache
+
+git:
+ depth: false
+ submodules: true
+
+script:
+ - mkdir build
+ - cd build
+ - cmake -DCMAKE_BUILD_TYPE=Release -DSHMEM=ON ..
+ - make
+ - make clean
+ - cmake -DCMAKE_BUILD_TYPE=Release -DSDL2=ON -DX11=OFF -DALSA=OFF -DPULSEAUDIO=OFF -DSNDIO=OFF -DPORTAUDIO=OFF ..
+ - make
+ - make clean
+ - cmake -DCMAKE_BUILD_TYPE=Release -DSDL2=OFF -DX11=ON -DALSA=OFF -DPULSEAUDIO=OFF -DSNDIO=OFF -DPORTAUDIO=OFF ..
+ - make
+ - make clean
+ - cmake -DCMAKE_BUILD_TYPE=Release -DSDL2=ON -DX11=OFF -DALSA=ON -DPULSEAUDIO=OFF -DSNDIO=OFF -DPORTAUDIO=OFF ..
+ - make
+ - make clean
+ - cmake -DCMAKE_BUILD_TYPE=Release -DSDL2=ON -DX11=OFF -DALSA=OFF -DPULSEAUDIO=ON -DSNDIO=OFF -DPORTAUDIO=OFF ..
+ - make
+ - make clean
+ - cmake -DCMAKE_BUILD_TYPE=Release -DSDL2=ON -DX11=OFF -DALSA=OFF -DPULSEAUDIO=OFF -DSNDIO=ON -DPORTAUDIO=OFF ..
+ - make
+ - make clean
+ - cmake -DCMAKE_BUILD_TYPE=Release -DSDL2=ON -DX11=OFF -DALSA=OFF -DPULSEAUDIO=OFF -DSNDIO=OFF -DPORTAUDIO=ON ..
+ - make
