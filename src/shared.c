@@ -65,11 +65,9 @@ int xavaMkdir(char *dir) {
 
 int xavaGetConfigDir(char *configPath) {
 	#if defined(__unix__)||defined(__APPLE__)
-		char *configFile = "config";
 		char *configHome = getenv("XDG_CONFIG_HOME");
 	#elif defined(WIN)
 		// editing files without an extension on windows is a pain
-		char *configFile = "config.cfg";
 		char *configHome = getenv("APPDATA");
 	#endif
 	// don't worry, this will never happen on windows unless you are running like 98
