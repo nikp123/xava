@@ -236,7 +236,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	int bars = 25;
 	int sourceIsAuto = 1;
-	double smh;
+	double smh = 0.0;
 	double *inl,*inr;
 	unsigned long oldTime = 0;
 
