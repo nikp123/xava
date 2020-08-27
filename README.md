@@ -135,8 +135,6 @@ XAVA is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
 
 ### VoidLinux
 
-> NOTE: Currently unavailable.
-
 XAVA is available in the Void repos:
 
     xbps-install xava
