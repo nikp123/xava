@@ -107,7 +107,7 @@ char *xavaGetInstallDir() {
 		path[strlen(path)-executableNameSize] = '\0';
 	#else 
 		// everything non-windows is simple as fuck, go look at the mess above
-		const char *path = malloc(strlen(PREFIX"/share/"PACKAGE"/"));
+		const char *path = malloc(strlen(PREFIX"/share/"PACKAGE"/") + 1);
 		strcpy(path, PREFIX"/share/"PACKAGE"/");
 	#endif
 	return path;
