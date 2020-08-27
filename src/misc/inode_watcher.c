@@ -71,6 +71,7 @@ void *watchFileProcess(void *name) {
 	inotify_rm_watch(fd, wd);
 	close(fd);
 	alive = 0;
+	return NULL;
 }
 #endif
 
@@ -101,6 +102,7 @@ void *watchFileProcess(void *name) {
 	}
 	free(name);
 	alive = 0;
+	return NULL;
 }
 #endif
 
