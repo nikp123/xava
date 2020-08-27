@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 {
 	// general: define variables
 	pthread_t  p_thread;
-	int thr_id;
+	//int thr_id;
 
 	int sleep = 0;
 	int i, n, o, height, c, rest, silence;
@@ -397,7 +397,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			#endif
 		}
 
-		thr_id = pthread_create(&p_thread, NULL, xavaInput, (void*)&audio);
+		// thr_id = below
+		pthread_create(&p_thread, NULL, xavaInput, (void*)&audio);
 		if (p.highcf > audio.rate / 2) {
 			cleanup();
 			fprintf(stderr,
