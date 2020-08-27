@@ -498,7 +498,7 @@ void load_config(char *configPath, void* params)
 		}
 		p->gradient_colors = (char **)malloc(sizeof(char*) * p->gradients);
 		for(int i = 0;i < p->gradients;i++){
-			char ini_config[23];
+			char ini_config[33];
 			sprintf(ini_config, "color:gradient_color_%d", (i + 1));
 			p->gradient_colors[i] = (char *)iniparser_getstring(ini, ini_config, NULL);
 			if(p->gradient_colors[i] == NULL){
