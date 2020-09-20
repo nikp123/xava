@@ -323,8 +323,8 @@ int render_gradient_x(void) {
 }
 
 void clear_screen_x(void) {
-	if(GLXmode) {
 	#ifdef GLX
+	if(GLXmode) {
 		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p.transF ? 1.0*p.background_opacity : 1.0); // TODO BG transparency
 		glColors[0] = xcol.red/65535.0;
 		glColors[1] = xcol.green/65535.0;
@@ -337,8 +337,9 @@ void clear_screen_x(void) {
 			glColors[6] = ARGB_G_32(p.shdw_col);
 			glColors[7] = ARGB_B_32(p.shdw_col);
 		}
+	} else
 	#endif
-	} else {
+	{
 		XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
 		XClearWindow(xavaXDisplay, xavaXWindow);
 
@@ -379,8 +380,8 @@ int apply_window_settings_x(void)
 	XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
 	// do the usual stuff :P
+	#ifdef GLX
 	if(GLXmode){
-		#ifdef GLX
 		glViewport(0, 0, p.w, p.h);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -391,8 +392,8 @@ int apply_window_settings_x(void)
 
 		// Vsync causes problems on NVIDIA GPUs, looking for possible workarounds/fixes
 		glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p.vsync);
-		#endif
 	}
+	#endif
 	clear_screen_x();
 
 	if(!p.interactF){
@@ -509,8 +510,8 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 		yoffset+=p.wy;
 	}
 
+	#ifdef GLX
 	if(GLXmode) {
-		#ifdef GLX
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		for(int i=0; i<p.gradients; i++) {
@@ -523,8 +524,9 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 		glXSwapBuffers(xavaXDisplay, xavaXWindow);
 		glFinish();
 		glXWaitGL();
-		#endif
-	} else {
+	} else 
+	#endif
+	{
 		// draw bars on the X11 window
 		for(int i = 0; i < bars; i++) {
 			// this fixes a rendering bug

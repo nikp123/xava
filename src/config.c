@@ -240,7 +240,7 @@ void validate_config(void* params, dictionary *ini)
 				p->vsync = 0;
 				break;
 		#endif
-		#ifdef XLIB
+                #if defined(XLIB)&&defined(GLX)
 			case X11_DISPLAY_NUM:
 				if(!GLXmode) p->vsync = 0;
 				break;
