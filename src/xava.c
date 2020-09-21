@@ -620,7 +620,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						fftw_execute(pl);
 						separate_freq_bands(outl, calcbars, 1, p.sens, p.ignore, audio.fftsize);
 					}
-				} else { //**if in sleep mode wait and continue**//
+				} else { // if in sleep mode wait and continue
 					#ifdef DEBUG
 						printw("no sound detected for 5 sec, going to sleep mode\n");
 					#endif
@@ -716,8 +716,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					if(f[o] > p.h) f[o] = p.h;
 				}
 
-				//autmatic sens adjustment
-				if (p.autosens) {
+				// automatic sens adjustment
+				if (p.autosens&&!silence) {
+					// don't adjust on complete silence
+					// as when switching tracks for example
+					
 					for (o = 0; o < bars; o++) {
 						if (f[o] > height ) {
 							senseLow = false;
@@ -725,7 +728,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 							break;
 						}
 						if (senseLow && !silence) p.sens = p.sens * 1.01;
-					if (o == bars - 1) p.sens = p.sens * 1.002;
+					if (o == bars - 1) p.sens = p.sens * 1.0002;
 					}
 				}
 
