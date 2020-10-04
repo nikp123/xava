@@ -592,14 +592,19 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 				// process: populate input buffer and check if input is present
 				silence = 1;
-				for (i = 0; i < (2 * (audio.fftsize / 2 + 1)); i++) {
-					if (i < audio.fftsize) {
-						inl[i] = audio.audio_out_l[i];
-						if (p.stereo) inr[i] = audio.audio_out_r[i];
-						if (p.stereo ? inl[i] || inr[i] : inl[i]) silence = 0;
-					} else {
-						inl[i] = 0;
-						if (p.stereo) inr[i] = 0;
+				for (i = 0; i < audio.fftsize+2; i++) {
+					inl[i] = audio.audio_out_l[i];
+					if(p.stereo) inr[i] = audio.audio_out_r[i];
+				}
+
+				for (i = 0; i < audio.fftsize+2; i++) {
+					if(inl[i]) {
+						silence = 0;
+						break;
+					}
+					if(p.stereo&&inr[i]) {
+						silence = 0;
+						break;
 					}
 				}
 
