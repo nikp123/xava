@@ -472,7 +472,7 @@ void load_config(char *configPath, void* params)
 
 	p->inputsize = (int)exp2((float)iniparser_getint(ini, "smoothing:input_size", 12));
 	p->fftsize = (int)exp2((float)iniparser_getint(ini, "smoothing:fft_size", 14));
-	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 1.2);
+	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 0.0);
 	p->waves = iniparser_getint(ini, "smoothing:waves", 0);
 	p->integral = iniparser_getdouble(ini, "smoothing:integral", 85);
 	p->gravity = 50.0 * iniparser_getdouble(ini, "smoothing:gravity", 100);

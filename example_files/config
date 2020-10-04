@@ -180,8 +180,8 @@
 # Higher values means smoother, but less precise. 0 to disable.
 ; integral = 85
 
-# Disables or enables the so-called "Monstercat smoothing" with or without "waves". Set to 0 to disable. 
-; monstercat = 1.2
+# Disables or enables the so-called "Monstercat smoothing" with or without "waves". Set to 0 to disable (default).
+; monstercat = 1.0
 ; waves = 0
 
 # Set gravity percentage for "drop off". Higher values means bars will drop faster.
