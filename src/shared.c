@@ -19,6 +19,11 @@
 	#define MAX_PATH PATH_MAX
 #endif
 
+#ifdef __APPLE__
+	#include <sys/syslimits.h>
+	#define MAX_PATH PATH_MAX 
+#endif
+
 #if defined(__unix__)||defined(__APPLE__)
 	#define mkdir(dir) mkdir(dir, 0770)
 #else
