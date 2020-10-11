@@ -186,7 +186,7 @@ void monstercat_filter(int bars, int waves, double monstercat, int *data) {
 			}
 		}
 	} else if (monstercat > 0) {
-		for (z = 0; z < bars; z++) {
+		for (z = 0; z < (bars/3); z++) {
 			//if (f[z] < 1)f[z] = 1;
 			for (m_y = z - 1; m_y >= 0; m_y--) {
 				de = z - m_y;
