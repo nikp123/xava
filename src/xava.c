@@ -498,11 +498,12 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			rest = (p.w - bars * p.bw - bars * p.bs + p.bs) / 2;
 			if (rest < 0)rest = 0;
 
-			#ifdef DEBUG
-				printw("height: %d width: %d bars:%d bar width: %d rest: %d\n",
-							 w,
-							 h, bars, p.bw, rest);
-			#endif
+			// TODO
+			//#ifdef DEBUG
+			//	printw("height: %d width: %d bars:%d bar width: %d rest: %d\n",
+			//				 w,
+			//				 h, bars, p.bw, rest);
+			//#endif
 
 			if (p.stereo) bars = bars / 2; // in stereo onle half number of bars per channel
 
@@ -522,27 +523,32 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				fc[n] = pow(powf(n, (p.logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0),
 								 freqconst)+p.lowcf;
 				fre[n] = fc[n] / (audio.rate / 2); 
-				//remember nyquist!, pr my calculations this should be rate/2 
-				//and  nyquist freq in M/2 but testing shows it is not... 
-				//or maybe the nq freq is in M/4
+				// Remember nyquist!, pr my calculations this should be rate/2 
+				// and  nyquist freq in M/2 but testing shows it is not... 
+				// or maybe the nq freq is in M/4
 
 				//lfc stores the lower cut frequency foo each bar in the fft out buffer
-				lcf[n] = fre[n] * (audio.fftsize /2);
+				lcf[n] = floor(fre[n] * (audio.fftsize/2));
 
 				if (n != 0) {
 					//hfc holds the high cut frequency for each bar
-					hcf[n-1] = lcf[n]-1; 
+
+					// I know it's not precise, but neither are integers
+					// You can see why in https://github.com/nikp123/xava/issues/29
+					// I did reverse the "next_bar_lcf-1" change
+					hcf[n-1] = lcf[n]; 
 				}
 
 				#ifdef DEBUG
 					if (n != 0) {
-						mvprintw(n,0,"%d: %f -> %f (%d -> %d) \n", n, 
-							fc[n - 1], fc[n], lcf[n - 1],
-								hcf[n - 1]);
-							}
+						printf("%d: %f -> %f (%d -> %d) \n", 
+							n, fc[n - 1], fc[n], lcf[n - 1], hcf[n - 1]);
+					}
 				#endif
 			}
 			hcf[n-1] = p.highcf*audio.fftsize/audio.rate;
+
+
 
 			// process: weigh signal to frequencies height and EQ
 			for (n = 0; n < calcbars; n++) {
@@ -585,11 +591,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 				//if (cont == 0) break;
 
-				#ifdef DEBUG
-					//clear();
-					refresh();
-				#endif
-
 				// process: populate input buffer and check if input is present
 				silence = 1;
 				for (i = 0; i < audio.fftsize+2; i++) {
@@ -626,9 +627,10 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						separate_freq_bands(outl, calcbars, 1, p.sens, p.ignore, audio.fftsize);
 					}
 				} else { // if in sleep mode wait and continue
-					#ifdef DEBUG
-						printw("no sound detected for 5 sec, going to sleep mode\n");
-					#endif
+					// TODO
+					//#ifdef DEBUG
+					//	printw("no sound detected for 5 sec, going to sleep mode\n");
+					//#endif
 					// wait 100ms, then check sound again.
 					xavaSleep(100, 0);
 
@@ -695,10 +697,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						//f[o] = f[o] - pow(div, 10) * (height + 1); 
 						fmem[o] = fmem[o] * (1 - div / 20); 
 
-						#ifdef DEBUG
-							mvprintw(o,0,"%d: f:%f->%f (%d->%d), k-value: %f, peak:%d \n",
-								o, fc[o], fc[o + 1], lcf[o], hcf[o], k[o], f[o]);
-						#endif
+						// TODO
+						//#ifdef DEBUG
+						//	mvprintw(o,0,"%d: f:%f->%f (%d->%d), k-value: %f, peak:%d \n",
+						//		o, fc[o], fc[o + 1], lcf[o], hcf[o], k[o], f[o]);
+						//#endif
 					}
 				}
 
