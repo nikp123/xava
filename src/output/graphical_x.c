@@ -104,34 +104,36 @@ int XGLInit(void) {
 #endif
 
 // Pull from the terminal colors, and afterwards, do the usual
-#define snatchColor(name, colorStr, colorNum, colorObj)  \
-	if(!strcmp(colorStr, "default")) { \
-		if(databaseName) { \
-			if(XrmGetResource(xavaXResDB, name, NULL, &type, &value)) \
-				XParseColor(xavaXDisplay, xavaXColormap, value.addr, &colorObj); \
-		} else { \
-			char tempColorStr[8]; \
-			sprintf(tempColorStr, "#%06x", colorNum); \
-			XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, &colorObj); \
-		} \
-	} else { \
-		char tempColorStr[8]; \
-		sprintf(tempColorStr, "#%06x", colorNum); \
-		XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, &colorObj); \
-	} \
-	XAllocColor(xavaXDisplay, xavaXColormap, &colorObj); \
+void snatchColor(char *name, char *colorStr, int colorNum, XColor *colorObj,
+		char *databaseName, XrmDatabase *xavaXResDB) {
+	XrmValue value;
+	char *type;
+	if(!strcmp(colorStr, "default")) {
+		if(databaseName) {
+			if(XrmGetResource(*xavaXResDB, name, NULL, &type, &value))
+				XParseColor(xavaXDisplay, xavaXColormap, value.addr, colorObj);
+		} else {
+			char tempColorStr[8];
+			sprintf(tempColorStr, "#%06x", colorNum);
+			XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, colorObj);
+		}
+	} else {
+		char tempColorStr[8];
+		sprintf(tempColorStr, "#%06x", colorNum);
+		XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, colorObj);
+	}
+	XAllocColor(xavaXDisplay, xavaXColormap, colorObj);
+}
 
 void calculateColors(void) {
-	char *type;
-	XrmValue value;
-	XrmDatabase xavaXResDB;
+	XrmInitialize();
+	XrmDatabase xavaXResDB = NULL;
 	char *databaseName = XResourceManagerString(xavaXDisplay);
 	if(databaseName) {
 		xavaXResDB = XrmGetStringDatabase(databaseName);
-		XrmInitialize();
 	}
-	snatchColor("color1", p.color, p.col, xcol);
-	snatchColor("color0", p.bcolor, p.bgcol, xbgcol);
+	snatchColor("color5", p.color, p.col, &xcol, databaseName, &xavaXResDB);
+	snatchColor("color4", p.bcolor, p.bgcol, &xbgcol, databaseName, &xavaXResDB);
 }
 
 int init_window_x(void)
@@ -349,6 +351,7 @@ void clear_screen_x(void) {
 
 int apply_window_settings_x(void)
 {
+	calculateColors();
 	// Gets the monitors resolution
 	if(p.fullF){
 		p.w = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
