@@ -1,5 +1,6 @@
 #include "graphical.h"
 #include "../config.h"
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
 
@@ -42,8 +43,8 @@ void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int s
 	}
 	// Some error checking
 	#ifdef DEBUG
-		if(winX > scrW - winW) printf("Warning: Screen out of bounds (X axis)!");
-		if(winY > scrH - winH) printf("Warning: Screen out of bounds (Y axis)!");
+		if((*winX) > scrW - winW) printf("Warning: Screen out of bounds (X axis)!\n");
+		if((*winY) > scrH - winH) printf("Warning: Screen out of bounds (Y axis)!\n");
 	#endif
 }
 
