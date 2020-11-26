@@ -16,6 +16,10 @@ const char *colorStrings[8] = {"black", "red", "green", "yellow",
 #endif
 
 void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int scrH, char *winPos) {
+	#ifdef GLX
+		if(!GLXmode) p.shdw = 0;
+	#endif
+
 	if(!strcmp(winPos, "top")){
 		(*winX) = (scrW - winW) / 2 + (*winX);
 		(*winY) -= p.shdw;

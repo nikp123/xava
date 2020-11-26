@@ -138,9 +138,6 @@ void calculateColors(void) {
 
 int init_window_x(void)
 {
-	// shadows are meant for the bars only
-	if(p.background_opacity != 0.0) p.shdw = 0;
-
 	// NVIDIA CPU cap utilization in Vsync fix
 	setenv("__GL_YIELD", "USLEEP", 0);
 
