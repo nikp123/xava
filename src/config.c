@@ -419,9 +419,9 @@ void load_config(char *configPath, void* params)
 				}
 				fclose(source);
 				fclose(fp);
-				free(targetFile);
 				printf("DONE\n");
 			}
+			free(targetFile);
 		}
 	} else { //opening specified file
 		fp = fopen(configPath, "rb+");
