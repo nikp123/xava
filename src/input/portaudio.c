@@ -73,12 +73,6 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 	return finished;
 }
 
-
-void portaudio_simple_free(paTestData data) {
-	Pa_Terminate();
-	free(data.recordedSamples);
-}
-
 void* input_portaudio(void *audiodata) {
 	audio = (struct audio_data *)audiodata;
 
@@ -191,6 +185,7 @@ void* input_portaudio(void *audiodata) {
 		exit(EXIT_FAILURE);
 	}
 
-	portaudio_simple_free(data);
+	Pa_Terminate();
+	free(data.recordedSamples);
 	return 0;
 } 
