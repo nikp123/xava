@@ -2,8 +2,8 @@
 #define FIFO_INPUT_NAME "fifo"
 
 struct audio_data {
-	int *audio_out_r;
-	int *audio_out_l;
+	double *audio_out_r;
+	double *audio_out_l;
 	int format;
 	unsigned int rate;
 	char *source;				// alsa device, fifo path or pulse source

@@ -237,7 +237,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	int bars = 25;
 	int sourceIsAuto = 1;
 	double smh = 0.0;
-	double *inl,*inr;
 	unsigned long oldTime = 0;
 
 	//int maxvalue = 0;
@@ -294,10 +293,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		audio.inputsize = p.inputsize;
 		audio.fftsize = p.fftsize;
 		audio.audio_out_l = malloc(sizeof(int)*p.fftsize+1);
-		inl = malloc(sizeof(double)*(p.fftsize+2));	
 		if(p.stereo) {
 			audio.audio_out_r = malloc(sizeof(int)*p.fftsize+1);
-			inr = malloc(sizeof(double)*(p.fftsize+2));	
 		}
 		audio.format = -1;
 		audio.rate = 0;
@@ -313,8 +310,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		//fft: planning to rock
 		fftw_complex outl[audio.fftsize/2+1], outr[audio.fftsize/2+1];
-		fftw_plan pl = fftw_plan_dft_r2c_1d(audio.fftsize, inl, outl, FFTW_MEASURE), pr;
-		if(p.stereo) pr = fftw_plan_dft_r2c_1d(audio.fftsize, inr, outr, FFTW_MEASURE);
+		fftw_plan pl = fftw_plan_dft_r2c_1d(audio.fftsize, audio.audio_out_l, outl, FFTW_MEASURE), pr;
+		if(p.stereo) pr = fftw_plan_dft_r2c_1d(audio.fftsize, audio.audio_out_r, outr, FFTW_MEASURE);
 
 		switch(p.im) {
 			#ifdef ALSA
@@ -593,17 +590,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 				// process: populate input buffer and check if input is present
 				silence = 1;
-				for (i = 0; i < audio.fftsize+2; i++) {
-					inl[i] = audio.audio_out_l[i];
-					if(p.stereo) inr[i] = audio.audio_out_r[i];
-				}
 
 				for (i = 0; i < audio.fftsize+2; i++) {
-					if(inl[i]) {
+					if(audio.audio_out_l[i]) {
 						silence = 0;
 						break;
 					}
-					if(p.stereo&&inr[i]) {
+					if(p.stereo&&audio.audio_out_r[i]) {
 						silence = 0;
 						break;
 					}
@@ -789,10 +782,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		switch(audio.channels) {
 			case 2:
 				free(audio.audio_out_r);
-				free(inr);
 			default:
 				free(audio.audio_out_l);
-				free(inl);
 				break;
 		}
 
