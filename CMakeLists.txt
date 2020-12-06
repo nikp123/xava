@@ -23,6 +23,10 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+if(MINGW)
+	set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
+endif()
+
 set(CMAKE_C_FLAGS "-Wall")
 set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
@@ -44,7 +48,7 @@ add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
 find_package(PkgConfig REQUIRED)
 
 # iniparser
-find_library(INIPARSER iniparser)
+find_library(INIPARSER iniparser HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 if(NOT INIPARSER)
 	message(STATUS "iniparser not found on system, building from source.")
 	if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/.git)
@@ -74,13 +78,13 @@ if(DEFINE_LEGACYINIPARSER AND INIPARSER)
 endif()
 
 # math lib
-find_library(MATH_LIB m)
+find_library(MATH_LIB m HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 if(NOT MATH_LIB)
   message(FATAL_ERROR "math library not found")
 endif()
 
 # pthread
-find_library(THREAD_LIB pthread)
+find_library(THREAD_LIB pthread HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 if(NOT THREAD_LIB)
 	message(FATAL_ERROR "pthread library not found")
 endif()
@@ -163,13 +167,13 @@ endif()
 
 # winapi
 if(MSYS OR MINGW OR MSVC)
-	find_library(GDI_LIB gdi32)
+	find_library(GDI_LIB gdi32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 	if(GDI_LIB)
-		find_library(WGL_LIB opengl32)
+		find_library(WGL_LIB opengl32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 		if(WGL_LIB)
-			find_library(GLU_LIB glu32)
+			find_library(GLU_LIB glu32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 			if(GLU_LIB)
-				find_library(DWM_LIB dwmapi)
+				find_library(DWM_LIB dwmapi HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 				if(DWM_LIB)
 					add_definitions(-DWIN -DGL)
 					list(APPEND ADDITIONAL_SOURCES "src/output/graphical_win.c")
@@ -230,7 +234,7 @@ endif()
 
 # sndio
 if(SNDIO)
-	find_library(SNDIO_LIB sndio)
+	find_library(SNDIO_LIB sndio HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 	if(SNDIO_LIB)
 		add_definitions(-DSNDIO)
 		list(APPEND ADDITIONAL_SOURCES "src/input/sndio.c")
