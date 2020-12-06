@@ -91,6 +91,10 @@ Fedora:
 
     dnf install alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake git
 
+MSYS2 (Windows):
+
+    pacman -S mingw-w64-i686-gcc mingw-w64-i686-fftw mingw-w64-i686-SDL2 mingw-w64-i686-portaudio cmake git pkg-config
+
 Iniparser is also required, but if it is not already installed,
  it will clone the [repository](https://github.com/ndevilla/iniparser).
 
@@ -121,6 +125,8 @@ Or you can change `PREFIX`, for example:
 
 If you're building from source, please don't delete the build files
  as you won't be able to uninstall xava if you do (CMake limitation).
+
+NOTE: For MSYS2, you MUST also add ``-G"Unix Makefiles"``
 
 ### Uninstalling
 
