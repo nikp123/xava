@@ -292,9 +292,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		audio.inputsize = p.inputsize;
 		audio.fftsize = p.fftsize;
-		audio.audio_out_l = malloc(sizeof(int)*p.fftsize+1);
+		audio.audio_out_l = malloc(sizeof(double)*p.fftsize+1);
 		if(p.stereo) {
-			audio.audio_out_r = malloc(sizeof(int)*p.fftsize+1);
+			audio.audio_out_r = malloc(sizeof(double)*p.fftsize+1);
 		}
 		audio.format = -1;
 		audio.rate = 0;
