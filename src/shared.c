@@ -69,8 +69,11 @@ int xavaMkdir(char *dir) {
 }
 
 int xavaGetConfigDir(char *configPath) {
-	#if defined(__unix__)||defined(__APPLE__)
+	#if defined(__unix__)
 		char *configHome = getenv("XDG_CONFIG_HOME");
+	#elif defined(__APPLE__)
+		char *configHome = malloc(MAX_PATH);
+		sprintf(configHome, "%s//Library//Application Support", getenv("HOME"));
 	#elif defined(WIN)
 		// editing files without an extension on windows is a pain
 		char *configHome = getenv("APPDATA");
@@ -88,6 +91,9 @@ int xavaGetConfigDir(char *configPath) {
 			sprintf(configPath,"%s/%s/%s/", configHome, ".config", PACKAGE);
 		else return -1;
 	}
+	#if defined(__APPLE__)
+		free(configHome);
+	#endif
 	return 0;
 }
 

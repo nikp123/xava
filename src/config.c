@@ -364,9 +364,9 @@ void load_config(char *configPath, void* params)
 
 	//config: creating path to default config file
 	if (configPath[0] == '\0') {
-		#if defined(__unix__)||defined(__APPLE__)
+		#if defined(__unix__)
 			char *configFile = "config";
-		#elif defined(WIN)
+		#elif defined(WIN)||defined(__APPLE__)
 			// editing files without an extension on windows is a pain
 			char *configFile = "config.cfg";
 		#endif
