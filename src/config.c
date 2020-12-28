@@ -547,7 +547,11 @@ void load_config(char *configPath, void* params)
 	p->wx = iniparser_getint(ini, "window:x_padding", 0);
 	p->wy = iniparser_getint(ini, "window:y_padding", 0);
 	p->fullF = iniparser_getboolean(ini, "window:fullscreen", 0);
-	p->transF = iniparser_getboolean(ini, "window:transparency", 1);
+	#if defined(__APPLE__)
+		p->transF = iniparser_getboolean(ini, "window:transparency", 0);
+	#else
+		p->transF = iniparser_getboolean(ini, "window:transparency", 1);
+	#endif
 	p->borderF = iniparser_getboolean(ini, "window:border", 0);
 	p->bottomF = iniparser_getboolean(ini, "window:keep_below", 1);
 	p->interactF = iniparser_getboolean(ini, "window:interactable", 1);
