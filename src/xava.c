@@ -93,6 +93,8 @@ static _Bool kys = 0, should_reload = 0;
 static float *fc = NULL, *fre, *fpeak, *k;
 static int *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;
 
+static float lastSens;
+
 static double *peak;
 
 // general: cleanup
@@ -602,6 +604,12 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					}
 				}
 
+					// so apparently sens can INDEED reach infinity
+					// so I've decided to limit how high sens can rise
+					// to prevent sens from reaching infinity again
+					if(!silence)
+						lastSens = p.sens;
+
 				if (silence == 1) sleep++;
 				else sleep = 0;
 
@@ -721,15 +729,17 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				if (p.autosens&&!silence) {
 					// don't adjust on complete silence
 					// as when switching tracks for example
-					
 					for (o = 0; o < bars; o++) {
 						if (f[o] > height ) {
 							senseLow = false;
-							p.sens = p.sens * 0.985;
+							p.sens *= 0.985;
 							break;
 						}
-						if (senseLow && !silence) p.sens = p.sens * 1.01;
-					if (o == bars - 1) p.sens = p.sens * 1.0002;
+						if (senseLow && !silence) {
+							p.sens *= 1.01;
+							// impose artificial limit on sens growth
+							if(p.sens > lastSens*2) p.sens = lastSens*2;
+						}
 					}
 				}
 
