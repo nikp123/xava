@@ -18,8 +18,8 @@
 ; autosens = true
 
 # Manual sensitivity in %. Autosens must be turned off for this to take effect.
-# 200 means double height and so on. Accepts only non-negative values.
-; sensitivity = 100
+# 200.0 means double height and so on. Accepts only non-negative values.
+; sensitivity = 100.0
 
 # The number of bars. 0 sets it to auto (put as many as you can).
 # Bars' width and space between bars in number of pixels on screen.

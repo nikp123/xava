@@ -317,9 +317,6 @@ void validate_config(void* params, dictionary *ini)
 		exit(EXIT_FAILURE);
 	}
 
-	// setting sens
-	p->sens = p->sens / 100;
-
 	// validate: window settings
 	// validate: alignment
 	_Bool foundAlignment = 0;
@@ -513,7 +510,8 @@ void load_config(char *configPath, void* params)
 	p->bs = iniparser_getint(ini, "general:bar_spacing", 5);
 	p->framerate = iniparser_getint(ini, "general:framerate", 60);
 	p->vsync = iniparser_getboolean(ini, "general:vsync", 1);
-	p->sens = iniparser_getint(ini, "general:sensitivity", 100);
+	p->sens = iniparser_getdouble(ini, "general:sensitivity", 100.0) *
+		XAVA_PREDEFINED_SENS_VALUE; // check shared.h for details
 	p->autosens = iniparser_getboolean(ini, "general:autosens", 1);
 	p->overshoot = iniparser_getint(ini, "general:overshoot", 0);
 	p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 26);
