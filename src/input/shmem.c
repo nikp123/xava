@@ -18,8 +18,6 @@ typedef short s16_t;
 // #define BUFSIZE 1024
 #define BUFSIZE 4096
 
-int rc;
-
 /*
 struct audio_data {
 	int audio_out_r[2048];
