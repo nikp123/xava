@@ -23,8 +23,8 @@ struct wl_surface *xavaWLSurface;
 struct xdg_surface *xavaXDGSurface;
 struct xdg_toplevel *xavaXDGToplevel;
 struct wl_shm_pool *xavaWLSHMPool;
-int shmFileIndentifier;
 
+int shmFileIndentifier;
 _Bool xavaWLCurrentlyDrawing = 0;
 uint32_t *xavaWLFrameBuffer;
 int xavaWLSHMFD;
@@ -120,9 +120,16 @@ static const struct wl_registry_listener xava_wl_registry_listener = {
 };
 
 void cleanup_graphical_wayland(void) {
+	close(xavaWLSHMFD);
+	munmap(xavaWLFrameBuffer, p.w*p.h*sizeof(uint32_t));
 
+	xdg_toplevel_destroy(xavaXDGToplevel);
+	xdg_surface_destroy(xavaXDGSurface);
+	wl_surface_destroy(xavaWLSurface);
+	wl_compositor_destroy(xavaWLCompositor);
+	wl_registry_destroy(xavaWLRegistry);
+	wl_display_disconnect(xavaWLDisplay);
 }
-
 
 void handle_wayland_platform_quirks(void) {
 	// Vsync is implied in Wayland
@@ -174,8 +181,6 @@ int init_window_wayland(void) {
 }
 
 void clear_screen_wayland(void) {
-	close(xavaWLSHMFD);
-	munmap(xavaWLFrameBuffer, p.w*p.h*sizeof(uint32_t));
 }
 
 int apply_window_settings_wayland(void) {
