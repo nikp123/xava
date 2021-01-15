@@ -14,6 +14,9 @@ option(PULSEAUDIO "PULSEAUDIO" ON)
 option(SNDIO "SNDIO" ON)
 option(PORTAUDIO "PORTAUDIO" ON)
 
+# Wayland protocols default directory
+set(WL_PROT_DIR "/usr/share/wayland-protocols")
+
 # Fix pkg-config for cross-builds (such as MinGW on ArchLinux)
 if(CMAKE_FIND_ROOT_PATH)
     set(CMAKE_SYSROOT "${CMAKE_FIND_ROOT_PATH}")
@@ -134,6 +137,11 @@ endif()
 if(WAYLAND)
 	pkg_check_modules(WAYLAND QUIET egl wayland-client wayland-egl)
 	if(WAYLAND_FOUND)
+		# Hacky way to deal with wayland-scanner (but will be used for nw)
+		execute_process(COMMAND wayland-scanner client-header 
+			"${WL_PROT_DIR}/stable/xdg-shell/xdg-shell.xml"
+			"${CMAKE_CURRENT_LIST_DIR}/src/output/xdg-shell-client-protocol.h")
+
 		list(APPEND ADDITIONAL_SOURCES "src/output/graphical_wayland.c")
 		list(APPEND INCLUDE_DIRS "${WAYLAND_INCLUDE_DIRS}")
 		list(APPEND LINK_DIRS "${WAYLAND_LIBRARY_DIRS}")

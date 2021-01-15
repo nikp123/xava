@@ -4,3 +4,4 @@ build*
 *.user
 *.config
 CMakeLists.txt.*
+src/output/xdg-shell-client-protocol.h
