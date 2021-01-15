@@ -123,7 +123,17 @@ void cleanup_graphical_wayland(void) {
 
 }
 
+
+void handle_wayland_platform_quirks(void) {
+	// Vsync is implied in Wayland
+	// it is disabled because it messes with the timing code
+	// in the backend
+	if(p.vsync) p.vsync = 0;
+}
+
 int init_window_wayland(void) {
+	handle_wayland_platform_quirks();
+
 	xavaWLDisplay = wl_display_connect(NULL);
 	if(xavaWLDisplay == NULL) {
 		fprintf(stderr, "Failed to connect to Wayland server\n");
