@@ -181,6 +181,8 @@ int init_window_wayland(void) {
 }
 
 void clear_screen_wayland(void) {
+	for(register int i=0; i<p.w*p.h; i++)
+		xavaWLFrameBuffer[i] = p.bgcol;
 }
 
 int apply_window_settings_wayland(void) {
@@ -194,6 +196,16 @@ int apply_window_settings_wayland(void) {
 		fprintf(stderr, "Failed to create a shared memory buffer\n");
 		return EXIT_FAILURE;
 	}
+
+	// handle colors
+	p.col = (p.col&0x00ffffff) | ((uint32_t)
+		(p.foreground_opacity*0xff)<<24);
+
+	p.bgcol = (p.bgcol&0x00ffffff) | ((uint32_t)
+		(p.background_opacity*0xff)<<24);
+
+	// clean screen manually
+	clear_screen_wayland();
 
 	return EXIT_SUCCESS;
 }
