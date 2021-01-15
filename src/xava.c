@@ -46,6 +46,10 @@
 #include "output/graphical_sdl.h"
 #endif
 
+#ifdef SDL
+#include "output/graphical_wayland.h"
+#endif
+
 #ifdef SNDIO
 #include "input/sndio.h"
 #endif
@@ -382,6 +386,16 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				xavaOutputHandleInput = &get_window_input_sdl;
 				xavaOutputDraw = &draw_graphical_sdl;
 				xavaOutputCleanup = &cleanup_graphical_sdl;
+				break;
+			#endif
+			#ifdef WAYLAND
+			case WAYLAND_DISPLAY_NUM:
+				xavaInitOutput = &init_window_wayland;
+				xavaOutputClear = &clear_screen_wayland;
+				xavaOutputApply = &apply_window_settings_wayland;
+				xavaOutputHandleInput = &get_window_input_wayland;
+				xavaOutputDraw = &draw_graphical_wayland;
+				xavaOutputCleanup = &cleanup_graphical_wayland;
 				break;
 			#endif
 			#ifdef WIN

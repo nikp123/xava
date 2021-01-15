@@ -45,6 +45,9 @@
 #ifdef SDL
 #include "output/graphical_sdl.h"
 #endif
+#ifdef WAYLAND
+#include "output/graphical_wayland.h"
+#endif
 
 // inode watching is a Linux(TM) feature
 // so watch out when you're compiling it
@@ -190,6 +193,9 @@ void validate_config(void* params, dictionary *ini)
 	#endif
 	#ifdef SDL
 		appendSupported(&support, SDL_DISPLAY_NAME, SDL_DISPLAY_NUM);
+	#endif
+	#ifdef WAYLAND
+		appendSupported(&support, WAYLAND_DISPLAY_NAME, WAYLAND_DISPLAY_NUM);
 	#endif
 	#ifdef WIN
 		appendSupported(&support, WIN32_DISPLAY_NAME, WIN32_DISPLAY_NUM);
