@@ -98,10 +98,6 @@ static void wl_surface_frame_done(void *data, struct wl_callback *cb, uint32_t t
 	/* Destroy this callback */
 	wl_callback_destroy(cb);
 
-	/* Request another frame */
-	cb = wl_surface_frame(xavaWLSurface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, NULL);
-
 	update_frame();
 }
 static const struct wl_callback_listener wl_surface_frame_listener = {
@@ -301,11 +297,6 @@ int init_window_wayland(void) {
 		xavaXDGToplevel = xdg_surface_get_toplevel(xavaXDGSurface);
 		xdg_toplevel_set_title(xavaXDGToplevel, "XAVA");
 	}
-
-	// This callback basically just updates the frames
-	struct wl_callback *cb = wl_surface_frame(xavaWLSurface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, NULL);
-
 	// process all of this, FINALLY
 	wl_surface_commit(xavaWLSurface);
 	return EXIT_SUCCESS;
@@ -386,6 +377,11 @@ void draw_graphical_wayland(int bars, int rest, int *f, int *flastd) {
 		}
 	}
 	xavaWLCurrentlyDrawing = 0;
+
+	// This callback basically just updates the frames
+	struct wl_callback *cb = wl_surface_frame(xavaWLSurface);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, NULL);
+
 	wl_display_roundtrip(xavaWLDisplay);
 }
 
