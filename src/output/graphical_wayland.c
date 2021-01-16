@@ -69,7 +69,7 @@ static void update_frame() {
 	// Update frame and inform wayland 
 	struct wl_buffer *buffer = wl_create_framebuffer();
 	wl_surface_attach(xavaWLSurface, buffer, 0, 0);
-	wl_surface_damage_buffer(xavaWLSurface, 0, 0, INT32_MAX, INT32_MAX);
+	//wl_surface_damage_buffer(xavaWLSurface, 0, 0, INT32_MAX, INT32_MAX);
 	wl_surface_commit(xavaWLSurface);
 }
 
@@ -369,6 +369,10 @@ void draw_graphical_wayland(int bars, int rest, int *f, int *flastd) {
 			brush = p.bgcol;
 			a^=b; b^=a; a^=b;
 		}
+
+		// Update damage only where necessary
+		wl_surface_damage_buffer(xavaWLSurface, rest+i*(p.bs+p.bw),
+				a, p.bw, b-a);
 
 		// advance the pointer by undrawn pixels amount
 		fbDataPtr+=a*p.w;
