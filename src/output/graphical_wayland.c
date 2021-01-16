@@ -277,7 +277,7 @@ int init_window_wayland(void) {
 		// Create a "wallpaper" surface
 		xavaWLRLayerSurface = zwlr_layer_shell_v1_get_layer_surface(
 			xavaWLRLayerShell, xavaWLSurface, xavaWLOutput,
-			ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND, "wallpaper");
+			ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM, "bottom");
 
 		// adjust position and properties accordingly
 		zwlr_layer_surface_v1_set_size(xavaWLRLayerSurface, p.w, p.h);
