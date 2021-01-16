@@ -532,17 +532,13 @@ void load_config(char *configPath, void* params)
 	#ifdef XLIB
 		// nikp123 causes a nuclear disaster 2019 (colorized)
 		p->iAmRoot = iniparser_getboolean(ini, "window:rootwindow", 0);
+	#endif
 
+	#if defined(XLIB)||defined(WAYLAND)
 		// nikp123 solves nuclear crisis and is declared
 		// peace maker of the world 2020 (colorized)
 		p->overrideRedirect = iniparser_getboolean(ini, "window:override_redirect", 0);
-
-		if(p->iAmRoot&&p->overrideRedirect) {
-			fprintf(stderr,
-					"rootwindow and override_redirect don't mix well together!\n");
-		}
 	#endif
-
 
 	p->w = iniparser_getint(ini, "window:width", 1180);
 	p->h = iniparser_getint(ini, "window:height", 300);
