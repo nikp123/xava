@@ -543,6 +543,8 @@ void load_config(char *configPath, void* params)
 	p->w = iniparser_getint(ini, "window:width", 1180);
 	p->h = iniparser_getint(ini, "window:height", 300);
 
+	p->monitor_num = iniparser_getint(ini, "window:monitor", 0);
+
 	p->winA = (char *)iniparser_getstring(ini, "window:alignment", "none");
 	p->wx = iniparser_getint(ini, "window:x_padding", 0);
 	p->wy = iniparser_getint(ini, "window:y_padding", 0);

@@ -31,7 +31,14 @@ struct xdg_toplevel *xavaXDGToplevel;
 struct wl_shm_pool *xavaWLSHMPool;
 // monitor/display managment crap
 struct zwlr_layer_surface_v1 *xavaWLRLayerSurface;
-struct wl_output *xavaWLOutput;
+struct wlOutput {
+	struct wl_output *output;
+	uint32_t scale;
+	uint32_t name;
+	uint32_t num;
+};
+struct wlOutput **xavaWLOutputs;
+int xavaWLOutputsCount;
 
 int shmFileIndentifier;
 _Bool xavaWLCurrentlyDrawing = 0;
@@ -46,6 +53,30 @@ static void wl_buffer_release(void *data, struct wl_buffer *wl_buffer) {
 }
 static const struct wl_buffer_listener wl_buffer_listener = {
 	.release = wl_buffer_release,
+};
+
+static void output_geometry(void *data, struct wl_output *output, int32_t x,
+		int32_t y, int32_t width_mm, int32_t height_mm, int32_t subpixel,
+		const char *make, const char *model, int32_t transform) {
+	// Who cares
+}
+static void output_mode(void *data, struct wl_output *output, uint32_t flags,
+		int32_t width, int32_t height, int32_t refresh) {
+	// Who cares
+}
+static void output_done(void *data, struct wl_output *output) {
+	// Who cares
+}
+static void output_scale(void *data, struct wl_output *wl_output,
+		int32_t scale) {
+	struct wlOutput *output = data;
+	output->scale = scale;
+}
+static const struct wl_output_listener output_listener = {
+	.geometry = output_geometry,
+	.mode = output_mode,
+	.done = output_done,
+	.scale = output_scale,
 };
 
 struct wl_buffer *wl_create_framebuffer(void) {
@@ -95,8 +126,15 @@ static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 
 static const struct wl_callback_listener wl_surface_frame_listener;
 static void wl_surface_frame_done(void *data, struct wl_callback *cb, uint32_t time) {
+	// this shit had been reverted because wayland really doesn't like when
+	// you suddenly stop sending in screen refresh events
+
 	/* Destroy this callback */
 	wl_callback_destroy(cb);
+
+	/* Request another frame */
+	cb = wl_surface_frame(xavaWLSurface);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, NULL);
 
 	update_frame();
 }
@@ -143,12 +181,24 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 		xavaXDGOutputManager = wl_registry_bind(xavaWLRegistry, name,
 			&zwlr_output_manager_v1_interface, 2);
 	} else if (strcmp(interface, wl_output_interface.name) == 0) {
-		// TODO: Multi-monitor support
 		//output->state = state;
-		//output->wl_name = name;
-		xavaWLOutput = wl_registry_bind(xavaWLRegistry, name,
-				&wl_output_interface, 3);
-		//wl_output_add_listener(output->wl_output, &output_listener, output);
+
+		int i = xavaWLOutputsCount;
+		struct wlOutput **wlo;
+		wlo = reallocarray(xavaWLOutputs, (++xavaWLOutputsCount), sizeof(struct wlOutput*));
+		if(wlo == NULL) {
+			fprintf(stderr, "Could not allocate xavaWLOutputs!\n");
+			exit(EXIT_FAILURE); // no safe exit
+		}
+
+		wlo[i] = malloc(sizeof(struct wlOutput));
+		wlo[i]->output = wl_registry_bind(xavaWLRegistry, name, &wl_output_interface, 3);
+		wlo[i]->name = name;
+
+		wl_output_add_listener(wlo[i]->output, &output_listener, wlo[i]);
+		xavaWLOutputs = wlo;
+
+		wl_display_roundtrip(xavaWLDisplay);
 	}
 }
 static void xava_wl_registry_global_remove(void *data, struct wl_registry *wl_registry,
@@ -165,9 +215,14 @@ void cleanup_graphical_wayland(void) {
 	munmap(xavaWLFrameBuffer, p.w*p.h*sizeof(uint32_t));
 
 	if(p.overrideRedirect) {
-		wl_output_destroy(xavaWLOutput);
 		zwlr_layer_surface_v1_destroy(xavaWLRLayerSurface);
 		zwlr_layer_shell_v1_destroy(xavaWLRLayerShell);
+
+		for(int i = 0; i < xavaWLOutputsCount; i++) {
+			wl_output_destroy(xavaWLOutputs[i]->output);
+			free(xavaWLOutputs[i]);
+		} xavaWLOutputsCount = 0;
+		free(xavaWLOutputs);
 	} else {
 		xdg_toplevel_destroy(xavaXDGToplevel);
 		xdg_surface_destroy(xavaXDGSurface);
@@ -232,6 +287,8 @@ uint32_t handle_window_alignment(void) {
 int init_window_wayland(void) {
 	handle_wayland_platform_quirks();
 
+	xavaWLOutputs = malloc(1); xavaWLOutputsCount = 0;
+
 	xavaWLDisplay = wl_display_connect(NULL);
 	if(xavaWLDisplay == NULL) {
 		fprintf(stderr, "Failed to connect to Wayland server\n");
@@ -254,7 +311,7 @@ int init_window_wayland(void) {
 		fprintf(stderr, "Your compositor doesn't support xdg_wm_base, failing....\n");
 		return EXIT_FAILURE;
 	}
-	if(xavaWLRLayerShell == NULL || xavaXDGOutputManager == NULL || xavaWLOutput == NULL) {
+	if(xavaWLRLayerShell == NULL || xavaXDGOutputManager == NULL || xavaWLOutputs == NULL) {
 		fprintf(stderr, "Your compositor doesn't support any of the following:\n"
 				"zwlr_layer_shell_v1, zwlr_output_manager_v1 and/or wl_output\n"
 				"This will DISABLE the ability to use override_redirect for safety"
@@ -264,6 +321,9 @@ int init_window_wayland(void) {
 
 	xavaWLSurface = wl_compositor_create_surface(xavaWLCompositor);
 
+	// select an appropriate output
+	struct wlOutput *output = xavaWLOutputs[p.monitor_num];
+
 	// p.overrideRedirect is a carry-over from X11
 	// It is basically a feature that allows windows to be
 	// rendered in the background in most supported window managers
@@ -272,7 +332,7 @@ int init_window_wayland(void) {
 	if(p.overrideRedirect) {
 		// Create a "wallpaper" surface
 		xavaWLRLayerSurface = zwlr_layer_shell_v1_get_layer_surface(
-			xavaWLRLayerShell, xavaWLSurface, xavaWLOutput,
+			xavaWLRLayerShell, xavaWLSurface, output->output,
 			ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM, "bottom");
 
 		// adjust position and properties accordingly
@@ -285,6 +345,7 @@ int init_window_wayland(void) {
 		// same stuff as xdg_surface_add_listener, but for zwlr_layer_surface
 		zwlr_layer_surface_v1_add_listener(xavaWLRLayerSurface,
 			&layer_surface_listener, NULL);
+
 	} else {
 		// create window, or "surface" in waland terms
 		xavaXDGSurface = xdg_wm_base_get_xdg_surface(xavaXDGWMBase, xavaWLSurface);
@@ -297,8 +358,15 @@ int init_window_wayland(void) {
 		xavaXDGToplevel = xdg_surface_get_toplevel(xavaXDGSurface);
 		xdg_toplevel_set_title(xavaXDGToplevel, "XAVA");
 	}
+
+	//wl_surface_set_buffer_scale(xavaWLSurface, 3);
+
+	struct wl_callback *cb = wl_surface_frame(xavaWLSurface);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, NULL);
+
 	// process all of this, FINALLY
 	wl_surface_commit(xavaWLSurface);
+
 	return EXIT_SUCCESS;
 }
 
@@ -331,6 +399,7 @@ int apply_window_settings_wayland(void) {
 
 	// clean screen because the colors changed
 	clear_screen_wayland();
+
 
 	return EXIT_SUCCESS;
 }
@@ -377,10 +446,6 @@ void draw_graphical_wayland(int bars, int rest, int *f, int *flastd) {
 		}
 	}
 	xavaWLCurrentlyDrawing = 0;
-
-	// This callback basically just updates the frames
-	struct wl_callback *cb = wl_surface_frame(xavaWLSurface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, NULL);
 
 	wl_display_roundtrip(xavaWLDisplay);
 }

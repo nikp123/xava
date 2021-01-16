@@ -8,7 +8,7 @@
 	 bgcol, col;
 		double *smooth;
 		int smcount, im, om, autobars, stereo, vsync, fixedbars, framerate, bw, bs,
-	 autosens, overshoot, waves, w, h;
+	 autosens, overshoot, waves, w, h, monitor_num;
 		char *winA;
 		int wx, wy;
 		_Bool oddoneout, fullF, transF, borderF, bottomF, interactF, taskbarF, iAmRoot, overrideRedirect, reloadOnDC;

@@ -90,6 +90,13 @@
 # Similar to what "interactable = false" does
 ; override_redirect = false
 
+# Wayland-only
+# When running override_redirect, you must specify the monitor number
+# These numbers range from 0 onwards, so for two monitors the options
+# will be 0 and 1. This is a crappy hack that barely works, so use with
+# caution
+; monitor = 0
+
 
 [input]
 
