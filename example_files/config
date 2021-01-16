@@ -84,10 +84,10 @@
 # You need to stop any form of compositing for this to even work properly
 ; rootwindow = false
 
-# Sets the override any redirection by the host WM, that is the window cannot change
-# the it's order in the window stack
-# This option also disables any form of interaction with the window - same as when:
-#    interacable = false
+# Forces the window to be drawn at "wallpaper"-level
+# Basically, it put it at the bottom of the window stack and cannot be moved
+# As a side-effect, it also removes any controls from the window
+# Similar to what "interactable = false" does
 ; override_redirect = false
 
 
@@ -140,6 +140,7 @@
 # 'sdl' is for a graphical window using SDL2
 # 'x11' is for a graphical window using X11 (usually faster, unsupported in wayland however)
 # 'win' is for a win32 graphical window
+# 'wayland' is for a wayland window
 ; method = x11
 
 # Visual channels. Can be 'stereo' or 'mono'.

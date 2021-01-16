@@ -141,6 +141,20 @@ if(WAYLAND)
 		execute_process(COMMAND wayland-scanner client-header 
 			"${WL_PROT_DIR}/stable/xdg-shell/xdg-shell.xml"
 			"${CMAKE_CURRENT_LIST_DIR}/src/output/xdg-shell-client-protocol.h")
+		execute_process(COMMAND wayland-scanner client-header
+			"${CMAKE_CURRENT_LIST_DIR}/assets/linux/wayland/protocols/wlr-layer-shell-unstable-v1.xml"
+			"${CMAKE_CURRENT_LIST_DIR}/src/output/wlr-layer-shell-unstable-v1-client-protocol.h")
+		execute_process(COMMAND wayland-scanner private-code
+			"${CMAKE_CURRENT_LIST_DIR}/assets/linux/wayland/protocols/wlr-layer-shell-unstable-v1.xml"
+			"${CMAKE_CURRENT_LIST_DIR}/src/output/wlr-layer-shell-unstable-v1-client-protocol.c")
+		list(APPEND ADDITIONAL_SOURCES "src/output/wlr-layer-shell-unstable-v1-client-protocol.c")
+		execute_process(COMMAND wayland-scanner client-header
+			"${CMAKE_CURRENT_LIST_DIR}/assets/linux/wayland/protocols/wlr-output-management-unstable-v1.xml"
+			"${CMAKE_CURRENT_LIST_DIR}/src/output/wlr-output-managment-unstable-v1.h")
+		execute_process(COMMAND wayland-scanner private-code
+			"${CMAKE_CURRENT_LIST_DIR}/assets/linux/wayland/protocols/wlr-output-management-unstable-v1.xml"
+			"${CMAKE_CURRENT_LIST_DIR}/src/output/wlr-output-managment-unstable-v1.c")
+		list(APPEND ADDITIONAL_SOURCES "src/output/wlr-output-managment-unstable-v1.c")
 
 		list(APPEND ADDITIONAL_SOURCES "src/output/graphical_wayland.c")
 		list(APPEND INCLUDE_DIRS "${WAYLAND_INCLUDE_DIRS}")
