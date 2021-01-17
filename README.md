@@ -171,9 +171,10 @@ You have to compile this yourself, get the dependencies installed
  above.
 
 Once you've done that, install [Background Music](https://github.com/kyleneideck/BackgroundMusic)
- and get it running on your Mac machine. Now what you need to do
- is add the following into the ``[input]`` section of the config
- file:
+ and get it running on your Mac machine. Then, install the latest
+ [XQuartz](https://www.xquartz.org/releases/index.html) build.
+ Now what you need to do is add the following into the ``[input]``
+ section of the config file:
 ```
 method = portaudio
 source = "Background Music"
@@ -182,10 +183,11 @@ And now, within "Background Music" change the audio source of
  XAVA to the speaker output that you want recorded.
 
 You are free to use either ``x11`` or ``sdl`` as the output methods.
-Just keep in mind that ``transparency = true`` DOES NOT work on macOS.
+Note however that ``x11`` may not work for some people.
+Also, keep in mind that ``transparency = true`` DOES NOT work on macOS.
 
 
-All installers/distro specific instalation sources might be out of date.
+All installers/distro specific installation sources might be out of date.
 
 
 Capturing audio
