@@ -59,6 +59,7 @@ static struct supported {
 } support;
 
 struct config_params p;
+static dictionary* ini;
 
 struct supported createSupported(void) {
 	struct supported new;
@@ -431,7 +432,6 @@ void load_config(char *configPath, void* params)
 	}
 
 	// config: parse ini
-	dictionary* ini;
 	ini = iniparser_load(configPath);
 
 	#if defined(__linux__)||defined(__APPLE__)||defined(__unix__)
@@ -585,11 +585,14 @@ void load_config(char *configPath, void* params)
 
 	// config: input
 	validate_config(params, ini);
-	//iniparser_freedict(ini);
 
 	#if defined(__linux__)||defined(__WIN32__)
 		// spawn a thread which will check if the file had been changed in any way
 		// to inform the main process that it needs to reload
 		watchFile(configPath);
 	#endif
+}
+
+void clean_config() {
+	iniparser_freedict(ini);
 }

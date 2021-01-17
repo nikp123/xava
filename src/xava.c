@@ -87,22 +87,34 @@ static int (*xavaOutputHandleInput)(void);
 static void (*xavaOutputDraw)(int, int, int*, int*);
 static void (*xavaOutputCleanup)(void);
 
-static _Bool kys = 0, should_reload = 0;
-
 // XAVA magic variables, too many of them indeed
+static _Bool kys = 0, should_reload = 0;
+static float lastSens;
+
+// heap allocated stuffs goes here
 static float *fc = NULL, *fre, *fpeak, *k;
 static int *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;
 
-static float lastSens;
-
 static double *peak;
+static pthread_t p_thread;
+static struct audio_data audio;
+static fftw_plan pl, pr;
 
 // general: cleanup
-void cleanup() {
+void cleanup(void) {
 	#if defined(__linux__)||defined(__WIN32__)
 		// we need to do this since the inode watcher is a seperate thread
 		destroyFileWatcher();
 	#endif
+
+	// telling audio thread to terminate 
+	audio.terminate = 1;
+
+	// waiting for all background threads and other stuff to terminate properly
+	xavaSleep(100, 0);
+
+	// kill the audio thread
+	pthread_join(p_thread, NULL);
 
 	xavaOutputCleanup();
 
@@ -122,6 +134,25 @@ void cleanup() {
 	free(fr);
 	free(peak);
 	fc = NULL;
+
+	fftw_destroy_plan(pl);
+	fftw_destroy_plan(pr);
+	fftw_cleanup();
+
+	free(audio.source);
+	free(p.smooth);
+
+	// cleanup remaining FFT buffers (abusing C here)
+	switch(audio.channels) {
+		case 2:
+			free(audio.audio_out_r);
+		default:
+			free(audio.audio_out_l);
+			break;
+	}
+
+	// clean the config
+	clean_config();
 }
 
 #if defined(__unix__)||defined(__APPLE__)
@@ -207,7 +238,6 @@ void monstercat_filter(int bars, int waves, double monstercat, int *data) {
 int main(int argc, char **argv)
 {
 	// general: define variables
-	pthread_t  p_thread;
 	//int thr_id;
 
 	int sleep = 0;
@@ -237,13 +267,10 @@ Keys:\n\
 as of 0.4.0 all options are specified in config file, see in '/home/username/.config/xava/' \n";
 
 	int bars = 25;
-	int sourceIsAuto = 1;
 	double smh = 0.0;
 	unsigned long oldTime = 0;
 
 	//int maxvalue = 0;
-
-	struct audio_data audio;
 
 	configPath[0] = '\0';
 
@@ -312,7 +339,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		//fft: planning to rock
 		fftw_complex outl[audio.fftsize/2+1], outr[audio.fftsize/2+1];
-		fftw_plan pl = fftw_plan_dft_r2c_1d(audio.fftsize, audio.audio_out_l, outl, FFTW_MEASURE), pr;
+
+		pl = fftw_plan_dft_r2c_1d(audio.fftsize, audio.audio_out_l, outl, FFTW_MEASURE);
 		if(p.stereo) pr = fftw_plan_dft_r2c_1d(audio.fftsize, audio.audio_out_r, outr, FFTW_MEASURE);
 
 		switch(p.im) {
@@ -331,8 +359,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			case PULSE_INPUT_NUM:
 				if(strcmp(audio.source, "auto") == 0) {
 					getPulseDefaultSink((void*)&audio);
-					sourceIsAuto = 1;
-				} else sourceIsAuto = 0;
+				}
 				audio.rate = 44100;
 				xavaInput = &input_pulse;
 				break;
@@ -403,7 +430,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			fprintf(stderr,
 				"higher cuttoff frequency can't be higher then sample rate / 2"
 			);
-				exit(EXIT_FAILURE);
+			exit(EXIT_FAILURE);
 		}
 
 		bool reloadConf = false;
@@ -772,30 +799,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			}//resize window
 		}//reloading config
 
-		// telling audio thread to terminate 
-		audio.terminate = 1;
-
-		// waiting for all background threads and other stuff to terminate properly
-		xavaSleep(100, 0);
-
-		// kill the audio thread
-		pthread_join( p_thread, NULL);
-
 		// get rid of everything else  
 		cleanup();
-
-		// internal variables
-		free(p.smooth);
-		if(sourceIsAuto) free(audio.source);
-
-		// cleanup remaining FFT buffers (abusing C here)
-		switch(audio.channels) {
-			case 2:
-				free(audio.audio_out_r);
-			default:
-				free(audio.audio_out_l);
-				break;
-		}
 
 		// since this is an infinite loop we need to break out of it
 		if(kys) break;

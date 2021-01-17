@@ -14,4 +14,5 @@
 		_Bool oddoneout, fullF, transF, borderF, bottomF, interactF, taskbarF, iAmRoot, overrideRedirect, reloadOnDC;
 	} p;
 	void load_config(char *configPath, void* p);
+	void clean_config();
 #endif
