@@ -5,6 +5,10 @@ build*
 *.config
 CMakeLists.txt.*
 
+# Just some random patches I keep around
+# Usually some experiments gone wrong, I guess
+*.patch
+
 # Just Wayland protocol crap
 src/output/xdg-shell-client-protocol.h
 src/output/xdg-output-unstable-v1-client-protocol.h
@@ -12,3 +16,4 @@ src/output/wlr-output-managment-unstable-v1.c
 src/output/wlr-output-managment-unstable-v1.h
 src/output/wlr-layer-shell-unstable-v1-client-protocol.c
 src/output/wlr-layer-shell-unstable-v1-client-protocol.h
+

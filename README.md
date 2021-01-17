@@ -16,6 +16,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Uninstalling](#uninstalling)
   - [Arch](#arch)
   - [Windows](#windows)
+  - [macOS](#macos)
 - [Capturing audio](#capturing-audio)
   - [From WASAPI (Windows)](#from-wasapi-windows-only-super-easy)
   - [From Pulseaudio monitor source](#from-pulseaudio-monitor-source-easy-as-well-unsupported-on-macos-and-windows)
@@ -95,6 +96,10 @@ MSYS2 (Windows):
 
     pacman -S mingw-w64-i686-gcc mingw-w64-i686-fftw mingw-w64-i686-SDL2 mingw-w64-i686-portaudio cmake git pkg-config
 
+Brew (macOS):
+
+    brew install portaudio fftw cmake gcc git pkg-config sdl2
+
 Iniparser is also required, but if it is not already installed,
  it will clone the [repository](https://github.com/ndevilla/iniparser).
 
@@ -105,6 +110,7 @@ For compilation you will also need `g++` or `clang++`, `make`,
 Getting started
 ---------------
 
+    export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/lib" (macOS only)
     mkdir build (if it doesn't already exist)
     cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release ( or Debug if you're that type ;) )
@@ -158,8 +164,30 @@ Technical info/notes:
 Please use minGW for compilation. I haven't tested MSVC, however
  the code has a bit of GNU specific features so it may not work.
 
+### macOS
 
-All installers/distro specific instalation sources might be out of date.
+You have to compile this yourself, get the dependencies installed
+ via brew (look above) and compile it using the method described
+ above.
+
+Once you've done that, install [Background Music](https://github.com/kyleneideck/BackgroundMusic)
+ and get it running on your Mac machine. Then, install the latest
+ [XQuartz](https://www.xquartz.org/releases/index.html) build.
+ Now what you need to do is add the following into the ``[input]``
+ section of the config file:
+```
+method = portaudio
+source = "Background Music"
+```
+And now, within "Background Music" change the audio source of
+ XAVA to the speaker output that you want recorded.
+
+You are free to use either ``x11`` or ``sdl`` as the output methods.
+Note however that ``x11`` may not work for some people.
+Also, keep in mind that ``transparency = true`` DOES NOT work on macOS.
+
+
+All installers/distro specific installation sources might be out of date.
 
 
 Capturing audio
