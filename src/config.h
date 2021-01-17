@@ -15,15 +15,11 @@
 		int wx, wy;
 		_Bool oddoneout, fullF, transF, borderF, bottomF, interactF, taskbarF;
 		XAVAMODULE *inputModule, *outputModule;
-		void* (*xavaInput)(void*);
-		void (*xavaInputHandleConfiguration)(void *, void *);
-		int (*xavaInitOutput)(void);
-		void (*xavaOutputClear)(void);
-		int (*xavaOutputApply)(void);
-		int (*xavaOutputHandleInput)(void);
-		void (*xavaOutputDraw)(int, int, int*, int*);
-		void (*xavaOutputCleanup)(void);
 	} p;
+
+	extern struct state_params {
+		_Bool pauseRendering;
+	} s;
 
 	void load_config(char *configPath, void* p);
 	void clean_config();

@@ -56,11 +56,14 @@ static XG_EVENT (*xavaOutputHandleInput)(void);
 static void (*xavaOutputDraw)(int, int, int*, int*);
 static void (*xavaOutputCleanup)(void);
 
-// XAVA magic variables, too many of them indeed
 static _Bool kys = 0, should_reload = 0;
 static float lastSens;
 
-// heap allocated stuffs goes here
+// for sharing XAVA-s internal state
+// ...or possibly for signal handling :thonk:
+struct state_params s;
+
+// XAVA magic variables, too many of them indeed
 static float *fc = NULL, *fre, *fpeak, *k;
 static int *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;
 
@@ -563,6 +566,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						fftw_execute(pl);
 						separate_freq_bands(outl, calcbars, 1, p.sens, p.ignore, audio.fftsize);
 					}
+
+					s.pauseRendering = false;
 				} else { // if in sleep mode wait and continue
 					// TODO
 					//#ifdef DEBUG
@@ -570,6 +575,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					//#endif
 					// wait 100ms, then check sound again.
 					xavaSleep(100, 0);
+
+					// signal to any potential rendering threads to stop
+					s.pauseRendering = true;
 
 					// unless the user requested that the program ends
 					if(kys||should_reload) sleep = 0;
