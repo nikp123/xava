@@ -164,7 +164,7 @@ Technical info/notes:
 Please use minGW for compilation. I haven't tested MSVC, however
  the code has a bit of GNU specific features so it may not work.
 
-# macOS
+### macOS
 
 You have to compile this yourself, get the dependencies installed
  via brew (look above) and compile it using the method described
