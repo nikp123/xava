@@ -126,17 +126,20 @@ static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 
 static const struct wl_callback_listener wl_surface_frame_listener;
 static void wl_surface_frame_done(void *data, struct wl_callback *cb, uint32_t time) {
-	// this shit had been reverted because wayland really doesn't like when
-	// you suddenly stop sending in screen refresh events
-
-	/* Destroy this callback */
 	wl_callback_destroy(cb);
 
-	/* Request another frame */
+	update_frame();
+
+	// stop updating frames while XAVA's having a nice sleep
+	while(s.pauseRendering) 
+		usleep(10000);
+
+	// request update
 	cb = wl_surface_frame(xavaWLSurface);
 	wl_callback_add_listener(cb, &wl_surface_frame_listener, NULL);
 
-	update_frame();
+	// signal to wayland about it
+	wl_surface_commit(xavaWLSurface);
 }
 static const struct wl_callback_listener wl_surface_frame_listener = {
 	.done = wl_surface_frame_done,
