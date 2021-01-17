@@ -110,6 +110,7 @@ For compilation you will also need `g++` or `clang++`, `make`,
 Getting started
 ---------------
 
+    export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/lib" (macOS only)
     mkdir build (if it doesn't already exist)
     cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release ( or Debug if you're that type ;) )
