@@ -171,9 +171,10 @@ You have to compile this yourself, get the dependencies installed
  above.
 
 Once you've done that, install [Background Music](https://github.com/kyleneideck/BackgroundMusic)
- and get it running on your Mac machine. Then, install the latest [XQuartz](https://www.xquartz.org/releases/index.html) build. Now what you need to do
- is add the following into the ``[input]`` section of the config
- file:
+ and get it running on your Mac machine. Then, install the latest
+ [XQuartz](https://www.xquartz.org/releases/index.html) build.
+ Now what you need to do is add the following into the ``[input]``
+ section of the config file:
 ```
 method = portaudio
 source = "Background Music"
