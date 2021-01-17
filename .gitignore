@@ -4,3 +4,8 @@ build*
 *.user
 *.config
 CMakeLists.txt.*
+
+# Just some random patches I keep around
+# Usually some experiments gone wrong, I guess
+*.patch
+
