@@ -13,5 +13,10 @@
 		int wx, wy;
 		_Bool oddoneout, fullF, transF, borderF, bottomF, interactF, taskbarF, iAmRoot, overrideRedirect, reloadOnDC;
 	} p;
+
+	extern struct state_params {
+		_Bool pauseRendering;
+	} s;
+
 	void load_config(char *configPath, void* p);
 #endif
