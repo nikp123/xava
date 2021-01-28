@@ -4,20 +4,15 @@
 #include <string.h>
 #include <math.h>
 
-const unsigned int colorNumbers[] = {0x000000, 0xFF0000, 0x00FF00, 0xFFFF00,
-											0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF};
-const char *colorStrings[8] = {"black", "red", "green", "yellow", 
-										"blue", "magenta", "cyan", "white"};
 
 #ifdef GLX
 	GLXContext xavaGLXContext;
 	GLXFBConfig* xavaFBConfig;
-	int GLXmode;
 #endif
 
 void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int scrH, char *winPos) {
-	#ifdef GLX
-		if(!GLXmode) p.shdw = 0;
+	#if !defined(GLX)
+		p.shdw = 0;
 	#endif
 
 	if(!strcmp(winPos, "top")){

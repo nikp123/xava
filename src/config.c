@@ -241,9 +241,9 @@ void validate_config(void* params, dictionary *ini)
 				p->vsync = 0;
 				break;
 		#endif
-                #if defined(XLIB)&&defined(GLX)
+		#if defined(XLIB)&&defined(GLX)
 			case X11_DISPLAY_NUM:
-				if(!GLXmode) p->vsync = 0;
+				//if(!GLXmode) p->vsync = 0;
 				break;
 		#endif
 		}
@@ -339,10 +339,10 @@ void validate_config(void* params, dictionary *ini)
 			exit(EXIT_FAILURE);
 		}
 		#ifdef GLX
-		if(p->iAmRoot && GLXmode) {
-			fprintf(stderr, "rootwindow and OpenGL don't work!\n");
-			exit(EXIT_FAILURE);
-		}
+		//if(p->iAmRoot && GLXmode) {
+		//	fprintf(stderr, "rootwindow and OpenGL don't work!\n");
+		//	exit(EXIT_FAILURE);
+		//}
 		#endif
 	}
 	#endif
@@ -520,7 +520,7 @@ void load_config(char *configPath, void* params)
 
 	// config: window
 	#ifdef GLX
-		GLXmode = iniparser_getboolean(ini, "window:opengl", 1);
+		//GLXmode = iniparser_getboolean(ini, "window:opengl", 1);
 	#endif
 
 	#ifdef XLIB

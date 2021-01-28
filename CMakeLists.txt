@@ -146,20 +146,23 @@ if(X11)
 		pkg_check_modules(X11 QUIET x11 xfixes xrandr)
 		if(X11_FOUND)
 			add_definitions(-DXLIB)
-			add_library(xavaOutXLIB SHARED "src/output/graphical_x.c")
+			add_library(xavaOutXLIB SHARED "src/output/graphical_x.c"
+											"src/output/graphical.c")
 			target_link_directories(xavaOutXLIB PRIVATE "${X11_LIBRARY_DIRS}")
 			target_include_directories(xavaOutXLIB PRIVATE "${X11_INCLUDE_DIRS}")
 			target_link_libraries(xavaOutXLIB "${X11_LIBRARIES}")
 			# GLX
 			pkg_check_modules(GL QUIET gl xrender)
 			if(GL_FOUND)
-				add_definitions(-DGLX -DGL)
-				#target_link_directories(xavaGFXXLIB PRIVATE "${GL_LIBRARY_DIRS}")
-				#target_include_directories(xavaGFXXLIB PRIVATE "${GL_INCLUDE_DIRS}")
-				#target_link_libraries(xavaGFXXLIB "${GL_LIBRARIES}")
-				list(APPEND INCLUDE_DIRS "${GL_INCLUDE_DIRS}")
-				list(APPEND LINK_DIRS "${GL_LIBRARY_DIRS}")
-				list(APPEND ADDITIONAL_LIBRARIES "${GL_LIBRARIES}")
+				add_library(xavaOutGLX SHARED "src/output/graphical_x.c"
+											   "src/output/graphical.c")
+				target_link_directories(xavaOutGLX PRIVATE 
+					"${GL_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
+				target_include_directories(xavaOutGLX PRIVATE 
+					"${GL_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
+				target_link_libraries(xavaOutGLX 
+					"${GL_LIBRARIES}" "${X11_LIBRARIES}")
+				target_compile_definitions(xavaOutGLX PUBLIC -DGLX -DGL)
 			else()
 				message(STATUS "GL and or Xrender library not found")
 			endif()
@@ -286,7 +289,6 @@ endif()
 add_executable(
 	xava
 	${ADDITIONAL_SOURCES}
-	src/output/graphical.c
 	src/shared.c
 	src/config.c
 	src/xava.c
