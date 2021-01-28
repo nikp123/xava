@@ -136,7 +136,7 @@ void calculateColors(void) {
 	snatchColor("color4", p.bcolor, p.bgcol, &xbgcol, databaseName, &xavaXResDB);
 }
 
-int init_window_x(void)
+int xavaInitOutput(void)
 {
 	// NVIDIA CPU cap utilization in Vsync fix
 	setenv("__GL_YIELD", "USLEEP", 0);
@@ -321,7 +321,7 @@ int render_gradient_x(void) {
 	return 0;
 }
 
-void clear_screen_x(void) {
+void xavaOutputClear(void) {
 	#ifdef GLX
 	if(GLXmode) {
 		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p.transF ? 1.0*p.background_opacity : 1.0); // TODO BG transparency
@@ -346,7 +346,7 @@ void clear_screen_x(void) {
 	}			// you figure out a less dumb to do this
 }
 
-int apply_window_settings_x(void)
+int xavaOutputApply(void)
 {
 	calculateColors();
 	// Gets the monitors resolution
@@ -394,7 +394,7 @@ int apply_window_settings_x(void)
 		glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p.vsync);
 	}
 	#endif
-	clear_screen_x();
+	xavaOutputClear();
 
 	if(!p.interactF){
 		XRectangle rect;
@@ -406,7 +406,7 @@ int apply_window_settings_x(void)
 	return 0;
 }
 
-int get_window_input_x(void) {
+int xavaOutputHandleInput(void) {
 	// this way we avoid event stacking which requires a full frame to process a single event
 	int action = 0;
 
@@ -501,7 +501,7 @@ int get_window_input_x(void) {
 	return action;
 }
 
-void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
+void xavaOutputDraw(int bars, int rest, int f[200], int flastd[200])
 {
 	// im lazy, but i just wanna make it work
 	int xoffset = rest, yoffset = p.h;
@@ -548,7 +548,7 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 	return;
 }
 
-void cleanup_graphical_x(void)
+void xavaOutputCleanup(void)
 {
 	// Root mode leaves artifacts on screen even though the window is dead
 	XClearWindow(xavaXDisplay, xavaXWindow);

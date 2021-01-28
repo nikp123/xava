@@ -47,7 +47,7 @@ typedef struct {
 
 
 //input: SHMEM
-void* input_shmem(void* data)
+void* xavaInput(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
 	vis_t *mmap_area;

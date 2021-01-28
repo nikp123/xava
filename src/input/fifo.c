@@ -17,7 +17,7 @@ int open_fifo(const char *path)
 
 
 // input: FIFO
-void* input_fifo(void* data)
+void* xavaInput(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
 	int fd;

@@ -69,6 +69,10 @@
 	#include <iniparser.h>
 #endif
 
+#if defined(__unix__)
+	#include <dlfcn.h>
+#endif
+
 #if defined(__linux__)||defined(WIN)
 	#include "misc/inode_watcher.h"
 #endif
@@ -100,6 +104,9 @@ static pthread_t p_thread;
 static struct audio_data audio;
 static fftw_plan pl, pr;
 
+// function handles for optional functionality
+static void *outputHandle, *inputHandle;
+
 // general: cleanup
 void cleanup(void) {
 	#if defined(__linux__)||defined(__WIN32__)
@@ -117,6 +124,10 @@ void cleanup(void) {
 	pthread_join(p_thread, NULL);
 
 	xavaOutputCleanup();
+
+	// free external libraries
+	dlclose(outputHandle);
+	dlclose(inputHandle);
 
 	// clean up XAVA internal variables
 	free(fc);
@@ -352,7 +363,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			#if defined(__unix__)||defined(__APPLE__)
 			case FIFO_INPUT_NUM:
 				audio.rate = 44100;
-				xavaInput = &input_fifo;
+				inputHandle = dlopen("./libxavaInFIFO.so", RTLD_LAZY);
 				break;
 			#endif
 			#ifdef PULSE
@@ -379,7 +390,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			#ifdef SHMEM
 			case SHMEM_INPUT_NUM:
 				audio.rate = 44100;
-				xavaInput = input_shmem;
+				inputHandle = dlopen("./libxavaInSHMEM.so", RTLD_LAZY);
 				break;
 			#endif
 			#ifdef WIN
@@ -389,26 +400,22 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				break;
 			#endif
 		}
+		// check if there were errors loading the library
+		if(!inputHandle) {
+			fprintf(stderr, "%s\n", dlerror());
+			exit(EXIT_FAILURE);
+		}
+		xavaInput = dlsym(inputHandle, "xavaInput"); 
 
 		switch(p.om) {
 			#ifdef XLIB
 			case X11_DISPLAY_NUM:
-				xavaInitOutput = &init_window_x;
-				xavaOutputClear = &clear_screen_x;
-				xavaOutputApply = &apply_window_settings_x;
-				xavaOutputHandleInput = &get_window_input_x;
-				xavaOutputDraw = &draw_graphical_x;
-				xavaOutputCleanup = &cleanup_graphical_x;
+				outputHandle = dlopen("./libxavaOutXLIB.so", RTLD_LAZY);
 				break;
 			#endif
 			#ifdef SDL
 			case SDL_DISPLAY_NUM:
-				xavaInitOutput = &init_window_sdl;
-				xavaOutputClear = &clear_screen_sdl;
-				xavaOutputApply = &apply_window_settings_sdl;
-				xavaOutputHandleInput = &get_window_input_sdl;
-				xavaOutputDraw = &draw_graphical_sdl;
-				xavaOutputCleanup = &cleanup_graphical_sdl;
+				outputHandle = dlopen("./libxavaOutSDL2.so", RTLD_LAZY);
 				break;
 			#endif
 			#ifdef WIN
@@ -422,6 +429,18 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				break;
 			#endif
 		}
+
+		// check if there were errors loading the library
+		if(!outputHandle) {
+			fprintf(stderr, "%s\n", dlerror());
+			exit(EXIT_FAILURE);
+		}
+		xavaInitOutput = dlsym(outputHandle, "xavaInitOutput");
+		xavaOutputClear = dlsym(outputHandle, "xavaOutputClear");
+		xavaOutputApply = dlsym(outputHandle, "xavaOutputApply");
+		xavaOutputHandleInput = dlsym(outputHandle, "xavaOutputHandleInput");
+		xavaOutputDraw = dlsym(outputHandle, "xavaOutputDraw");
+		xavaOutputCleanup = dlsym(outputHandle, "xavaOutputCleanup");
 
 		// thr_id = below
 		pthread_create(&p_thread, NULL, xavaInput, (void*)&audio);
