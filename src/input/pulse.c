@@ -98,11 +98,16 @@ void getPulseDefaultSink(void* data) {
 	pa_mainloop_run(m_pulseaudio_mainloop, &ret);
 }
 
-void* input_pulse(void* data)
+void* xavaInput(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
 	int i, n;
 	int16_t buf[audio->inputsize];
+
+	// get default audio source if there is none
+	if(strcmp(audio->source, "auto") == 0) {
+		getPulseDefaultSink((void*)audio);
+	}
 
 	/* The sample type to use */
 	static const pa_sample_spec ss = {

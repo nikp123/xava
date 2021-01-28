@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "fifo.h"
 
-void* input_sndio(void* data)
+void* xavaInput(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
 	struct sio_par par;

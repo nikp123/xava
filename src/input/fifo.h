@@ -14,5 +14,3 @@ struct audio_data {
 	int inputsize, fftsize;
 };
 
-// header files for fifo, part of xava
-void* input_fifo(void* data);

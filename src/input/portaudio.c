@@ -73,7 +73,7 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 	return finished;
 }
 
-void* input_portaudio(void *audiodata) {
+void* xavaInput(void *audiodata) {
 	audio = (struct audio_data *)audiodata;
 
 	PaStreamParameters inputParameters;

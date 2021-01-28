@@ -117,7 +117,7 @@ static _Bool directory_exists(const char * path) {
 	return exists;
 }
 
-void* input_alsa(void* data) {
+void* xavaInput(void* data) {
 	int err;
 	struct audio_data* audio = (struct audio_data*)data;
 	snd_pcm_t* handle;

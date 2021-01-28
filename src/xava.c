@@ -357,7 +357,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		switch(p.im) {
 			#ifdef ALSA
 			case ALSA_INPUT_NUM:
-				xavaInput = &input_alsa;
+				inputHandle = dlopen("./libxavaInALSA.so", RTLD_LAZY);
 				break;
 			#endif
 			#if defined(__unix__)||defined(__APPLE__)
@@ -368,23 +368,20 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			#endif
 			#ifdef PULSE
 			case PULSE_INPUT_NUM:
-				if(strcmp(audio.source, "auto") == 0) {
-					getPulseDefaultSink((void*)&audio);
-				}
 				audio.rate = 44100;
-				xavaInput = &input_pulse;
+				inputHandle = dlopen("./libxavaInPULSEAUDIO.so", RTLD_LAZY);
 				break;
 			#endif
 			#ifdef SNDIO
 			case SNDIO_INPUT_NUM:
 				audio.rate = 44100;
-				xavaInput = &input_sndio;
+				inputHandle = dlopen("./libxavaInSNDIO.so", RTLD_LAZY);
 				break;
 			#endif
 			#ifdef PORTAUDIO
 			case PORTAUDIO_INPUT_NUM:
 				audio.rate = 44100;
-				xavaInput = input_portaudio;
+				inputHandle = dlopen("./libxavaInPORTAUDIO.so", RTLD_LAZY);
 				break;
 			#endif
 			#ifdef SHMEM
