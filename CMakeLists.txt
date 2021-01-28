@@ -154,6 +154,9 @@ if(WAYLAND)
 		execute_process(COMMAND wayland-scanner private-code
 			"${CMAKE_CURRENT_LIST_DIR}/assets/linux/wayland/protocols/wlr-output-management-unstable-v1.xml"
 			"${CMAKE_CURRENT_LIST_DIR}/src/output/wlr-output-managment-unstable-v1.c")
+		execute_process(COMMAND wayland-scanner client-header
+			"${WL_PROT_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml"
+			"${CMAKE_CURRENT_LIST_DIR}/src/output/xdg-output-unstable-v1-client-protocol.h")
 		list(APPEND ADDITIONAL_SOURCES "src/output/wlr-output-managment-unstable-v1.c")
 
 		list(APPEND ADDITIONAL_SOURCES "src/output/graphical_wayland.c")
