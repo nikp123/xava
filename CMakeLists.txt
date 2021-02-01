@@ -2,13 +2,6 @@ project(xava C CXX)
 cmake_minimum_required(VERSION 3.1)
 
 # default build configuration, adjust this to your liking
-option(SHMEM "SHMEM" OFF)
-option(SDL2 "SDL2" ON)
-option(X11 "X11" ON)
-option(ALSA "ALSA" ON)
-option(PULSEAUDIO "PULSEAUDIO" ON)
-option(SNDIO "SNDIO" ON)
-option(PORTAUDIO "PORTAUDIO" ON)
 
 # Fix pkg-config for cross-builds (such as MinGW on ArchLinux)
 if(CMAKE_FIND_ROOT_PATH)
@@ -94,178 +87,9 @@ pkg_check_modules(FFTW3 REQUIRED fftw3)
 list(APPEND INCLUDE_DIRS "${FFTW3_INCLUDE_DIRS}")
 list(APPEND LINK_DIRS "${FFTW3_LIBRARY_DIRS}")
 
-
 # Optional features
 set(ADDITIONAL_SOURCES "")
 set(ADDITIONAL_LIBRARIES "")
-
-# shmem
-if(SHMEM)
-	add_definitions(-DSHMEM)
-	add_library(xavaInSHMEM SHARED "src/input/shmem.c")
-	target_link_libraries(xavaInSHMEM "-lrt")
-endif()
-
-# OS-Specific inclusions
-if(NOT (MSYS OR MINGW OR MSVC))
-	message(STATUS "Not a Windows platform, can use POSIX now!")
-	add_library(xavaInFIFO SHARED "src/input/fifo.c")
-endif()
-
-# SDL2
-if(SDL2)
-	pkg_check_modules(SDL2 QUIET sdl2)
-	if(SDL2_FOUND)
-		add_definitions(-DSDL)
-		add_library(xavaOutSDL2 SHARED "src/output/graphical_sdl.c")
-		target_link_libraries(xavaOutSDL2 "${SDL2_LIBRARIES}")
-		target_include_directories(xavaOutSDL2 PRIVATE "${SDL2_INCLUDE_DIRS}")
-		target_link_directories(xavaOutSDL2 PRIVATE "${SDL2_LIBRARY_DIRS}")
-	else()
-		message(STATUS "SDL2 library not found")
-	endif()
-endif()
-
-# Xorg
-if(X11)
-	if(APPLE)
-		include(FindX11)
-		if(X11_FOUND)
-			add_definitions(-DXLIB)
-			add_library(xavaOutXLIB SHARED "src/output/graphical_x.c")
-			target_link_directories(xavaOutXLIB PRIVATE "${X11_INCLUDE_DIR}"
-				"${X11_Xfixes_INCLUDE_PATH}" "${X11_Xrandr_INCLUDE_PATH}" )
-			target_include_directories(xavaOutXLIB PRIVATE "${X11_INCLUDE_DIR}"
-				"${X11_Xfixes_INCLUDE_PATH}" "${X11_Xrandr_INCLUDE_PATH}" )
-			target_link_libraries(xavaOutXLIB "${X11_LIBRARIES}"
-				"${X11_Xfixes_LIB}" "${X11_Xrandr_LIB}")
-		else()
-			message(STATUS "X11, Xrandr and/or Xfixes library not found")
-		endif()
-	else()
-		pkg_check_modules(X11 QUIET x11 xfixes xrandr)
-		if(X11_FOUND)
-			add_definitions(-DXLIB)
-			add_library(xavaOutXLIB SHARED "src/output/graphical_x.c"
-											"src/output/graphical.c")
-			target_link_directories(xavaOutXLIB PRIVATE "${X11_LIBRARY_DIRS}")
-			target_include_directories(xavaOutXLIB PRIVATE "${X11_INCLUDE_DIRS}")
-			target_link_libraries(xavaOutXLIB "${X11_LIBRARIES}")
-			# GLX
-			pkg_check_modules(GL QUIET gl xrender)
-			if(GL_FOUND)
-				add_library(xavaOutGLX SHARED "src/output/graphical_x.c"
-											   "src/output/graphical.c")
-				target_link_directories(xavaOutGLX PRIVATE 
-					"${GL_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
-				target_include_directories(xavaOutGLX PRIVATE 
-					"${GL_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
-				target_link_libraries(xavaOutGLX 
-					"${GL_LIBRARIES}" "${X11_LIBRARIES}")
-				target_compile_definitions(xavaOutGLX PUBLIC -DGLX -DGL)
-			else()
-				message(STATUS "GL and or Xrender library not found")
-			endif()
-		else()
-			message(STATUS "X11, Xrandr and/or Xfixes library not found")
-		endif()
-	endif()
-endif()
-
-
-# winapi
-#if(MSYS OR MINGW OR MSVC)
-#	find_library(GDI_LIB gdi32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-#	if(GDI_LIB)
-#		find_library(WGL_LIB opengl32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-#		if(WGL_LIB)
-#			find_library(GLU_LIB glu32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-#			if(GLU_LIB)
-#				find_library(DWM_LIB dwmapi HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-#				if(DWM_LIB)
-#					add_definitions(-DWIN -DGL)
-#					list(APPEND ADDITIONAL_SOURCES "src/output/graphical_win.c")
-#					list(APPEND ADDITIONAL_SOURCES "src/input/wasapi.cpp")
-#					list(APPEND ADDITIONAL_LIBRARIES "-lgdi32")
-#					list(APPEND ADDITIONAL_LIBRARIES "-lwinmm")
-#					list(APPEND ADDITIONAL_LIBRARIES "-lopengl32")
-#					list(APPEND ADDITIONAL_LIBRARIES "-lglu32")
-#					list(APPEND ADDITIONAL_LIBRARIES "-ldwmapi")
-#				else()
-#					message("DWMAPI library not found")
-#				endif()
-#			else()
-#				message("GLU library not found")
-#			endif()
-#		else()
-#			message("openGL library not found")
-#		endif()
-#	else()
-#		message(STATUS "GDI library not found")
-#	endif()
-#	
-#	if(CMAKE_BUILD_TYPE STREQUAL "Release")
-#		message(STATUS "Since release build, console is being disabled")
-#		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -mwindows")
-#
-#		# Prepare NSI file for compilation
-#		configure_file("assets/windows/xava.nsi.template" "xava.nsi" NEWLINE_STYLE CRLF)
-#	endif()
-#endif()
-
-# alsa
-if(ALSA)
-	pkg_check_modules(ALSA QUIET alsa)
-	if(ALSA_FOUND)
-		add_definitions(-DALSA)
-		add_library(xavaInALSA SHARED "src/input/alsa.c")
-		target_link_libraries(xavaInALSA "${ALSA_LIBRARIES}")
-		target_include_directories(xavaInALSA PRIVATE "${ALSA_INCLUDE_DIRS}")
-		target_link_directories(xavaInALSA PRIVATE "${ALSA_LIBRARY_DIRS}")
-	else()
-		message(STATUS "alsa library not found")
-	endif()
-endif()
-
-# pulseaudio
-if(PULSEAUDIO)
-	pkg_check_modules(PULSEAUDIO QUIET libpulse libpulse-simple)
-	if(PULSEAUDIO_FOUND)
-		add_definitions(-DPULSE)
-		add_library(xavaInPULSEAUDIO SHARED "src/input/pulse.c")
-		target_link_libraries(xavaInPULSEAUDIO "${PULSEAUDIO_LIBRARIES}")
-		target_include_directories(xavaInPULSEAUDIO PRIVATE "${PULSEAUDIO_INCLUDE_DIRS}")
-		target_link_directories(xavaInPULSEAUDIO PRIVATE "${PULSEAUDIO_LIBRARY_DIRS}")
-	else()
-		message(STATUS "pulseaudio library not found")
-	endif()
-endif()
-
-# sndio
-if(SNDIO)
-	find_library(SNDIO_LIB sndio HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-	if(SNDIO_LIB)
-		add_definitions(-DSNDIO)
-		add_library(xavaInSNDIO SHARED "src/input/sndio.c")
-		target_link_libraries(xavaInSNDIO "-lsndio")
-	else()
-		message(STATUS "sndio library not found")
-	endif()
-endif()
-
-# portaudio
-if(PORTAUDIO)
-	pkg_check_modules(PORTAUDIO QUIET portaudio-2.0)
-	if(PORTAUDIO_FOUND)
-		add_definitions(-DPORTAUDIO)
-		add_library(xavaInPORTAUDIO SHARED "src/input/portaudio.c")
-		target_link_libraries(xavaInPORTAUDIO "${PORTAUDIO_LIBRARIES}")
-		target_include_directories(xavaInPORTAUDIO PRIVATE "${PORTAUDIO_INCLUDE_DIRS}")
-		target_link_directories(xavaInPORTAUDIO PRIVATE "${PORTAUDIO_LIBRARY_DIRS}")
-	else()
-		message(STATUS "portaudio library not found")
-	endif()
-endif()
 
 if((UNIX AND NOT APPLE) OR (MSYS OR MINGW OR MSVC))
 	list(APPEND ADDITIONAL_SOURCES "src/misc/inode_watcher.c")
@@ -284,6 +108,20 @@ endif()
 if(UNIX)
 	list(APPEND ADDITIONAL_LIBRARIES "dl")
 endif()
+
+# Build input modules
+file(GLOB outputs "src/input/*/build.cmake" )
+foreach(dir ${outputs})
+	get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
+	include(${dir})
+endforeach()
+
+# Build output modules
+file(GLOB outputs "src/output/*/build.cmake" )
+foreach(dir ${outputs})
+	get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
+	include(${dir})
+endforeach()
 
 # Build executable
 add_executable(

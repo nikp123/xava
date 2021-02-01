@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <portaudio.h>
-#include "portaudio.h"
-#include "fifo.h"
+#include "main.h"
+#include "../../shared.h"
 
 #define SAMPLE_SILENCE 32768
 #define PA_SAMPLE_TYPE paInt16

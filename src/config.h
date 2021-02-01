@@ -1,5 +1,11 @@
 #ifndef H_CONFIG
 #define H_CONFIG
+	#ifdef INIPARSER
+		#include "../lib/iniparser/src/iniparser.h"
+	#else
+		#include <iniparser.h>
+	#endif
+
 	extern struct config_params {
 		char *color, *bcolor, *audio_source, **gradient_colors, *shadow_color;
 		double monstercat, integral, gravity, ignore, sens, logScale, logBegin, logEnd,

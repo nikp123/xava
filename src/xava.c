@@ -31,36 +31,36 @@
 #include <dirent.h>
 
 #ifdef ALSA
-#include "input/alsa.h"
+#include "input/alsa/main.h"
 #endif
 
 #ifdef PULSE
-#include "input/pulse.h"
+#include "input/pulseaudio/main.h"
 #endif
 
 #ifdef XLIB
-#include "output/graphical_x.h"
+#include "output/graphical_x11/main.h"
 #endif
 
 #ifdef SDL
-#include "output/graphical_sdl.h"
+#include "output/graphical_sdl2/main.h"
 #endif
 
 #ifdef SNDIO
-#include "input/sndio.h"
+#include "input/sndio/main.h"
 #endif
 
 #ifdef PORTAUDIO
-#include "input/portaudio.h"
+#include "input/portaudio/main.h"
 #endif
 
 #ifdef SHMEM
-#include "input/shmem.h"
+#include "input/shmem/main.h"
 #endif
 
 #ifdef WIN
-#include "output/graphical_win.h"
-#include "input/wasapi.h"
+#include "output/graphical_win/main.h"
+#include "input/wasapi/main.h"
 #endif
 
 #ifdef INIPARSER
@@ -78,7 +78,7 @@
 #endif
 
 #include "output/graphical.h"
-#include "input/fifo.h"
+#include "input/fifo/main.h"
 #include "config.h"
 #include "shared.h"
 

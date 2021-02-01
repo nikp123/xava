@@ -15,8 +15,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "graphical.h"
-#include "../config.h"
+#include "../graphical.h"
+#include "../../config.h"
 
 static Pixmap gradientBox = 0;
 static XColor xbgcol, xcol, *xgrad;
@@ -561,3 +561,6 @@ void xavaOutputCleanup(void)
 	free(xgrad);
 	return;
 }
+
+//_Bool xavaValidateOutput(ini *configFile) {
+//}

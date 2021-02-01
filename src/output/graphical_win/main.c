@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <time.h>
-#include "graphical_win.h"
-#include "graphical.h"
-#include "../config.h"
+#include "main.h"
+#include "../graphical.h"
+#include "../../config.h"
 
 #define WIN_ICON_PATH "xava.ico"
 

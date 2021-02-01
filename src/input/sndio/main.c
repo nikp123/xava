@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "fifo.h"
+#include "../../shared.h"
 
 void* xavaInput(void* data)
 {

@@ -1,7 +1,7 @@
 #include <SDL.h>
 #include <time.h>
-#include "graphical.h"
-#include "../config.h"
+#include "../graphical.h"
+#include "../../config.h"
 
 SDL_Window *xavaSDLWindow;
 SDL_Surface *xavaSDLWindowSurface;

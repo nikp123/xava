@@ -1,4 +1,4 @@
-#include "fifo.h"
+#include "../../shared.h"
 #include <alsa/asoundlib.h>
 
 #include <sys/types.h>

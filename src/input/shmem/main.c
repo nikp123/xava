@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
-#include "fifo.h"
+#include "../../shared.h"
 
 typedef unsigned int u32_t;
 typedef short s16_t;

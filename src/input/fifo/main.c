@@ -3,7 +3,7 @@
 #include <sys/fcntl.h>
 #include <sys/types.h>
 #include <time.h>
-#include "fifo.h"
+#include "../../shared.h"
 
 int rc;
 
