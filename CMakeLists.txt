@@ -127,6 +127,7 @@ endforeach()
 add_executable(
 	xava
 	${ADDITIONAL_SOURCES}
+	src/module.c
 	src/shared.c
 	src/config.c
 	src/xava.c

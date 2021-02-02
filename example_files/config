@@ -33,11 +33,6 @@
 ; lower_cutoff_freq = 26
 ; higher_cutoff_freq = 15000
 
-# This allows XAVA to restart when the display settings are changed
-# As this can cause constant reloading (https://github.com/nikp123/xava/issues/20)
-# it is left off by default (X11 only)
-; reload_on_display_configure = false
-
 
 [window]
 
@@ -70,9 +65,6 @@
 ; x_padding = 0
 ; y_padding = 0
 
-# Enables the OpenGL renderer (not available on all output modes)
-; opengl = true
-
 # This option removes the ability to interact with the window
 # NOTE: It does not work with SDL2 
 ; interactable = true
@@ -80,7 +72,11 @@
 # Create an taskbar icon
 ; taskbar_icon = true
 
-# Draw directly on the root window (or wallpaper) itself (Xorg ONLY), VERY UNPREDICTABLE
+
+[x11]
+# Hacks and options related to X11 and GLX output modes
+
+# Draw directly on the root window (or wallpaper) itself
 # You need to stop any form of compositing for this to even work properly
 ; rootwindow = false
 
@@ -88,7 +84,12 @@
 # the it's order in the window stack
 # This option also disables any form of interaction with the window - same as when:
 #    interacable = false
-; override_redirect = false
+; override_redirect
+
+# This allows XAVA to restart when the display settings are changed
+# As this can cause constant reloading (https://github.com/nikp123/xava/issues/20)
+# it is left off by default (X11 only)
+; reload_on_display_configure = false
 
 
 [input]

@@ -9,71 +9,17 @@
 #include "config.h"
 #include "shared.h"
 
-#ifdef ALSA
-#include "input/alsa/main.h"
-#endif
-#include "input/fifo/main.h"
-#ifdef PULSE
-#include "input/pulseaudio/main.h"
-#endif
-#ifdef SNDIO
-#include <sndio.h>
-#include "input/sndio/main.h"
-#endif
-#ifdef PORTAUDIO
-#include "input/portaudio/main.h"
-#endif
-#ifdef SHMEM
-#include "input/shmem/main.h"
-#endif
-#ifdef WIN
-#include "output/graphical_win/main.h"
-#include "input/wasapi/main.h"
-#endif
-#ifdef XLIB
-#include "output/graphical_x11/main.h"
-#endif
-#ifdef SDL
-#include "output/graphical_sdl2/main.h"
-#endif
-
 // inode watching is a Linux(TM) feature
 // so watch out when you're compiling it
 #if defined(__linux__)||defined(WIN)
 #include "misc/inode_watcher.h"
 #endif
 
-static struct supported {
-	size_t count;
-	int *numbers;
-	const char **names;
-} support;
+static const char *colorStrings[8] = {"black", "red", "green", "yellow", 
+										"blue", "magenta", "cyan", "white"};
 
 struct config_params p;
 static dictionary* ini;
-
-struct supported createSupported(void) {
-	struct supported new;
-	new.names = malloc(1);
-	new.numbers = malloc(1);
-	new.count = 0;
-	return new;
-}
-
-void appendSupported(struct supported *support, char *appendName, int appendNum) {
-	const char **names = realloc(support->names, (++support->count)*sizeof(char*));
-	names[support->count-1] = appendName;
-	support->names=names;
-	int *numbers = realloc(support->numbers, support->count*sizeof(int));
-	numbers[support->count-1] = appendNum;
-	support->numbers=numbers;
-}
-
-void deleteSupported(struct supported *support) {
-	free(support->names);
-	free(support->numbers);
-	support->count = 0;
-}
 
 static char *inputMethod, *outputMethod, *channels;
 
@@ -127,77 +73,32 @@ unsigned int parse_color(char *colorStr, int defaultColor) {
 	return retColor;
 }
 
-void validate_config(void* params, dictionary *ini)
-{
+dictionary *get_config_pointer(void) {
+	return ini;
+}
+
+void validate_config(void* params, dictionary *ini) {
 	struct config_params *p = (struct config_params *)params;
-	
+
 	// validate: input method
-	p->im = 0;
-	support = createSupported();
-	#ifdef ALSA
-		appendSupported(&support, ALSA_INPUT_NAME, ALSA_INPUT_NUM);
-		appendSupported(&support, "Loopback,1", ALSA_INPUT_NUM);
-	#endif
-	appendSupported(&support, FIFO_INPUT_NAME, FIFO_INPUT_NUM);
-	appendSupported(&support, "/tmp/mpd.fifo", FIFO_INPUT_NUM);
-	#ifdef PULSE
-		appendSupported(&support, PULSE_INPUT_NAME, PULSE_INPUT_NUM);
-		appendSupported(&support, "auto", PULSE_INPUT_NUM);
-	#endif
-	#ifdef SNDIO
-		appendSupported(&support, SNDIO_INPUT_NAME, SNDIO_INPUT_NUM);
-		appendSupported(&support, SIO_DEVANY, SNDIO_INPUT_NUM);
-	#endif
-	#ifdef PORTAUDIO
-		appendSupported(&support, PORTAUDIO_INPUT_NAME, PORTAUDIO_INPUT_NUM);
-		appendSupported(&support, "auto", PORTAUDIO_INPUT_NUM);
-	#endif
-	#ifdef SHMEM
-		appendSupported(&support, SHMEM_INPUT_NAME, SHMEM_INPUT_NUM);
-		appendSupported(&support, "/squeezelite-00:00:00:00:00:00", SHMEM_INPUT_NUM);
-	#endif
-	#ifdef WIN
-		appendSupported(&support, WASAPI_INPUT_NAME, WASAPI_INPUT_NUM);
-		appendSupported(&support, "loopback", WASAPI_INPUT_NUM);
-	#endif
-	for(size_t i = 0; i < support.count; i+=2) {
-		if(!strcmp(inputMethod, support.names[i])) {
-			p->im = support.numbers[i];
-			p->audio_source = (char *)iniparser_getstring(ini, "input:source", support.names[i+1]);
-			break;
-		}
-	}
-	if(!p->im) {
-		fprintf(stderr, "Input method %s doesn't exist in this build of "PACKAGE"\n"
-						"Change it or recompile with the proper dependencies installed!\n", inputMethod);
+	p->inputModule = load_input_module(inputMethod);
+	if(!is_module_valid(p->inputModule)) {
+		fprintf(stderr, "Input method '%s' does not exist, exiting...\n",
+				inputMethod);
+		fprintf(stderr, "Details:\n");
+		print_module_error();
 		exit(EXIT_FAILURE);
 	}
-	deleteSupported(&support);
 
 	// validate: output method
-	p->om = 0;
-	support = createSupported();
-	#ifdef XLIB
-		appendSupported(&support, X11_DISPLAY_NAME, X11_DISPLAY_NUM);
-	#endif
-	#ifdef SDL
-		appendSupported(&support, SDL_DISPLAY_NAME, SDL_DISPLAY_NUM);
-	#endif
-	#ifdef WIN
-		appendSupported(&support, WIN32_DISPLAY_NAME, WIN32_DISPLAY_NUM);
-	#endif
-	for(size_t i = 0; i < support.count; i++) {
-		if(!strcmp(outputMethod, support.names[i])) {
-			p->om = support.numbers[i];
-			break;
-		}
-	}
-	if(!p->om) {
-		fprintf(stderr, "Output method %s doesn't exist in this build of "PACKAGE"\n"
-						"Change it or recompile with the proper dependencies installed!\n", outputMethod);
+	p->outputModule = load_output_module(outputMethod);
+	if(!is_module_valid(p->outputModule)) {
+		fprintf(stderr, "Output method '%s' does not exist, exiting...\n",
+				outputMethod);
+		fprintf(stderr, "Details:\n");
+		print_module_error();
 		exit(EXIT_FAILURE);
 	}
-	deleteSupported(&support);
 
 	// validate: output channels
 	p->stereo = -1;
@@ -209,40 +110,26 @@ void validate_config(void* params, dictionary *ini)
 						channels);
 		exit(EXIT_FAILURE);
 	}
-	
+
 	// validate: bars
 	p->autobars = 1;
 	if (p->fixedbars > 0) p->autobars = 0;
 	if (p->fixedbars > 200) p->fixedbars = 200;
 	if (p->bw > 200) p->bw = 200;
 	if (p->bw < 1) p->bw = 1;
-	
+
 	// validate: framerate
 	if (p->framerate < 1) {
 		fprintf(stderr,
 			"framerate can't lower than 1!\n");
 		exit(EXIT_FAILURE);
 	}
-	
+
 	// validate: framerate
-	if (p->vsync != 0) {
-		switch(p->om) {
-		#ifdef SDL
-			case SDL_DISPLAY_NUM:
-				p->vsync = 0;
-				break;
-		#endif
-		#if defined(XLIB)&&defined(GLX)
-			case X11_DISPLAY_NUM:
-				//if(!GLXmode) p->vsync = 0;
-				break;
-		#endif
-		}
-		if (p->vsync < -1) {
-			fprintf(stderr,
-				"Vsync cannot be below -1, no such Vsync mode exists!\n");
-			exit(EXIT_FAILURE);
-		}
+	if (p->vsync < -1) {
+		fprintf(stderr,
+			"Vsync cannot be below -1, no such Vsync mode exists!\n");
+		exit(EXIT_FAILURE);
 	}
 
 	// validate: color
@@ -322,21 +209,6 @@ void validate_config(void* params, dictionary *ini)
 	}
 	if(!foundAlignment)
 		fprintf(stderr, "The value for alignment is invalid, '%s'!", p->winA);
-
-	#ifdef XLIB
-	if(p->om == X11_DISPLAY_NUM) {
-		if(p->iAmRoot && p->gradients) {
-			fprintf(stderr, "rootwindow and gradients don't work!\n");
-			exit(EXIT_FAILURE);
-		}
-		#ifdef GLX
-		//if(p->iAmRoot && GLXmode) {
-		//	fprintf(stderr, "rootwindow and OpenGL don't work!\n");
-		//	exit(EXIT_FAILURE);
-		//}
-		#endif
-	}
-	#endif
 
 	// validate: shadow
 	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
@@ -424,38 +296,10 @@ void load_config(char *configPath, void* params)
 
 	// config: parse ini
 	ini = iniparser_load(configPath);
-
-	#if defined(__linux__)||defined(__APPLE__)||defined(__unix__)
-		#ifdef PULSE
-			#define DEFAULT_INPUT PULSE_INPUT_NAME
-		#elif defined(PORTAUDIO)
-			#define DEFAULT_INPUT PORTAUDIO_INPUT_NAME
-		#elif defined(ALSA)
-			#define DEFAULT_INPUT ALSA_INPUT_NAME
-		#elif defined(SNDIO)
-			#define DEFAULT_INPUT SNDIO_INPUT_NAME
-		#elif defined(SHMEM)
-			#define DEFAULT_INPUT SHMEM_INPUT_NAME
-		#else
-			#define DEFAULT_INPUT FIFO_INPUT_NAME
-		#endif
-	#elif defined(WIN)
-		#define DEFAULT_INPUT WASAPI_INPUT_NAME
-	#endif
-	inputMethod = (char *)iniparser_getstring(ini, "input:method", DEFAULT_INPUT);
+	inputMethod = (char *)iniparser_getstring(ini, "input:method", XAVA_DEFAULT_INPUT);
 
 	// config: output
-	// use macros to define the default output
-	#if defined(__linux__)||defined(__APPLE__)||defined(__unix__)
-		#if defined(XLIB)
-			#define DEFAULT_OUTPUT X11_DISPLAY_NAME
-		#elif defined(SDL)
-			#define DEFAULT_OUTPUT SDL_DISPLAY_NAME
-		#endif
-	#elif defined(__WIN32__)
-		#define DEFAULT_OUTPUT WIN32_DISPLAY_NAME
-	#endif
-	outputMethod = (char *)iniparser_getstring(ini, "output:method", DEFAULT_OUTPUT);
+	outputMethod = (char *)iniparser_getstring(ini, "output:method", XAVA_DEFAULT_OUTPUT);
 	channels =  (char *)iniparser_getstring(ini, "output:channels", "mono");
 
 	p->inputsize = (int)exp2((float)iniparser_getint(ini, "smoothing:input_size", 12));
@@ -507,28 +351,8 @@ void load_config(char *configPath, void* params)
 	p->overshoot = iniparser_getint(ini, "general:overshoot", 0);
 	p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 26);
 	p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 15000);
-	p->reloadOnDC = iniparser_getboolean(ini, "general:reload_on_display_configure", 0);
 
 	// config: window
-	#ifdef GLX
-		//GLXmode = iniparser_getboolean(ini, "window:opengl", 1);
-	#endif
-
-	#ifdef XLIB
-		// nikp123 causes a nuclear disaster 2019 (colorized)
-		p->iAmRoot = iniparser_getboolean(ini, "window:rootwindow", 0);
-
-		// nikp123 solves nuclear crisis and is declared
-		// peace maker of the world 2020 (colorized)
-		p->overrideRedirect = iniparser_getboolean(ini, "window:override_redirect", 0);
-
-		if(p->iAmRoot&&p->overrideRedirect) {
-			fprintf(stderr,
-					"rootwindow and override_redirect don't mix well together!\n");
-		}
-	#endif
-
-
 	p->w = iniparser_getint(ini, "window:width", 1180);
 	p->h = iniparser_getint(ini, "window:height", 300);
 
@@ -536,11 +360,7 @@ void load_config(char *configPath, void* params)
 	p->wx = iniparser_getint(ini, "window:x_padding", 0);
 	p->wy = iniparser_getint(ini, "window:y_padding", 0);
 	p->fullF = iniparser_getboolean(ini, "window:fullscreen", 0);
-	#if defined(__APPLE__)
-		p->transF = iniparser_getboolean(ini, "window:transparency", 0);
-	#else
-		p->transF = iniparser_getboolean(ini, "window:transparency", 1);
-	#endif
+	p->transF = iniparser_getboolean(ini, "window:transparency", 1);
 	p->borderF = iniparser_getboolean(ini, "window:border", 0);
 	p->bottomF = iniparser_getboolean(ini, "window:keep_below", 1);
 	p->interactF = iniparser_getboolean(ini, "window:interactable", 1);

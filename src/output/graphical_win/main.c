@@ -3,6 +3,7 @@
 #include "main.h"
 #include "../graphical.h"
 #include "../../config.h"
+#include "../../shared.h"
 
 #define WIN_ICON_PATH "xava.ico"
 
@@ -451,3 +452,8 @@ void cleanup_graphical_win(void) {
 	UnregisterClass(szAppName, xavaWinModule);
 	//CloseHandle(xavaWinModule);
 }
+
+void xavaOutputHandleConfiguration(void *data) {
+	//dictionary *ini = (dictionary*) data;
+}
+

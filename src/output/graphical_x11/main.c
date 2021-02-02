@@ -17,6 +17,7 @@
 #include <time.h>
 #include "../graphical.h"
 #include "../../config.h"
+#include "../../shared.h"
 
 static Pixmap gradientBox = 0;
 static XColor xbgcol, xcol, *xgrad;
@@ -36,6 +37,10 @@ static XWMHints xavaXWMHints;
 static XEvent xev;
 static Bool xavaSupportsRR;
 static int xavaRREventBase;
+
+_Bool rootWindowEnabled;
+_Bool overrideRedirectEnabled;
+_Bool reloadOnDisplayConfigure;
 
 #ifdef GLX
 static int VisData[] = {
@@ -185,11 +190,11 @@ int xavaInitOutput(void)
 
 	xavaAttr.backing_store = Always;
 	// make it so that the window CANNOT be reordered by the WM
-	xavaAttr.override_redirect = p.overrideRedirect;
+	xavaAttr.override_redirect = overrideRedirectEnabled;
 
 	int xavaWindowFlags = CWOverrideRedirect | CWBackingStore |  CWEventMask | CWColormap | CWBorderPixel | CWBackPixel;
 
-	if(p.iAmRoot) xavaXWindow = xavaXRoot;
+	if(rootWindowEnabled) xavaXWindow = xavaXRoot;
 	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p.wx, p.wy, (unsigned int)p.w,
 		(unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
@@ -289,7 +294,8 @@ int xavaInitOutput(void)
 			}
 
 			// listen for display configure events only if enabled
-			if(p.reloadOnDC) XRRSelectInput(xavaXDisplay, xavaXWindow, rr_mask);
+			if(reloadOnDisplayConfigure)
+				XRRSelectInput(xavaXDisplay, xavaXWindow, rr_mask);
 		}
 	}
 
@@ -464,7 +470,8 @@ int xavaOutputHandleInput(void) {
 			case ConfigureNotify:
 			{
 				// the window should not be resized when it IS the monitor
-				if(p.iAmRoot||p.overrideRedirect) break;
+				if(rootWindowEnabled||overrideRedirectEnabled)
+					break;
 
 				// This is needed to track the window size
 				XConfigureEvent trackedXavaXWindow;
@@ -500,7 +507,7 @@ void xavaOutputDraw(int bars, int rest, int f[200], int flastd[200])
 {
 	// im lazy, but i just wanna make it work
 	int xoffset = rest, yoffset = p.h;
-	if(p.iAmRoot) {
+	if(rootWindowEnabled) {
 		xoffset+=p.wx;
 		yoffset+=p.wy;
 	}
@@ -562,5 +569,39 @@ void xavaOutputCleanup(void)
 	return;
 }
 
-//_Bool xavaValidateOutput(ini *configFile) {
-//}
+void xavaOutputHandleConfiguration(void *data) {
+	dictionary *ini = (dictionary*)data;
+
+	reloadOnDisplayConfigure = iniparser_getboolean
+		(ini, "x11:reload_on_display_configure", 0);
+	rootWindowEnabled = iniparser_getboolean
+		(ini, "x11:root_window", 0);
+	overrideRedirectEnabled = iniparser_getboolean
+		(ini, "x11:override_redirect", 0);
+
+	// who knew that messing with some random properties breaks things
+	if(rootWindowEnabled&&overrideRedirectEnabled) {
+		fprintf(stderr,
+				"root_window and override_redirect "
+				"don't mix well together!\n");
+	}
+	if(rootWindowEnabled && p.gradients) {
+		fprintf(stderr, "root_window and gradients don't work!\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// Xquartz doesnt support ARGB windows
+	// Therefore transparency is impossible on macOS
+	#ifdef __APPLE__
+		p->transF = 0;
+	#endif
+
+	#ifndef GLX
+		// VSync doesnt work without OpenGL :(
+		p.vsync = 0;
+	#else
+		// OGL + Root Window = completely broken
+		rootWindowEnabled = 0;
+	#endif
+}
+

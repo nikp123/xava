@@ -64,3 +64,11 @@ void* xavaInput(void* data)
 
 	return 0;
 }
+
+void xavaInputHandleConfiguration(void *data1, void *data2) {
+	dictionary *ini = (dictionary*) data1;
+	struct audio_data *audio = (struct audio_data*) data2; 
+	audio->rate = 44100;
+	audio->source = (char *)iniparser_getstring(ini, "input:source", SIO_DEVANY);
+}
+

@@ -30,47 +30,10 @@
 #include <pthread.h>
 #include <dirent.h>
 
-#ifdef ALSA
-#include "input/alsa/main.h"
-#endif
-
-#ifdef PULSE
-#include "input/pulseaudio/main.h"
-#endif
-
-#ifdef XLIB
-#include "output/graphical_x11/main.h"
-#endif
-
-#ifdef SDL
-#include "output/graphical_sdl2/main.h"
-#endif
-
-#ifdef SNDIO
-#include "input/sndio/main.h"
-#endif
-
-#ifdef PORTAUDIO
-#include "input/portaudio/main.h"
-#endif
-
-#ifdef SHMEM
-#include "input/shmem/main.h"
-#endif
-
-#ifdef WIN
-#include "output/graphical_win/main.h"
-#include "input/wasapi/main.h"
-#endif
-
 #ifdef INIPARSER
 	#include "../lib/iniparser/src/iniparser.h"
 #else
 	#include <iniparser.h>
-#endif
-
-#if defined(__unix__)
-	#include <dlfcn.h>
 #endif
 
 #if defined(__linux__)||defined(WIN)
@@ -83,7 +46,9 @@
 #include "shared.h"
 
 static void* (*xavaInput)(void*);
+static void (*xavaInputHandleConfiguration)(void*, void*);
 
+static void (*xavaOutputHandleConfiguration)(void*);
 static int (*xavaInitOutput)(void);
 static void (*xavaOutputClear)(void);
 static int (*xavaOutputApply)(void);
@@ -104,9 +69,6 @@ static pthread_t p_thread;
 static struct audio_data audio;
 static fftw_plan pl, pr;
 
-// function handles for optional functionality
-static void *outputHandle, *inputHandle;
-
 // general: cleanup
 void cleanup(void) {
 	#if defined(__linux__)||defined(__WIN32__)
@@ -125,9 +87,9 @@ void cleanup(void) {
 
 	xavaOutputCleanup();
 
-	// free external libraries
-	dlclose(outputHandle);
-	dlclose(inputHandle);
+	// destroy modules
+	destroy_module(p.inputModule);
+	destroy_module(p.outputModule);
 
 	// clean up XAVA internal variables
 	free(fc);
@@ -323,12 +285,26 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	// general: main loop
 	while (1) {
-		//config: load
+		// load config
 		load_config(configPath, (void *)&p);
 
-		//input: init
-		audio.source = malloc(1 +  strlen(p.audio_source));
-		strcpy(audio.source, p.audio_source);
+		// load symbols
+		xavaInput                    = get_symbol_address(p.inputModule, "xavaInput");
+		xavaInputHandleConfiguration = get_symbol_address(p.inputModule, "xavaInputHandleConfiguration");
+
+		xavaInitOutput                = get_symbol_address(p.outputModule, "xavaInitOutput");
+		xavaOutputClear               = get_symbol_address(p.outputModule, "xavaOutputClear");
+		xavaOutputApply               = get_symbol_address(p.outputModule, "xavaOutputApply");
+		xavaOutputHandleInput         = get_symbol_address(p.outputModule, "xavaOutputHandleInput");
+		xavaOutputDraw                = get_symbol_address(p.outputModule, "xavaOutputDraw");
+		xavaOutputCleanup             = get_symbol_address(p.outputModule, "xavaOutputCleanup");
+		xavaOutputHandleConfiguration = get_symbol_address(p.outputModule, "xavaOutputHandleConfiguration");
+
+		// load input config
+		xavaInputHandleConfiguration(get_config_pointer(), (void*)&audio);
+
+		// load output config
+		xavaOutputHandleConfiguration(get_config_pointer());
 
 		audio.inputsize = p.inputsize;
 		audio.fftsize = p.fftsize;
@@ -337,7 +313,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			audio.audio_out_r = malloc(sizeof(double)*p.fftsize+1);
 		}
 		audio.format = -1;
-		audio.rate = 0;
 		audio.terminate = 0;
 		audio.channels = 1+p.stereo;
 
@@ -353,91 +328,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		pl = fftw_plan_dft_r2c_1d(audio.fftsize, audio.audio_out_l, outl, FFTW_MEASURE);
 		if(p.stereo) pr = fftw_plan_dft_r2c_1d(audio.fftsize, audio.audio_out_r, outr, FFTW_MEASURE);
-
-		switch(p.im) {
-			#ifdef ALSA
-			case ALSA_INPUT_NUM:
-				inputHandle = dlopen("./libxavaInALSA.so", RTLD_LAZY);
-				break;
-			#endif
-			#if defined(__unix__)||defined(__APPLE__)
-			case FIFO_INPUT_NUM:
-				audio.rate = 44100;
-				inputHandle = dlopen("./libxavaInFIFO.so", RTLD_LAZY);
-				break;
-			#endif
-			#ifdef PULSE
-			case PULSE_INPUT_NUM:
-				audio.rate = 44100;
-				inputHandle = dlopen("./libxavaInPULSEAUDIO.so", RTLD_LAZY);
-				break;
-			#endif
-			#ifdef SNDIO
-			case SNDIO_INPUT_NUM:
-				audio.rate = 44100;
-				inputHandle = dlopen("./libxavaInSNDIO.so", RTLD_LAZY);
-				break;
-			#endif
-			#ifdef PORTAUDIO
-			case PORTAUDIO_INPUT_NUM:
-				audio.rate = 44100;
-				inputHandle = dlopen("./libxavaInPORTAUDIO.so", RTLD_LAZY);
-				break;
-			#endif
-			#ifdef SHMEM
-			case SHMEM_INPUT_NUM:
-				audio.rate = 44100;
-				inputHandle = dlopen("./libxavaInSHMEM.so", RTLD_LAZY);
-				break;
-			#endif
-			#ifdef WIN
-			case WASAPI_INPUT_NUM:
-				audio.rate = 44100;
-				xavaInput = input_wasapi;
-				break;
-			#endif
-		}
-		// check if there were errors loading the library
-		if(!inputHandle) {
-			fprintf(stderr, "%s\n", dlerror());
-			exit(EXIT_FAILURE);
-		}
-		xavaInput = dlsym(inputHandle, "xavaInput"); 
-
-		switch(p.om) {
-			#ifdef XLIB
-			case X11_DISPLAY_NUM:
-				outputHandle = dlopen("./libxavaOutXLIB.so", RTLD_LAZY);
-				break;
-			#endif
-			#ifdef SDL
-			case SDL_DISPLAY_NUM:
-				outputHandle = dlopen("./libxavaOutSDL2.so", RTLD_LAZY);
-				break;
-			#endif
-			#ifdef WIN
-			case WIN32_DISPLAY_NUM:
-				xavaInitOutput = &init_window_win;
-				xavaOutputClear = &clear_screen_win;
-				xavaOutputApply = &apply_win_settings;
-				xavaOutputHandleInput = &get_window_input_win;
-				xavaOutputDraw = &draw_graphical_win;
-				xavaOutputCleanup = &cleanup_graphical_win;
-				break;
-			#endif
-		}
-
-		// check if there were errors loading the library
-		if(!outputHandle) {
-			fprintf(stderr, "%s\n", dlerror());
-			exit(EXIT_FAILURE);
-		}
-		xavaInitOutput = dlsym(outputHandle, "xavaInitOutput");
-		xavaOutputClear = dlsym(outputHandle, "xavaOutputClear");
-		xavaOutputApply = dlsym(outputHandle, "xavaOutputApply");
-		xavaOutputHandleInput = dlsym(outputHandle, "xavaOutputHandleInput");
-		xavaOutputDraw = dlsym(outputHandle, "xavaOutputDraw");
-		xavaOutputCleanup = dlsym(outputHandle, "xavaOutputCleanup");
 
 		// thr_id = below
 		pthread_create(&p_thread, NULL, xavaInput, (void*)&audio);
@@ -812,8 +702,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					"Audio thread exited unexpectedly. %s\n", audio.error_message);
 					exit(EXIT_FAILURE); 
 				} 
-			}//resize window
-		}//reloading config
+			} // resize window
+		} // reloading config
 
 		// get rid of everything else  
 		cleanup();

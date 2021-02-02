@@ -2,6 +2,7 @@
 #include <time.h>
 #include "../graphical.h"
 #include "../../config.h"
+#include "../../shared.h"
 
 SDL_Window *xavaSDLWindow;
 SDL_Surface *xavaSDLWindowSurface;
@@ -165,3 +166,11 @@ void xavaOutputDraw(int bars, int rest, int *f, int *flastd) {
 	SDL_UpdateWindowSurface(xavaSDLWindow);
 	return;
 }
+
+void xavaOutputHandleConfiguration(void *data) {
+	//dictionary *ini = (dictionary*) data;
+
+	// VSync doesnt work on SDL2 :(
+	p.vsync = 0;
+}
+
