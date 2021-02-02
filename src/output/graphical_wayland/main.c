@@ -6,14 +6,15 @@
 #include <sys/syscall.h>
 #include <sys/mman.h>
 
-#include "xdg-shell-client-protocol.h"
-#include "wlr-layer-shell-unstable-v1-client-protocol.h"
-#include "xdg-output-unstable-v1-client-protocol.h"
-#include "wlr-output-managment-unstable-v1.h"
+#include "gen/xdg-shell-client-protocol.h"
+#include "gen/wlr-layer-shell-unstable-v1-client-protocol.h"
+#include "gen/xdg-output-unstable-v1-client-protocol.h"
+#include "gen/wlr-output-managment-unstable-v1.h"
 
-#include "graphical.h"
-#include "../config.h"
-#include "graphical_wayland.h"
+#include "../graphical.h"
+#include "../../config.h"
+#include "../../shared.h"
+#include "main.h"
 
 /* Globals */
 struct wl_display *xavaWLDisplay;
@@ -46,6 +47,9 @@ uint32_t *xavaWLFrameBuffer;
 int xavaWLSHMFD;
 
 int width_margin, height_margin;
+
+_Bool backgroundLayer;
+int monitorNumber;
 
 static void wl_buffer_release(void *data, struct wl_buffer *wl_buffer) {
 	/* Sent by the compositor when it's no longer using this buffer */
@@ -213,11 +217,11 @@ static const struct wl_registry_listener xava_wl_registry_listener = {
 	.global_remove = xava_wl_registry_global_remove,
 };
 
-void cleanup_graphical_wayland(void) {
+void xavaOutputCleanup(void) {
 	close(xavaWLSHMFD);
 	munmap(xavaWLFrameBuffer, p.w*p.h*sizeof(uint32_t));
 
-	if(p.overrideRedirect) {
+	if(backgroundLayer) {
 		zwlr_layer_surface_v1_destroy(xavaWLRLayerSurface);
 		zwlr_layer_shell_v1_destroy(xavaWLRLayerShell);
 
@@ -287,7 +291,7 @@ uint32_t handle_window_alignment(void) {
 	return anchor;
 }
 
-int init_window_wayland(void) {
+int xavaInitOutput(void) {
 	handle_wayland_platform_quirks();
 
 	xavaWLOutputs = malloc(1); xavaWLOutputsCount = 0;
@@ -317,22 +321,18 @@ int init_window_wayland(void) {
 	if(xavaWLRLayerShell == NULL || xavaXDGOutputManager == NULL || xavaWLOutputs == NULL) {
 		fprintf(stderr, "Your compositor doesn't support any of the following:\n"
 				"zwlr_layer_shell_v1, zwlr_output_manager_v1 and/or wl_output\n"
-				"This will DISABLE the ability to use override_redirect for safety"
-				" reasons!\n");
-		p.overrideRedirect = 0;
+				"This will DISABLE the ability to use the background layer for\n"
+				"safety reasons!\n");
+		backgroundLayer = 0;
 	}
 
 	xavaWLSurface = wl_compositor_create_surface(xavaWLCompositor);
 
 	// select an appropriate output
-	struct wlOutput *output = xavaWLOutputs[p.monitor_num];
+	struct wlOutput *output = xavaWLOutputs[monitorNumber];
 
-	// p.overrideRedirect is a carry-over from X11
-	// It is basically a feature that allows windows to be
-	// rendered in the background in most supported window managers
-	//
 	// The option carries the same functionality here to Wayland as well
-	if(p.overrideRedirect) {
+	if(backgroundLayer) {
 		// Create a "wallpaper" surface
 		xavaWLRLayerSurface = zwlr_layer_shell_v1_get_layer_surface(
 			xavaWLRLayerShell, xavaWLSurface, output->output,
@@ -373,12 +373,12 @@ int init_window_wayland(void) {
 	return EXIT_SUCCESS;
 }
 
-void clear_screen_wayland(void) {
+void xavaOutputClear(void) {
 	for(register int i=0; i<p.w*p.h; i++)
 		xavaWLFrameBuffer[i] = p.bgcol;
 }
 
-int apply_window_settings_wayland(void) {
+int xavaOutputApply(void) {
 	// TODO: Fullscreen support
 	//if(p.fullF) xdg_toplevel_set_fullscreen(xavaWLSurface, NULL);
 	//else        xdg_toplevel_unset_fullscreen(xavaWLSurface);
@@ -401,13 +401,14 @@ int apply_window_settings_wayland(void) {
 		(p.background_opacity*0xff)<<24);
 
 	// clean screen because the colors changed
-	clear_screen_wayland();
+	xavaOutputClear();
+
 
 
 	return EXIT_SUCCESS;
 }
 
-int get_window_input_wayland(void) {
+int xavaOutputHandleInput(void) {
 	// i am too lazy to do this part
 	// especially with how tedious Wayland is for client-side
 	// development
@@ -417,7 +418,7 @@ int get_window_input_wayland(void) {
 }
 
 // super optimized, because cpus are shit at graphics
-void draw_graphical_wayland(int bars, int rest, int *f, int *flastd) {
+void xavaOutputDraw(int bars, int rest, int *f, int *flastd) {
 	xavaWLCurrentlyDrawing = 1;
 	for(int i = 0; i < bars; i++) {
 		// get the properly aligned starting pointer
@@ -451,5 +452,16 @@ void draw_graphical_wayland(int bars, int rest, int *f, int *flastd) {
 	xavaWLCurrentlyDrawing = 0;
 
 	wl_display_roundtrip(xavaWLDisplay);
+}
+
+void xavaOutputHandleConfiguration(void *data) {
+	dictionary *ini = (dictionary*)data;
+
+	backgroundLayer = iniparser_getboolean
+		(ini, "wayland:backgroundLayer", 0);
+	monitorNumber = iniparser_getboolean
+		(ini, "wayland:monitor_num", 0);
+
+	p.vsync = 0;
 }
 

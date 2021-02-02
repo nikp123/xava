@@ -101,7 +101,7 @@
 # Basically, it put it at the bottom of the window stack and cannot be moved
 # As a side-effect, it also removes any controls from the window
 # Similar to what "interactable = false" does
-; override_redirect = false
+; background_layer = false
 
 # Wayland-only
 # When running override_redirect, you must specify the monitor number

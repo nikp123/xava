@@ -1,11 +1,6 @@
 project(xava C CXX)
 cmake_minimum_required(VERSION 3.1)
 
-# default build configuration, adjust this to your liking
-
-# Wayland protocols default directory
-set(WL_PROT_DIR "/usr/share/wayland-protocols")
-
 # Fix pkg-config for cross-builds (such as MinGW on ArchLinux)
 if(CMAKE_FIND_ROOT_PATH)
     set(CMAKE_SYSROOT "${CMAKE_FIND_ROOT_PATH}")
