@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <portaudio.h>
-#include "portaudio.h"
-#include "fifo.h"
+#include "main.h"
+#include "../../shared.h"
 
 #define SAMPLE_SILENCE 32768
 #define PA_SAMPLE_TYPE paInt16
@@ -73,7 +73,7 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 	return finished;
 }
 
-void* input_portaudio(void *audiodata) {
+void* xavaInput(void *audiodata) {
 	audio = (struct audio_data *)audiodata;
 
 	PaStreamParameters inputParameters;
@@ -189,3 +189,11 @@ void* input_portaudio(void *audiodata) {
 	free(data.recordedSamples);
 	return 0;
 } 
+
+void xavaInputHandleConfiguration(void *data1, void *data2) {
+	dictionary *ini = (dictionary*) data1;
+	struct audio_data *audio = (struct audio_data*) data2; 
+	audio->rate = 44100;
+	audio->source = (char *)iniparser_getstring(ini, "input:source", "auto");
+}
+

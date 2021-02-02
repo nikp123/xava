@@ -15,8 +15,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "graphical.h"
-#include "../config.h"
+#include "../graphical.h"
+#include "../../config.h"
+#include "../../shared.h"
 
 static Pixmap gradientBox = 0;
 static XColor xbgcol, xcol, *xgrad;
@@ -36,6 +37,10 @@ static XWMHints xavaXWMHints;
 static XEvent xev;
 static Bool xavaSupportsRR;
 static int xavaRREventBase;
+
+_Bool rootWindowEnabled;
+_Bool overrideRedirectEnabled;
+_Bool reloadOnDisplayConfigure;
 
 #ifdef GLX
 static int VisData[] = {
@@ -136,7 +141,7 @@ void calculateColors(void) {
 	snatchColor("color4", p.bcolor, p.bgcol, &xbgcol, databaseName, &xavaXResDB);
 }
 
-int init_window_x(void)
+int xavaInitOutput(void)
 {
 	// NVIDIA CPU cap utilization in Vsync fix
 	setenv("__GL_YIELD", "USLEEP", 0);
@@ -185,11 +190,11 @@ int init_window_x(void)
 
 	xavaAttr.backing_store = Always;
 	// make it so that the window CANNOT be reordered by the WM
-	xavaAttr.override_redirect = p.overrideRedirect;
+	xavaAttr.override_redirect = overrideRedirectEnabled;
 
 	int xavaWindowFlags = CWOverrideRedirect | CWBackingStore |  CWEventMask | CWColormap | CWBorderPixel | CWBackPixel;
 
-	if(p.iAmRoot) xavaXWindow = xavaXRoot;
+	if(rootWindowEnabled) xavaXWindow = xavaXRoot;
 	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p.wx, p.wy, (unsigned int)p.w,
 		(unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
@@ -207,7 +212,7 @@ int init_window_x(void)
 	XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask | VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
 
 	#ifdef GLX
-		if(GLXmode) if(XGLInit()) return 1;
+		if(XGLInit()) return 1;
 	#endif
 
 	XMapWindow(xavaXDisplay, xavaXWindow);
@@ -289,7 +294,8 @@ int init_window_x(void)
 			}
 
 			// listen for display configure events only if enabled
-			if(p.reloadOnDC) XRRSelectInput(xavaXDisplay, xavaXWindow, rr_mask);
+			if(reloadOnDisplayConfigure)
+				XRRSelectInput(xavaXDisplay, xavaXWindow, rr_mask);
 		}
 	}
 
@@ -321,9 +327,8 @@ int render_gradient_x(void) {
 	return 0;
 }
 
-void clear_screen_x(void) {
-	#ifdef GLX
-	if(GLXmode) {
+void xavaOutputClear(void) {
+	#if defined(GLX)
 		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p.transF ? 1.0*p.background_opacity : 1.0); // TODO BG transparency
 		glColors[0] = xcol.red/65535.0;
 		glColors[1] = xcol.green/65535.0;
@@ -336,17 +341,15 @@ void clear_screen_x(void) {
 			glColors[6] = ARGB_G_32(p.shdw_col);
 			glColors[7] = ARGB_B_32(p.shdw_col);
 		}
-	} else
-	#endif
-	{
+	#else
 		XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
 		XClearWindow(xavaXDisplay, xavaXWindow);
 
 		if(p.gradients) render_gradient_x();
-	}			// you figure out a less dumb to do this
+	#endif
 }
 
-int apply_window_settings_x(void)
+int xavaOutputApply(void)
 {
 	calculateColors();
 	// Gets the monitors resolution
@@ -381,20 +384,18 @@ int apply_window_settings_x(void)
 
 	// do the usual stuff :P
 	#ifdef GLX
-	if(GLXmode){
-		glViewport(0, 0, p.w, p.h);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		
-		glOrtho(0, (double)p.w, 0, (double)p.h, -1, 1);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
+	glViewport(0, 0, p.w, p.h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	
+	glOrtho(0, (double)p.w, 0, (double)p.h, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
-		// Vsync causes problems on NVIDIA GPUs, looking for possible workarounds/fixes
-		glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p.vsync);
-	}
+	// Vsync causes problems on NVIDIA GPUs, looking for possible workarounds/fixes
+	glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p.vsync);
 	#endif
-	clear_screen_x();
+	xavaOutputClear();
 
 	if(!p.interactF){
 		XRectangle rect;
@@ -406,7 +407,7 @@ int apply_window_settings_x(void)
 	return 0;
 }
 
-int get_window_input_x(void) {
+int xavaOutputHandleInput(void) {
 	// this way we avoid event stacking which requires a full frame to process a single event
 	int action = 0;
 
@@ -469,7 +470,8 @@ int get_window_input_x(void) {
 			case ConfigureNotify:
 			{
 				// the window should not be resized when it IS the monitor
-				if(p.iAmRoot||p.overrideRedirect) break;
+				if(rootWindowEnabled||overrideRedirectEnabled)
+					break;
 
 				// This is needed to track the window size
 				XConfigureEvent trackedXavaXWindow;
@@ -501,17 +503,16 @@ int get_window_input_x(void) {
 	return action;
 }
 
-void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
+void xavaOutputDraw(int bars, int rest, int f[200], int flastd[200])
 {
 	// im lazy, but i just wanna make it work
 	int xoffset = rest, yoffset = p.h;
-	if(p.iAmRoot) {
+	if(rootWindowEnabled) {
 		xoffset+=p.wx;
 		yoffset+=p.wy;
 	}
 
-	#ifdef GLX
-	if(GLXmode) {
+	#if defined(GLX)
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		for(int i=0; i<p.gradients; i++) {
@@ -524,9 +525,7 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 		glXSwapBuffers(xavaXDisplay, xavaXWindow);
 		glFinish();
 		glXWaitGL();
-	} else 
-	#endif
-	{
+	#else
 		// draw bars on the X11 window
 		for(int i = 0; i < bars; i++) {
 			// this fixes a rendering bug
@@ -544,11 +543,11 @@ void draw_graphical_x(int bars, int rest, int f[200], int flastd[200])
 				XClearArea(xavaXDisplay, xavaXWindow, xoffset + i*(p.bs+p.bw), yoffset - flastd[i], (unsigned int)p.bw, (unsigned int)(flastd[i]-f[i]), 0);
 		}
 		XSync(xavaXDisplay, 0);
-	}
+	#endif
 	return;
 }
 
-void cleanup_graphical_x(void)
+void xavaOutputCleanup(void)
 {
 	// Root mode leaves artifacts on screen even though the window is dead
 	XClearWindow(xavaXDisplay, xavaXWindow);
@@ -560,7 +559,7 @@ void cleanup_graphical_x(void)
  
 	#ifdef GLX
 		glXMakeCurrent(xavaXDisplay, 0, 0);
-		if(GLXmode) glXDestroyContext(xavaXDisplay, xavaGLXContext);
+		glXDestroyContext(xavaXDisplay, xavaGLXContext);
 	#endif
 	XFreeGC(xavaXDisplay, xavaXGraphics);
 	XDestroyWindow(xavaXDisplay, xavaXWindow);
@@ -569,3 +568,40 @@ void cleanup_graphical_x(void)
 	free(xgrad);
 	return;
 }
+
+void xavaOutputHandleConfiguration(void *data) {
+	dictionary *ini = (dictionary*)data;
+
+	reloadOnDisplayConfigure = iniparser_getboolean
+		(ini, "x11:reload_on_display_configure", 0);
+	rootWindowEnabled = iniparser_getboolean
+		(ini, "x11:root_window", 0);
+	overrideRedirectEnabled = iniparser_getboolean
+		(ini, "x11:override_redirect", 0);
+
+	// who knew that messing with some random properties breaks things
+	if(rootWindowEnabled&&overrideRedirectEnabled) {
+		fprintf(stderr,
+				"root_window and override_redirect "
+				"don't mix well together!\n");
+	}
+	if(rootWindowEnabled && p.gradients) {
+		fprintf(stderr, "root_window and gradients don't work!\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// Xquartz doesnt support ARGB windows
+	// Therefore transparency is impossible on macOS
+	#ifdef __APPLE__
+		p->transF = 0;
+	#endif
+
+	#ifndef GLX
+		// VSync doesnt work without OpenGL :(
+		p.vsync = 0;
+	#else
+		// OGL + Root Window = completely broken
+		rootWindowEnabled = 0;
+	#endif
+}
+

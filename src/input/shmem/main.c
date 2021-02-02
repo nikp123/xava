@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
-#include "fifo.h"
+#include "../../shared.h"
 
 typedef unsigned int u32_t;
 typedef short s16_t;
@@ -47,7 +47,7 @@ typedef struct {
 
 
 //input: SHMEM
-void* input_shmem(void* data)
+void* xavaInput(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
 	vis_t *mmap_area;
@@ -110,3 +110,11 @@ void* input_shmem(void* data)
 	}
 	return 0;
 }
+
+void xavaInputHandleConfiguration(void *data1, void *data2) {
+	dictionary *ini = (dictionary*) data1;
+	struct audio_data *audio = (struct audio_data*) data2; 
+	audio->rate = 44100;
+	audio->source = (char *)iniparser_getstring(ini, "input:source", "/squeezelite-00:00:00:00:00:00");
+}
+

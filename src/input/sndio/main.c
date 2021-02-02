@@ -4,9 +4,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "fifo.h"
+#include "../../shared.h"
 
-void* input_sndio(void* data)
+void* xavaInput(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
 	struct sio_par par;
@@ -64,3 +64,11 @@ void* input_sndio(void* data)
 
 	return 0;
 }
+
+void xavaInputHandleConfiguration(void *data1, void *data2) {
+	dictionary *ini = (dictionary*) data1;
+	struct audio_data *audio = (struct audio_data*) data2; 
+	audio->rate = 44100;
+	audio->source = (char *)iniparser_getstring(ini, "input:source", SIO_DEVANY);
+}
+

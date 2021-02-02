@@ -1,6 +1,7 @@
-#include "fifo.h"
+#include "../../shared.h"
 #include <alsa/asoundlib.h>
 
+#include <dictionary.h>
 #include <sys/types.h>
 #include <dirent.h>
 
@@ -117,7 +118,7 @@ static _Bool directory_exists(const char * path) {
 	return exists;
 }
 
-void* input_alsa(void* data) {
+void* xavaInput(void* data) {
 	int err;
 	struct audio_data* audio = (struct audio_data*)data;
 	snd_pcm_t* handle;
@@ -193,3 +194,11 @@ void* input_alsa(void* data) {
 		}
 	}
 }
+
+void xavaInputHandleConfiguration(void *data1, void *data2) {
+	dictionary *ini = (dictionary*) data1;
+	struct audio_data *audio = (struct audio_data*) data2; 
+	audio->rate = 44100;
+	audio->source = (char *)iniparser_getstring(ini, "input:source", "Loopback,1");
+}
+

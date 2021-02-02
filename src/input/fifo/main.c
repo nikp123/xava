@@ -3,21 +3,19 @@
 #include <sys/fcntl.h>
 #include <sys/types.h>
 #include <time.h>
-#include "fifo.h"
+#include "../../shared.h"
 
 int rc;
 
-int open_fifo(const char *path)
-{
+int open_fifo(const char *path) {
 	int fd = open(path, O_RDONLY);
 	int flags = fcntl(fd, F_GETFL, 0);
 	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 	return fd;
 }
 
-
 // input: FIFO
-void* input_fifo(void* data)
+void* xavaInput(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
 	int fd;
@@ -75,41 +73,6 @@ void* input_fifo(void* data)
 				n++;
 				if (n == audio->inputsize-1) n = 0;
 			}
-
-/*
-			for (q = 0; q < (size / 4); q++) {
-
-				tempr = ( buf[ 4 * q + 3] << 2);
-
-				lo =  ( buf[4 * q + 2] >> 6);
-				if (lo < 0)lo = abs(lo) + 1;
-				if (tempr >= 0)tempr = tempr + lo;
-				else tempr = tempr - lo;
-
-				templ = ( buf[ 4 * q + 1] << 2);
-
-				lo =  ( buf[ 4 * q] >> 6);
-				if (lo < 0)lo = abs(lo) + 1;
-				if (templ >= 0)templ = templ + lo;
-				else templ = templ - lo;
-
-				if (audio->channels == 1) audio->audio_out_l[n] = (tempr + 
-templ) / 
-2;
-
-
-				//stereo storing channels in buffer
-				if (audio->channels == 2) {
-					audio->audio_out_l[n] = templ;
-					audio->audio_out_r[n] = tempr;
-					}
-
-
-
-				n++;
-				if (n == 2048 - 1)n = 0;
-			}
-*/
 		}
 
 		if (audio->terminate == 1) {
@@ -119,3 +82,11 @@ templ) /
 	}
 	return 0;
 }
+
+void xavaInputHandleConfiguration(void *data1, void *data2) {
+	dictionary *ini = (dictionary*) data1;
+	struct audio_data *audio = (struct audio_data*) data2; 
+	audio->rate = 44100;
+	audio->source = (char *)iniparser_getstring(ini, "input:source", "/tmp/mpd.fifo");
+}
+

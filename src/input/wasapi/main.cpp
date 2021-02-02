@@ -9,6 +9,9 @@
 #include "fifo.h"
 #include "wasapi.h"
 
+// This variable is read by the main executable
+const char XAVA_DEFAULT_AUDIO_SORUCE[] = "loopback";
+
 using namespace std;
 
 const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);

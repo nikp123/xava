@@ -2,17 +2,6 @@ project(xava C CXX)
 cmake_minimum_required(VERSION 3.1)
 
 # default build configuration, adjust this to your liking
-option(SHMEM "SHMEM" OFF)
-option(SDL2 "SDL2" ON)
-option(X11 "X11" ON)
-option(WAYLAND "WAYLAND" OFF)
-if(WAYLAND) # Wayland REQUIRES SHMEM as a dependency
-	set(SHMEM ON)
-endif()
-option(ALSA "ALSA" ON)
-option(PULSEAUDIO "PULSEAUDIO" ON)
-option(SNDIO "SNDIO" ON)
-option(PORTAUDIO "PORTAUDIO" ON)
 
 # Wayland protocols default directory
 set(WL_PROT_DIR "/usr/share/wayland-protocols")
@@ -101,206 +90,9 @@ pkg_check_modules(FFTW3 REQUIRED fftw3)
 list(APPEND INCLUDE_DIRS "${FFTW3_INCLUDE_DIRS}")
 list(APPEND LINK_DIRS "${FFTW3_LIBRARY_DIRS}")
 
-
 # Optional features
 set(ADDITIONAL_SOURCES "")
 set(ADDITIONAL_LIBRARIES "")
-
-# shmem
-if(SHMEM)
-	add_definitions(-DSHMEM)
-	list(APPEND ADDITIONAL_LIBRARIES "-lrt")
-	list(APPEND ADDITIONAL_SOURCES "src/input/shmem.c")
-endif()
-
-# OS-Specific inclusions
-if(NOT (MSYS OR MINGW OR MSVC))
-	message(STATUS "Not a Windows platform, can use POSIX now!")
-	list(APPEND ADDITIONAL_SOURCES "src/input/fifo.c")
-endif()
-
-# SDL2
-if(SDL2)
-	pkg_check_modules(SDL2 QUIET sdl2)
-	if(SDL2_FOUND)
-		list(APPEND ADDITIONAL_SOURCES "src/output/graphical_sdl.c")
-		list(APPEND INCLUDE_DIRS "${SDL2_INCLUDE_DIRS}")
-		list(APPEND LINK_DIRS "${SDL2_LIBRARY_DIRS}")
-		list(APPEND ADDITIONAL_LIBRARIES "${SDL2_LIBRARIES}")
-		add_definitions(-DSDL)
-	else()
-		message(STATUS "SDL2 library not found")
-	endif()
-endif()
-
-# Wayland
-if(WAYLAND)
-	pkg_check_modules(WAYLAND QUIET egl wayland-client wayland-egl)
-	if(WAYLAND_FOUND)
-		# Hacky way to deal with wayland-scanner (but will be used for nw)
-		execute_process(COMMAND wayland-scanner client-header 
-			"${WL_PROT_DIR}/stable/xdg-shell/xdg-shell.xml"
-			"${CMAKE_CURRENT_LIST_DIR}/src/output/xdg-shell-client-protocol.h")
-		execute_process(COMMAND wayland-scanner client-header
-			"${CMAKE_CURRENT_LIST_DIR}/assets/linux/wayland/protocols/wlr-layer-shell-unstable-v1.xml"
-			"${CMAKE_CURRENT_LIST_DIR}/src/output/wlr-layer-shell-unstable-v1-client-protocol.h")
-		execute_process(COMMAND wayland-scanner private-code
-			"${CMAKE_CURRENT_LIST_DIR}/assets/linux/wayland/protocols/wlr-layer-shell-unstable-v1.xml"
-			"${CMAKE_CURRENT_LIST_DIR}/src/output/wlr-layer-shell-unstable-v1-client-protocol.c")
-		list(APPEND ADDITIONAL_SOURCES "src/output/wlr-layer-shell-unstable-v1-client-protocol.c")
-		execute_process(COMMAND wayland-scanner client-header
-			"${CMAKE_CURRENT_LIST_DIR}/assets/linux/wayland/protocols/wlr-output-management-unstable-v1.xml"
-			"${CMAKE_CURRENT_LIST_DIR}/src/output/wlr-output-managment-unstable-v1.h")
-		execute_process(COMMAND wayland-scanner private-code
-			"${CMAKE_CURRENT_LIST_DIR}/assets/linux/wayland/protocols/wlr-output-management-unstable-v1.xml"
-			"${CMAKE_CURRENT_LIST_DIR}/src/output/wlr-output-managment-unstable-v1.c")
-		execute_process(COMMAND wayland-scanner client-header
-			"${WL_PROT_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml"
-			"${CMAKE_CURRENT_LIST_DIR}/src/output/xdg-output-unstable-v1-client-protocol.h")
-		list(APPEND ADDITIONAL_SOURCES "src/output/wlr-output-managment-unstable-v1.c")
-
-		list(APPEND ADDITIONAL_SOURCES "src/output/graphical_wayland.c")
-		list(APPEND INCLUDE_DIRS "${WAYLAND_INCLUDE_DIRS}")
-		list(APPEND LINK_DIRS "${WAYLAND_LIBRARY_DIRS}")
-		list(APPEND ADDITIONAL_LIBRARIES "${WAYLAND_LIBRARIES}")
-		add_definitions(-DWAYLAND)
-	else()
-		message(STATUS "Wayland libraries not found")
-	endif()
-endif()
-
-# Xorg
-if(X11)
-	if(APPLE)
-		include(FindX11)
-		if(X11_FOUND)
-			add_definitions(-DXLIB)
-			list(APPEND ADDITIONAL_SOURCES "src/output/graphical_x.c")
-			list(APPEND INCLUDE_DIRS "${X11_INCLUDE_DIR}" "${X11_Xfixes_INCLUDE_PATH}" "${X11_Xrandr_INCLUDE_PATH}")
-			list(APPEND LINK_DIRS "${X11_INCLUDE_DIR}" "${X11_Xfixes_INCLUDE_PATH}" "${X11_Xrandr_INCLUDE_PATH}")
-			list(APPEND ADDITIONAL_LIBRARIES "${X11_LIBRARIES}" "${X11_Xfixes_LIB}" "${X11_Xrandr_LIB}")
-		else()
-			message(STATUS "X11, Xrandr and/or Xfixes library not found")
-		endif()
-	else()
-		pkg_check_modules(X11 QUIET x11 xfixes xrandr)
-		if(X11_FOUND)
-			add_definitions(-DXLIB)
-			list(APPEND ADDITIONAL_SOURCES "src/output/graphical_x.c")
-			list(APPEND INCLUDE_DIRS "${X11_INCLUDE_DIRS}")
-			list(APPEND LINK_DIRS "${X11_LIBRARY_DIRS}")
-			list(APPEND ADDITIONAL_LIBRARIES "${X11_LIBRARIES}")
-			
-			# GLX
-			pkg_check_modules(GL QUIET gl xrender)
-			if(GL_FOUND)
-				add_definitions(-DGLX -DGL)
-				list(APPEND INCLUDE_DIRS "${GL_INCLUDE_DIRS}")
-				list(APPEND LINK_DIRS "${GL_LIBRARY_DIRS}")
-				list(APPEND ADDITIONAL_LIBRARIES "${GL_LIBRARIES}")
-			else()
-				message(STATUS "GL and or Xrender library not found")
-			endif()
-		else()
-			message(STATUS "X11, Xrandr and/or Xfixes library not found")
-		endif()
-	endif()
-endif()
-
-
-# winapi
-if(MSYS OR MINGW OR MSVC)
-	find_library(GDI_LIB gdi32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-	if(GDI_LIB)
-		find_library(WGL_LIB opengl32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-		if(WGL_LIB)
-			find_library(GLU_LIB glu32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-			if(GLU_LIB)
-				find_library(DWM_LIB dwmapi HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-				if(DWM_LIB)
-					add_definitions(-DWIN -DGL)
-					list(APPEND ADDITIONAL_SOURCES "src/output/graphical_win.c")
-					list(APPEND ADDITIONAL_SOURCES "src/input/wasapi.cpp")
-					list(APPEND ADDITIONAL_LIBRARIES "-lgdi32")
-					list(APPEND ADDITIONAL_LIBRARIES "-lwinmm")
-					list(APPEND ADDITIONAL_LIBRARIES "-lopengl32")
-					list(APPEND ADDITIONAL_LIBRARIES "-lglu32")
-					list(APPEND ADDITIONAL_LIBRARIES "-ldwmapi")
-				else()
-					message("DWMAPI library not found")
-				endif()
-			else()
-				message("GLU library not found")
-			endif()
-		else()
-			message("openGL library not found")
-		endif()
-	else()
-		message(STATUS "GDI library not found")
-	endif()
-	
-	if(CMAKE_BUILD_TYPE STREQUAL "Release")
-		message(STATUS "Since release build, console is being disabled")
-		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -mwindows")
-
-		# Prepare NSI file for compilation
-		configure_file("assets/windows/xava.nsi.template" "xava.nsi" NEWLINE_STYLE CRLF)
-	endif()
-endif()
-
-# alsa
-if(ALSA)
-	pkg_check_modules(ALSA QUIET alsa)
-	if(ALSA_FOUND)
-		add_definitions(-DALSA)
-		list(APPEND INCLUDE_DIRS "${ALSA_INCLUDE_DIRS}")
-		list(APPEND LINK_DIRS "${ALSA_LIBRARY_DIRS}")
-		list(APPEND ADDITIONAL_SOURCES "src/input/alsa.c")
-		list(APPEND ADDITIONAL_LIBRARIES "${ALSA_LIBRARIES}")
-	else()
-		message(STATUS "alsa library not found")
-	endif()
-endif()
-
-# pulseaudio
-if(PULSEAUDIO)
-	pkg_check_modules(PULSEAUDIO QUIET libpulse libpulse-simple)
-	if(PULSEAUDIO_FOUND)
-		add_definitions(-DPULSE)
-		list(APPEND INCLUDE_DIRS "${PULSEAUDIO_INCLUDE_DIRS}")
-		list(APPEND LINK_DIRS "${PULSEAUDIO_LIBRARY_DIRS}")
-		list(APPEND ADDITIONAL_SOURCES "src/input/pulse.c")
-		list(APPEND ADDITIONAL_LIBRARIES "${PULSEAUDIO_LIBRARIES}")
-	else()
-		message(STATUS "pulseaudio library not found")
-	endif()
-endif()
-
-# sndio
-if(SNDIO)
-	find_library(SNDIO_LIB sndio HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-	if(SNDIO_LIB)
-		add_definitions(-DSNDIO)
-		list(APPEND ADDITIONAL_SOURCES "src/input/sndio.c")
-		list(APPEND ADDITIONAL_LIBRARIES "-lsndio")
-	else()
-		message(STATUS "sndio library not found")
-	endif()
-endif()
-
-# portaudio
-if(PORTAUDIO)
-	pkg_check_modules(PORTAUDIO QUIET portaudio-2.0)
-	if(PORTAUDIO_FOUND)
-		add_definitions(-DPORTAUDIO)
-		list(APPEND INCLUDE_DIRS "${PORTAUDIO_INCLUDE_DIRS}")
-		list(APPEND LINK_DIRS "${PORTAUDIO_LIBRARY_DIRS}")
-		list(APPEND ADDITIONAL_SOURCES "src/input/portaudio.c")
-		list(APPEND ADDITIONAL_LIBRARIES "${PORTAUDIO_LIBRARIES}")
-	else()
-		message(STATUS "portaudio library not found")
-	endif()
-endif()
 
 if((UNIX AND NOT APPLE) OR (MSYS OR MINGW OR MSVC))
 	list(APPEND ADDITIONAL_SOURCES "src/misc/inode_watcher.c")
@@ -315,11 +107,30 @@ if(UNIX AND NOT APPLE)
 	configure_file("assets/linux/xava.desktop.template" "xava.desktop" NEWLINE_STYLE UNIX)
 endif()
 
+# Runtime library load
+if(UNIX)
+	list(APPEND ADDITIONAL_LIBRARIES "dl")
+endif()
+
+# Build output modules
+file(GLOB outputs "src/output/*/build.cmake" )
+foreach(dir ${outputs})
+	get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
+	include(${dir})
+endforeach()
+
+# Build input modules
+file(GLOB outputs "src/input/*/build.cmake" )
+foreach(dir ${outputs})
+	get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
+	include(${dir})
+endforeach()
+
 # Build executable
 add_executable(
 	xava
 	${ADDITIONAL_SOURCES}
-	src/output/graphical.c
+	src/module.c
 	src/shared.c
 	src/config.c
 	src/xava.c

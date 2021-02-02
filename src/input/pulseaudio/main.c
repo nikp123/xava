@@ -7,7 +7,7 @@
 #include <pulse/pulseaudio.h>
 #include <pthread.h>
 
-#include "fifo.h"
+#include "../../shared.h"
 
 pa_mainloop *m_pulseaudio_mainloop;
 
@@ -98,11 +98,16 @@ void getPulseDefaultSink(void* data) {
 	pa_mainloop_run(m_pulseaudio_mainloop, &ret);
 }
 
-void* input_pulse(void* data)
+void* xavaInput(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
 	int i, n;
 	int16_t buf[audio->inputsize];
+
+	// get default audio source if there is none
+	if(strcmp(audio->source, "auto") == 0) {
+		getPulseDefaultSink((void*)audio);
+	}
 
 	/* The sample type to use */
 	static const pa_sample_spec ss = {
@@ -164,3 +169,11 @@ void* input_pulse(void* data)
 
 	return 0;
 }
+
+void xavaInputHandleConfiguration(void *data1, void *data2) {
+	dictionary *ini = (dictionary*) data1;
+	struct audio_data *audio = (struct audio_data*) data2; 
+	audio->rate = 44100;
+	audio->source = (char *)iniparser_getstring(ini, "input:source", "auto");
+}
+

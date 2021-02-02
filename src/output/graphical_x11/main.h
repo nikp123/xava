@@ -1,0 +1,2 @@
+#define X11_DISPLAY_NUM 1
+#define X11_DISPLAY_NAME "x11"

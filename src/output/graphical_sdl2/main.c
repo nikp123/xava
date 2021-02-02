@@ -1,7 +1,8 @@
 #include <SDL.h>
 #include <time.h>
-#include "graphical.h"
-#include "../config.h"
+#include "../graphical.h"
+#include "../../config.h"
+#include "../../shared.h"
 
 SDL_Window *xavaSDLWindow;
 SDL_Surface *xavaSDLWindowSurface;
@@ -9,7 +10,7 @@ SDL_Event xavaSDLEvent;
 SDL_DisplayMode xavaSDLVInfo;
 int *gradCol;
 
-void cleanup_graphical_sdl(void)
+void xavaOutputCleanup(void)
 {
 	free(gradCol);
 	SDL_FreeSurface(xavaSDLWindowSurface);
@@ -17,7 +18,7 @@ void cleanup_graphical_sdl(void)
 	SDL_Quit();
 }
 
-int init_window_sdl()
+int xavaInitOutput()
 {
 	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
 	{
@@ -53,11 +54,11 @@ int init_window_sdl()
 	return 0;
 }
 
-void clear_screen_sdl(void) {
+void xavaOutputClear(void) {
 	SDL_FillRect(xavaSDLWindowSurface, NULL, SDL_MapRGB(xavaSDLWindowSurface->format, p.bgcol/0x10000%0x100, p.bgcol/0x100%0x100, p.bgcol%0x100));
 }
 
-int apply_window_settings_sdl(void) {
+int xavaOutputApply(void) {
 	// toggle fullscreen
 	SDL_SetWindowFullscreen(xavaSDLWindow, SDL_WINDOW_FULLSCREEN & p.fullF);
 
@@ -65,7 +66,7 @@ int apply_window_settings_sdl(void) {
 	// Appearently SDL uses multithreading so this avoids invalid access
 	// If I had a job, here's what I would be fired for xD
 	SDL_Delay(100);
-	clear_screen_sdl();
+	xavaOutputClear();
 
 	// Window size patch, because xava wipes w and h for some reason.
 	p.w = xavaSDLWindowSurface->w;
@@ -73,7 +74,7 @@ int apply_window_settings_sdl(void) {
 	return 0;
 }
 
-int get_window_input_sdl() {
+int xavaOutputHandleInput() {
 	while(SDL_PollEvent(&xavaSDLEvent) != 0) {
 		switch(xavaSDLEvent.type) {
 			case SDL_KEYDOWN:
@@ -136,7 +137,7 @@ int get_window_input_sdl() {
 	return 0;
 }
  
-void draw_graphical_sdl(int bars, int rest, int *f, int *flastd) {
+void xavaOutputDraw(int bars, int rest, int *f, int *flastd) {
 	for(int i = 0; i < bars; i++) {
 		SDL_Rect current_bar;
 		if(f[i] > flastd[i]){ 
@@ -165,3 +166,11 @@ void draw_graphical_sdl(int bars, int rest, int *f, int *flastd) {
 	SDL_UpdateWindowSurface(xavaSDLWindow);
 	return;
 }
+
+void xavaOutputHandleConfiguration(void *data) {
+	//dictionary *ini = (dictionary*) data;
+
+	// VSync doesnt work on SDL2 :(
+	p.vsync = 0;
+}
+
