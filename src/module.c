@@ -23,14 +23,14 @@ XAVAMODULE *load_module(char *name) {
 	}
 
 	// Typically /usr/local/lib/xava/
-	size_t new_size = strlen(name) + sizeof("PREFIX/lib/xava/")
+	size_t new_size = strlen(name) + sizeof(PREFIX"/lib/xava/")
 		+ strlen(LIBRARY_EXTENSION);
 	char *new_name = calloc(new_size, sizeof(char));
-	sprintf(new_name, "PREFIX/lib/xava/%s%s", name,
+	sprintf(new_name, PREFIX"/lib/xava/%s%s", name,
 			LIBRARY_EXTENSION);
 
 	// lower the name
-	for(int i=strlen("PREFIX/lib/xava/"); i<strlen(new_name); i++)
+	for(int i=strlen(PREFIX"/lib/xava/"); i<strlen(new_name); i++)
 		new_name[i] = tolower(new_name[i]);
 
 	XAVAMODULE *module = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
