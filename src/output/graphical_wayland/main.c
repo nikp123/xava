@@ -458,7 +458,7 @@ void xavaOutputHandleConfiguration(void *data) {
 	dictionary *ini = (dictionary*)data;
 
 	backgroundLayer = iniparser_getboolean
-		(ini, "wayland:backgroundLayer", 0);
+		(ini, "wayland:background_layer", 0);
 	monitorNumber = iniparser_getboolean
 		(ini, "wayland:monitor_num", 0);
 
