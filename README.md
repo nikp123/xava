@@ -123,7 +123,7 @@ Windows users, just download the installer from the Releases page
 
 Install `xava` to default `/usr/local`:
 
-    make install
+    sudo make install
 
 Or you can change `PREFIX`, for example:
 
