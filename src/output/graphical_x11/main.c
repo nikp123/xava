@@ -407,9 +407,9 @@ int xavaOutputApply(void)
 	return 0;
 }
 
-int xavaOutputHandleInput(void) {
+XG_EVENT xavaOutputHandleInput(void) {
 	// this way we avoid event stacking which requires a full frame to process a single event
-	int action = 0;
+	XG_EVENT action = XAVA_IGNORE;
 
 	while(XPending(xavaXDisplay)) {
 		XNextEvent(xavaXDisplay, &xavaXEvent);
@@ -424,13 +424,13 @@ int xavaOutputHandleInput(void) {
 					// bail = -1
 					case XK_a:
 						p.bs++;
-						return 2;
+						return XAVA_RESIZE;
 					case XK_s:
 						if(p.bs > 0) p.bs--;
-						return 2;
+						return XAVA_RESIZE;
 					case XK_f: // fullscreen
 						p.fullF = !p.fullF;
-						return 2;
+						return XAVA_RESIZE;
 					case XK_Up:
 						p.sens *= 1.05;
 						break;
@@ -439,23 +439,23 @@ int xavaOutputHandleInput(void) {
 						break;
 					case XK_Left:
 						p.bw++;
-						return 2;
+						return XAVA_RESIZE;
 					case XK_Right:
 						if (p.bw > 1) p.bw--;
-						return 2;
+						return XAVA_RESIZE;
 					case XK_r: //reload config
-						return 1;
+						return XAVA_RELOAD;
 					case XK_q:
-						return -1;
+						return XAVA_QUIT;
 					case XK_Escape:
-						return -1;
+						return XAVA_QUIT;
 					case XK_b:
 						xbgcol.red   = rand();
 						xbgcol.green = rand();
 						xbgcol.blue  = rand();
 						xbgcol.flags = DoRed | DoGreen | DoBlue;
 						XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
-						return 3;
+						return XAVA_REDRAW;
 					case XK_c:
 						if(p.gradients) break;
 						xcol.red   = rand();
@@ -463,7 +463,7 @@ int xavaOutputHandleInput(void) {
 						xcol.blue  = rand();
 						xcol.flags = DoRed | DoGreen | DoBlue;
 						XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
-						return 3;
+						return XAVA_REDRAW;
 				}
 				break;
 			}
@@ -480,23 +480,25 @@ int xavaOutputHandleInput(void) {
 					p.w = trackedXavaXWindow.width;
 					p.h = trackedXavaXWindow.height;
 				}
-				action = 2;
+				action = XAVA_RESIZE;
 				break;
 			}
 			case Expose:
-				if(action != 2) action = 3;
+				if(action != XAVA_RESIZE)
+					action = XAVA_REDRAW;
 				break;
 			case VisibilityNotify:
-				if(xavaXEvent.xvisibility.state == VisibilityUnobscured) action = 2;
+				if(xavaXEvent.xvisibility.state == VisibilityUnobscured)
+					action = XAVA_RESIZE;
 				break;
 			case ClientMessage:
 				if((Atom)xavaXEvent.xclient.data.l[0] == wm_delete_window)
-					return -1;
+					return XAVA_QUIT;
 				break;
 			default:
 				if(xavaXEvent.type == xavaRREventBase + RRScreenChangeNotify) {
 					printf("Display change detected - Restarting...\n");
-					return 1;
+					return XAVA_RELOAD;
 				}
 		}
 	}

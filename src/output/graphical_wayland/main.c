@@ -408,13 +408,13 @@ int xavaOutputApply(void) {
 	return EXIT_SUCCESS;
 }
 
-int xavaOutputHandleInput(void) {
+XG_EVENT xavaOutputHandleInput(void) {
 	// i am too lazy to do this part
 	// especially with how tedious Wayland is for client-side
 	// development
 
 	// obligatory highlighted TODO goes here
-	return 0;
+	return XAVA_IGNORE;
 }
 
 // super optimized, because cpus are shit at graphics

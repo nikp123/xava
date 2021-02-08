@@ -52,7 +52,7 @@ static void (*xavaOutputHandleConfiguration)(void*);
 static int (*xavaInitOutput)(void);
 static void (*xavaOutputClear)(void);
 static int (*xavaOutputApply)(void);
-static int (*xavaOutputHandleInput)(void);
+static XG_EVENT (*xavaOutputHandleInput)(void);
 static void (*xavaOutputDraw)(int, int, int*, int*);
 static void (*xavaOutputCleanup)(void);
 
@@ -500,17 +500,20 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 			while  (!resizeWindow) {
 				switch(xavaOutputHandleInput()) {
-					case -1:
+					case XAVA_QUIT:
 						cleanup();
 						return EXIT_SUCCESS;
-					case 1:
+					case XAVA_RELOAD:
 						should_reload = 1;
 						break;
-					case 2:
+					case XAVA_RESIZE:
 						resizeWindow = TRUE;
 						break;
-					case 3:
+					case XAVA_REDRAW:
 						redrawWindow = TRUE;
+						break;
+					default:
+						// ignore other values
 						break;
 				}
 				#if defined(__linux__)||defined(__WIN32__)
