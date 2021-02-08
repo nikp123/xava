@@ -32,6 +32,9 @@ BOOL WINAPI wglSwapIntervalEXT (int interval);
 // a crappy workaround for a flawed event-loop design
 static _Bool resized=FALSE, quit=FALSE;
 
+// Warning: shitty win32 api design below, cover your poor eyes
+// Why can't I just pass this shit immediately to my events function
+// instead of doing this shit
 LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch(msg) {
 		case WM_CREATE:
@@ -43,13 +46,13 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 				// bail = -1
 				case 'A':
 					p.bs++;
-					return 2;
+					return XAVA_RESIZE;
 				case 'S':
 					if(p.bs > 0) p.bs--;
-					return 2;
+					return XAVA_RESIZE;
 				case 'F': // fullscreen
 					p.fullF = !p.fullF;
-					return 2;
+					return XAVA_RESIZE;
 				case VK_UP:
 					p.sens *= 1.05;
 					break;
@@ -58,23 +61,23 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 					break;
 				case VK_LEFT:
 					p.bw++;
-					return 2;
+					return XAVA_RESIZE;
 				case VK_RIGHT:
 					if (p.bw > 1) p.bw--;
-					return 2;
+					return XAVA_RESIZE;
 				case 'R': //reload config
-					return 1;
+					return XAVA_RELOAD;
 				case 'Q':
-					return -1;
+					return XAVA_QUIT;
 				case VK_ESCAPE:
-					return -1;
+					return XAVA_QUIT;
 				case 'B':
 					p.bgcol = (rand()<<16)|rand();
-					return 3;
+					return XAVA_REDRAW;
 				case 'C':
 					if(p.gradients) break;
 					p.col = (rand()<<16)|rand();
-					return 3;
+					return XAVA_REDRAW;
 				default: break;
 			}
 			break;
@@ -82,16 +85,16 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 			p.w=LOWORD(lParam);
 			p.h=HIWORD(lParam);
 			resized=TRUE;
-			return 2;
+			return XAVA_RELOAD;
 		case WM_CLOSE:
 			// Perform cleanup tasks.
 			PostQuitMessage(0); 
 			quit=TRUE;
-			return -1;
+			return XAVA_QUIT;
 		case WM_DESTROY:
 			quit=TRUE;
-			return -1;
-		case WM_QUIT:
+			return XAVA_QUIT;
+		case WM_QUIT: // lol why is this ignored
 			break;
 		case WM_NCHITTEST: {
 			LRESULT hit = DefWindowProc(hWnd, msg, wParam, lParam);
@@ -101,7 +104,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 		default:
 			return DefWindowProc(hWnd,msg,wParam,lParam);
 	}
-	return 0;
+	return XAVA_IGNORE;
 }
 
 void clear_screen_win(void) {
@@ -397,26 +400,29 @@ int apply_win_settings(void) {
 	return 0;
 }
 
-int get_window_input_win(void) {
+XG_EVENT get_window_input_win(void) {
 	while(PeekMessage(&xavaWinEvent, xavaWinWindow, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&xavaWinEvent);
+
+		// you fucking piece of shit why are you predefined type AAAAAAAAAAAAAA
 		int r=DispatchMessage(&xavaWinEvent);  // handle return values
-		
+
 		// so you may have wondered why do i do stuff like this
 		// it's because non-keyboard/mouse messages DONT pass through return values
 		// which, guess what, completely breaks my previous design - thanks micro$oft, really appreciate it
-		
+
 		if(quit) {
 			quit=FALSE;
-			return -1;
+			return XAVA_QUIT;
 		}
 		if(resized) {
 			resized=FALSE;
-			return 2;
+			return XAVA_RESIZE;
 		}
-		if(r) return r;
+		if(r != XAVA_IGNORE)
+			return r;
 	}
-	return 0;
+	return XAVA_IGNORE;
 }
 
 void draw_graphical_win(int bars, int rest, int f[200], int flastd[200]) {

@@ -74,7 +74,7 @@ int xavaOutputApply(void) {
 	return 0;
 }
 
-int xavaOutputHandleInput() {
+XG_EVENT xavaOutputHandleInput() {
 	while(SDL_PollEvent(&xavaSDLEvent) != 0) {
 		switch(xavaSDLEvent.type) {
 			case SDL_KEYDOWN:
@@ -85,15 +85,15 @@ int xavaOutputHandleInput() {
 					// bail = -1
 					case SDLK_a:
 						p.bs++;
-						return 2;
+						return XAVA_RESIZE;
 					case SDLK_s:
 						if(p.bs > 0) p.bs--;
-						return 2;
+						return XAVA_RESIZE;
 					case SDLK_ESCAPE:
-						return -1;
+						return XAVA_QUIT;
 					case SDLK_f: // fullscreen
 						p.fullF = !p.fullF;
-						return 2;
+						return XAVA_RESIZE;
 					case SDLK_UP: // key up
 						p.sens *= 1.05;
 						break;
@@ -102,25 +102,25 @@ int xavaOutputHandleInput() {
 						break;
 					case SDLK_LEFT: // key left
 						p.bw++;
-						return 2;
+						return XAVA_RESIZE;
 					case SDLK_RIGHT: // key right
 						if(p.bw > 1) p.bw--;
-						return 2;
+						return XAVA_RESIZE;
 					case SDLK_r: // reload config
-						return 1;
+						return XAVA_RELOAD;
 					case SDLK_c: // change foreground color
 						if(p.gradients) break;
 						p.col = rand() % 0x100;
 						p.col = p.col << 16;
 						p.col += (unsigned int)rand();
-						return 3;
+						return XAVA_REDRAW;
 					case SDLK_b: // change background color
 						p.bgcol = rand() % 0x100;
 						p.bgcol = p.bgcol << 16;
 						p.bgcol += (unsigned int)rand();
-						return 3;
+						return XAVA_REDRAW;
 					case SDLK_q:
-						return -1;
+						return XAVA_QUIT;
 				}
 				break;
 			case SDL_WINDOWEVENT:
@@ -129,12 +129,12 @@ int xavaOutputHandleInput() {
 					// if the user resized the window
 					p.w = xavaSDLEvent.window.data1;
 					p.h = xavaSDLEvent.window.data2;
-					return 2;
+					return XAVA_RESIZE;
 				}
 				break;
 		}
 	}
-	return 0;
+	return XAVA_IGNORE;
 }
  
 void xavaOutputDraw(int bars, int rest, int *f, int *flastd) {
