@@ -23,33 +23,34 @@ struct wl_shm *xavaWLSHM;
 struct wl_compositor *xavaWLCompositor;
 struct xdg_wm_base *xavaXDGWMBase;
 // monitor/display managment crap
-struct zwlr_layer_shell_v1 *xavaWLRLayerShell;
-struct xdg_output_manager *xavaXDGOutputManager;
+static struct zwlr_layer_shell_v1 *xavaWLRLayerShell;
+static struct xdg_output_manager *xavaXDGOutputManager;
 /* Objects */
-struct wl_surface *xavaWLSurface;
-struct xdg_surface *xavaXDGSurface;
-struct xdg_toplevel *xavaXDGToplevel;
-struct wl_shm_pool *xavaWLSHMPool;
+static struct wl_surface *xavaWLSurface;
+static struct xdg_surface *xavaXDGSurface;
+static struct xdg_toplevel *xavaXDGToplevel;
+//static struct wl_shm_pool *xavaWLSHMPool;
 // monitor/display managment crap
-struct zwlr_layer_surface_v1 *xavaWLRLayerSurface;
+static struct zwlr_layer_surface_v1 *xavaWLRLayerSurface;
 struct wlOutput {
 	struct wl_output *output;
 	uint32_t scale;
 	uint32_t name;
 	uint32_t num;
 };
-struct wlOutput **xavaWLOutputs;
-int xavaWLOutputsCount;
+static struct wlOutput **xavaWLOutputs;
+static int xavaWLOutputsCount;
+ 
+//static int shmFileIdentifier;
+static _Bool xavaWLCurrentlyDrawing = 0;
+static uint32_t *xavaWLFrameBuffer;
+static int xavaWLSHMFD;
+ 
+static int width_margin, height_margin;
 
-int shmFileIndentifier;
-_Bool xavaWLCurrentlyDrawing = 0;
-uint32_t *xavaWLFrameBuffer;
-int xavaWLSHMFD;
-
-int width_margin, height_margin;
-
-_Bool backgroundLayer;
-int monitorNumber;
+static _Bool backgroundLayer;
+static XG_EVENT storedEvent;
+static int monitorNumber;
 
 static void wl_buffer_release(void *data, struct wl_buffer *wl_buffer) {
 	/* Sent by the compositor when it's no longer using this buffer */
@@ -122,6 +123,9 @@ static void layer_surface_configure(void *data,
 static void layer_surface_closed(void *data,
 		struct zwlr_layer_surface_v1 *surface) {
 	//destroy_swaybg_output(output);
+	#ifdef DEBUG
+		fprintf(stderr, "wayland: zwlr_layer_surface lost\n");
+	#endif
 }
 static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 	.configure = layer_surface_configure,
@@ -210,7 +214,13 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 }
 static void xava_wl_registry_global_remove(void *data, struct wl_registry *wl_registry,
 		uint32_t name) {
-	// noop
+	// This sometimes happens when displays get reconfigured
+
+	storedEvent = XAVA_RELOAD;
+
+	#ifdef DEBUG
+		fprintf(stderr, "wayland: wl_registry died\n");
+	#endif
 }
 static const struct wl_registry_listener xava_wl_registry_listener = {
 	.global = xava_wl_registry_global_listener,
@@ -412,6 +422,11 @@ XG_EVENT xavaOutputHandleInput(void) {
 	// i am too lazy to do this part
 	// especially with how tedious Wayland is for client-side
 	// development
+
+	XG_EVENT event = storedEvent;
+	storedEvent = XAVA_IGNORE;
+	if(event != XAVA_IGNORE)
+		return event;
 
 	// obligatory highlighted TODO goes here
 	return XAVA_IGNORE;
