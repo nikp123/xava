@@ -405,5 +405,6 @@ void load_config(char *configPath, void* params)
 }
 
 void clean_config() {
-	iniparser_freedict(ini);
+	// apparently fucking iniparser has a double free somewhere and it can't work... great
+	//iniparser_freedict(ini);
 }
