@@ -25,21 +25,29 @@ XAVAMODULE *load_module(char *name) {
 	// Typically /usr/local/lib/xava/
 	size_t new_size = strlen(name) + sizeof(PREFIX"/lib/xava/")
 		+ strlen(LIBRARY_EXTENSION);
-	char *new_name = calloc(new_size, sizeof(char));
-	sprintf(new_name, PREFIX"/lib/xava/%s%s", name,
-			LIBRARY_EXTENSION);
 
-	// lower the name
-	for(int i=strlen(PREFIX"/lib/xava/"); i<strlen(new_name); i++)
-		new_name[i] = tolower(new_name[i]);
+	// allocate enough for the system module size instead
+	// because it's bigger, duh...
+	char *new_name = calloc(new_size, sizeof(char));
+
+	// regardless, try the local module first, as it has priority
+	// over normal ones
+	sprintf(new_name, "./%s%s", name, LIBRARY_EXTENSION);
 
 	XAVAMODULE *module = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
 	module->moduleHandle = dlopen(new_name, RTLD_NOW);
 	module->name = new_name;
 
-	// Possibly a local module instead
+	// if that doesn't work
+	// try normal module path instead
 	if(module->moduleHandle == NULL) {
-		sprintf(new_name, "./%s%s", name, LIBRARY_EXTENSION);
+		sprintf(new_name, PREFIX"/lib/xava/%s%s", name,
+			LIBRARY_EXTENSION);
+
+		// lower the name, because users
+		for(int i=strlen(PREFIX"/lib/xava/"); i<strlen(new_name); i++)
+			new_name[i] = tolower(new_name[i]);
+
 		module->moduleHandle = dlopen(new_name, RTLD_NOW);
 	}
 
