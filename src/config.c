@@ -11,7 +11,7 @@
 
 // inode watching is a Linux(TM) feature
 // so watch out when you're compiling it
-#if defined(__linux__)||defined(WIN)
+#if defined(__linux__)||defined(__WIN32__)
 #include "misc/inode_watcher.h"
 #endif
 
@@ -227,7 +227,7 @@ void load_config(char *configPath, void* params)
 	if (configPath[0] == '\0') {
 		#if defined(__unix__)
 			char *configFile = "config";
-		#elif defined(WIN)||defined(__APPLE__)
+		#elif defined(__WIN32__)||defined(__APPLE__)
 			// editing files without an extension on windows is a pain
 			char *configFile = "config.cfg";
 		#endif

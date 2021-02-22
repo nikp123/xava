@@ -6,8 +6,8 @@
 #include <audioclient.h>
 #include <avrt.h>
 #include <functiondiscoverykeys_devpkey.h>
-#include "fifo.h"
-#include "wasapi.h"
+#include "../../shared.h"
+#include "main.h"
 
 // This variable is read by the main executable
 const char XAVA_DEFAULT_AUDIO_SORUCE[] = "loopback";

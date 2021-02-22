@@ -10,6 +10,14 @@ typedef struct xavamodule {
 } XAVAMODULE;
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+typedef struct xavamodule {
+	char *name;
+	HMODULE moduleHandle;
+} XAVAMODULE;
+#endif
+
 #include <stdbool.h>
 
 void print_module_error();

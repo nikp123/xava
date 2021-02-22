@@ -1,12 +1,12 @@
 # The project default
-option(WIN32 "WIN32" ON)
+option(WINAPI "WINAPI" ON)
 
 if(NOT (MSYS OR MINGW OR MSVC))
-	set(WIN32 OFF)
+	set(WINAPI OFF)
 endif()
 
 # winapi
-if(WIN32)
+if(WINAPI)
 	find_library(GDI_LIB gdi32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 	if(GDI_LIB)
 		find_library(WGL_LIB opengl32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
@@ -16,12 +16,10 @@ if(WIN32)
 				find_library(DWM_LIB dwmapi HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 				if(DWM_LIB)
 					add_definitions(-DWIN -DGL)
-					list(APPEND ADDITIONAL_SOURCES "${XAVA_MODULE_DIR}/main.c")
-					list(APPEND ADDITIONAL_LIBRARIES "-lgdi32")
-					list(APPEND ADDITIONAL_LIBRARIES "-lwinmm")
-					list(APPEND ADDITIONAL_LIBRARIES "-lopengl32")
-					list(APPEND ADDITIONAL_LIBRARIES "-lglu32")
-					list(APPEND ADDITIONAL_LIBRARIES "-ldwmapi")
+					add_library(out_win SHARED "${XAVA_MODULE_DIR}/main.c"
+						"src/output/graphical.c")
+					target_link_libraries(out_win "-lgdi32 -lwinmm -lopengl32 -lglu32 -ldwmapi")
+					set_target_properties(out_win PROPERTIES PREFIX "")
 				else()
 					message("DWMAPI library not found")
 				endif()

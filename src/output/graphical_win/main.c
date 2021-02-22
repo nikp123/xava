@@ -1,10 +1,27 @@
+#include <assert.h>
+#include <tchar.h>
 #include <stdio.h>
 #include <time.h>
-#include "main.h"
+
+#include <windows.h>
+#include <windowsx.h>
+#include <dwmapi.h>
+
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/wglext.h>
+
 #include "../graphical.h"
 #include "../../config.h"
 #include "../../shared.h"
 
+#ifdef assert
+#define vertify(expr) if(!expr) assert(0)
+#else 
+#define vertify(expr) expr
+#endif
+
+#define WGL_WGLEXT_PROTOTYPES
 #define WIN_ICON_PATH "xava.ico"
 
 const char szAppName[] = "XAVA";
