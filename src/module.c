@@ -34,22 +34,20 @@ XAVAMODULE *load_module(char *name) {
 	// over normal ones
 	sprintf(new_name, "./%s%s", name, LIBRARY_EXTENSION);
 
-	XAVAMODULE *module = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
-	module->moduleHandle = dlopen(new_name, RTLD_NOW);
-	module->name = new_name;
-
-	// if that doesn't work
-	// try normal module path instead
-	if(module->moduleHandle == NULL) {
+	// check if the thing even exists
+	FILE *fp = fopen(new_name, "r");
+	if(fp == NULL) {
 		sprintf(new_name, PREFIX"/lib/xava/%s%s", name,
 			LIBRARY_EXTENSION);
 
 		// lower the name, because users
 		for(int i=strlen(PREFIX"/lib/xava/"); i<strlen(new_name); i++)
 			new_name[i] = tolower(new_name[i]);
+	} else fclose(fp);
 
-		module->moduleHandle = dlopen(new_name, RTLD_NOW);
-	}
+	XAVAMODULE *module = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
+	module->moduleHandle = dlopen(new_name, RTLD_NOW);
+	module->name = new_name;
 
 	#ifdef DEBUG
 		printf("Module loaded '%s' loaded at %p\n",

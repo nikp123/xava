@@ -1,5 +1,5 @@
 project(xava C CXX)
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.13)
 
 # default build configuration, adjust this to your liking
 

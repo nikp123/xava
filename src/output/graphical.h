@@ -9,10 +9,10 @@
 
 #ifdef GL
 	#include <GL/gl.h>
-	int drawGLBars(int rest, int bars, double colors[8], double gradColors[24], int *f);
+	int drawGLBars(void *v, int rest, int bars, double colors[8], double gradColors[24], int *f);
 #endif
 
-void calculate_win_pos(int *winX, int *winY, int winW, int winH, int scrW, int scrH, char *winPos);
+void calculate_win_pos(void *, int, int);
 
 #define DEF_FG_COL 6
 #define DEF_BG_COL 0

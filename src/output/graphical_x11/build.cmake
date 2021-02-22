@@ -7,7 +7,8 @@ if(X11)
 		include(FindX11)
 		if(X11_FOUND)
 			add_definitions(-DXLIB)
-			add_library(out_x11 SHARED "${XAVA_MODULE_DIR}/main.c")
+			add_library(out_x11 SHARED "${XAVA_MODULE_DIR}/main.c"
+											"src/output/graphical.c")
 			target_link_directories(out_x11 PRIVATE "${X11_INCLUDE_DIR}"
 				"${X11_Xfixes_INCLUDE_PATH}" "${X11_Xrandr_INCLUDE_PATH}" )
 			target_include_directories(out_x11 PRIVATE "${X11_INCLUDE_DIR}"
