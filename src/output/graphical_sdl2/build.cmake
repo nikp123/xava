@@ -6,7 +6,9 @@ if(SDL2)
 	pkg_check_modules(SDL2 QUIET sdl2)
 	if(SDL2_FOUND)
 		add_definitions(-DSDL)
-		add_library(out_sdl2 SHARED "${XAVA_MODULE_DIR}/main.c")
+		add_library(out_sdl2 SHARED 
+			"${XAVA_MODULE_DIR}/main.c"
+			"src/output/graphical.c")
 		target_link_libraries(out_sdl2 "${SDL2_LIBRARIES}")
 		target_include_directories(out_sdl2 PRIVATE "${SDL2_INCLUDE_DIRS}")
 		target_link_directories(out_sdl2 PRIVATE "${SDL2_LIBRARY_DIRS}")

@@ -20,6 +20,8 @@
 	#include <iniparser.h>
 #endif
 
+#include "module.h"
+
 int xavaMkdir(char *dir);
 int xavaGetConfigDir(char *configPath);
 char *xavaGetInstallDir(void);
@@ -43,7 +45,29 @@ struct audio_data {
 	int inputsize, fftsize;
 };
 
+struct config_params {
+	char *color, *bcolor, **gradient_colors, *shadow_color;
+	double monstercat, integral, gravity, ignore, sens, logScale, logBegin, logEnd,
+ eqBalance, foreground_opacity, background_opacity; 
+	unsigned int lowcf, highcf, shdw, shdw_col, inputsize, fftsize, gradients, 
+ bgcol, col;
+	double *smooth;
+	int smcount, autobars, stereo, vsync, fixedbars, framerate, bw, bs,
+ autosens, overshoot, waves, w, h;
+	char *winA;
+	int wx, wy;
+	_Bool oddoneout, fullF, transF, borderF, bottomF, interactF, taskbarF;
+	XAVAMODULE *inputModule, *outputModule;
+};
+
+struct state_params {
+	_Bool pauseRendering;
+	struct audio_data audio;
+	struct config_params conf;
+};
+
 typedef enum XAVA_GRAHPICAL_EVENT {
 	XAVA_REDRAW, XAVA_IGNORE, XAVA_RESIZE, XAVA_RELOAD,
 	XAVA_QUIT
 } XG_EVENT;
+

@@ -18,7 +18,6 @@
 static const char *colorStrings[8] = {"black", "red", "green", "yellow", 
 										"blue", "magenta", "cyan", "white"};
 
-struct config_params p;
 static dictionary* ini;
 
 static char *inputMethod, *outputMethod, *channels;
@@ -218,8 +217,7 @@ void validate_config(void* params, dictionary *ini) {
 	}
 }
 
-void load_config(char *configPath, void* params)
-{
+void load_config(char *configPath, void* params) {
 	struct config_params *p = (struct config_params *)params;
 	FILE *fp;
 

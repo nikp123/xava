@@ -48,20 +48,19 @@
 static void* (*xavaInput)(void*);
 static void (*xavaInputHandleConfiguration)(void*, void*);
 
-static void (*xavaOutputHandleConfiguration)(void*);
-static int (*xavaInitOutput)(void);
-static void (*xavaOutputClear)(void);
-static int (*xavaOutputApply)(void);
-static XG_EVENT (*xavaOutputHandleInput)(void);
-static void (*xavaOutputDraw)(int, int, int*, int*);
-static void (*xavaOutputCleanup)(void);
+static void (*xavaOutputHandleConfiguration)(void*, void*);
+static int (*xavaInitOutput)(void*);
+static void (*xavaOutputClear)(void*);
+static int (*xavaOutputApply)(void*);
+static XG_EVENT (*xavaOutputHandleInput)(void*);
+static void (*xavaOutputDraw)(void*, int, int, int*, int*);
+static void (*xavaOutputCleanup)(void*);
 
 static _Bool kys = 0, should_reload = 0;
 static float lastSens;
 
-// for sharing XAVA-s internal state
-// ...or possibly for signal handling :thonk:
-struct state_params s;
+// teh main XAVA handle (made just to not piss off MinGW)
+static struct state_params s;
 
 // XAVA magic variables, too many of them indeed
 static float *fc = NULL, *fre, *fpeak, *k;
@@ -69,7 +68,6 @@ static int *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;
 
 static double *peak;
 static pthread_t p_thread;
-static struct audio_data audio;
 static fftw_plan pl, pr;
 
 // general: cleanup
@@ -80,7 +78,7 @@ void cleanup(void) {
 	#endif
 
 	// telling audio thread to terminate 
-	audio.terminate = 1;
+	s.audio.terminate = 1;
 
 	// waiting for all background threads and other stuff to terminate properly
 	xavaSleep(100, 0);
@@ -88,11 +86,11 @@ void cleanup(void) {
 	// kill the audio thread
 	pthread_join(p_thread, NULL);
 
-	xavaOutputCleanup();
+	xavaOutputCleanup(&s);
 
 	// destroy modules
-	destroy_module(p.inputModule);
-	destroy_module(p.outputModule);
+	destroy_module(s.conf.inputModule);
+	destroy_module(s.conf.outputModule);
 
 	// clean up XAVA internal variables
 	free(fc);
@@ -115,15 +113,15 @@ void cleanup(void) {
 	fftw_destroy_plan(pr);
 	fftw_cleanup();
 
-	free(audio.source);
-	free(p.smooth);
+	free(s.audio.source);
+	free(s.conf.smooth);
 
 	// cleanup remaining FFT buffers (abusing C here)
-	switch(audio.channels) {
+	switch(s.audio.channels) {
 		case 2:
-			free(audio.audio_out_r);
+			free(s.audio.audio_out_r);
 		default:
-			free(audio.audio_out_l);
+			free(s.audio.audio_out_l);
 			break;
 	}
 
@@ -288,53 +286,57 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	// general: main loop
 	while (1) {
+		// extract the shorthand sub-handles
+		struct config_params *p = &s.conf;
+		struct audio_data *audio = &s.audio;
+
 		// load config
-		load_config(configPath, (void *)&p);
+		load_config(configPath, p);
 
 		// load symbols
-		xavaInput                    = get_symbol_address(p.inputModule, "xavaInput");
-		xavaInputHandleConfiguration = get_symbol_address(p.inputModule, "xavaInputHandleConfiguration");
+		xavaInput                    = get_symbol_address(p->inputModule, "xavaInput");
+		xavaInputHandleConfiguration = get_symbol_address(p->inputModule, "xavaInputHandleConfiguration");
 
-		xavaInitOutput                = get_symbol_address(p.outputModule, "xavaInitOutput");
-		xavaOutputClear               = get_symbol_address(p.outputModule, "xavaOutputClear");
-		xavaOutputApply               = get_symbol_address(p.outputModule, "xavaOutputApply");
-		xavaOutputHandleInput         = get_symbol_address(p.outputModule, "xavaOutputHandleInput");
-		xavaOutputDraw                = get_symbol_address(p.outputModule, "xavaOutputDraw");
-		xavaOutputCleanup             = get_symbol_address(p.outputModule, "xavaOutputCleanup");
-		xavaOutputHandleConfiguration = get_symbol_address(p.outputModule, "xavaOutputHandleConfiguration");
+		xavaInitOutput                = get_symbol_address(p->outputModule, "xavaInitOutput");
+		xavaOutputClear               = get_symbol_address(p->outputModule, "xavaOutputClear");
+		xavaOutputApply               = get_symbol_address(p->outputModule, "xavaOutputApply");
+		xavaOutputHandleInput         = get_symbol_address(p->outputModule, "xavaOutputHandleInput");
+		xavaOutputDraw                = get_symbol_address(p->outputModule, "xavaOutputDraw");
+		xavaOutputCleanup             = get_symbol_address(p->outputModule, "xavaOutputCleanup");
+		xavaOutputHandleConfiguration = get_symbol_address(p->outputModule, "xavaOutputHandleConfiguration");
 
 		// load input config
-		xavaInputHandleConfiguration(get_config_pointer(), (void*)&audio);
+		xavaInputHandleConfiguration(get_config_pointer(), (void*)audio);
 
 		// load output config
-		xavaOutputHandleConfiguration(get_config_pointer());
+		xavaOutputHandleConfiguration(&s, get_config_pointer());
 
-		audio.inputsize = p.inputsize;
-		audio.fftsize = p.fftsize;
-		audio.audio_out_l = malloc(sizeof(double)*p.fftsize+1);
-		if(p.stereo) {
-			audio.audio_out_r = malloc(sizeof(double)*p.fftsize+1);
+		audio->inputsize = p->inputsize;
+		audio->fftsize = p->fftsize;
+		audio->audio_out_l = malloc(sizeof(double)*p->fftsize+1);
+		if(p->stereo) {
+			audio->audio_out_r = malloc(sizeof(double)*p->fftsize+1);
 		}
-		audio.format = -1;
-		audio.terminate = 0;
-		audio.channels = 1+p.stereo;
+		audio->format = -1;
+		audio->terminate = 0;
+		audio->channels = 1+p->stereo;
 
-		if(p.stereo) {
-			for (i = 0; i < audio.fftsize; i++) {
-				audio.audio_out_l[i] = 0;
-				audio.audio_out_r[i] = 0;
+		if(p->stereo) {
+			for (i = 0; i < audio->fftsize; i++) {
+				audio->audio_out_l[i] = 0;
+				audio->audio_out_r[i] = 0;
 			}
-		} else for(i=0; i < audio.fftsize; i++) audio.audio_out_l[i] = 0;
+		} else for(i=0; i < audio->fftsize; i++) audio->audio_out_l[i] = 0;
 
 		//fft: planning to rock
-		fftw_complex outl[audio.fftsize/2+1], outr[audio.fftsize/2+1];
+		fftw_complex outl[audio->fftsize/2+1], outr[audio->fftsize/2+1];
 
-		pl = fftw_plan_dft_r2c_1d(audio.fftsize, audio.audio_out_l, outl, FFTW_MEASURE);
-		if(p.stereo) pr = fftw_plan_dft_r2c_1d(audio.fftsize, audio.audio_out_r, outr, FFTW_MEASURE);
+		pl = fftw_plan_dft_r2c_1d(audio->fftsize, audio->audio_out_l, outl, FFTW_MEASURE);
+		if(p->stereo) pr = fftw_plan_dft_r2c_1d(audio->fftsize, audio->audio_out_r, outr, FFTW_MEASURE);
 
 		// thr_id = below
-		pthread_create(&p_thread, NULL, xavaInput, (void*)&audio);
-		if (p.highcf > audio.rate / 2) {
+		pthread_create(&p_thread, NULL, xavaInput, (void*)audio);
+		if (p->highcf > audio->rate / 2) {
 			cleanup();
 			fprintf(stderr,
 				"higher cuttoff frequency can't be higher then sample rate / 2"
@@ -345,30 +347,30 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		bool reloadConf = false;
 		bool senseLow = true;
 
-		if(xavaInitOutput())
+		if(xavaInitOutput(&s))
 			exit(EXIT_FAILURE);
 
 		while(!reloadConf) { //jumbing back to this loop means that you resized the screen
-			height = (p.h - 1);
+			height = (p->h - 1);
 
 			// handle for user setting too many bars
-			if (p.fixedbars) {
-				p.autobars = 0;
-				if (p.fixedbars * p.bw + p.fixedbars * p.bs - p.bs > p.w) p.autobars = 1;
+			if (p->fixedbars) {
+				p->autobars = 0;
+				if (p->fixedbars * p->bw + p->fixedbars * p->bs - p->bs > p->w) p->autobars = 1;
 			}
 
 			//getting orignial numbers of barss incase of resize
-			if (p.autobars == 1)  {
-				bars = (p.w + p.bs) / (p.bw + p.bs);
+			if (p->autobars == 1)  {
+				bars = (p->w + p->bs) / (p->bw + p->bs);
 
-				//if (p.bs != 0) bars = (w - bars * p.bs + p.bs) / bw;
-			} else bars = p.fixedbars;
+				//if (p->bs != 0) bars = (w - bars * p->bs + p->bs) / bw;
+			} else bars = p->fixedbars;
 
 			if (bars < 1) bars = 1; // must have at least 1 bars
 
-			if (p.stereo) { // stereo must have even numbers of bars
+			if (p->stereo) { // stereo must have even numbers of bars
 				if (bars%2) bars--;
-			} else if(p.oddoneout) { // and oddoneout needs to have odd number of bars
+			} else if(p->oddoneout) { // and oddoneout needs to have odd number of bars
 				if (!(bars%2)) bars--;
 			}
 
@@ -424,46 +426,46 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				k[i] = .0;
 			}
 
-			xavaOutputApply();
+			xavaOutputApply(&s);
 
 			// process [smoothing]: calculate gravity
-			g = p.gravity * ((float)height / 2160) * (60 / (float)p.framerate);
+			g = p->gravity * ((float)height / 2160) * (60 / (float)p->framerate);
 
 			// checks if there is stil extra room, will use this to center
-			rest = (p.w - bars * p.bw - bars * p.bs + p.bs) / 2;
+			rest = (p->w - bars * p->bw - bars * p->bs + p->bs) / 2;
 			if (rest < 0)rest = 0;
 
 			// TODO
 			//#ifdef DEBUG
 			//	printw("height: %d width: %d bars:%d bar width: %d rest: %d\n",
 			//				 w,
-			//				 h, bars, p.bw, rest);
+			//				 h, bars, p->bw, rest);
 			//#endif
 
-			if (p.stereo) bars = bars / 2; // in stereo onle half number of bars per channel
+			if (p->stereo) bars = bars / 2; // in stereo onle half number of bars per channel
 
-			if ((p.smcount > 0) && (bars > 0)) {
-				smh = (double)(((double)p.smcount)/((double)bars));
+			if ((p->smcount > 0) && (bars > 0)) {
+				smh = (double)(((double)p->smcount)/((double)bars));
 			}
 
 			// since oddoneout requires every odd bar, why not split them in half?
-			const int calcbars = p.oddoneout ? bars/2+1 : bars;
+			const int calcbars = p->oddoneout ? bars/2+1 : bars;
 
 			// frequency constant that we'll use for logarithmic progression of frequencies
-			double freqconst = log(p.highcf-p.lowcf)/log(pow(calcbars, p.logScale));
+			double freqconst = log(p->highcf-p->lowcf)/log(pow(calcbars, p->logScale));
 			//freqconst = -2;
 
 			// process: calculate cutoff frequencies
 			for (n=0; n < calcbars; n++) {
-				fc[n] = pow(powf(n, (p.logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0),
-								 freqconst)+p.lowcf;
-				fre[n] = fc[n] / (audio.rate / 2); 
+				fc[n] = pow(powf(n, (p->logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0),
+								 freqconst)+p->lowcf;
+				fre[n] = fc[n] / (audio->rate / 2); 
 				// Remember nyquist!, pr my calculations this should be rate/2 
 				// and  nyquist freq in M/2 but testing shows it is not... 
 				// or maybe the nq freq is in M/4
 
 				//lfc stores the lower cut frequency foo each bar in the fft out buffer
-				lcf[n] = floor(fre[n] * (audio.fftsize/2));
+				lcf[n] = floor(fre[n] * (audio->fftsize/2));
 
 				if (n != 0) {
 					//hfc holds the high cut frequency for each bar
@@ -481,24 +483,24 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					}
 				#endif
 			}
-			hcf[n-1] = p.highcf*audio.fftsize/audio.rate;
+			hcf[n-1] = p->highcf*audio->fftsize/audio->rate;
 
 
 
 			// process: weigh signal to frequencies height and EQ
 			for (n = 0; n < calcbars; n++) {
-				k[n] = pow(fc[n], p.eqBalance);
+				k[n] = pow(fc[n], p->eqBalance);
 				k[n] *= (float)height / 100;
-				k[n] *= p.smooth[(int)floor(((double)n) * smh)];
+				k[n] *= p->smooth[(int)floor(((double)n) * smh)];
 			}
 
-			if (p.stereo) bars = bars * 2;
+			if (p->stereo) bars = bars * 2;
 
 			bool resizeWindow = false;
 			bool redrawWindow = false;
 
 			while  (!resizeWindow) {
-				switch(xavaOutputHandleInput()) {
+				switch(xavaOutputHandleInput(&s)) {
 					case XAVA_QUIT:
 						cleanup();
 						return EXIT_SUCCESS;
@@ -532,12 +534,12 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				// process: populate input buffer and check if input is present
 				silence = 1;
 
-				for (i = 0; i < audio.fftsize+2; i++) {
-					if(audio.audio_out_l[i]) {
+				for (i = 0; i < audio->fftsize+2; i++) {
+					if(audio->audio_out_l[i]) {
 						silence = 0;
 						break;
 					}
-					if(p.stereo&&audio.audio_out_r[i]) {
+					if(p->stereo&&audio->audio_out_r[i]) {
 						silence = 0;
 						break;
 					}
@@ -547,24 +549,24 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					// so I've decided to limit how high sens can rise
 					// to prevent sens from reaching infinity again
 					if(!silence)
-						lastSens = p.sens;
+						lastSens = p->sens;
 
 				if (silence == 1) sleep++;
 				else sleep = 0;
 
 				// process: if input was present for the last 5 seconds apply FFT to it
-				if (sleep < p.framerate * 5) {
+				if (sleep < p->framerate * 5) {
 
 					// process: execute FFT and sort frequency bands
-					if (p.stereo) {
+					if (p->stereo) {
 						fftw_execute(pl);
 						fftw_execute(pr);
 
-						separate_freq_bands(outl, calcbars, 1, p.sens, p.ignore, audio.fftsize);
-						separate_freq_bands(outr, calcbars, 2, p.sens, p.ignore, audio.fftsize);
+						separate_freq_bands(outl, calcbars, 1, p->sens, p->ignore, audio->fftsize);
+						separate_freq_bands(outr, calcbars, 2, p->sens, p->ignore, audio->fftsize);
 					} else {
 						fftw_execute(pl);
-						separate_freq_bands(outl, calcbars, 1, p.sens, p.ignore, audio.fftsize);
+						separate_freq_bands(outl, calcbars, 1, p->sens, p->ignore, audio->fftsize);
 					}
 
 					s.pauseRendering = false;
@@ -584,7 +586,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					continue;
 				}
 
-				if(p.oddoneout) {
+				if(p->oddoneout) {
 					//memset(fl+sizeof(float)*(bars/2), 0.0f, sizeof(float)*bars);
 					for(i=bars/2; i>0; i--) {
 						fl[i*2-1+bars%2]=fl[i];
@@ -593,18 +595,18 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 
 				// process [smoothing]
-				if (p.monstercat) {
-					if (p.stereo) {
-						monstercat_filter(bars / 2, p.waves, p.monstercat, fl);
-						monstercat_filter(bars / 2, p.waves, p.monstercat, fr);
+				if (p->monstercat) {
+					if (p->stereo) {
+						monstercat_filter(bars / 2, p->waves, p->monstercat, fl);
+						monstercat_filter(bars / 2, p->waves, p->monstercat, fr);
 					} else {
-						monstercat_filter(calcbars, p.waves, p.monstercat, fl);
+						monstercat_filter(calcbars, p->waves, p->monstercat, fl);
 					}
 				}
 
 				//preperaing signal for drawing
 				for (o = 0; o < bars; o++) {
-					if (p.stereo) {
+					if (p->stereo) {
 						if (o < bars / 2) {
 							f[o] = fl[bars / 2 - o - 1];
 						} else {
@@ -631,9 +633,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 
 				// process [smoothing]: integral
-				if (p.integral > 0) {
+				if (p->integral > 0) {
 					for (o = 0; o < bars; o++) {
-						f[o] = fmem[o] * p.integral + f[o];
+						f[o] = fmem[o] * p->integral + f[o];
 						fmem[o] = f[o];
 
 						int diff = (height + 1) - f[o]; 
@@ -651,7 +653,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 
 				// process [oddoneout]
-				if(p.oddoneout) {
+				if(p->oddoneout) {
 					for(i=1; i<bars-1; i+=2) {
 						f[i] = f[i+1]/2 + f[i-1]/2;
 					}
@@ -666,37 +668,37 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				// and set max height
 				for (o = 0; o < bars; o++) {
 					if(f[o] < 1) f[o] = 1;
-					if(f[o] > p.h) f[o] = p.h;
+					if(f[o] > p->h) f[o] = p->h;
 				}
 
 				// automatic sens adjustment
-				if (p.autosens&&!silence) {
+				if (p->autosens&&!silence) {
 					// don't adjust on complete silence
 					// as when switching tracks for example
 					for (o = 0; o < bars; o++) {
 						if (f[o] > height ) {
 							senseLow = false;
-							p.sens *= 0.985;
+							p->sens *= 0.985;
 							break;
 						}
 						if (senseLow && !silence) {
-							p.sens *= 1.01;
+							p->sens *= 1.01;
 							// impose artificial limit on sens growth
-							if(p.sens > lastSens*2) p.sens = lastSens*2;
+							if(p->sens > lastSens*2) p->sens = lastSens*2;
 						}
 					}
 				}
 
 				// output: draw processed input
 				if(redrawWindow) {
-					xavaOutputClear();
+					xavaOutputClear(&s);
 					memset(flastd, 0x00, sizeof(int)*bars);
 					redrawWindow = FALSE;
 				}
-				xavaOutputDraw(bars, rest, f, flastd);
+				xavaOutputDraw((void*)&s, bars, rest, f, flastd);
 
-				if(!p.vsync) // the window handles frametimes instead of XAVA
-					oldTime = xavaSleep(oldTime, p.framerate);
+				if(!p->vsync) // the window handles frametimes instead of XAVA
+					oldTime = xavaSleep(oldTime, p->framerate);
 
 				// save previous bar values
 				memcpy(flastd, f, sizeof(int)*bars);
@@ -707,10 +709,10 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 
 				// checking if audio thread has exited unexpectedly
-				if(audio.terminate == 1) {
+				if(audio->terminate == 1) {
 					cleanup();
 					fprintf(stderr,
-					"Audio thread exited unexpectedly. %s\n", audio.error_message);
+					"Audio thread exited unexpectedly. %s\n", audio->error_message);
 					exit(EXIT_FAILURE); 
 				} 
 			} // resize window
