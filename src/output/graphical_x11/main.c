@@ -93,11 +93,11 @@ enum {
 
 
 #ifdef GLX
-int XGLInit(void) {
+int XGLInit(struct config_params *p) {
 	// we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
 	xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
 	glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
-	if(p.transF) {
+	if(p->transF) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
@@ -130,19 +130,21 @@ void snatchColor(char *name, char *colorStr, int colorNum, XColor *colorObj,
 	XAllocColor(xavaXDisplay, xavaXColormap, colorObj);
 }
 
-void calculateColors(void) {
+void calculateColors(struct config_params *p) {
 	XrmInitialize();
 	XrmDatabase xavaXResDB = NULL;
 	char *databaseName = XResourceManagerString(xavaXDisplay);
 	if(databaseName) {
 		xavaXResDB = XrmGetStringDatabase(databaseName);
 	}
-	snatchColor("color5", p.color, p.col, &xcol, databaseName, &xavaXResDB);
-	snatchColor("color4", p.bcolor, p.bgcol, &xbgcol, databaseName, &xavaXResDB);
+	snatchColor("color5", p->color, p->col, &xcol, databaseName, &xavaXResDB);
+	snatchColor("color4", p->bcolor, p->bgcol, &xbgcol, databaseName, &xavaXResDB);
 }
 
-int xavaInitOutput(void)
-{
+int xavaInitOutput(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	// NVIDIA CPU cap utilization in Vsync fix
 	setenv("__GL_YIELD", "USLEEP", 0);
 
@@ -159,11 +161,11 @@ int xavaInitOutput(void)
 	xavaXScreenNumber = DefaultScreen(xavaXDisplay);
 	xavaXRoot = RootWindow(xavaXDisplay, xavaXScreenNumber);
 
-	calculate_win_pos(&p.wx, &p.wy, p.w, p.h, xavaXScreen->width, xavaXScreen->height, p.winA);
+	calculate_win_pos(p, xavaXScreen->width, xavaXScreen->height);
 
 	// 32 bit color means alpha channel support
 	#ifdef GLX
-	if(p.transF) {
+	if(p->transF) {
 		fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
 		fbconfig = 0;
 		for(int i = 0; i<numfbconfigs; i++) {
@@ -180,12 +182,12 @@ int xavaInitOutput(void)
 		}
 	} else
 	#endif
-		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p.transF ? 32 : 24, TrueColor, &xavaVInfo);
+		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p->transF ? 32 : 24, TrueColor, &xavaVInfo);
 
 	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 	xavaXColormap = xavaAttr.colormap;
-	calculateColors();
-	xavaAttr.background_pixel = p.transF ? 0 : xbgcol.pixel;
+	calculateColors(p);
+	xavaAttr.background_pixel = p->transF ? 0 : xbgcol.pixel;
 	xavaAttr.border_pixel = xcol.pixel;
 
 	xavaAttr.backing_store = Always;
@@ -195,8 +197,8 @@ int xavaInitOutput(void)
 	int xavaWindowFlags = CWOverrideRedirect | CWBackingStore |  CWEventMask | CWColormap | CWBorderPixel | CWBackPixel;
 
 	if(rootWindowEnabled) xavaXWindow = xavaXRoot;
-	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p.wx, p.wy, (unsigned int)p.w,
-		(unsigned int)p.h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
+	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p->wx, p->wy, (unsigned int)p->w,
+		(unsigned int)p->h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
 	// The "X" button is handled by the window manager and not Xorg, so we set up a Atom
@@ -212,18 +214,18 @@ int xavaInitOutput(void)
 	XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask | VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
 
 	#ifdef GLX
-		if(XGLInit()) return 1;
+		if(XGLInit(p)) return 1;
 	#endif
 
 	XMapWindow(xavaXDisplay, xavaXWindow);
 	xavaXGraphics = XCreateGC(xavaXDisplay, xavaXWindow, 0, 0);
 
-	if(p.gradients) {
-		xgrad = malloc((p.gradients+1)*sizeof(XColor));
-		XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[0], &xgrad[p.gradients]);
-		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p.gradients]);
-		for(unsigned int i=0; i<p.gradients; i++) {
-			XParseColor(xavaXDisplay, xavaXColormap, p.gradient_colors[i], &xgrad[i]);
+	if(p->gradients) {
+		xgrad = malloc((p->gradients+1)*sizeof(XColor));
+		XParseColor(xavaXDisplay, xavaXColormap, p->gradient_colors[0], &xgrad[p->gradients]);
+		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p->gradients]);
+		for(unsigned int i=0; i<p->gradients; i++) {
+			XParseColor(xavaXDisplay, xavaXColormap, p->gradient_colors[i], &xgrad[i]);
 			XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[i]);
 		}
 	}
@@ -257,27 +259,27 @@ int xavaInitOutput(void)
 	xev.xclient.data.l[4] = 0;
 
 	// keep window in bottom property
-	xev.xclient.data.l[0] = p.bottomF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+	xev.xclient.data.l[0] = p->bottomF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
 	xev.xclient.data.l[1] = wmStateBelow;
 	XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-	if(p.bottomF) XLowerWindow(xavaXDisplay, xavaXWindow);
+	if(p->bottomF) XLowerWindow(xavaXDisplay, xavaXWindow);
 
 	// remove window from taskbar
-	xev.xclient.data.l[0] = p.taskbarF ? _NET_WM_STATE_REMOVE : _NET_WM_STATE_ADD;
+	xev.xclient.data.l[0] = p->taskbarF ? _NET_WM_STATE_REMOVE : _NET_WM_STATE_ADD;
 	xev.xclient.data.l[1] = taskbar;
 	XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
 	// Setting window options
 	struct mwmHints hints;
 	hints.flags = (1L << 1);
-	hints.decorations = p.borderF;
+	hints.decorations = p->borderF;
 	XChangeProperty(xavaXDisplay, xavaXWindow, mwmHintsProperty, mwmHintsProperty, 32, PropModeReplace, (unsigned char *)&hints, 5);
 
 	// move the window in case it didn't by default
 	XWindowAttributes xwa;
 	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &xwa);
-	if(strcmp(p.winA, "none"))
-		XMoveWindow(xavaXDisplay, xavaXWindow, p.wx, p.wy);
+	if(strcmp(p->winA, "none"))
+		XMoveWindow(xavaXDisplay, xavaXWindow, p->wx, p->wy);
 
 	// query for the RR extension in X11
 	int error;
@@ -302,60 +304,65 @@ int xavaInitOutput(void)
 	return 0;
 }
 
-int render_gradient_x(void) {
+int render_gradient_x(struct config_params *p) {
 	if(gradientBox != 0) XFreePixmap(xavaXDisplay, gradientBox);
 
-	gradientBox = XCreatePixmap(xavaXDisplay, xavaXWindow, (unsigned int)p.bw, (unsigned int)p.h, 32);
+	gradientBox = XCreatePixmap(xavaXDisplay, xavaXWindow, (unsigned int)p->bw, (unsigned int)p->h, 32);
 	// TODO: Error checks
 
-	for(unsigned int I = 0; I < (unsigned int)p.h; I++) {
+	for(unsigned int I = 0; I < (unsigned int)p->h; I++) {
 		// don't touch +1.0/w_h at the end fixes some math problems
-		double step = (double)(I%((unsigned int)p.h/(p.gradients-1)))/(double)((unsigned int)p.h/(p.gradients-1));
+		double step = (double)(I%((unsigned int)p->h/(p->gradients-1)))/(double)((unsigned int)p->h/(p->gradients-1));
 
 		// to future devs: this isnt ARGB. this is something internal that cannot be changed by simple means
 
-		unsigned int gcPhase = (p.gradients-1)*I/(unsigned int)p.h;
-		xgrad[p.gradients].red   = UNSIGNED_TRANS(xgrad[gcPhase].red, xgrad[gcPhase+1].red, step);
-		xgrad[p.gradients].green = UNSIGNED_TRANS(xgrad[gcPhase].green, xgrad[gcPhase+1].green, step);
-		xgrad[p.gradients].blue  = UNSIGNED_TRANS(xgrad[gcPhase].blue, xgrad[gcPhase+1].blue, step);
-		xgrad[p.gradients].flags = DoRed | DoGreen | DoBlue;
-		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p.gradients]);
+		unsigned int gcPhase = (p->gradients-1)*I/(unsigned int)p->h;
+		xgrad[p->gradients].red   = UNSIGNED_TRANS(xgrad[gcPhase].red, xgrad[gcPhase+1].red, step);
+		xgrad[p->gradients].green = UNSIGNED_TRANS(xgrad[gcPhase].green, xgrad[gcPhase+1].green, step);
+		xgrad[p->gradients].blue  = UNSIGNED_TRANS(xgrad[gcPhase].blue, xgrad[gcPhase+1].blue, step);
+		xgrad[p->gradients].flags = DoRed | DoGreen | DoBlue;
+		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p->gradients]);
 
-		XSetForeground(xavaXDisplay, xavaXGraphics, xgrad[p.gradients].pixel);
-		XFillRectangle(xavaXDisplay, gradientBox, xavaXGraphics, 0, p.h - (int)I, (unsigned int)p.w, 1);
+		XSetForeground(xavaXDisplay, xavaXGraphics, xgrad[p->gradients].pixel);
+		XFillRectangle(xavaXDisplay, gradientBox, xavaXGraphics, 0, p->h - (int)I, (unsigned int)p->w, 1);
 	}
 	return 0;
 }
 
-void xavaOutputClear(void) {
+void xavaOutputClear(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	#if defined(GLX)
-		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p.transF ? 1.0*p.background_opacity : 1.0); // TODO BG transparency
+		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p->transF ? 1.0*p->background_opacity : 1.0); // TODO BG transparency
 		glColors[0] = xcol.red/65535.0;
 		glColors[1] = xcol.green/65535.0;
 		glColors[2] = xcol.blue/65535.0;
-		glColors[3] = p.transF ? p.foreground_opacity : 1.0;
+		glColors[3] = p->transF ? p->foreground_opacity : 1.0;
 
-		if(p.shdw) {
-			glColors[4] = ARGB_A_32(p.shdw_col);
-			glColors[5] = ARGB_R_32(p.shdw_col);
-			glColors[6] = ARGB_G_32(p.shdw_col);
-			glColors[7] = ARGB_B_32(p.shdw_col);
+		if(p->shdw) {
+			glColors[4] = ARGB_A_32(p->shdw_col);
+			glColors[5] = ARGB_R_32(p->shdw_col);
+			glColors[6] = ARGB_G_32(p->shdw_col);
+			glColors[7] = ARGB_B_32(p->shdw_col);
 		}
 	#else
 		XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
 		XClearWindow(xavaXDisplay, xavaXWindow);
 
-		if(p.gradients) render_gradient_x();
+		if(p->gradients) render_gradient_x(p);
 	#endif
 }
 
-int xavaOutputApply(void)
-{
-	calculateColors();
+int xavaOutputApply(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
+	calculateColors(p);
 	// Gets the monitors resolution
-	if(p.fullF){
-		p.w = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
-		p.h = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
+	if(p->fullF){
+		p->w = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
+		p->h = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
 	}
 
 	//Atom xa = XInternAtom(xavaXDisplay, "_NET_WM_WINDOW_TYPE", 0); May be used in the future
@@ -377,27 +384,27 @@ int xavaOutputApply(void)
 	xev.xclient.window = xavaXWindow;
 	xev.xclient.message_type = wmState;
 	xev.xclient.format = 32;
-	xev.xclient.data.l[0] = p.fullF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+	xev.xclient.data.l[0] = p->fullF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
 	xev.xclient.data.l[1] = fullScreen;
 	xev.xclient.data.l[2] = 0;
 	XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
 	// do the usual stuff :P
 	#ifdef GLX
-	glViewport(0, 0, p.w, p.h);
+	glViewport(0, 0, p->w, p->h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	
-	glOrtho(0, (double)p.w, 0, (double)p.h, -1, 1);
+	glOrtho(0, (double)p->w, 0, (double)p->h, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	// Vsync causes problems on NVIDIA GPUs, looking for possible workarounds/fixes
-	glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p.vsync);
+	glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p->vsync);
 	#endif
-	xavaOutputClear();
+	xavaOutputClear(v);
 
-	if(!p.interactF){
+	if(!p->interactF){
 		XRectangle rect;
 		XserverRegion region = XFixesCreateRegion(xavaXDisplay, &rect, 1);
 		XFixesSetWindowShapeRegion(xavaXDisplay, xavaXWindow, ShapeInput, 0, 0, region);
@@ -407,7 +414,10 @@ int xavaOutputApply(void)
 	return 0;
 }
 
-XG_EVENT xavaOutputHandleInput(void) {
+XG_EVENT xavaOutputHandleInput(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	// this way we avoid event stacking which requires a full frame to process a single event
 	XG_EVENT action = XAVA_IGNORE;
 
@@ -423,25 +433,25 @@ XG_EVENT xavaOutputHandleInput(void) {
 					// resizeTerminal = 2
 					// bail = -1
 					case XK_a:
-						p.bs++;
+						p->bs++;
 						return XAVA_RESIZE;
 					case XK_s:
-						if(p.bs > 0) p.bs--;
+						if(p->bs > 0) p->bs--;
 						return XAVA_RESIZE;
 					case XK_f: // fullscreen
-						p.fullF = !p.fullF;
+						p->fullF = !p->fullF;
 						return XAVA_RESIZE;
 					case XK_Up:
-						p.sens *= 1.05;
+						p->sens *= 1.05;
 						break;
 					case XK_Down:
-						p.sens *= 0.95;
+						p->sens *= 0.95;
 						break;
 					case XK_Left:
-						p.bw++;
+						p->bw++;
 						return XAVA_RESIZE;
 					case XK_Right:
-						if (p.bw > 1) p.bw--;
+						if (p->bw > 1) p->bw--;
 						return XAVA_RESIZE;
 					case XK_r: //reload config
 						return XAVA_RELOAD;
@@ -457,7 +467,7 @@ XG_EVENT xavaOutputHandleInput(void) {
 						XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
 						return XAVA_REDRAW;
 					case XK_c:
-						if(p.gradients) break;
+						if(p->gradients) break;
 						xcol.red   = rand();
 						xcol.green = rand();
 						xcol.blue  = rand();
@@ -476,9 +486,9 @@ XG_EVENT xavaOutputHandleInput(void) {
 				// This is needed to track the window size
 				XConfigureEvent trackedXavaXWindow;
 				trackedXavaXWindow = xavaXEvent.xconfigure;
-				if(p.w != trackedXavaXWindow.width || p.h != trackedXavaXWindow.height) {
-					p.w = trackedXavaXWindow.width;
-					p.h = trackedXavaXWindow.height;
+				if(p->w != trackedXavaXWindow.width || p->h != trackedXavaXWindow.height) {
+					p->w = trackedXavaXWindow.width;
+					p->h = trackedXavaXWindow.height;
 				}
 				action = XAVA_RESIZE;
 				break;
@@ -505,24 +515,27 @@ XG_EVENT xavaOutputHandleInput(void) {
 	return action;
 }
 
-void xavaOutputDraw(int bars, int rest, int f[200], int flastd[200])
+void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200])
 {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	// im lazy, but i just wanna make it work
-	int xoffset = rest, yoffset = p.h;
+	int xoffset = rest, yoffset = p->h;
 	if(rootWindowEnabled) {
-		xoffset+=p.wx;
-		yoffset+=p.wy;
+		xoffset+=p->wx;
+		yoffset+=p->wy;
 	}
 
 	#if defined(GLX)
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		for(int i=0; i<p.gradients; i++) {
+		for(int i=0; i<p->gradients; i++) {
 			gradColors[i*3] = xgrad[i].red/65535.0;
 			gradColors[i*3+1] = xgrad[i].green/65535.0;
 			gradColors[i*3+2] = xgrad[i].blue/65535.0;
 		}
-		if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
+		if(drawGLBars(v, rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
 		
 		glXSwapBuffers(xavaXDisplay, xavaXWindow);
 		glFinish();
@@ -531,25 +544,25 @@ void xavaOutputDraw(int bars, int rest, int f[200], int flastd[200])
 		// draw bars on the X11 window
 		for(int i = 0; i < bars; i++) {
 			// this fixes a rendering bug
-			if(f[i] > p.h) f[i] = p.h;
+			if(f[i] > p->h) f[i] = p->h;
 
 			if(f[i] > flastd[i]) {
-				if(p.gradients)
-					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 0, p.h - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]), rest + i*(p.bs+p.bw), p.h - f[i]);
+				if(p->gradients)
+					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 0, p->h - f[i], (unsigned int)p->bw, (unsigned int)(f[i]-flastd[i]), rest + i*(p->bs+p->bw), p->h - f[i]);
 				else {
 					XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
-					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, xoffset + i*(p.bs+p.bw), yoffset - f[i], (unsigned int)p.bw, (unsigned int)(f[i]-flastd[i]));
+					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, xoffset + i*(p->bs+p->bw), yoffset - f[i], (unsigned int)p->bw, (unsigned int)(f[i]-flastd[i]));
 				}
 			}
 			else if (f[i] < flastd[i])
-				XClearArea(xavaXDisplay, xavaXWindow, xoffset + i*(p.bs+p.bw), yoffset - flastd[i], (unsigned int)p.bw, (unsigned int)(flastd[i]-f[i]), 0);
+				XClearArea(xavaXDisplay, xavaXWindow, xoffset + i*(p->bs+p->bw), yoffset - flastd[i], (unsigned int)p->bw, (unsigned int)(flastd[i]-f[i]), 0);
 		}
 		XSync(xavaXDisplay, 0);
 	#endif
 	return;
 }
 
-void xavaOutputCleanup(void)
+void xavaOutputCleanup(void *v)
 {
 	// Root mode leaves artifacts on screen even though the window is dead
 	XClearWindow(xavaXDisplay, xavaXWindow);
@@ -571,7 +584,10 @@ void xavaOutputCleanup(void)
 	return;
 }
 
-void xavaOutputHandleConfiguration(void *data) {
+void xavaOutputHandleConfiguration(void *v, void *data) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	dictionary *ini = (dictionary*)data;
 
 	reloadOnDisplayConfigure = iniparser_getboolean
@@ -587,7 +603,7 @@ void xavaOutputHandleConfiguration(void *data) {
 				"root_window and override_redirect "
 				"don't mix well together!\n");
 	}
-	if(rootWindowEnabled && p.gradients) {
+	if(rootWindowEnabled && p->gradients) {
 		fprintf(stderr, "root_window and gradients don't work!\n");
 		exit(EXIT_FAILURE);
 	}
@@ -600,7 +616,7 @@ void xavaOutputHandleConfiguration(void *data) {
 
 	#ifndef GLX
 		// VSync doesnt work without OpenGL :(
-		p.vsync = 0;
+		p->vsync = 0;
 	#else
 		// OGL + Root Window = completely broken
 		rootWindowEnabled = 0;

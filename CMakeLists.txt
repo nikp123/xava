@@ -1,5 +1,5 @@
 project(xava C CXX)
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.13)
 
 # Fix pkg-config for cross-builds (such as MinGW on ArchLinux)
 if(CMAKE_FIND_ROOT_PATH)
