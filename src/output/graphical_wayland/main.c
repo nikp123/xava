@@ -12,7 +12,6 @@
 #include "gen/wlr-output-managment-unstable-v1.h"
 
 #include "../graphical.h"
-#include "../../config.h"
 #include "../../shared.h"
 #include "main.h"
 
@@ -84,8 +83,8 @@ static const struct wl_output_listener output_listener = {
 	.scale = output_scale,
 };
 
-struct wl_buffer *wl_create_framebuffer(void) {
-	int width = p.w, height = p.h;
+struct wl_buffer *wl_create_framebuffer(struct config_params *p) {
+	int width = p->w, height = p->h;
 	int stride = width*4;
 	int size = stride * height;
 
@@ -98,12 +97,12 @@ struct wl_buffer *wl_create_framebuffer(void) {
 	return buffer;
 }
 
-static void update_frame() {
+static void update_frame(struct config_params *p) {
 	// Vsync kind of thing here
 	while(xavaWLCurrentlyDrawing) usleep(1000);
 
 	// Update frame and inform wayland 
-	struct wl_buffer *buffer = wl_create_framebuffer();
+	struct wl_buffer *buffer = wl_create_framebuffer(p);
 	wl_surface_attach(xavaWLSurface, buffer, 0, 0);
 	//wl_surface_damage_buffer(xavaWLSurface, 0, 0, INT32_MAX, INT32_MAX);
 	wl_surface_commit(xavaWLSurface);
@@ -112,13 +111,15 @@ static void update_frame() {
 static void layer_surface_configure(void *data,
 		struct zwlr_layer_surface_v1 *surface,
 		uint32_t serial, uint32_t width, uint32_t height) {
+	struct config_params *p = data;
+
 	//screenWidth = width;
 	//screenHeight = height;
 
 	// Respond to compositor
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 
-	update_frame();
+	update_frame(p);
 }
 static void layer_surface_closed(void *data,
 		struct zwlr_layer_surface_v1 *surface) {
@@ -133,18 +134,21 @@ static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 };
 
 static const struct wl_callback_listener wl_surface_frame_listener;
-static void wl_surface_frame_done(void *data, struct wl_callback *cb, uint32_t time) {
-	wl_callback_destroy(cb);
+static void wl_surface_frame_done(void *data, struct wl_callback *cb,
+		uint32_t time) {
+	struct state_params *s = data;
+	struct config_params *p = &s->conf;
 
-	update_frame();
+	wl_callback_destroy(cb);
+	update_frame(p);
 
 	// stop updating frames while XAVA's having a nice sleep
-	while(s.pauseRendering) 
+	while(s->pauseRendering) 
 		usleep(10000);
 
 	// request update
 	cb = wl_surface_frame(xavaWLSurface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, NULL);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, s);
 
 	// signal to wayland about it
 	wl_surface_commit(xavaWLSurface);
@@ -155,10 +159,12 @@ static const struct wl_callback_listener wl_surface_frame_listener = {
 
 static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surface,
 		uint32_t serial) {
+	struct config_params *p = data;
+
 	// confirm that you exist to the compositor
 	xdg_surface_ack_configure(xdg_surface, serial);
 
-	update_frame();
+	update_frame(p);
 }
 static const struct xdg_surface_listener xdg_surface_listener = {
 	.configure = xdg_surface_configure,
@@ -227,9 +233,12 @@ static const struct wl_registry_listener xava_wl_registry_listener = {
 	.global_remove = xava_wl_registry_global_remove,
 };
 
-void xavaOutputCleanup(void) {
+void xavaOutputCleanup(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	close(xavaWLSHMFD);
-	munmap(xavaWLFrameBuffer, p.w*p.h*sizeof(uint32_t));
+	munmap(xavaWLFrameBuffer, p->w*p->h*sizeof(uint32_t));
 
 	if(backgroundLayer) {
 		zwlr_layer_surface_v1_destroy(xavaWLRLayerSurface);
@@ -250,11 +259,11 @@ void xavaOutputCleanup(void) {
 	wl_display_disconnect(xavaWLDisplay);
 }
 
-void handle_wayland_platform_quirks(void) {
+void handle_wayland_platform_quirks(struct config_params *p) {
 	// Vsync is implied in Wayland
 	// it is disabled because it messes with the timing code
 	// in the backend
-	if(p.vsync) p.vsync = 0;
+	if(p->vsync) p->vsync = 0;
 }
 
 /**
@@ -263,46 +272,49 @@ void handle_wayland_platform_quirks(void) {
  * enough functionality for this to work
  * It assumes clients are able to pick their own positions
 **/
-uint32_t handle_window_alignment(void) {
+uint32_t handle_window_alignment(struct config_params *p) {
 	const uint32_t top = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
 	const uint32_t bottom = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
 	const uint32_t left = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
 	const uint32_t right = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
 
 	uint32_t anchor = 0;
-	width_margin = p.wx;
-	height_margin = p.wy;
+	width_margin = p->wx;
+	height_margin = p->wy;
 
 	// margins are reversed on opposite edges for user convenience
 
 	// Top alingments
-	if(!strcmp("top", p.winA)) anchor = top; 
-	else if(!strcmp("top_left", p.winA)) anchor = top|left; 
-	else if(!strcmp("top_right", p.winA)) {
+	if(!strcmp("top", p->winA)) anchor = top; 
+	else if(!strcmp("top_left", p->winA)) anchor = top|left; 
+	else if(!strcmp("top_right", p->winA)) {
 		width_margin *= -1; anchor = top|right;
 	}
 
 	// Middle alignments
-	else if(!strcmp("left", p.winA)) anchor = left;
-	else if(!strcmp("center", p.winA)) { /** nop **/ }
-	else if(!strcmp("right", p.winA)) { 
+	else if(!strcmp("left", p->winA)) anchor = left;
+	else if(!strcmp("center", p->winA)) { /** nop **/ }
+	else if(!strcmp("right", p->winA)) { 
 		width_margin *= -1; anchor = right;
 	}
 	// Bottom alignments
-	else if(!strcmp("bottom_left", p.winA)) anchor = left|bottom;
-	else if(!strcmp("bottom", p.winA)) anchor = bottom;
-	else if(!strcmp("bottom_right", p.winA)) { 
+	else if(!strcmp("bottom_left", p->winA)) anchor = left|bottom;
+	else if(!strcmp("bottom", p->winA)) anchor = bottom;
+	else if(!strcmp("bottom_right", p->winA)) { 
 		width_margin *= -1; anchor = right|bottom;
 	}
 
-	if(!strncmp("bottom", p.winA, 6))
+	if(!strncmp("bottom", p->winA, 6))
 		height_margin *= -1;
 
 	return anchor;
 }
 
-int xavaInitOutput(void) {
-	handle_wayland_platform_quirks();
+int xavaInitOutput(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
+	handle_wayland_platform_quirks(p);
 
 	xavaWLOutputs = malloc(1); xavaWLOutputsCount = 0;
 
@@ -349,15 +361,16 @@ int xavaInitOutput(void) {
 			ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM, "bottom");
 
 		// adjust position and properties accordingly
-		zwlr_layer_surface_v1_set_size(xavaWLRLayerSurface, p.w, p.h);
-		zwlr_layer_surface_v1_set_anchor(xavaWLRLayerSurface, handle_window_alignment());
+		zwlr_layer_surface_v1_set_size(xavaWLRLayerSurface, p->w, p->h);
+		zwlr_layer_surface_v1_set_anchor(xavaWLRLayerSurface, 
+				handle_window_alignment(p));
 		zwlr_layer_surface_v1_set_margin(xavaWLRLayerSurface, 
 				height_margin, -width_margin, -height_margin, width_margin);
 		zwlr_layer_surface_v1_set_exclusive_zone(xavaWLRLayerSurface, -1);
 
 		// same stuff as xdg_surface_add_listener, but for zwlr_layer_surface
 		zwlr_layer_surface_v1_add_listener(xavaWLRLayerSurface,
-			&layer_surface_listener, NULL);
+			&layer_surface_listener, p);
 
 	} else {
 		// create window, or "surface" in waland terms
@@ -366,7 +379,7 @@ int xavaInitOutput(void) {
 		// for those unaware, the compositor baby sits everything that you
 		// make, thus it needs a function through which the compositor
 		// will manage your application
-		xdg_surface_add_listener(xavaXDGSurface, &xdg_surface_listener, NULL);
+		xdg_surface_add_listener(xavaXDGSurface, &xdg_surface_listener, p);
 
 		xavaXDGToplevel = xdg_surface_get_toplevel(xavaXDGSurface);
 		xdg_toplevel_set_title(xavaXDGToplevel, "XAVA");
@@ -375,7 +388,7 @@ int xavaInitOutput(void) {
 	//wl_surface_set_buffer_scale(xavaWLSurface, 3);
 
 	struct wl_callback *cb = wl_surface_frame(xavaWLSurface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, NULL);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, s);
 
 	// process all of this, FINALLY
 	wl_surface_commit(xavaWLSurface);
@@ -383,17 +396,23 @@ int xavaInitOutput(void) {
 	return EXIT_SUCCESS;
 }
 
-void xavaOutputClear(void) {
-	for(register int i=0; i<p.w*p.h; i++)
-		xavaWLFrameBuffer[i] = p.bgcol;
+void xavaOutputClear(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
+	for(register int i=0; i<p->w*p->h; i++)
+		xavaWLFrameBuffer[i] = p->bgcol;
 }
 
-int xavaOutputApply(void) {
+int xavaOutputApply(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	// TODO: Fullscreen support
-	//if(p.fullF) xdg_toplevel_set_fullscreen(xavaWLSurface, NULL);
+	//if(p->fullF) xdg_toplevel_set_fullscreen(xavaWLSurface, NULL);
 	//else        xdg_toplevel_unset_fullscreen(xavaWLSurface);
 
-	int size = p.w*p.h*sizeof(uint32_t);
+	int size = p->w*p->h*sizeof(uint32_t);
 	xavaWLSHMFD = syscall(SYS_memfd_create, "buffer", 0);
 	ftruncate(xavaWLSHMFD, size);
 
@@ -405,20 +424,20 @@ int xavaOutputApply(void) {
 	}
 
 	// handle colors
-	p.col = (p.col&0x00ffffff) | ((uint32_t)
-		(p.foreground_opacity*0xff)<<24);
-	p.bgcol = (p.bgcol&0x00ffffff) | ((uint32_t)
-		(p.background_opacity*0xff)<<24);
+	p->col = (p->col&0x00ffffff) | ((uint32_t)
+		(p->foreground_opacity*0xff)<<24);
+	p->bgcol = (p->bgcol&0x00ffffff) | ((uint32_t)
+		(p->background_opacity*0xff)<<24);
 
 	// clean screen because the colors changed
-	xavaOutputClear();
+	xavaOutputClear(v);
 
 
 
 	return EXIT_SUCCESS;
 }
 
-XG_EVENT xavaOutputHandleInput(void) {
+XG_EVENT xavaOutputHandleInput(void *v) {
 	// i am too lazy to do this part
 	// especially with how tedious Wayland is for client-side
 	// development
@@ -433,35 +452,38 @@ XG_EVENT xavaOutputHandleInput(void) {
 }
 
 // super optimized, because cpus are shit at graphics
-void xavaOutputDraw(int bars, int rest, int *f, int *flastd) {
+void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	xavaWLCurrentlyDrawing = 1;
 	for(int i = 0; i < bars; i++) {
 		// get the properly aligned starting pointer
-		register uint32_t *fbDataPtr = &xavaWLFrameBuffer[rest+i*(p.bs+p.bw)];
-		register int bw = p.bw;
+		register uint32_t *fbDataPtr = &xavaWLFrameBuffer[rest+i*(p->bs+p->bw)];
+		register int bw = p->bw;
 
 		// beginning and end of bars, depends on the order
-		register int a = p.h - f[i];
-		register int b = p.h - flastd[i];
-		register uint32_t brush = p.col;
+		register int a = p->h - f[i];
+		register int b = p->h - flastd[i];
+		register uint32_t brush = p->col;
 		if(f[i] < flastd[i]) {
-			brush = p.bgcol;
+			brush = p->bgcol;
 			a^=b; b^=a; a^=b;
 		}
 
 		// Update damage only where necessary
-		wl_surface_damage_buffer(xavaWLSurface, rest+i*(p.bs+p.bw),
-				a, p.bw, b-a);
+		wl_surface_damage_buffer(xavaWLSurface, rest+i*(p->bs+p->bw),
+				a, p->bw, b-a);
 
 		// advance the pointer by undrawn pixels amount
-		fbDataPtr+=a*p.w;
+		fbDataPtr+=a*p->w;
 
 		// loop through the rows of pixels
 		for(register int j = a; j < b; j++) {
 			for(register int k = 0; k < bw; k++) {
 				*fbDataPtr++ = brush;
 			}
-			fbDataPtr += (p.w-p.bw);
+			fbDataPtr += (p->w-p->bw);
 		}
 	}
 	xavaWLCurrentlyDrawing = 0;
@@ -469,7 +491,10 @@ void xavaOutputDraw(int bars, int rest, int *f, int *flastd) {
 	wl_display_roundtrip(xavaWLDisplay);
 }
 
-void xavaOutputHandleConfiguration(void *data) {
+void xavaOutputHandleConfiguration(void *v, void *data) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	dictionary *ini = (dictionary*)data;
 
 	backgroundLayer = iniparser_getboolean
@@ -477,6 +502,6 @@ void xavaOutputHandleConfiguration(void *data) {
 	monitorNumber = iniparser_getboolean
 		(ini, "wayland:monitor_num", 0);
 
-	p.vsync = 0;
+	p->vsync = 0;
 }
 
