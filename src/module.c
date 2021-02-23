@@ -124,7 +124,28 @@ bool is_module_valid(XAVAMODULE *module) {
 }
 
 void *get_symbol_address(XAVAMODULE *module, char *symbol) {
-	return GetProcAddress(module->moduleHandle, symbol);
+	void *addr = GetProcAddress(module->moduleHandle, symbol);
+	
+	if(addr == NULL) {
+		int error = GetLastError();
+		char *message;
+		FormatMessage(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			error,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR) &message,
+			0, NULL );
+		
+		fprintf(stderr, "Finding symbol '%s' in '%s' failed! (code '%x')\n"
+				"Error message: %s",
+				symbol, module->name, error, message);
+	}
+
+
+	return addr;
 }
 
 XAVAMODULE *load_module(char *name) {
@@ -153,6 +174,7 @@ XAVAMODULE *load_output_module(char *name) {
 }
 
 void destroy_module(XAVAMODULE *module) {
+	FreeLibrary(module->moduleHandle);
 	free(module->name);
 	free(module);
 }
