@@ -6,14 +6,6 @@
 	#define XAVA_PREDEFINED_SENS_VALUE 0.0005
 #endif
 
-// This is changed by the CMake build file, don't touch :)
-#ifndef XAVA_DEFAULT_INPUT
-	#define XAVA_DEFAULT_INPUT "pulseaudio"
-#endif
-#ifndef XAVA_DEFAULT_OUTPUT
-	#define XAVA_DEFAULT_OUTPUT "x11"
-#endif
-
 #ifdef INIPARSER
 	#include "../lib/iniparser/src/iniparser.h"
 #else

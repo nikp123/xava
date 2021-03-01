@@ -18,6 +18,7 @@ endif()
 
 if(MINGW)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
+	add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
 endif()
 
 set(CMAKE_C_FLAGS "-Wall")
