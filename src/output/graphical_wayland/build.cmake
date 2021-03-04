@@ -6,8 +6,7 @@ option(WAYLAND "WAYLAND" ON)
 
 # Wayland
 if(WAYLAND)
-	pkg_check_modules(WAYLAND QUIET egl wayland-client-extra++ 
-		wayland-client wayland-egl)
+	pkg_check_modules(WAYLAND QUIET egl wayland-client wayland-egl)
 	if(WAYLAND_FOUND)
 		# Hacky way to deal with wayland-scanner (but will be used for nw)
 		execute_process(COMMAND wayland-scanner client-header 
