@@ -209,7 +209,7 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 		}
 
 		wlo[i] = malloc(sizeof(struct wlOutput));
-		wlo[i]->output = wl_registry_bind(xavaWLRegistry, name, &wl_output_interface, 3);
+		wlo[i]->output = wl_registry_bind(xavaWLRegistry, name, &wl_output_interface, 2);
 		wlo[i]->name = name;
 
 		wl_output_add_listener(wlo[i]->output, &output_listener, wlo[i]);
