@@ -234,7 +234,7 @@ static const struct wl_registry_listener xava_wl_registry_listener = {
 	.global_remove = xava_wl_registry_global_remove,
 };
 
-void xavaOutputCleanup(void *v) {
+EXP_FUNC void xavaOutputCleanup(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -311,7 +311,7 @@ uint32_t handle_window_alignment(struct config_params *p) {
 	return anchor;
 }
 
-int xavaInitOutput(void *v) {
+EXP_FUNC int xavaInitOutput(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -397,7 +397,7 @@ int xavaInitOutput(void *v) {
 	return EXIT_SUCCESS;
 }
 
-void xavaOutputClear(void *v) {
+EXP_FUNC void xavaOutputClear(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -405,7 +405,7 @@ void xavaOutputClear(void *v) {
 		xavaWLFrameBuffer[i] = p->bgcol;
 }
 
-int xavaOutputApply(void *v) {
+EXP_FUNC int xavaOutputApply(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -434,7 +434,7 @@ int xavaOutputApply(void *v) {
 	return EXIT_SUCCESS;
 }
 
-XG_EVENT xavaOutputHandleInput(void *v) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 	// i am too lazy to do this part
 	// especially with how tedious Wayland is for client-side
 	// development
@@ -449,7 +449,7 @@ XG_EVENT xavaOutputHandleInput(void *v) {
 }
 
 // super optimized, because cpus are shit at graphics
-void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
+EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -488,7 +488,7 @@ void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 	wl_display_roundtrip(xavaWLDisplay);
 }
 
-void xavaOutputHandleConfiguration(void *v, void *data) {
+EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
