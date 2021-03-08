@@ -3,7 +3,9 @@
 #include <sys/fcntl.h>
 #include <sys/types.h>
 #include <time.h>
+
 #include "../../shared.h"
+#include "main.h"
 
 int rc;
 

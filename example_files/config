@@ -49,7 +49,7 @@
 # Window transparency toggle (your system must support transparent windows)
 ; transparency = true
 
-# Keeps the window under any other (doesn't work in SDL)
+# Keeps the window under any other
 ; keep_below = true
 
 # This option aligns the window with a certain part of the screen
@@ -66,7 +66,6 @@
 ; y_padding = 0
 
 # This option removes the ability to interact with the window
-# NOTE: It does not work with SDL2 
 ; interactable = true
 
 # Create an taskbar icon
@@ -115,8 +114,6 @@
 
 # Audio capturing method. Possible methods are the ones listed below.
 # If one doesn't work, it might not be supported by your system or it just wasn't compiled with it.
-# 
-# Defaults to the order shown below ('pulse', 'portaudio', 'alsa'...)
 #
 # All input methods uses the same config variable 'source'
 # to define where it should get the audio.
@@ -131,7 +128,7 @@
 # to capture from an input device, such as a microphone
 #
 # You can also specify 'list' as the source to portaudio to list all available audio devices
-; method = pulse
+; method = pulseaudio
 ; source = auto
 
 ; method = portaudio
@@ -158,7 +155,8 @@
 # Output method. Can be any of the following (if supported):
 # By default it's the window that is recommended for your platform/OS.
 # 'sdl' is for a graphical window using SDL2
-# 'x11' is for a graphical window using X11 (usually faster, unsupported in wayland however)
+# 'x11' is for a X11 window
+# 'glx' is for a X11 window using OpenGL 
 # 'win' is for a win32 graphical window
 # 'wayland' is for a wayland window
 ; method = x11

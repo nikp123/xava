@@ -6,8 +6,9 @@
 #include <audioclient.h>
 #include <avrt.h>
 #include <functiondiscoverykeys_devpkey.h>
-#include "fifo.h"
-#include "wasapi.h"
+
+#include "main.h"
+#include "../../shared.h"
 
 // This variable is read by the main executable
 const char XAVA_DEFAULT_AUDIO_SORUCE[] = "loopback";
@@ -64,7 +65,7 @@ HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
 #define REFTIMES_PER_SEC  10000000
 #define REFTIMES_PER_MILLISEC  10000
 
-void* input_wasapi(void *audiodata) {
+external void* xavaInput(void *audiodata) {
 	HRESULT hr;
 	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
 	UINT32 bufferFrameCount;
@@ -221,5 +222,14 @@ void* input_wasapi(void *audiodata) {
 	CoUninitialize();
 
 	return 0;
+}
+
+
+external void xavaInputHandleConfiguration(void *data1, void *data2) {
+	dictionary *ini = (dictionary*)data1;
+	struct audio_data *audio = (struct audio_data*)data2;
+
+	audio->rate = 44100;
+	audio->source = (char *)iniparser_getstring(ini, "input:source", "loopback");
 }
 

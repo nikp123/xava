@@ -104,3 +104,79 @@ bool is_module_valid(XAVAMODULE *module) {
 }
 #endif
 
+#ifdef __WIN32__
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <windows.h>
+
+char *LIBRARY_EXTENSION = ".dll";
+
+void print_module_error() {
+	return;
+}
+
+bool is_module_valid(XAVAMODULE *module) {
+	if(module->moduleHandle)
+		return 1;
+	else
+		return 0;
+}
+
+void *get_symbol_address(XAVAMODULE *module, char *symbol) {
+	void *addr = GetProcAddress(module->moduleHandle, symbol);
+	
+	if(addr == NULL) {
+		int error = GetLastError();
+		char *message;
+		FormatMessage(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			error,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR) &message,
+			0, NULL );
+		
+		fprintf(stderr, "Finding symbol '%s' in '%s' failed! (code '%x')\n"
+				"Error message: %s",
+				symbol, module->name, error, message);
+	}
+
+
+	return addr;
+}
+
+XAVAMODULE *load_module(char *name) {
+	char *new_name = malloc(strlen(name)+strlen(LIBRARY_EXTENSION));
+	sprintf(new_name, "%s%s", name, LIBRARY_EXTENSION);
+	XAVAMODULE *module = malloc(sizeof(XAVAMODULE));
+	module->name = new_name;
+	module->moduleHandle = LoadLibrary(new_name);
+	return module;
+}
+
+XAVAMODULE *load_input_module(char *name) {
+	char *new_name = malloc(strlen(name) + strlen("in_"));
+	sprintf(new_name, "in_%s", name);
+	XAVAMODULE *module = load_module(new_name);
+	free(new_name);
+	return module;
+}
+
+XAVAMODULE *load_output_module(char *name) {
+	char *new_name = malloc(strlen(name) + strlen("out_"));
+	sprintf(new_name, "out_%s", name);
+	XAVAMODULE *module = load_module(new_name);
+	free(new_name);
+	return module;
+}
+
+void destroy_module(XAVAMODULE *module) {
+	FreeLibrary(module->moduleHandle);
+	free(module->name);
+	free(module);
+}
+#endif
+

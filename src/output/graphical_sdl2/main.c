@@ -3,6 +3,7 @@
 #include "../graphical.h"
 #include "../../config.h"
 #include "../../shared.h"
+#include "main.h"
 
 SDL_Window *xavaSDLWindow;
 SDL_Surface *xavaSDLWindowSurface;
@@ -10,7 +11,7 @@ SDL_Event xavaSDLEvent;
 SDL_DisplayMode xavaSDLVInfo;
 int *gradCol;
 
-void xavaOutputCleanup(void *v)
+EXP_FUNC void xavaOutputCleanup(void *v)
 {
 	free(gradCol);
 	SDL_FreeSurface(xavaSDLWindowSurface);
@@ -18,7 +19,7 @@ void xavaOutputCleanup(void *v)
 	SDL_Quit();
 }
 
-int xavaInitOutput(void *v)
+EXP_FUNC int xavaInitOutput(void *v)
 {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
@@ -57,14 +58,14 @@ int xavaInitOutput(void *v)
 	return 0;
 }
 
-void xavaOutputClear(void *v) {
+EXP_FUNC void xavaOutputClear(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
 	SDL_FillRect(xavaSDLWindowSurface, NULL, SDL_MapRGB(xavaSDLWindowSurface->format, p->bgcol/0x10000%0x100, p->bgcol/0x100%0x100, p->bgcol%0x100));
 }
 
-int xavaOutputApply(void *v) {
+EXP_FUNC int xavaOutputApply(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -83,7 +84,7 @@ int xavaOutputApply(void *v) {
 	return 0;
 }
 
-XG_EVENT xavaOutputHandleInput(void *v) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -149,7 +150,7 @@ XG_EVENT xavaOutputHandleInput(void *v) {
 	return XAVA_IGNORE;
 }
  
-void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
+EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -182,7 +183,7 @@ void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 	return;
 }
 
-void xavaOutputHandleConfiguration(void *v, void *data) {
+EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 

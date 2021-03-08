@@ -5,7 +5,7 @@ X.A.V.A.
 
 **X**11 **A**udio **V**isualizer for **A**LSA
 
-also supports audio input from WASAPI (Windows), PortAudio, Pulseaudio, shmem, fifo (MPD) and sndio.
+also supports audio input from WASAPI (Windows), PortAudio, Pulseaudio, SHMEM, FIFO (MPD) and sndio.
 
 a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://github.com/karlstav/cava) by [Nikola Pavlica](mailto:pavlica.nikola@gmail.com)
 
@@ -182,10 +182,7 @@ source = "Background Music"
 And now, within "Background Music" change the audio source of
  XAVA to the speaker output that you want recorded.
 
-You are free to use either ``x11`` or ``sdl`` as the output methods.
-Note however that ``x11`` may not work for some people.
-Also, keep in mind that ``transparency = true`` DOES NOT work on macOS.
-
+You are free to use either ``x11`` or ``sdl2`` as the output methods.
 
 All installers/distro specific installation sources might be out of date.
 
@@ -199,7 +196,7 @@ If you are on Windows, just use this.
  Don't even bother dealing with other options. 
 
 It's enabled by default if it detects compilation for Windows
- and if it's disabled go and set ``method = win`` in the ``[input]``
+ and if it's disabled go and set ``method = wasapi`` in the ``[input]``
  section of the config file.
 
 If you want to record loopback audio (that is "what you hear")
@@ -215,7 +212,7 @@ First make sure you have installed pulseaudio dev files and
  be automatically if the dev files are found).
 
 If you're lucky all you have to do is to set this line in the
- config file under the ``[input]`` section ``method = pulse``.
+ config file under the ``[input]`` section ``method = pulseaudio``.
  
 If nothing happens you might have to use a different source
  than the default. The default might also be your microphone.
@@ -355,9 +352,6 @@ If your audio device has a huge buffer, you might experience that xava
  in your audio playing software. Or in case of MPD, just quickly pause
  and resume playback (yes, this is a bug).
 
-If you are getting lag spikes on Windows, please use Vsync
- as the Windows process scheduler is always inaccurate.
-
 Usage
 -----
 
@@ -435,7 +429,7 @@ have been amplified while 5 is being lowered.
 
 ### Output modes
 
-XAVA supports outputing as `x`, `sdl` and `win`. You can change the output
+XAVA supports outputing as `x11`, `sdl2` and `win`. You can change the output
 mode in the ``[general]`` section of the config file, provided that the 
 feature was actaully built in.
 
@@ -451,8 +445,6 @@ Window size:
 Toggle fullscreen:
 
 	fullscreen = *1 or 0*
-
-WARNING: On ``win`` it isn't supported.
 
 Toggle window border:
 
@@ -480,8 +472,6 @@ You can enable transparent windows:
      
 	transparency = 1
 
-WARNING: ``sdl`` doesn't support transparency.
-
 And with transparency comes the ability to change the opacity of the background and the bars:
 
 	foreground_opacity = *range from 0.0 to 1.0*
@@ -491,7 +481,7 @@ Force the window to be behind any window (may not work):
     
 	keep_below = 1
 
-Set window properties (X11 only):
+Set window properties:
 
 	set_win_props = 1
 
@@ -509,13 +499,14 @@ Pro-tip: You can still gain control of the window by clicking
 
 ### OpenGL
 
-To run XAVA in OpenGL:
+Migration notice:
 
-	opengl = true
+OpenGL is now a seperate output method due to complications caused within the codebase.
 
-WARNING: OpenGL isn't supported on ``sdl``.
-And also on Windows OpenGL is always enabled, despite what you
- set it to.
+OpenGL is enabled by default on Windows. Meanwhile on X11, the ``[output]`` mode should
+be changed to ``glx``.
+
+The ``opengl = true/false`` is deprecated as of 0.7.0.0.
 
 ### VSync
 

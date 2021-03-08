@@ -7,5 +7,10 @@ endif()
 
 # winapi
 if(WASAPI)
-	list(APPEND ADDITIONAL_SOURCES "${XAVA_MODULE_DIR}/main.cpp")
+	add_library(in_wasapi SHARED "${XAVA_MODULE_DIR}/main.cpp")
+	target_link_libraries(in_wasapi iniparser ole32 oleaut32)
+	#target_include_directories(in_wasapi PRIVATE "${ALSA_INCLUDE_DIRS}")
+	#target_link_directories(in_wasapi PRIVATE "${ALSA_LIBRARY_DIRS}")
+	set_target_properties(in_wasapi PROPERTIES PREFIX "")
 endif()
+

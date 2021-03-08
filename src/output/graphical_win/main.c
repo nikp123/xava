@@ -1,11 +1,20 @@
+#include <assert.h>
+#include <tchar.h>
 #include <stdio.h>
 #include <time.h>
-#include "main.h"
+
+#include <windows.h>
+#include <windowsx.h>
+#include <dwmapi.h>
+
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/wglext.h>
+
 #include "../graphical.h"
 #include "../../config.h"
 #include "../../shared.h"
-
-#define WIN_ICON_PATH "xava.ico"
+#include "main.h"
 
 const char szAppName[] = "XAVA";
 const char wcWndName[] = "XAVA";
@@ -35,7 +44,16 @@ static _Bool resized=FALSE, quit=FALSE;
 // Warning: shitty win32 api design below, cover your poor eyes
 // Why can't I just pass this shit immediately to my events function
 // instead of doing this shit
-LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
+
+// Retarded shit, exhibit A:
+void *configParamsForWindowFuncBecauseWinAPIIsOutdated;
+LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+
+	// this shit is beyond retarded
+	struct config_params *p = configParamsForWindowFuncBecauseWinAPIIsOutdated;
+	if(p == NULL)
+		return DefWindowProc(hWnd,msg,wParam,lParam);
+
 	switch(msg) {
 		case WM_CREATE:
 			break;
@@ -45,25 +63,25 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 				// resizeTerminal = 2
 				// bail = -1
 				case 'A':
-					p.bs++;
+					p->bs++;
 					return XAVA_RESIZE;
 				case 'S':
-					if(p.bs > 0) p.bs--;
+					if(p->bs > 0) p->bs--;
 					return XAVA_RESIZE;
 				case 'F': // fullscreen
-					p.fullF = !p.fullF;
+					p->fullF = !p->fullF;
 					return XAVA_RESIZE;
 				case VK_UP:
-					p.sens *= 1.05;
+					p->sens *= 1.05;
 					break;
 				case VK_DOWN:
-					p.sens *= 0.95;
+					p->sens *= 0.95;
 					break;
 				case VK_LEFT:
-					p.bw++;
+					p->bw++;
 					return XAVA_RESIZE;
 				case VK_RIGHT:
-					if (p.bw > 1) p.bw--;
+					if (p->bw > 1) p->bw--;
 					return XAVA_RESIZE;
 				case 'R': //reload config
 					return XAVA_RELOAD;
@@ -72,18 +90,18 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 				case VK_ESCAPE:
 					return XAVA_QUIT;
 				case 'B':
-					p.bgcol = (rand()<<16)|rand();
+					p->bgcol = (rand()<<16)|rand();
 					return XAVA_REDRAW;
 				case 'C':
-					if(p.gradients) break;
-					p.col = (rand()<<16)|rand();
+					if(p->gradients) break;
+					p->col = (rand()<<16)|rand();
 					return XAVA_REDRAW;
 				default: break;
 			}
 			break;
 		case WM_SIZE:
-			p.w=LOWORD(lParam);
-			p.h=HIWORD(lParam);
+			p->w=LOWORD(lParam);
+			p->h=HIWORD(lParam);
 			resized=TRUE;
 			return XAVA_RELOAD;
 		case WM_CLOSE:
@@ -107,23 +125,26 @@ LRESULT CALLBACK WindowFunc(HWND hWnd,UINT msg, WPARAM wParam, LPARAM lParam) {
 	return XAVA_IGNORE;
 }
 
-void clear_screen_win(void) {
-	glColors[0] = ARGB_R_32(p.col)/255.0;
-	glColors[1] = ARGB_G_32(p.col)/255.0;
-	glColors[2] = ARGB_B_32(p.col)/255.0;
-	glColors[3] = p.transF ? p.foreground_opacity : 1.0;
-	glColors[4] = ARGB_A_32(p.shdw_col)/255.0;
-	glColors[5] = ARGB_R_32(p.shdw_col)/255.0;
-	glColors[6] = ARGB_G_32(p.shdw_col)/255.0;
-	glColors[7] = ARGB_B_32(p.shdw_col)/255.0;
+EXP_FUNC void xavaOutputClear(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
 
-	for(int i=0; i<p.gradients; i++) {
+	glColors[0] = ARGB_R_32(p->col)/255.0;
+	glColors[1] = ARGB_G_32(p->col)/255.0;
+	glColors[2] = ARGB_B_32(p->col)/255.0;
+	glColors[3] = p->transF ? p->foreground_opacity : 1.0;
+	glColors[4] = ARGB_A_32(p->shdw_col)/255.0;
+	glColors[5] = ARGB_R_32(p->shdw_col)/255.0;
+	glColors[6] = ARGB_G_32(p->shdw_col)/255.0;
+	glColors[7] = ARGB_B_32(p->shdw_col)/255.0;
+
+	for(int i=0; i<p->gradients; i++) {
 		gradColors[i*3] = ARGB_R_32(gradientColor[i])/255.0;
 		gradColors[i*3+1] = ARGB_G_32(gradientColor[i])/255.0;
 		gradColors[i*3+2] = ARGB_B_32(gradientColor[i])/255.0;;
 	}
 
-	//glClearColor(ARGB_R_32(p.bgcol)/255.0, ARGB_G_32(p.bgcol)/255.0, ARGB_B_32(p.bgcol)/255.0, 0.0);
+	//glClearColor(ARGB_R_32(p->bgcol)/255.0, ARGB_G_32(p->bgcol)/255.0, ARGB_B_32(p->bgcol)/255.0, 0.0);
 }
 
 unsigned char register_window_win(HINSTANCE HIn) {
@@ -167,7 +188,7 @@ void GetDesktopResolution(int *horizontal, int *vertical) {
 	return;
 }
 
-void init_opengl_win(void) {
+void init_opengl_win(struct config_params *p) {
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL);
@@ -176,7 +197,7 @@ void init_opengl_win(void) {
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
-	if(p.transF) {
+	if(p->transF) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
@@ -228,17 +249,20 @@ unsigned char CreateHGLRC(HWND hWnd) {
 	return TRUE;
 }
 
-void resize_framebuffer(void) {
-	glViewport(0, 0, p.w, p.h);
+void resize_framebuffer(struct config_params *p) {
+	glViewport(0, 0, p->w, p->h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glOrtho(0, p.w, 0, p.h, -1, 1);
+	glOrtho(0, p->w, 0, p->h, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
 
-int init_window_win(void) {
+EXP_FUNC int xavaInitOutput(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	// reset event trackers
 	resized=FALSE;
 	quit=FALSE;
@@ -261,32 +285,32 @@ int init_window_win(void) {
 	GetDesktopResolution(&screenWidth, &screenHeight);
 
 	// adjust window position etc...
-	calculate_win_pos(&p.wx, &p.wy, p.w, p.h, screenWidth, screenHeight, p.winA);
+	calculate_win_pos(p, screenWidth, screenHeight);
 
 	// Some error checking
 #ifdef DEBUG
-	if(p.wx > screenWidth - p.w) printf("Warning: Screen out of bounds (X axis)!");
-	if(p.wy > screenHeight - p.h) printf("Warning: Screen out of bounds (Y axis)!");
+	if(p->wx > screenWidth - p->w) printf("Warning: Screen out of bounds (X axis)!");
+	if(p->wy > screenHeight - p->h) printf("Warning: Screen out of bounds (Y axis)!");
 #endif
 
-	if(!p.transF) p.interactF=1; // correct practicality error
+	if(!p->transF) p->interactF=1; // correct practicality error
 
 	// extended and standard window styles
 	DWORD dwExStyle=0, dwStyle=0;
-	if(p.transF) dwExStyle|=WS_EX_TRANSPARENT;
-	if(!p.interactF) dwExStyle|=WS_EX_LAYERED|WS_EX_COMPOSITED;
-	if(!p.taskbarF) dwExStyle|=WS_EX_TOOLWINDOW;
-	if(p.borderF) dwStyle|=WS_CAPTION;
+	if(p->transF) dwExStyle|=WS_EX_TRANSPARENT;
+	if(!p->interactF) dwExStyle|=WS_EX_LAYERED|WS_EX_COMPOSITED;
+	if(!p->taskbarF) dwExStyle|=WS_EX_TOOLWINDOW;
+	if(p->borderF) dwStyle|=WS_CAPTION;
 	// create window
 	xavaWinWindow = CreateWindowEx(dwExStyle, szAppName, wcWndName, WS_POPUP | WS_VISIBLE | dwStyle,
-		p.wx, p.wy, p.w, p.h, NULL, NULL, xavaWinModule, NULL);
+		p->wx, p->wy, p->w, p->h, NULL, NULL, xavaWinModule, NULL);
 	if(xavaWinWindow == NULL) {
 		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
 	// transparency fix
-	if(p.transF) SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
-	SetWindowPos(xavaWinWindow, p.bottomF ? HWND_BOTTOM : HWND_NOTOPMOST, p.wx, p.wy, p.w, p.h, SWP_SHOWWINDOW);
+	if(p->transF) SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
+	SetWindowPos(xavaWinWindow, p->bottomF ? HWND_BOTTOM : HWND_NOTOPMOST, p->wx, p->wy, p->w, p->h, SWP_SHOWWINDOW);
 
 
 	// we need the desktop window manager to enable transparent background (from Vista ...onward)
@@ -294,7 +318,7 @@ int init_window_win(void) {
 	HRGN hRgn = CreateRectRgn(0, 0, -1, -1);
 	bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
 	bb.hRgnBlur = hRgn;
-	bb.fEnable = p.transF;
+	bb.fEnable = p->transF;
 	DwmEnableBlurBehindWindow(xavaWinWindow, &bb);
 
 	xavaWinFrame = GetDC(xavaWinWindow);
@@ -302,24 +326,24 @@ int init_window_win(void) {
 	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
 
 	// process colors
-	if(!strcmp(p.color, "default")) {
+	if(!strcmp(p->color, "default")) {
 		// we'll just get the accent color (which is way easier and an better thing to do)
 		WINBOOL opaque = 1;
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
-		p.col = fancyVariable;
+		p->col = fancyVariable;
 		if(!SUCCEEDED(error)) {
 			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
 			return 1;
 		}
 	} // as for the other case, we don't have to do any more processing
 
-	if(!strcmp(p.bcolor, "default")) {
+	if(!strcmp(p->bcolor, "default")) {
 		// we'll just get the accent color (which is way easier and a better thing to do)
 		WINBOOL opaque = 1;
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
-		p.bgcol = fancyVariable;
+		p->bgcol = fancyVariable;
 		if(!SUCCEEDED(error)) {
 			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
 			return 1;
@@ -327,12 +351,12 @@ int init_window_win(void) {
 	}
 
 	// parse all of the values
-	gradientColor = malloc(sizeof(int)*p.gradients);
-	for(int i=0; i<p.gradients; i++)
-		sscanf(p.gradient_colors[i], "#%06x", &gradientColor[i]);
+	gradientColor = malloc(sizeof(int)*p->gradients);
+	for(int i=0; i<p->gradients; i++)
+		sscanf(p->gradient_colors[i], "#%06x", &gradientColor[i]);
 
 	// set up opengl and stuff
-	init_opengl_win();
+	init_opengl_win(p);
 
 	// set up precise timers (otherwise unstable framerate)
 	if(timeGetDevCaps(&xavaPeriod, sizeof(TIMECAPS))!=MMSYSERR_NOERROR) {
@@ -342,15 +366,18 @@ int init_window_win(void) {
 	timeEndPeriod(0);
 	timeBeginPeriod(xavaPeriod.wPeriodMin);
 
-	shadowSize = p.shdw;
+	shadowSize = p->shdw;
 
 	return 0;
 }
 
-int apply_win_settings(void) {
+EXP_FUNC int xavaOutputApply(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	//ReleaseDC(xavaWinWindow, xavaWinFrame);
 
-	if(p.fullF) {
+	if(p->fullF) {
 		POINT Point = {0};
 		HMONITOR Monitor = MonitorFromPoint(Point, MONITOR_DEFAULTTONEAREST);
 		MONITORINFO MonitorInfo = { sizeof(MonitorInfo) };
@@ -360,8 +387,8 @@ int apply_win_settings(void) {
 
 			// dont overwrite old size on accident if already fullscreen
 			if(!(oldX||oldH||oldX||oldY)) {
-				oldX = p.wx; oldY = p.wy;
-				oldW = p.w; oldH = p.h;
+				oldX = p->wx; oldY = p->wy;
+				oldW = p->w; oldH = p->h;
 			}
 
 			// resizing to full screen
@@ -372,35 +399,41 @@ int apply_win_settings(void) {
 		}
 		// check if the window has been already resized
 	} else if(oldW||oldH||oldX||oldY) {
-		p.wx = oldX; p.wy = oldY;
-		p.w = oldW; p.h = oldH;
+		p->wx = oldX; p->wy = oldY;
+		p->w = oldW; p->h = oldH;
 
 		// reset to default if restoring
 		oldX = 0; oldY = 0;
 		oldW = 0; oldH = 0;
 
 		// restore window properties
-		DWORD Style = WS_POPUP | WS_VISIBLE | (p.borderF?WS_CAPTION:0);
+		DWORD Style = WS_POPUP | WS_VISIBLE | (p->borderF?WS_CAPTION:0);
 		SetWindowLongPtr(xavaWinWindow, GWL_STYLE, Style);
 
-		SetWindowPos(xavaWinWindow, 0, p.wx, p.wy, p.w, p.h,
+		SetWindowPos(xavaWinWindow, 0, p->wx, p->wy, p->w, p->h,
 			SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 	}
 
-	clear_screen_win();
-	resize_framebuffer();
+	xavaOutputClear(s);
+	resize_framebuffer(p);
 
 	// TODO: find a better solution, original issue:
 	// transparent polys draw over opaque ones on windows
-	if(shadowSize > p.bw)
-		p.shdw = p.bw;
+	if(shadowSize > p->bw)
+		p->shdw = p->bw;
 
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT"); 
-	wglSwapIntervalEXT(p.vsync);
+	wglSwapIntervalEXT(p->vsync);
 	return 0;
 }
 
-XG_EVENT get_window_input_win(void) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
+	// don't even fucking ask
+	configParamsForWindowFuncBecauseWinAPIIsOutdated = p;
+
 	while(PeekMessage(&xavaWinEvent, xavaWinWindow, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&xavaWinEvent);
 
@@ -425,21 +458,24 @@ XG_EVENT get_window_input_win(void) {
 	return XAVA_IGNORE;
 }
 
-void draw_graphical_win(int bars, int rest, int f[200], int flastd[200]) {
+EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200]) {
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
 	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
 
 	// clear color and calculate pixel witdh in double
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if(drawGLBars(rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
+	if(drawGLBars(s, rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
 
 	// dumb workarounds for dumb OSes
 	glBegin(GL_QUADS);
-		glColor4d(ARGB_R_32(p.bgcol)/255.0, ARGB_G_32(p.bgcol)/255.0, ARGB_B_32(p.bgcol)/255.0, p.background_opacity);
+		glColor4d(ARGB_R_32(p->bgcol)/255.0, ARGB_G_32(p->bgcol)/255.0, ARGB_B_32(p->bgcol)/255.0, p->background_opacity);
 		glVertex2d(0.0, 0.0);
-		glVertex2d(0.0, p.h);
-		glVertex2d(p.w, p.h);
-		glVertex2d(p.w, 0.0);
+		glVertex2d(0.0, p->h);
+		glVertex2d(p->w, p->h);
+		glVertex2d(p->w, 0.0);
 	glEnd();
 
 	glFlush();
@@ -448,7 +484,7 @@ void draw_graphical_win(int bars, int rest, int f[200], int flastd[200]) {
 	SwapBuffers(xavaWinFrame);
 }
 
-void cleanup_graphical_win(void) {
+EXP_FUNC void xavaOutputCleanup(void *v) {
 	timeEndPeriod(xavaPeriod.wPeriodMin);
 	free(gradientColor);
 	wglMakeCurrent(NULL, NULL);
@@ -459,7 +495,12 @@ void cleanup_graphical_win(void) {
 	//CloseHandle(xavaWinModule);
 }
 
-void xavaOutputHandleConfiguration(void *data) {
+EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
 	//dictionary *ini = (dictionary*) data;
+	struct state_params *s = v;
+	struct config_params *p = &s->conf;
+
+	// VSync is a must due to shit Windows timers
+	p->vsync = 1;
 }
 

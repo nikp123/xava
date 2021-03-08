@@ -16,20 +16,21 @@ endif()
 
 if(MINGW)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
+	add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
 endif()
 
-set(CMAKE_C_FLAGS "-Wall")
+set(CMAKE_C_FLAGS "-Wall -fvisibility='internal'")
 set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS "-Wall")
+set(CMAKE_CXX_FLAGS "-Wall -fvisibility='internal'")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 set(CMAKE_C_STANDARD 11)
 set(xava_VERSION_MAJOR 0)
-set(xava_VERSION_MINOR 6)
-set(xava_VERSION_PATCH 3)
-set(xava_VERSION_TWEAK 1)
+set(xava_VERSION_MINOR 7)
+set(xava_VERSION_PATCH 0)
+set(xava_VERSION_TWEAK 0)
 
 set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
 

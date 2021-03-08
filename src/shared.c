@@ -74,7 +74,7 @@ int xavaGetConfigDir(char *configPath) {
 	#elif defined(__APPLE__)
 		char *configHome = malloc(MAX_PATH);
 		sprintf(configHome, "%s//Library//Application Support", getenv("HOME"));
-	#elif defined(WIN)
+	#elif defined(__WIN32__)
 		// editing files without an extension on windows is a pain
 		char *configHome = getenv("APPDATA");
 	#endif
