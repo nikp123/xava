@@ -9,6 +9,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
+
+#include "main.h"
 #include "../../shared.h"
 
 typedef unsigned int u32_t;

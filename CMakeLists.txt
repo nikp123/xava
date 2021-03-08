@@ -21,10 +21,10 @@ if(MINGW)
 	add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
 endif()
 
-set(CMAKE_C_FLAGS "-Wall")
+set(CMAKE_C_FLAGS "-Wall -fvisibility='internal'")
 set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS "-Wall")
+set(CMAKE_CXX_FLAGS "-Wall -fvisibility='internal'")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 

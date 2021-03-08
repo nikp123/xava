@@ -18,6 +18,7 @@
 #include "../graphical.h"
 #include "../../config.h"
 #include "../../shared.h"
+#include "main.h"
 
 static Pixmap gradientBox = 0;
 static XColor xbgcol, xcol, *xgrad;
@@ -141,7 +142,7 @@ void calculateColors(struct config_params *p) {
 	snatchColor("color4", p->bcolor, p->bgcol, &xbgcol, databaseName, &xavaXResDB);
 }
 
-int xavaInitOutput(void *v) {
+EXP_FUNC int xavaInitOutput(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -329,7 +330,7 @@ int render_gradient_x(struct config_params *p) {
 	return 0;
 }
 
-void xavaOutputClear(void *v) {
+EXP_FUNC void xavaOutputClear(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -354,7 +355,7 @@ void xavaOutputClear(void *v) {
 	#endif
 }
 
-int xavaOutputApply(void *v) {
+EXP_FUNC int xavaOutputApply(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -414,7 +415,7 @@ int xavaOutputApply(void *v) {
 	return 0;
 }
 
-XG_EVENT xavaOutputHandleInput(void *v) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -515,7 +516,7 @@ XG_EVENT xavaOutputHandleInput(void *v) {
 	return action;
 }
 
-void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200])
+EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200])
 {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
@@ -562,7 +563,7 @@ void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200])
 	return;
 }
 
-void xavaOutputCleanup(void *v)
+EXP_FUNC void xavaOutputCleanup(void *v)
 {
 	// Root mode leaves artifacts on screen even though the window is dead
 	XClearWindow(xavaXDisplay, xavaXWindow);
@@ -584,7 +585,7 @@ void xavaOutputCleanup(void *v)
 	return;
 }
 
-void xavaOutputHandleConfiguration(void *v, void *data) {
+EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 

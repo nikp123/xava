@@ -1,9 +1,11 @@
-#include "../../shared.h"
 #include <alsa/asoundlib.h>
 
 #include <dictionary.h>
 #include <sys/types.h>
 #include <dirent.h>
+
+#include "../../shared.h"
+#include "main.h"
 
 // input: ALSA
 

@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "main.h"
 #include "../../shared.h"
 
 void* xavaInput(void* data)

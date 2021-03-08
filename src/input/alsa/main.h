@@ -1,2 +1,3 @@
-#define ALSA_INPUT_NAME "alsa"
-#define ALSA_INPUT_NUM 1
+// exported function, a macro used to determine which functions
+// are exposed as symbols within the final library/obj files
+#define EXP_FUNC __attribute__ ((visibility ("default")))

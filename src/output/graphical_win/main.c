@@ -14,15 +14,7 @@
 #include "../graphical.h"
 #include "../../config.h"
 #include "../../shared.h"
-
-#ifdef assert
-#define vertify(expr) if(!expr) assert(0)
-#else 
-#define vertify(expr) expr
-#endif
-
-#define WGL_WGLEXT_PROTOTYPES
-#define WIN_ICON_PATH "xava.ico"
+#include "main.h"
 
 const char szAppName[] = "XAVA";
 const char wcWndName[] = "XAVA";
@@ -133,7 +125,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	return XAVA_IGNORE;
 }
 
-void xavaOutputClear(void *v) {
+EXP_FUNC void xavaOutputClear(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -267,7 +259,7 @@ void resize_framebuffer(struct config_params *p) {
 	glLoadIdentity();
 }
 
-int xavaInitOutput(void *v) {
+EXP_FUNC int xavaInitOutput(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -379,7 +371,7 @@ int xavaInitOutput(void *v) {
 	return 0;
 }
 
-int xavaOutputApply(void *v) {
+EXP_FUNC int xavaOutputApply(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -435,7 +427,7 @@ int xavaOutputApply(void *v) {
 	return 0;
 }
 
-XG_EVENT xavaOutputHandleInput(void *v) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -466,7 +458,7 @@ XG_EVENT xavaOutputHandleInput(void *v) {
 	return XAVA_IGNORE;
 }
 
-void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200]) {
+EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200]) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
@@ -492,7 +484,7 @@ void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200]) {
 	SwapBuffers(xavaWinFrame);
 }
 
-void xavaOutputCleanup(void *v) {
+EXP_FUNC void xavaOutputCleanup(void *v) {
 	timeEndPeriod(xavaPeriod.wPeriodMin);
 	free(gradientColor);
 	wglMakeCurrent(NULL, NULL);
@@ -503,7 +495,7 @@ void xavaOutputCleanup(void *v) {
 	//CloseHandle(xavaWinModule);
 }
 
-void xavaOutputHandleConfiguration(void *v, void *data) {
+EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
 	//dictionary *ini = (dictionary*) data;
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
