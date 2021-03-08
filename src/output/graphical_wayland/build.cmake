@@ -8,6 +8,8 @@ option(WAYLAND "WAYLAND" ON)
 if(WAYLAND)
 	pkg_check_modules(WAYLAND QUIET egl wayland-client wayland-egl)
 	if(WAYLAND_FOUND)
+		set(_CFLAG_SYMBOLS_HIDE "-fvisibility=hidden")
+
 		# Hacky way to deal with wayland-scanner (but will be used for nw)
 		execute_process(COMMAND wayland-scanner client-header 
 			"${WL_PROT_DIR}/stable/xdg-shell/xdg-shell.xml"
@@ -34,6 +36,7 @@ if(WAYLAND)
 
 		add_library(out_wayland SHARED
 			"${XAVA_MODULE_DIR}/main.c"
+			"${XAVA_MODULE_DIR}/render.c"
 			"src/output/graphical.c"
 			"${XAVA_MODULE_DIR}/gen/xdg-shell-client-protocol.c"
 			"${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c"

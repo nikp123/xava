@@ -14,6 +14,7 @@
 #include "../graphical.h"
 #include "../../shared.h"
 #include "main.h"
+#include "render.h"
 
 /* Globals */
 struct wl_display *xavaWLDisplay;
@@ -428,6 +429,8 @@ int xavaOutputApply(void *v) {
 		(p->foreground_opacity*0xff)<<24);
 	p->bgcol = (p->bgcol&0x00ffffff) | ((uint32_t)
 		(p->background_opacity*0xff)<<24);
+
+	p->col = wayland_color_blend(p->col, p->foreground_opacity*255);
 
 	// clean screen because the colors changed
 	xavaOutputClear(v);
