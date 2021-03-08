@@ -1,3 +1,6 @@
+#ifndef __XAVA_SHARED_H
+#define __XAVA_SHARED_H
+
 // Audio sensitivity and volume varies greatly between 
 // different audio, audio systems and operating systems
 // This value is used to properly calibrate the sensitivity
@@ -63,3 +66,5 @@ typedef enum XAVA_GRAHPICAL_EVENT {
 	XAVA_QUIT
 } XG_EVENT;
 
+
+#endif
