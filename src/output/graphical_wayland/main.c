@@ -425,17 +425,11 @@ int xavaOutputApply(void *v) {
 	}
 
 	// handle colors
-	p->col = (p->col&0x00ffffff) | ((uint32_t)
-		(p->foreground_opacity*0xff)<<24);
-	p->bgcol = (p->bgcol&0x00ffffff) | ((uint32_t)
-		(p->background_opacity*0xff)<<24);
-
 	p->col = wayland_color_blend(p->col, p->foreground_opacity*255);
+	p->col = wayland_color_blend(p->bgcol, p->background_opacity*255);
 
 	// clean screen because the colors changed
 	xavaOutputClear(v);
-
-
 
 	return EXIT_SUCCESS;
 }
