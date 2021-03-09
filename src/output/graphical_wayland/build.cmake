@@ -37,6 +37,10 @@ if(WAYLAND)
 		add_library(out_wayland SHARED
 			"${XAVA_MODULE_DIR}/main.c"
 			"${XAVA_MODULE_DIR}/render.c"
+			"${XAVA_MODULE_DIR}/wl_output.c"
+			"${XAVA_MODULE_DIR}/registry.c"
+			"${XAVA_MODULE_DIR}/xdg.c"
+			"${XAVA_MODULE_DIR}/zwlr.c"
 			"src/output/graphical.c"
 			"${XAVA_MODULE_DIR}/gen/xdg-shell-client-protocol.c"
 			"${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c"

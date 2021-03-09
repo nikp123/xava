@@ -6,146 +6,42 @@
 #include <sys/syscall.h>
 #include <sys/mman.h>
 
-#include "gen/xdg-shell-client-protocol.h"
-#include "gen/wlr-layer-shell-unstable-v1-client-protocol.h"
-#include "gen/xdg-output-unstable-v1-client-protocol.h"
-#include "gen/wlr-output-managment-unstable-v1.h"
-
 #include "../graphical.h"
 #include "../../shared.h"
+
 #include "main.h"
 #include "render.h"
+#include "wl_output.h"
+#include "registry.h"
+#include "zwlr.h"
+#include "xdg.h"
 
 /* Globals */
 struct wl_display *xavaWLDisplay;
-struct wl_registry *xavaWLRegistry;
-struct wl_shm *xavaWLSHM;
 struct wl_compositor *xavaWLCompositor;
-struct xdg_wm_base *xavaXDGWMBase;
-// monitor/display managment crap
-static struct zwlr_layer_shell_v1 *xavaWLRLayerShell;
-static struct xdg_output_manager *xavaXDGOutputManager;
-/* Objects */
 static struct wl_surface *xavaWLSurface;
-static struct xdg_surface *xavaXDGSurface;
-static struct xdg_toplevel *xavaXDGToplevel;
 //static struct wl_shm_pool *xavaWLSHMPool;
-// monitor/display managment crap
-static struct zwlr_layer_surface_v1 *xavaWLRLayerSurface;
-struct wlOutput {
-	struct wl_output *output;
-	uint32_t scale;
-	uint32_t name;
-	uint32_t num;
-};
-static struct wlOutput **xavaWLOutputs;
-static int xavaWLOutputsCount;
  
-//static int shmFileIdentifier;
-static _Bool xavaWLCurrentlyDrawing = 0;
 static uint32_t *xavaWLFrameBuffer;
-static int xavaWLSHMFD;
  
-static int width_margin, height_margin;
+struct surfaceData sd;
 
 static _Bool backgroundLayer;
-static XG_EVENT storedEvent;
-static int monitorNumber;
-
-static void wl_buffer_release(void *data, struct wl_buffer *wl_buffer) {
-	/* Sent by the compositor when it's no longer using this buffer */
-	wl_buffer_destroy(wl_buffer);
-}
-static const struct wl_buffer_listener wl_buffer_listener = {
-	.release = wl_buffer_release,
-};
-
-static void output_geometry(void *data, struct wl_output *output, int32_t x,
-		int32_t y, int32_t width_mm, int32_t height_mm, int32_t subpixel,
-		const char *make, const char *model, int32_t transform) {
-	// Who cares
-}
-static void output_mode(void *data, struct wl_output *output, uint32_t flags,
-		int32_t width, int32_t height, int32_t refresh) {
-	// Who cares
-}
-static void output_done(void *data, struct wl_output *output) {
-	// Who cares
-}
-static void output_scale(void *data, struct wl_output *wl_output,
-		int32_t scale) {
-	struct wlOutput *output = data;
-	output->scale = scale;
-}
-static const struct wl_output_listener output_listener = {
-	.geometry = output_geometry,
-	.mode = output_mode,
-	.done = output_done,
-	.scale = output_scale,
-};
-
-struct wl_buffer *wl_create_framebuffer(struct config_params *p) {
-	int width = p->w, height = p->h;
-	int stride = width*4;
-	int size = stride * height;
-
-	struct wl_shm_pool *pool = wl_shm_create_pool(xavaWLSHM, xavaWLSHMFD, size);
-	struct wl_buffer *buffer = wl_shm_pool_create_buffer(pool,
-			0, width, height, stride, WL_SHM_FORMAT_ARGB8888);
-	wl_shm_pool_destroy(pool);
-
-	wl_buffer_add_listener(buffer, &wl_buffer_listener, NULL);
-	return buffer;
-}
-
-static void update_frame(struct config_params *p) {
-	// Vsync kind of thing here
-	while(xavaWLCurrentlyDrawing) usleep(1000);
-
-	// Update frame and inform wayland 
-	struct wl_buffer *buffer = wl_create_framebuffer(p);
-	wl_surface_attach(xavaWLSurface, buffer, 0, 0);
-	//wl_surface_damage_buffer(xavaWLSurface, 0, 0, INT32_MAX, INT32_MAX);
-	wl_surface_commit(xavaWLSurface);
-}
-
-static void layer_surface_configure(void *data,
-		struct zwlr_layer_surface_v1 *surface,
-		uint32_t serial, uint32_t width, uint32_t height) {
-	struct config_params *p = data;
-
-	//screenWidth = width;
-	//screenHeight = height;
-
-	// Respond to compositor
-	zwlr_layer_surface_v1_ack_configure(surface, serial);
-
-	update_frame(p);
-}
-static void layer_surface_closed(void *data,
-		struct zwlr_layer_surface_v1 *surface) {
-	//destroy_swaybg_output(output);
-	#ifdef DEBUG
-		fprintf(stderr, "wayland: zwlr_layer_surface lost\n");
-	#endif
-}
-static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
-	.configure = layer_surface_configure,
-	.closed = layer_surface_closed,
-};
+XG_EVENT storedEvent;
+int monitorNumber;
 
 static const struct wl_callback_listener wl_surface_frame_listener;
 static void wl_surface_frame_done(void *data, struct wl_callback *cb,
 		uint32_t time) {
-	struct state_params *s = data;
-	struct config_params *p = &s->conf;
+	struct surfaceData *s = data;
 
 	wl_callback_destroy(cb);
-	update_frame(p);
 
 	// stop updating frames while XAVA's having a nice sleep
-	while(s->pauseRendering) 
+	while(s->s->pauseRendering) 
 		usleep(10000);
+
+	update_frame(s);
 
 	// request update
 	cb = wl_surface_frame(xavaWLSurface);
@@ -158,101 +54,23 @@ static const struct wl_callback_listener wl_surface_frame_listener = {
 	.done = wl_surface_frame_done,
 };
 
-static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surface,
-		uint32_t serial) {
-	struct config_params *p = data;
-
-	// confirm that you exist to the compositor
-	xdg_surface_ack_configure(xdg_surface, serial);
-
-	update_frame(p);
-}
-static const struct xdg_surface_listener xdg_surface_listener = {
-	.configure = xdg_surface_configure,
-};
-
-static void xdg_wm_base_ping(void *data, struct xdg_wm_base *xdg_wm_base,
-		uint32_t serial) {
-	xdg_wm_base_pong(xdg_wm_base, serial);
-}
-static const struct xdg_wm_base_listener xdg_wm_base_listener = {
-	.ping = xdg_wm_base_ping,
-};
-
-static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_registry,
-		uint32_t name, const char *interface, uint32_t version) {
-	if (strcmp(interface, wl_shm_interface.name) == 0) {
-		xavaWLSHM = wl_registry_bind(
-			wl_registry, name, &wl_shm_interface, 1);
-	} else if (strcmp(interface, wl_compositor_interface.name) == 0) {
-		xavaWLCompositor = wl_registry_bind(
-			wl_registry, name, &wl_compositor_interface, 4);
-	} else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
-		xavaXDGWMBase = wl_registry_bind(
-			wl_registry, name, &xdg_wm_base_interface, 1);
-		xdg_wm_base_add_listener(xavaXDGWMBase,
-			&xdg_wm_base_listener, NULL);
-	} else if (strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0) {
-		xavaWLRLayerShell = wl_registry_bind(xavaWLRegistry, name,
-				&zwlr_layer_shell_v1_interface, 1);
-	} else if (strcmp(interface, zwlr_output_manager_v1_interface.name) == 0) {
-		xavaXDGOutputManager = wl_registry_bind(xavaWLRegistry, name,
-			&zwlr_output_manager_v1_interface, 2);
-	} else if (strcmp(interface, wl_output_interface.name) == 0) {
-		//output->state = state;
-
-		int i = xavaWLOutputsCount;
-		struct wlOutput **wlo;
-		wlo = reallocarray(xavaWLOutputs, (++xavaWLOutputsCount), sizeof(struct wlOutput*));
-		if(wlo == NULL) {
-			fprintf(stderr, "Could not allocate xavaWLOutputs!\n");
-			exit(EXIT_FAILURE); // no safe exit
-		}
-
-		wlo[i] = malloc(sizeof(struct wlOutput));
-		wlo[i]->output = wl_registry_bind(xavaWLRegistry, name, &wl_output_interface, 2);
-		wlo[i]->name = name;
-
-		wl_output_add_listener(wlo[i]->output, &output_listener, wlo[i]);
-		xavaWLOutputs = wlo;
-
-		wl_display_roundtrip(xavaWLDisplay);
-	}
-}
-static void xava_wl_registry_global_remove(void *data, struct wl_registry *wl_registry,
-		uint32_t name) {
-	// This sometimes happens when displays get reconfigured
-
-	storedEvent = XAVA_RELOAD;
-
-	#ifdef DEBUG
-		fprintf(stderr, "wayland: wl_registry died\n");
-	#endif
-}
-static const struct wl_registry_listener xava_wl_registry_listener = {
-	.global = xava_wl_registry_global_listener,
-	.global_remove = xava_wl_registry_global_remove,
-};
-
-EXP_FUNC void xavaOutputCleanup(void *v) {
+void closeSHM(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
 	close(xavaWLSHMFD);
 	munmap(xavaWLFrameBuffer, p->w*p->h*sizeof(uint32_t));
+}
+
+EXP_FUNC void xavaOutputCleanup(void *v) {
+	struct state_params *s = v;
+	closeSHM(s);
 
 	if(backgroundLayer) {
-		zwlr_layer_surface_v1_destroy(xavaWLRLayerSurface);
-		zwlr_layer_shell_v1_destroy(xavaWLRLayerShell);
-
-		for(int i = 0; i < xavaWLOutputsCount; i++) {
-			wl_output_destroy(xavaWLOutputs[i]->output);
-			free(xavaWLOutputs[i]);
-		} xavaWLOutputsCount = 0;
-		free(xavaWLOutputs);
+		zwlr_cleanup();
+		wl_output_cleanup();
 	} else {
-		xdg_toplevel_destroy(xavaXDGToplevel);
-		xdg_surface_destroy(xavaXDGSurface);
+		xdg_cleanup();
 	}
 	wl_surface_destroy(xavaWLSurface);
 	wl_compositor_destroy(xavaWLCompositor);
@@ -260,64 +78,8 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
 	wl_display_disconnect(xavaWLDisplay);
 }
 
-void handle_wayland_platform_quirks(struct config_params *p) {
-	// Vsync is implied in Wayland
-	// it is disabled because it messes with the timing code
-	// in the backend
-	if(p->vsync) p->vsync = 0;
-}
-
-/**
- * calculate and correct window positions
- * NOTE: The global calculate_win_pos() doesn't provide
- * enough functionality for this to work
- * It assumes clients are able to pick their own positions
-**/
-uint32_t handle_window_alignment(struct config_params *p) {
-	const uint32_t top = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
-	const uint32_t bottom = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
-	const uint32_t left = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
-	const uint32_t right = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
-
-	uint32_t anchor = 0;
-	width_margin = p->wx;
-	height_margin = p->wy;
-
-	// margins are reversed on opposite edges for user convenience
-
-	// Top alingments
-	if(!strcmp("top", p->winA)) anchor = top; 
-	else if(!strcmp("top_left", p->winA)) anchor = top|left; 
-	else if(!strcmp("top_right", p->winA)) {
-		width_margin *= -1; anchor = top|right;
-	}
-
-	// Middle alignments
-	else if(!strcmp("left", p->winA)) anchor = left;
-	else if(!strcmp("center", p->winA)) { /** nop **/ }
-	else if(!strcmp("right", p->winA)) { 
-		width_margin *= -1; anchor = right;
-	}
-	// Bottom alignments
-	else if(!strcmp("bottom_left", p->winA)) anchor = left|bottom;
-	else if(!strcmp("bottom", p->winA)) anchor = bottom;
-	else if(!strcmp("bottom_right", p->winA)) { 
-		width_margin *= -1; anchor = right|bottom;
-	}
-
-	if(!strncmp("bottom", p->winA, 6))
-		height_margin *= -1;
-
-	return anchor;
-}
-
 EXP_FUNC int xavaInitOutput(void *v) {
 	struct state_params *s = v;
-	struct config_params *p = &s->conf;
-
-	handle_wayland_platform_quirks(p);
-
-	xavaWLOutputs = malloc(1); xavaWLOutputsCount = 0;
 
 	xavaWLDisplay = wl_display_connect(NULL);
 	if(xavaWLDisplay == NULL) {
@@ -351,49 +113,26 @@ EXP_FUNC int xavaInitOutput(void *v) {
 
 	xavaWLSurface = wl_compositor_create_surface(xavaWLCompositor);
 
-	// select an appropriate output
-	struct wlOutput *output = xavaWLOutputs[monitorNumber];
+	// setting up surfaceData
+	sd.surface = xavaWLSurface;
+	sd.s       = s;
 
 	// The option carries the same functionality here to Wayland as well
 	if(backgroundLayer) {
-		// Create a "wallpaper" surface
-		xavaWLRLayerSurface = zwlr_layer_shell_v1_get_layer_surface(
-			xavaWLRLayerShell, xavaWLSurface, output->output,
-			ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM, "bottom");
-
-		// adjust position and properties accordingly
-		zwlr_layer_surface_v1_set_size(xavaWLRLayerSurface, p->w, p->h);
-		zwlr_layer_surface_v1_set_anchor(xavaWLRLayerSurface, 
-				handle_window_alignment(p));
-		zwlr_layer_surface_v1_set_margin(xavaWLRLayerSurface, 
-				height_margin, -width_margin, -height_margin, width_margin);
-		zwlr_layer_surface_v1_set_exclusive_zone(xavaWLRLayerSurface, -1);
-
-		// same stuff as xdg_surface_add_listener, but for zwlr_layer_surface
-		zwlr_layer_surface_v1_add_listener(xavaWLRLayerSurface,
-			&layer_surface_listener, p);
-
+		zwlr_init(&sd);
 	} else {
-		// create window, or "surface" in waland terms
-		xavaXDGSurface = xdg_wm_base_get_xdg_surface(xavaXDGWMBase, xavaWLSurface);
-
-		// for those unaware, the compositor baby sits everything that you
-		// make, thus it needs a function through which the compositor
-		// will manage your application
-		xdg_surface_add_listener(xavaXDGSurface, &xdg_surface_listener, p);
-
-		xavaXDGToplevel = xdg_surface_get_toplevel(xavaXDGSurface);
-		xdg_toplevel_set_title(xavaXDGToplevel, "XAVA");
+		xdg_init(&sd);
 	}
 
 	//wl_surface_set_buffer_scale(xavaWLSurface, 3);
 
 	struct wl_callback *cb = wl_surface_frame(xavaWLSurface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, s);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, &sd);
 
 	// process all of this, FINALLY
 	wl_surface_commit(xavaWLSurface);
 
+	xavaWLSHMFD = syscall(SYS_memfd_create, "buffer", 0);
 	return EXIT_SUCCESS;
 }
 
@@ -414,7 +153,7 @@ EXP_FUNC int xavaOutputApply(void *v) {
 	//else        xdg_toplevel_unset_fullscreen(xavaWLSurface);
 
 	int size = p->w*p->h*sizeof(uint32_t);
-	xavaWLSHMFD = syscall(SYS_memfd_create, "buffer", 0);
+	//xavaWLSHMFD = syscall(SYS_memfd_create, "buffer", 0);
 	ftruncate(xavaWLSHMFD, size);
 
 	xavaWLFrameBuffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, xavaWLSHMFD, 0);
@@ -435,12 +174,19 @@ EXP_FUNC int xavaOutputApply(void *v) {
 }
 
 EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
-	// i am too lazy to do this part
-	// especially with how tedious Wayland is for client-side
-	// development
+	struct state_params *s = (struct state_params*)v;
 
 	XG_EVENT event = storedEvent;
 	storedEvent = XAVA_IGNORE;
+
+	switch(storedEvent) {
+		case XAVA_RESIZE:
+			closeSHM(s);
+			break;
+		default:
+			break;
+	}
+
 	if(event != XAVA_IGNORE)
 		return event;
 
@@ -499,6 +245,7 @@ EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
 	monitorNumber = iniparser_getboolean
 		(ini, "wayland:monitor_num", 0);
 
+	// Vsync is implied, although system timers must be used
 	p->vsync = 0;
 }
 
