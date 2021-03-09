@@ -30,6 +30,8 @@ static _Bool backgroundLayer;
 XG_EVENT storedEvent;
 int monitorNumber;
 
+uint32_t fgcol,bgcol;
+
 static const struct wl_callback_listener wl_surface_frame_listener;
 static void wl_surface_frame_done(void *data, struct wl_callback *cb,
 		uint32_t time) {
@@ -164,8 +166,8 @@ EXP_FUNC int xavaOutputApply(void *v) {
 	}
 
 	// handle colors
-	p->col = wayland_color_blend(p->col, p->foreground_opacity*255);
-	p->bgcol = wayland_color_blend(p->bgcol, p->background_opacity*255);
+	fgcol = wayland_color_blend(p->col, p->foreground_opacity*255);
+	bgcol = wayland_color_blend(p->bgcol, p->background_opacity*255);
 
 	// clean screen because the colors changed
 	xavaOutputClear(v);
@@ -208,9 +210,9 @@ EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 		// beginning and end of bars, depends on the order
 		register int a = p->h - f[i];
 		register int b = p->h - flastd[i];
-		register uint32_t brush = p->col;
+		register uint32_t brush = fgcol;
 		if(f[i] < flastd[i]) {
-			brush = p->bgcol;
+			brush = bgcol;
 			a^=b; b^=a; a^=b;
 		}
 
