@@ -9,7 +9,7 @@ extern const struct xdg_surface_listener xdg_surface_listener;
 extern const struct xdg_wm_base_listener xdg_wm_base_listener;
 extern struct xdg_wm_base *xavaXDGWMBase;
 
-extern void xdg_init(struct surfaceData *s);
+extern void xdg_init(struct waydata *s);
 extern void xdg_cleanup();
 
 #endif

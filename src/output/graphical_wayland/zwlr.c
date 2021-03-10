@@ -13,7 +13,7 @@ struct zwlr_layer_shell_v1 *xavaWLRLayerShell;
 static void layer_surface_configure(void *data,
 		struct zwlr_layer_surface_v1 *surface,
 		uint32_t serial, uint32_t width, uint32_t height) {
-	struct surfaceData *s = data;
+	struct waydata *s = data;
 
 	//screenWidth = width;
 	//screenHeight = height;
@@ -81,7 +81,7 @@ extern uint32_t handle_window_alignment(struct config_params *p) {
 	return anchor;
 }
 
-void zwlr_init(struct surfaceData *s){
+void zwlr_init(struct waydata *s){
 	struct wlOutput *output = wl_output_get_desired();
 	struct config_params *p = &s->s->conf;
 

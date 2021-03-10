@@ -13,11 +13,13 @@ struct wl_registry *xavaWLRegistry;
 
 static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_registry,
 		uint32_t name, const char *interface, uint32_t version) {
+	struct waydata *wd = data;
+
 	if (strcmp(interface, wl_shm_interface.name) == 0) {
-		xavaWLSHM = wl_registry_bind(
+		wd->shm = wl_registry_bind(
 			wl_registry, name, &wl_shm_interface, 1);
 	} else if (strcmp(interface, wl_compositor_interface.name) == 0) {
-		xavaWLCompositor = wl_registry_bind(
+		wd->compositor = wl_registry_bind(
 			wl_registry, name, &wl_compositor_interface, 4);
 	} else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
 		xavaXDGWMBase = wl_registry_bind(
@@ -48,15 +50,16 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 		wl_output_add_listener(wlo[i]->output, &output_listener, wlo[i]);
 		xavaWLOutputs = wlo;
 
-		wl_display_roundtrip(xavaWLDisplay);
+		wl_display_roundtrip(wd->display);
 	}
 }
 
 static void xava_wl_registry_global_remove(void *data, struct wl_registry *wl_registry,
 		uint32_t name) {
-	// This sometimes happens when displays get reconfigured
+	struct waydata *sd = data;
 
-	storedEvent = XAVA_RELOAD;
+	// This sometimes happens when displays get reconfigured
+	sd->event = XAVA_RELOAD;
 
 	#ifdef DEBUG
 		fprintf(stderr, "wayland: wl_registry died\n");

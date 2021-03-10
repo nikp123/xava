@@ -1,6 +1,5 @@
 #include "render.h"
 
-struct wl_shm *xavaWLSHM;
 int xavaWLSHMFD;
 _Bool xavaWLCurrentlyDrawing = 0;
 
@@ -19,12 +18,14 @@ static const struct wl_buffer_listener wl_buffer_listener = {
 	.release = wl_buffer_release,
 };
 
-struct wl_buffer *wl_create_framebuffer(struct config_params *p) {
+struct wl_buffer *wl_create_framebuffer(struct waydata *wd) {
+	struct config_params *p = &wd->s->conf;
+
 	int width = p->w, height = p->h;
 	int stride = width*4;
 	int size = stride * height;
 
-	struct wl_shm_pool *pool = wl_shm_create_pool(xavaWLSHM, xavaWLSHMFD, size);
+	struct wl_shm_pool *pool = wl_shm_create_pool(wd->shm, xavaWLSHMFD, size);
 	struct wl_buffer *buffer = wl_shm_pool_create_buffer(pool,
 			0, width, height, stride, WL_SHM_FORMAT_ARGB8888);
 	wl_shm_pool_destroy(pool);
@@ -33,8 +34,8 @@ struct wl_buffer *wl_create_framebuffer(struct config_params *p) {
 	return buffer;
 }
 
-void update_frame(struct surfaceData *s) {
-	struct config_params *p = &s->s->conf;
+void update_frame(struct waydata *wd) {
+	struct config_params *p = &wd->s->conf;
 
 	// Vsync kind of thing here
 	while(xavaWLCurrentlyDrawing) usleep(1000);
@@ -43,10 +44,10 @@ void update_frame(struct surfaceData *s) {
 	ftruncate(xavaWLSHMFD, size);
 
 	// Update frame and inform wayland 
-	struct wl_buffer *buffer = wl_create_framebuffer(&s->s->conf);
-	wl_surface_attach(s->surface, buffer, 0, 0);
+	struct wl_buffer *buffer = wl_create_framebuffer(wd);
+	wl_surface_attach(wd->surface, buffer, 0, 0);
 	//wl_surface_damage_buffer(xavaWLSurface, 0, 0, INT32_MAX, INT32_MAX);
-	wl_surface_commit(s->surface);
+	wl_surface_commit(wd->surface);
 }
 
 

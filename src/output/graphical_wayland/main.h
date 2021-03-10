@@ -9,16 +9,16 @@
 
 #include "../../shared.h" 
 
-struct surfaceData {
-	struct wl_surface *surface;
-	struct state_params *s;
+struct waydata {
+	struct wl_surface    *surface;
+	struct wl_shm        *shm;
+	struct wl_display    *display;
+	struct wl_compositor *compositor;
+	struct state_params  *s;
+	XG_EVENT event;
 };
 
-extern struct wl_shm *xavaWLSHM;
-extern struct wl_display *xavaWLDisplay;
-extern struct wl_compositor *xavaWLCompositor;
 
-extern XG_EVENT storedEvent;
 extern int monitorNumber;
 
 #endif

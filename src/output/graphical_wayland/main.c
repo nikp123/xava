@@ -17,17 +17,13 @@
 #include "xdg.h"
 
 /* Globals */
-struct wl_display *xavaWLDisplay;
-struct wl_compositor *xavaWLCompositor;
-static struct wl_surface *xavaWLSurface;
 //static struct wl_shm_pool *xavaWLSHMPool;
  
 static uint32_t *xavaWLFrameBuffer;
  
-struct surfaceData sd;
+struct waydata wd;
 
 static _Bool backgroundLayer;
-XG_EVENT storedEvent;
 int monitorNumber;
 
 uint32_t fgcol,bgcol;
@@ -35,22 +31,22 @@ uint32_t fgcol,bgcol;
 static const struct wl_callback_listener wl_surface_frame_listener;
 static void wl_surface_frame_done(void *data, struct wl_callback *cb,
 		uint32_t time) {
-	struct surfaceData *s = data;
+	struct waydata *wd = data;
 
 	wl_callback_destroy(cb);
 
 	// stop updating frames while XAVA's having a nice sleep
-	while(s->s->pauseRendering) 
+	while(wd->s->pauseRendering) 
 		usleep(10000);
 
-	update_frame(s);
+	update_frame(wd);
 
 	// request update
-	cb = wl_surface_frame(xavaWLSurface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, s);
+	cb = wl_surface_frame(wd->surface);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, wd);
 
 	// signal to wayland about it
-	wl_surface_commit(xavaWLSurface);
+	wl_surface_commit(wd->surface);
 }
 static const struct wl_callback_listener wl_surface_frame_listener = {
 	.done = wl_surface_frame_done,
@@ -74,30 +70,30 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
 	} else {
 		xdg_cleanup();
 	}
-	wl_surface_destroy(xavaWLSurface);
-	wl_compositor_destroy(xavaWLCompositor);
+	wl_surface_destroy(wd.surface);
+	wl_compositor_destroy(wd.compositor);
 	wl_registry_destroy(xavaWLRegistry);
-	wl_display_disconnect(xavaWLDisplay);
+	wl_display_disconnect(wd.display);
 }
 
 EXP_FUNC int xavaInitOutput(void *v) {
-	struct state_params *s = v;
+	wd.s       = v;
 
-	xavaWLDisplay = wl_display_connect(NULL);
-	if(xavaWLDisplay == NULL) {
+	wd.display = wl_display_connect(NULL);
+	if(wd.display == NULL) {
 		fprintf(stderr, "Failed to connect to Wayland server\n");
 		return EXIT_FAILURE;
 	}
 
-	xavaWLRegistry = wl_display_get_registry(xavaWLDisplay);
+	xavaWLRegistry = wl_display_get_registry(wd.display);
 	// TODO: Check failure states
-	wl_registry_add_listener(xavaWLRegistry, &xava_wl_registry_listener, NULL);
-	wl_display_roundtrip(xavaWLDisplay);
-	if(xavaWLSHM == NULL) {
+	wl_registry_add_listener(xavaWLRegistry, &xava_wl_registry_listener, &wd);
+	wl_display_roundtrip(wd.display);
+	if(wd.shm == NULL) {
 		fprintf(stderr, "Your compositor doesn't support wl_shm, failing....\n");
 		return EXIT_FAILURE;
 	}
-	if(xavaWLCompositor == NULL) {
+	if(wd.compositor == NULL) {
 		fprintf(stderr, "Your compositor doesn't support wl_compositor, failing....\n");
 		return EXIT_FAILURE;
 	}
@@ -113,26 +109,22 @@ EXP_FUNC int xavaInitOutput(void *v) {
 		backgroundLayer = 0;
 	}
 
-	xavaWLSurface = wl_compositor_create_surface(xavaWLCompositor);
-
-	// setting up surfaceData
-	sd.surface = xavaWLSurface;
-	sd.s       = s;
+	wd.surface = wl_compositor_create_surface(wd.compositor);
 
 	// The option carries the same functionality here to Wayland as well
 	if(backgroundLayer) {
-		zwlr_init(&sd);
+		zwlr_init(&wd);
 	} else {
-		xdg_init(&sd);
+		xdg_init(&wd);
 	}
 
 	//wl_surface_set_buffer_scale(xavaWLSurface, 3);
 
-	struct wl_callback *cb = wl_surface_frame(xavaWLSurface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, &sd);
+	struct wl_callback *cb = wl_surface_frame(wd.surface);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
 
 	// process all of this, FINALLY
-	wl_surface_commit(xavaWLSurface);
+	wl_surface_commit(wd.surface);
 
 	xavaWLSHMFD = syscall(SYS_memfd_create, "buffer", 0);
 	return EXIT_SUCCESS;
@@ -178,10 +170,10 @@ EXP_FUNC int xavaOutputApply(void *v) {
 EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 	struct state_params *s = (struct state_params*)v;
 
-	XG_EVENT event = storedEvent;
-	storedEvent = XAVA_IGNORE;
+	XG_EVENT event = wd.event;
+	wd.event = XAVA_IGNORE;
 
-	switch(storedEvent) {
+	switch(wd.event) {
 		case XAVA_RESIZE:
 			closeSHM(s);
 			break;
@@ -217,7 +209,7 @@ EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 		}
 
 		// Update damage only where necessary
-		wl_surface_damage_buffer(xavaWLSurface, rest+i*(p->bs+p->bw),
+		wl_surface_damage_buffer(wd.surface, rest+i*(p->bs+p->bw),
 				a, p->bw, b-a);
 
 		// advance the pointer by undrawn pixels amount
@@ -233,7 +225,7 @@ EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 	}
 	xavaWLCurrentlyDrawing = 0;
 
-	wl_display_roundtrip(xavaWLDisplay);
+	wl_display_roundtrip(wd.display);
 }
 
 EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {

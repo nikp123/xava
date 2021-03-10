@@ -20,19 +20,20 @@ const struct xdg_wm_base_listener xdg_wm_base_listener = {
 static void xdg_toplevel_handle_configure(void *data,
 		struct xdg_toplevel *xdg_toplevel, int32_t w, int32_t h,
 		struct wl_array *states) {
-	struct state_params *s = data;
-	struct config_params *p = &s->conf;
+	struct waydata *s = data;
 
 	if (w == 0 || h == 0) return;
 
-	p->w = w;
-	p->h = h;
-	storedEvent = XAVA_RESIZE;
+	s->s->conf.w = w;
+	s->s->conf.h = h;
+	s->event = XAVA_RESIZE;
 }
 
 static void xdg_toplevel_handle_close(void *data,
 		struct xdg_toplevel *xdg_toplevel) {
-	storedEvent = XAVA_QUIT;
+	struct waydata *s = data;
+
+	s->event = XAVA_QUIT;
 }
 
 struct xdg_toplevel_listener xdg_toplevel_listener = {
@@ -42,7 +43,7 @@ struct xdg_toplevel_listener xdg_toplevel_listener = {
 
 static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surface,
 		uint32_t serial) {
-	struct surfaceData *s = data;
+	struct waydata *s = data;
 
 	// confirm that you exist to the compositor
 	xdg_surface_ack_configure(xdg_surface, serial);
@@ -54,7 +55,7 @@ const struct xdg_surface_listener xdg_surface_listener = {
 	.configure = xdg_surface_configure,
 };
 
-void xdg_init(struct surfaceData *s) {
+void xdg_init(struct waydata *s) {
 	// create window, or "surface" in waland terms
 	xavaXDGSurface = xdg_wm_base_get_xdg_surface(xavaXDGWMBase, s->surface);
 
