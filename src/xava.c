@@ -289,6 +289,19 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		// extract the shorthand sub-handles
 		struct config_params *p = &s.conf;
 		struct audio_data *audio = &s.audio;
+		struct function_pointers *func = &s.func;
+
+		// assign all valid function pointers
+		// 
+		// this is done in order to allow functions from the main executable
+		// to run in the modules because linkers apparently don't like it
+		// when I import those functions through header files
+		func->destroyXAVAEventStack = destroyXAVAEventStack;
+		func->newXAVAEventStack = newXAVAEventStack;
+		func->pendingXAVAEventStack = pendingXAVAEventStack;
+		func->popXAVAEventStack = popXAVAEventStack;
+		func->pushXAVAEventStack = pushXAVAEventStack;
+		func->isEventPendingXAVA = isEventPendingXAVA;
 
 		// load config
 		load_config(configPath, p);
@@ -534,7 +547,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				// process: populate input buffer and check if input is present
 				silence = 1;
 
-				for (i = 0; i < audio->fftsize+2; i++) {
+				for (i = 0; i < audio->fftsize; i++) {
 					if(audio->audio_out_l[i]) {
 						silence = 0;
 						break;
@@ -545,11 +558,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					}
 				}
 
-					// so apparently sens can INDEED reach infinity
-					// so I've decided to limit how high sens can rise
-					// to prevent sens from reaching infinity again
-					if(!silence)
-						lastSens = p->sens;
+				// so apparently sens can INDEED reach infinity
+				// so I've decided to limit how high sens can rise
+				// to prevent sens from reaching infinity again
+				if(!silence)
+					lastSens = p->sens;
 
 				if (silence == 1) sleep++;
 				else sleep = 0;
