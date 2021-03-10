@@ -15,10 +15,18 @@ struct waydata {
 	struct wl_display    *display;
 	struct wl_compositor *compositor;
 	struct state_params  *s;
-	XG_EVENT event;
+	XG_EVENT_STACK       *events;
+	uint32_t             maxSize;
+	uint32_t             *fb;
+	int                  shmfd;
+	_Bool                fbUnsafe;
 };
 
 
+extern const struct wl_callback_listener wl_surface_frame_listener;
+
 extern int monitorNumber;
+
+EXP_FUNC void xavaOutputClear(void *v);
 
 #endif

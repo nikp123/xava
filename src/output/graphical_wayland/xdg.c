@@ -2,6 +2,8 @@
 
 #include "render.h"
 #include "xdg.h"
+#include "main.h"
+#include <wayland-client-core.h>
 
 static struct xdg_surface *xavaXDGSurface;
 static struct xdg_toplevel *xavaXDGToplevel;
@@ -20,20 +22,39 @@ const struct xdg_wm_base_listener xdg_wm_base_listener = {
 static void xdg_toplevel_handle_configure(void *data,
 		struct xdg_toplevel *xdg_toplevel, int32_t w, int32_t h,
 		struct wl_array *states) {
-	struct waydata *s = data;
+	struct waydata           *wd   = data;
+	struct state_params      *s    = wd->s;
+	struct function_pointers *func = &s->func;
+	struct config_params     *p    = &s->conf;
 
-	if (w == 0 || h == 0) return;
+	if(w == 0 && h == 0) return;
 
-	s->s->conf.w = w;
-	s->s->conf.h = h;
-	s->event = XAVA_RESIZE;
+	if(p->w != w && p->h != h) {
+		while(wd->fbUnsafe)
+			usleep(10);
+
+		wd->fbUnsafe = true;
+
+		p->w = w;
+		p->h = h;
+
+		reallocSHM(wd);
+
+		func->pushXAVAEventStack(wd->events, XAVA_REDRAW);
+
+		func->pushXAVAEventStack(wd->events, XAVA_RESIZE);
+
+		wd->fbUnsafe = false;
+	}
 }
 
 static void xdg_toplevel_handle_close(void *data,
 		struct xdg_toplevel *xdg_toplevel) {
-	struct waydata *s = data;
+	struct waydata *wd = data;
+	struct state_params      *s    = wd->s;
+	struct function_pointers *func = &s->func;
 
-	s->event = XAVA_QUIT;
+	func->pushXAVAEventStack(wd->events, XAVA_QUIT);
 }
 
 struct xdg_toplevel_listener xdg_toplevel_listener = {
@@ -43,12 +64,13 @@ struct xdg_toplevel_listener xdg_toplevel_listener = {
 
 static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surface,
 		uint32_t serial) {
-	struct waydata *s = data;
+	struct waydata           *wd   = data;
+	//struct function_pointers *func = &wd->s->func; 
 
 	// confirm that you exist to the compositor
 	xdg_surface_ack_configure(xdg_surface, serial);
 
-	update_frame(s);
+	update_frame(wd);
 }
 
 const struct xdg_surface_listener xdg_surface_listener = {

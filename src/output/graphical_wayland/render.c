@@ -1,7 +1,7 @@
-#include "render.h"
+#include <sys/mman.h>
 
-int xavaWLSHMFD;
-_Bool xavaWLCurrentlyDrawing = 0;
+#include "render.h"
+#include "main.h"
 
 uint32_t extern wayland_color_blend(uint32_t color, uint16_t alpha) {
 	uint8_t red =   ((color >> 16 & 0xff) | (color >> 8 & 0xff00)) * alpha / 0xffff;
@@ -11,6 +11,7 @@ uint32_t extern wayland_color_blend(uint32_t color, uint16_t alpha) {
 }
 
 static void wl_buffer_release(void *data, struct wl_buffer *wl_buffer) {
+	//struct waydata *wd = data;
 	/* Sent by the compositor when it's no longer using this buffer */
 	wl_buffer_destroy(wl_buffer);
 }
@@ -25,23 +26,24 @@ struct wl_buffer *wl_create_framebuffer(struct waydata *wd) {
 	int stride = width*4;
 	int size = stride * height;
 
-	struct wl_shm_pool *pool = wl_shm_create_pool(wd->shm, xavaWLSHMFD, size);
+	struct wl_shm_pool *pool = wl_shm_create_pool(wd->shm, wd->shmfd, size);
 	struct wl_buffer *buffer = wl_shm_pool_create_buffer(pool,
 			0, width, height, stride, WL_SHM_FORMAT_ARGB8888);
 	wl_shm_pool_destroy(pool);
 
-	wl_buffer_add_listener(buffer, &wl_buffer_listener, NULL);
+	wl_buffer_add_listener(buffer, &wl_buffer_listener, wd);
+
 	return buffer;
 }
 
 void update_frame(struct waydata *wd) {
-	struct config_params *p = &wd->s->conf;
+	//struct config_params     *p    = &wd->s->conf;
+	//struct function_pointers *func = &wd->s->func;
 
-	// Vsync kind of thing here
-	while(xavaWLCurrentlyDrawing) usleep(1000);
-
-	int size = p->w*p->h*sizeof(uint32_t);
-	ftruncate(xavaWLSHMFD, size);
+	// stop updating frames while XAVA's having a nice sleep
+	while(wd->s->pauseRendering) {
+		sleep(100);
+	}
 
 	// Update frame and inform wayland 
 	struct wl_buffer *buffer = wl_create_framebuffer(wd);
@@ -50,4 +52,38 @@ void update_frame(struct waydata *wd) {
 	wl_surface_commit(wd->surface);
 }
 
+void reallocSHM(struct waydata *wd) {
+	struct state_params *s = wd->s;
+	struct config_params *p = &s->conf;
+
+	munmap(wd->fb, wd->maxSize);
+
+	int size = p->w*p->h*sizeof(uint32_t);
+	if(size > wd->maxSize) {
+		wd->maxSize = size;
+		if(ftruncate(wd->shmfd, size) == -1) {
+			perror("Error ");
+		}
+	}
+
+	wd->fb = mmap(NULL, wd->maxSize, PROT_READ | PROT_WRITE, MAP_SHARED, wd->shmfd, 0);
+	if(wd->fb == MAP_FAILED) {
+		perror("Failed to create a shared memory buffer\nError:");
+		close(wd->shmfd);
+		exit(EXIT_FAILURE); // don't care, just crash
+	}
+
+	wl_surface_commit(wd->surface);
+}
+
+void closeSHM(struct waydata *wd) { 
+	struct state_params  *s = wd->s;
+	struct config_params *p = &s->conf;
+
+	close(wd->shmfd);
+	munmap(wd->fb, p->w*p->h*sizeof(uint32_t));
+
+	wd->shmfd = -1;
+	wd->fb = NULL;
+}
 

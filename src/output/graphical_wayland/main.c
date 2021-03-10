@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 #include <unistd.h>
 #include <sys/syscall.h>
-#include <sys/mman.h>
 
 #include "../graphical.h"
 #include "../../shared.h"
@@ -19,8 +19,6 @@
 /* Globals */
 //static struct wl_shm_pool *xavaWLSHMPool;
  
-static uint32_t *xavaWLFrameBuffer;
- 
 struct waydata wd;
 
 static _Bool backgroundLayer;
@@ -28,41 +26,28 @@ int monitorNumber;
 
 uint32_t fgcol,bgcol;
 
-static const struct wl_callback_listener wl_surface_frame_listener;
 static void wl_surface_frame_done(void *data, struct wl_callback *cb,
 		uint32_t time) {
 	struct waydata *wd = data;
 
 	wl_callback_destroy(cb);
 
-	// stop updating frames while XAVA's having a nice sleep
-	while(wd->s->pauseRendering) 
-		usleep(10000);
-
 	update_frame(wd);
 
 	// request update
 	cb = wl_surface_frame(wd->surface);
+
 	wl_callback_add_listener(cb, &wl_surface_frame_listener, wd);
 
 	// signal to wayland about it
 	wl_surface_commit(wd->surface);
 }
-static const struct wl_callback_listener wl_surface_frame_listener = {
+const struct wl_callback_listener wl_surface_frame_listener = {
 	.done = wl_surface_frame_done,
 };
 
-void closeSHM(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
-
-	close(xavaWLSHMFD);
-	munmap(xavaWLFrameBuffer, p->w*p->h*sizeof(uint32_t));
-}
-
 EXP_FUNC void xavaOutputCleanup(void *v) {
-	struct state_params *s = v;
-	closeSHM(s);
+	closeSHM(&wd);
 
 	if(backgroundLayer) {
 		zwlr_cleanup();
@@ -77,7 +62,11 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
 }
 
 EXP_FUNC int xavaInitOutput(void *v) {
-	wd.s       = v;
+	struct state_params      *s    = v;
+	struct function_pointers *func = &s->func;
+
+	wd.s      = v;
+	wd.events = func->newXAVAEventStack();
 
 	wd.display = wl_display_connect(NULL);
 	if(wd.display == NULL) {
@@ -120,13 +109,19 @@ EXP_FUNC int xavaInitOutput(void *v) {
 
 	//wl_surface_set_buffer_scale(xavaWLSurface, 3);
 
-	struct wl_callback *cb = wl_surface_frame(wd.surface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
-
 	// process all of this, FINALLY
 	wl_surface_commit(wd.surface);
 
-	xavaWLSHMFD = syscall(SYS_memfd_create, "buffer", 0);
+	wd.shmfd = syscall(SYS_memfd_create, "buffer", 0);
+
+	wd.maxSize = 0;
+	wd.fbUnsafe = false;
+
+	reallocSHM(&wd);
+
+	struct wl_callback *cb = wl_surface_frame(wd.surface);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
+
 	return EXIT_SUCCESS;
 }
 
@@ -134,8 +129,12 @@ EXP_FUNC void xavaOutputClear(void *v) {
 	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
+	if(wd.fbUnsafe) return; 
+
+	wd.fbUnsafe = true;
 	for(register int i=0; i<p->w*p->h; i++)
-		xavaWLFrameBuffer[i] = bgcol;
+		wd.fb[i] = bgcol;
+	wd.fbUnsafe = false;
 }
 
 EXP_FUNC int xavaOutputApply(void *v) {
@@ -146,57 +145,52 @@ EXP_FUNC int xavaOutputApply(void *v) {
 	//if(p->fullF) xdg_toplevel_set_fullscreen(xavaWLSurface, NULL);
 	//else        xdg_toplevel_unset_fullscreen(xavaWLSurface);
 
-	int size = p->w*p->h*sizeof(uint32_t);
-	//xavaWLSHMFD = syscall(SYS_memfd_create, "buffer", 0);
-	ftruncate(xavaWLSHMFD, size);
-
-	xavaWLFrameBuffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, xavaWLSHMFD, 0);
-	if(xavaWLFrameBuffer == MAP_FAILED) {
-		close(xavaWLSHMFD);
-		fprintf(stderr, "Failed to create a shared memory buffer\n");
-		return EXIT_FAILURE;
-	}
+	// process new size
+	wl_display_roundtrip(wd.display);
 
 	// handle colors
 	fgcol = wayland_color_blend(p->col, p->foreground_opacity*255);
 	bgcol = wayland_color_blend(p->bgcol, p->background_opacity*255);
 
-	// clean screen because the colors changed
-	xavaOutputClear(v);
+	xavaOutputClear(s);
 
 	return EXIT_SUCCESS;
 }
 
 EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
-	struct state_params *s = (struct state_params*)v;
+	struct state_params      *s    = (struct state_params*)v;
+	//struct config_params     *p    = &s->conf;
+	struct function_pointers *func = &s->func;
 
-	XG_EVENT event = wd.event;
-	wd.event = XAVA_IGNORE;
+	XG_EVENT event = XAVA_IGNORE;
 
-	switch(wd.event) {
-		case XAVA_RESIZE:
-			closeSHM(s);
-			break;
-		default:
-			break;
+	while(func->pendingXAVAEventStack(wd.events)) {
+		event = func->popXAVAEventStack(wd.events);
+
+		switch(event) {
+			case XAVA_RESIZE:
+				return XAVA_RESIZE;
+			case XAVA_QUIT:
+				return XAVA_QUIT;
+			default:
+				break;
+		}
 	}
 
-	if(event != XAVA_IGNORE)
-		return event;
-
-	// obligatory highlighted TODO goes here
-	return XAVA_IGNORE;
+	return event;
 }
 
 // super optimized, because cpus are shit at graphics
 EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+	struct state_params      *s    = v;
+	struct config_params     *p    = &s->conf;
 
-	xavaWLCurrentlyDrawing = 1;
+	if(wd.fbUnsafe) return;
+
+	wd.fbUnsafe = true;
 	for(int i = 0; i < bars; i++) {
 		// get the properly aligned starting pointer
-		register uint32_t *fbDataPtr = &xavaWLFrameBuffer[rest+i*(p->bs+p->bw)];
+		register uint32_t *fbDataPtr = &wd.fb[rest+i*(p->bs+p->bw)];
 		register int bw = p->bw;
 
 		// beginning and end of bars, depends on the order
@@ -223,7 +217,7 @@ EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 			fbDataPtr += (p->w-p->bw);
 		}
 	}
-	xavaWLCurrentlyDrawing = 0;
+	wd.fbUnsafe = false;
 
 	wl_display_roundtrip(wd.display);
 }

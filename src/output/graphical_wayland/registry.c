@@ -56,10 +56,12 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 
 static void xava_wl_registry_global_remove(void *data, struct wl_registry *wl_registry,
 		uint32_t name) {
-	struct waydata *sd = data;
+	struct waydata           *wd   = data;
+	struct state_params      *s    = wd->s;
+	struct function_pointers *func = &s->func;
 
 	// This sometimes happens when displays get reconfigured
-	sd->event = XAVA_RELOAD;
+	func->pushXAVAEventStack(wd->events, XAVA_RELOAD);
 
 	#ifdef DEBUG
 		fprintf(stderr, "wayland: wl_registry died\n");

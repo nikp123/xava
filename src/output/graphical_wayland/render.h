@@ -8,10 +8,9 @@
 
 #include "main.h"
 
-extern _Bool xavaWLCurrentlyDrawing;
-extern int xavaWLSHMFD;
-
-uint32_t extern wayland_color_blend(uint32_t color, uint16_t alpha);
-void update_frame(struct waydata *s);
+extern uint32_t wayland_color_blend (uint32_t color, uint16_t alpha);
+extern void     update_frame        (struct waydata *s);
+extern void     reallocSHM          (struct waydata *wd);
+extern void     closeSHM            (struct waydata *wd);
 
 #endif
