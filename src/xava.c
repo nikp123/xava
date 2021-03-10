@@ -476,12 +476,12 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					hcf[n-1] = lcf[n]; 
 				}
 
-				#ifdef DEBUG
-					if (n != 0) {
-						printf("%d: %f -> %f (%d -> %d) \n", 
-							n, fc[n - 1], fc[n], lcf[n - 1], hcf[n - 1]);
-					}
-				#endif
+				//#ifdef DEBUG
+				//	if (n != 0) {
+				//		printf("%d: %f -> %f (%d -> %d) \n", 
+				//			n, fc[n - 1], fc[n], lcf[n - 1], hcf[n - 1]);
+				//	}
+				//#endif
 			}
 			hcf[n-1] = p->highcf*audio->fftsize/audio->rate;
 
