@@ -1,12 +1,27 @@
 #ifndef __SHARED_H
 #define __SHARED_H
 
+#include <stdbool.h>
+
+#define EXP_FUNC __attribute__ ((visibility ("default")))
+
 // Audio sensitivity and volume varies greatly between 
 // different audio, audio systems and operating systems
 // This value is used to properly calibrate the sensitivity
 // for a certain platform or setup in the Makefile
 #ifndef XAVA_PREDEFINED_SENS_VALUE
 	#define XAVA_PREDEFINED_SENS_VALUE 0.0005
+#endif
+
+// Some common comparision macros
+#ifndef MIN
+	#define MIN(x,y) ((x)>(y) ? (y):(x))
+#endif
+#ifndef MAX
+	#define MAX(x,y) ((x)>(y) ? (x):(y))
+#endif
+#ifndef DIFF
+	#define DIFF(x,y) (MAX((x),(y))-MIN((x),(y)))
 #endif
 
 #ifdef INIPARSER
@@ -18,6 +33,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "module.h"
+
+// XAVA event stuff
+typedef enum XAVA_GRAHPICAL_EVENT {
+	XAVA_REDRAW, XAVA_IGNORE, XAVA_RESIZE, XAVA_RELOAD,
+	XAVA_QUIT
+} XG_EVENT;
+
+typedef struct XAVA_GRAHPICAL_EVENT_STACK {
+	int pendingEvents;
+	XG_EVENT *events;
+} XG_EVENT_STACK;
+
+extern void            pushXAVAEventStack    (XG_EVENT_STACK *stack, XG_EVENT event);
+extern XG_EVENT        popXAVAEventStack     (XG_EVENT_STACK *stack);
+extern XG_EVENT_STACK *newXAVAEventStack     ();
+extern void            destroyXAVAEventStack (XG_EVENT_STACK *stack);
+extern _Bool           pendingXAVAEventStack (XG_EVENT_STACK *stack);
+extern _Bool           isEventPendingXAVA    (XG_EVENT_STACK *stack, XG_EVENT event);
 
 int xavaMkdir(char *dir);
 int xavaGetConfigDir(char *configPath);
@@ -96,6 +129,17 @@ struct config_params {
 	// toggle, taskbarF = taskbar icon toggle
 };
 
+// this is cringe but my linker isn't cooperating,
+// so this will have to do
+struct function_pointers {
+	void            (*pushXAVAEventStack)    (XG_EVENT_STACK *stack, XG_EVENT event);
+	XG_EVENT        (*popXAVAEventStack)     (XG_EVENT_STACK *stack);
+	XG_EVENT_STACK* (*newXAVAEventStack)     ();
+	void            (*destroyXAVAEventStack) (XG_EVENT_STACK *stack);
+	_Bool           (*pendingXAVAEventStack) (XG_EVENT_STACK *stack);
+	_Bool           (*isEventPendingXAVA)    (XG_EVENT_STACK *stack, XG_EVENT event);
+};
+
 // XAVA handle 
 struct XAVA_HANDLE {
 	// variables that XAVA outputs
@@ -109,11 +153,8 @@ struct XAVA_HANDLE {
 	// handles to both config variables and the audio state
 	struct audio_data audio;
 	struct config_params conf;
+	struct function_pointers func;
 };
 
-typedef enum XAVA_GRAHPICAL_EVENT {
-	XAVA_REDRAW, XAVA_IGNORE, XAVA_RESIZE, XAVA_RELOAD,
-	XAVA_QUIT
-} XG_EVENT;
 #endif
 

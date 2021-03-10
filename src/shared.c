@@ -9,6 +9,8 @@
 
 #include <unistd.h>
 
+#include "shared.h"
+
 #ifdef __WIN32__
 #include <windows.h>
 #endif
@@ -149,3 +151,56 @@ unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 	#endif
 	return 0;
 }
+
+
+// XAVA event stack
+void pushXAVAEventStack(XG_EVENT_STACK *stack, XG_EVENT event) {
+	stack->pendingEvents++;
+
+	XG_EVENT *newStack = reallocarray(stack->events, stack->pendingEvents, sizeof(XG_EVENT));
+	stack->events = newStack;
+
+	stack->events[stack->pendingEvents-1] = event;
+}
+
+XG_EVENT popXAVAEventStack(XG_EVENT_STACK *stack) {
+	XG_EVENT *newStack;
+	XG_EVENT event = stack->events[0];
+
+	stack->pendingEvents--;
+	for(int i = 0; i<stack->pendingEvents; i++) {
+		stack->events[i] = stack->events[i+1];
+	}
+
+	newStack = reallocarray(stack->events, MIN(stack->pendingEvents, 1), sizeof(XG_EVENT));
+	stack->events = newStack;
+
+	return event;
+}
+
+XG_EVENT_STACK *newXAVAEventStack() {
+	XG_EVENT_STACK *stack = calloc(1, sizeof(XG_EVENT_STACK));
+	stack->pendingEvents = 0;
+	stack->events = malloc(1); // needs a valid pointer here
+	return stack;
+}
+
+void destroyXAVAEventStack(XG_EVENT_STACK *stack) {
+	free(stack->events);
+	free(stack);
+}
+
+_Bool pendingXAVAEventStack(XG_EVENT_STACK *stack) {
+	return (stack->pendingEvents > 0) ? true : false;
+}
+
+// used for blocking in case an processing an event at the wrong
+// time can cause disaster
+_Bool isEventPendingXAVA(XG_EVENT_STACK *stack, XG_EVENT event) {
+	for(int i = 0; i < stack->pendingEvents; i++) {
+		if(stack->events[i] == event) return true;
+	}
+
+	return false;
+}
+
