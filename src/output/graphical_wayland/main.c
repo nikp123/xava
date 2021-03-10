@@ -135,7 +135,7 @@ EXP_FUNC void xavaOutputClear(void *v) {
 	struct config_params *p = &s->conf;
 
 	for(register int i=0; i<p->w*p->h; i++)
-		xavaWLFrameBuffer[i] = p->bgcol;
+		xavaWLFrameBuffer[i] = bgcol;
 }
 
 EXP_FUNC int xavaOutputApply(void *v) {
