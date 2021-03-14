@@ -32,25 +32,19 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 	} else if (strcmp(interface, zwlr_output_manager_v1_interface.name) == 0) {
 		xavaXDGOutputManager = wl_registry_bind(xavaWLRegistry, name,
 			&zwlr_output_manager_v1_interface, 2);
+		printf("lol");
 	} else if (strcmp(interface, wl_output_interface.name) == 0) {
-		//output->state = state;
+		struct wlOutput *output = malloc(sizeof(struct wlOutput));
+		output->output = 
+			wl_registry_bind(xavaWLRegistry, name, &wl_output_interface, 3);
+		output->name = name;
+		wl_output_add_listener(output->output, &output_listener, output);
+		wl_list_insert(&wd->wl_output, &output->link);
 
-		int i = xavaWLOutputsCount;
-		struct wlOutput **wlo;
-		wlo = reallocarray(xavaWLOutputs, (++xavaWLOutputsCount), sizeof(struct wlOutput*));
-		if(wlo == NULL) {
-			fprintf(stderr, "Could not allocate xavaWLOutputs!\n");
-			exit(EXIT_FAILURE); // no safe exit
-		}
-
-		wlo[i] = malloc(sizeof(struct wlOutput));
-		wlo[i]->output = wl_registry_bind(xavaWLRegistry, name, &wl_output_interface, 2);
-		wlo[i]->name = name;
-
-		wl_output_add_listener(wlo[i]->output, &output_listener, wlo[i]);
-		xavaWLOutputs = wlo;
-
-		wl_display_roundtrip(wd->display);
+		output->xdg_output = zxdg_output_manager_v1_get_xdg_output(
+			xavaXDGOutputManager, output->output);
+		zxdg_output_v1_add_listener(output->xdg_output,
+			&xdg_output_listener, output);
 	}
 }
 

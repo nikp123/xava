@@ -20,12 +20,13 @@ struct waydata {
 	uint32_t             *fb;
 	int                  shmfd;
 	_Bool                fbUnsafe;
+	struct wl_list       wl_output;
 };
 
 
 extern const struct wl_callback_listener wl_surface_frame_listener;
 
-extern int monitorNumber;
+extern char* monitorName;
 
 EXP_FUNC void xavaOutputClear(void *v);
 

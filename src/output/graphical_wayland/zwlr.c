@@ -81,29 +81,30 @@ extern uint32_t handle_window_alignment(struct config_params *p) {
 	return anchor;
 }
 
-void zwlr_init(struct waydata *s){
+void zwlr_init(struct waydata *wd) {
+	struct state_params *s = wd->s;
+	struct config_params *p = &s->conf;
 	struct wlOutput *output = wl_output_get_desired();
-	struct config_params *p = &s->s->conf;
 
 	// Create a "wallpaper" surface
 	xavaWLRLayerSurface = zwlr_layer_shell_v1_get_layer_surface(
-		xavaWLRLayerShell, s->surface, output->output,
+		xavaWLRLayerShell, wd->surface, output->output,
 		ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM, "bottom");
 
 	// adjust position and properties accordingly
 	zwlr_layer_surface_v1_set_size(xavaWLRLayerSurface, p->w, p->h);
 	zwlr_layer_surface_v1_set_anchor(xavaWLRLayerSurface, 
-			handle_window_alignment(&s->s->conf));
+			handle_window_alignment(p));
 	zwlr_layer_surface_v1_set_margin(xavaWLRLayerSurface, 
 			height_margin, -width_margin, -height_margin, width_margin);
 	zwlr_layer_surface_v1_set_exclusive_zone(xavaWLRLayerSurface, -1);
 
 	// same stuff as xdg_surface_add_listener, but for zwlr_layer_surface
 	zwlr_layer_surface_v1_add_listener(xavaWLRLayerSurface,
-		&layer_surface_listener, s);
+		&layer_surface_listener, wd);
 }
 
-void zwlr_cleanup() {
+void zwlr_cleanup(struct waydata *wd) {
 	zwlr_layer_surface_v1_destroy(xavaWLRLayerSurface);
 	zwlr_layer_shell_v1_destroy(xavaWLRLayerShell);
 }

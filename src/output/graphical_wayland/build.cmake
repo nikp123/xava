@@ -20,6 +20,9 @@ if(WAYLAND)
 		execute_process(COMMAND wayland-scanner client-header
 			"${WL_PROT_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml"
 			"${XAVA_MODULE_DIR}/gen/xdg-output-unstable-v1-client-protocol.h")
+		execute_process(COMMAND wayland-scanner private-code
+			"${WL_PROT_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml"
+			"${XAVA_MODULE_DIR}/gen/xdg-output-unstable-v1-client-protocol.c")
 
 		execute_process(COMMAND wayland-scanner client-header
 			"${XAVA_MODULE_DIR}/protocols/wlr-layer-shell-unstable-v1.xml"
@@ -43,6 +46,7 @@ if(WAYLAND)
 			"${XAVA_MODULE_DIR}/zwlr.c"
 			"src/output/graphical.c"
 			"${XAVA_MODULE_DIR}/gen/xdg-shell-client-protocol.c"
+			"${XAVA_MODULE_DIR}/gen/xdg-output-unstable-v1-client-protocol.c"
 			"${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c"
 			"${XAVA_MODULE_DIR}/gen/wlr-layer-shell-unstable-v1-client-protocol.c")
 		target_link_libraries(out_wayland "${WAYLAND_LIBRARIES}")

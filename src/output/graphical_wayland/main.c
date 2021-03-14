@@ -20,7 +20,7 @@
 struct waydata wd;
 
 static _Bool backgroundLayer;
-int monitorNumber;
+       char* monitorName;
 
 uint32_t fgcol,bgcol;
 
@@ -48,11 +48,11 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
 	closeSHM(&wd);
 
 	if(backgroundLayer) {
-		zwlr_cleanup();
-		wl_output_cleanup();
+		zwlr_cleanup(&wd);
 	} else {
 		xdg_cleanup();
 	}
+	wl_output_cleanup(&wd);
 	wl_surface_destroy(wd.surface);
 	wl_compositor_destroy(wd.compositor);
 	wl_registry_destroy(xavaWLRegistry);
@@ -72,6 +72,9 @@ EXP_FUNC int xavaInitOutput(void *v) {
 		return EXIT_FAILURE;
 	}
 
+	// Before the registry shananigans, outputs must be initialized
+	wl_output_init(&wd);
+
 	xavaWLRegistry = wl_display_get_registry(wd.display);
 	// TODO: Check failure states
 	wl_registry_add_listener(xavaWLRegistry, &xava_wl_registry_listener, &wd);
@@ -88,9 +91,9 @@ EXP_FUNC int xavaInitOutput(void *v) {
 		fprintf(stderr, "Your compositor doesn't support xdg_wm_base, failing....\n");
 		return EXIT_FAILURE;
 	}
-	if(xavaWLRLayerShell == NULL || xavaXDGOutputManager == NULL || xavaWLOutputs == NULL) {
+	if(xavaWLRLayerShell == NULL || xavaXDGOutputManager == NULL) {
 		fprintf(stderr, "Your compositor doesn't support any of the following:\n"
-				"zwlr_layer_shell_v1, zwlr_output_manager_v1 and/or wl_output\n"
+				"zwlr_layer_shell_v1a and/or zwlr_output_manager_v1\n"
 				"This will DISABLE the ability to use the background layer for\n"
 				"safety reasons!\n");
 		backgroundLayer = 0;
@@ -228,8 +231,8 @@ EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
 
 	backgroundLayer = iniparser_getboolean
 		(ini, "wayland:background_layer", 1);
-	monitorNumber = iniparser_getboolean
-		(ini, "wayland:monitor_num", 0);
+	monitorName = iniparser_getstring
+		(ini, "wayland:monitor_num", "ignore");
 
 	// Vsync is implied, although system timers must be used
 	p->vsync = 0;
