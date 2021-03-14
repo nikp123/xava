@@ -13,7 +13,7 @@
 void calculate_win_pos(void *v, int scrW, int scrH) {
 	struct config_params *p = v;
 
-	#if !defined(GLX)
+	#if !defined(GL)
 		p->shdw = 0;
 	#endif
 
