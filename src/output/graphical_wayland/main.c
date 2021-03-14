@@ -17,8 +17,6 @@
 #include "xdg.h"
 
 /* Globals */
-//static struct wl_shm_pool *xavaWLSHMPool;
- 
 struct waydata wd;
 
 static _Bool backgroundLayer;
@@ -229,7 +227,7 @@ EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
 	dictionary *ini = (dictionary*)data;
 
 	backgroundLayer = iniparser_getboolean
-		(ini, "wayland:background_layer", 0);
+		(ini, "wayland:background_layer", 1);
 	monitorNumber = iniparser_getboolean
 		(ini, "wayland:monitor_num", 0);
 

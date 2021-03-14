@@ -96,17 +96,35 @@
 
 # Hacks and options related to the Wayland output mode
 
-# Forces the window to be drawn at "wallpaper"-level
-# Basically, it put it at the bottom of the window stack and cannot be moved
-# As a side-effect, it also removes any controls from the window
-# Similar to what "interactable = false" does
-; background_layer = false
+# Run the visualizer at "wallpaper"-level
+# This makes sure that the visualizer stays behind every window.
+# Enabling this automatically disables all of your inputs since
+# it acts like a wallpaper, go figure. Use UNIX (kill code)
+# signaling in order to reset or end XAVA.
+#
+# HOWEVER: This only works for compositors supporting zwlr_layer_shell
+# version 1 or above. This mostly includes wlroots-based compositors.
+# GNOME and KDE won't cut it here, I believe.
+# 
+# As for when this is disabled, XAVA spawns a XDG window, but a lot of
+# features are missing:
+#  - keyboard and mouse input
+#  - window borders (be it client-side or server-side)
+#  - fullscreen mode
+#  - non-transparent windows (just use background_opacity instead lol)
+#  - any kind of GPU acceleration
+#  - window positioning logic
+#  - taskbar icon
+#
+# Also in XDG, XAVA may crash when resizing the window due to buffer
+# related issues (If this bothers you, an issue or PR would be appreciated)
+; background_layer = true
 
-# Wayland-only
-# When running override_redirect, you must specify the monitor number
-# These numbers range from 0 onwards, so for two monitors the options
-# will be 0 and 1. This is a crappy hack that barely works, so use with
-# caution
+# When background_layer is enabled, this options offers you to select
+# which monitor XAVA should occupy (for now, incomplete)
+#
+# Specifying an invalid monitor would cause XAVA to fall back onto the
+# first available
 ; monitor = 0
 
 
@@ -157,8 +175,8 @@
 # 'sdl' is for a graphical window using SDL2
 # 'x11' is for a X11 window
 # 'glx' is for a X11 window using OpenGL 
-# 'win' is for a win32 graphical window
-# 'wayland' is for a wayland window
+# 'win' is for a WIN32 window using OpenGL
+# 'wayland' is for a Wayland surface (ZWLR or XDG)
 ; method = x11
 
 # Visual channels. Can be 'stereo' or 'mono'.
