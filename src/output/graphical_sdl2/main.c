@@ -11,7 +11,7 @@ SDL_Event xavaSDLEvent;
 SDL_DisplayMode xavaSDLVInfo;
 int *gradCol;
 
-EXP_FUNC void xavaOutputCleanup(void *v)
+EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *s)
 {
 	free(gradCol);
 	SDL_FreeSurface(xavaSDLWindowSurface);
@@ -19,9 +19,8 @@ EXP_FUNC void xavaOutputCleanup(void *v)
 	SDL_Quit();
 }
 
-EXP_FUNC int xavaInitOutput(void *v)
+EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *s)
 {
-	struct state_params *s = v;
 	struct config_params *p = &s->conf;
 
 	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
@@ -58,15 +57,12 @@ EXP_FUNC int xavaInitOutput(void *v)
 	return 0;
 }
 
-EXP_FUNC void xavaOutputClear(void *v) {
-	struct state_params *s = v;
+EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *s) {
 	struct config_params *p = &s->conf;
-
 	SDL_FillRect(xavaSDLWindowSurface, NULL, SDL_MapRGB(xavaSDLWindowSurface->format, p->bgcol/0x10000%0x100, p->bgcol/0x100%0x100, p->bgcol%0x100));
 }
 
-EXP_FUNC int xavaOutputApply(void *v) {
-	struct state_params *s = v;
+EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *s) {
 	struct config_params *p = &s->conf;
 
 	// toggle fullscreen
@@ -76,7 +72,7 @@ EXP_FUNC int xavaOutputApply(void *v) {
 	// Appearently SDL uses multithreading so this avoids invalid access
 	// If I had a job, here's what I would be fired for xD
 	SDL_Delay(100);
-	xavaOutputClear(v);
+	xavaOutputClear(s);
 
 	// Window size patch, because xava wipes w and h for some reason.
 	p->w = xavaSDLWindowSurface->w;
@@ -84,8 +80,7 @@ EXP_FUNC int xavaOutputApply(void *v) {
 	return 0;
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
-	struct state_params *s = v;
+EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *s) {
 	struct config_params *p = &s->conf;
 
 	while(SDL_PollEvent(&xavaSDLEvent) != 0) {
@@ -150,9 +145,12 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 	return XAVA_IGNORE;
 }
  
-EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
-	struct state_params *s = v;
+EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 	struct config_params *p = &s->conf;
+	int *f = s->f;
+	int *flastd = s->fl;
+	int rest = s->rest;
+	int bars = s->bars;
 
 	for(int i = 0; i < bars; i++) {
 		SDL_Rect current_bar;
@@ -183,8 +181,7 @@ EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 	return;
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
-	struct state_params *s = v;
+EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s, void *data) {
 	struct config_params *p = &s->conf;
 
 	//dictionary *ini = (dictionary*) data;

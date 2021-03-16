@@ -33,7 +33,7 @@ int num_bar_heights = (sizeof(bar_heights) / sizeof(bar_heights[0]));
 // static struct colors the_color_redefinitions[MAX_COLOR_REDEFINITION];
 
 // general: cleanup
-EXP_FUNC void xavaOutputCleanup(struct state_params *s) {
+EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	echo();
 	system("setfont  >/dev/null 2>&1");
 	system("setfont /usr/share/consolefonts/Lat2-Fixed16.psf.gz  >/dev/null 2>&1");
@@ -95,8 +95,8 @@ static NCURSES_COLOR_T change_color_definition(NCURSES_COLOR_T color_number,
 	return return_color_number;
 }
 
-EXP_FUNC void xavaInitOutput(struct state_params *s) {
-	struct config_params *p = &s->conf;
+EXP_FUNC void xavaInitOutput(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 	initscr();
 	curs_set(0);
 	timeout(0);
@@ -208,11 +208,9 @@ void change_colors(int cur_height, int tot_height) {
 	attron(COLOR_PAIR(cur_height + 16));
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 	char ch = getch();
-
 
 	int neww,newh;
 	getmaxyx(stdscr, newh, neww);
@@ -265,42 +263,38 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 	return XAVA_IGNORE;
 }
 
-EXP_FUNC void xavaOutputClear(void *v) {
+EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
 	system("clear");
 	clear();
 }
 
-EXP_FUNC void xavaOutputApply(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
-
-	xavaOutputClear(v);
+EXP_FUNC void xavaOutputApply(struct XAVA_HANDLE *hand) {
+	xavaOutputClear(hand);
 }
 
 #define TERMINAL_RESIZED -1
 
-EXP_FUNC int xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC int xavaOutputDraw(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	int height = p->h/8-1;
 
-	for(int i=0; i<bars; i++) {
-		int diff=f[i]-flastd[i];
+	for(int i=0; i<hand->bars; i++) {
+		int diff=hand->f[i]-hand->fl[i];
 		if(diff==0) continue;
 
-		int xoffset = rest+(p->bw+p->bs)*i;
+		int xoffset = hand->rest+(p->bw+p->bs)*i;
 		if(diff>0) {
-			for(int k=greatestDivisible(flastd[i], 8); k<f[i]; k+=8) {
+			for(int k=greatestDivisible(hand->fl[i], 8); k<hand->f[i]; k+=8) {
 				//change_colors(k, height);
-				int kdiff=f[i]-k; if(kdiff > 8) kdiff = 8;
+				int kdiff=hand->f[i]-k; if(kdiff > 8) kdiff = 8;
 				for(int j=0; j<p->bw; j++) {
 					mvaddch(height-k/8, xoffset+j, 0x41 + kdiff);
 				}
 			}
 		} else {
-			for(int k=greatestDivisible(f[i], 8); k<flastd[i]; k+=8) {
-				int kdiff=f[i]-k;
+			for(int k=greatestDivisible(hand->f[i], 8); k<hand->fl[i]; k+=8) {
+				int kdiff=hand->f[i]-k;
 				//change_colors(k, height);
 				for(int j=0; j<p->bw; j++) {
 					if(kdiff<=0)

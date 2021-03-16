@@ -1,6 +1,8 @@
 #ifndef H_GRAPHICAL
 #define H_GRAPHICAL
 
+#include "../shared.h"
+
 #ifdef GLX
 	#include <GL/glx.h>
 	extern GLXContext xavaGLXContext;
@@ -9,10 +11,10 @@
 
 #ifdef GL
 	#include <GL/gl.h>
-	int drawGLBars(void *v, int rest, int bars, double colors[8], double gradColors[24], int *f);
+	extern int drawGLBars(struct XAVA_HANDLE *hand, double colors[8], double gradColors[24]);
 #endif
 
-void calculate_win_pos(void *, int, int);
+extern void calculate_win_pos(struct config_params *p, int scrW, int scrH);
 
 #define DEF_FG_COL 6
 #define DEF_BG_COL 0

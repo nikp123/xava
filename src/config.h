@@ -8,6 +8,8 @@
 		#define XAVA_DEFAULT_OUTPUT "x11"
 	#endif
 
-	void load_config(char *configPath, void* p);
+	#include "shared.h"
+
+	void load_config(char *configPath, struct XAVA_HANDLE*);
 	void clean_config();
 #endif

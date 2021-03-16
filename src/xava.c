@@ -45,22 +45,23 @@
 #include "config.h"
 #include "shared.h"
 
-static void* (*xavaInput)(void*);
-static void (*xavaInputHandleConfiguration)(void*, void*);
+static void*    (*xavaInput)                     (void*); // technically it's "struct audio_data*"
+                                                          // but the compiler complains :(
+static void     (*xavaInputHandleConfiguration)  (struct audio_data*, void*);
 
-static void (*xavaOutputHandleConfiguration)(void*, void*);
-static int (*xavaInitOutput)(void*);
-static void (*xavaOutputClear)(void*);
-static int (*xavaOutputApply)(void*);
-static XG_EVENT (*xavaOutputHandleInput)(void*);
-static void (*xavaOutputDraw)(void*, int, int, int*, int*);
-static void (*xavaOutputCleanup)(void*);
+static void     (*xavaOutputHandleConfiguration) (struct XAVA_HANDLE*, void*);
+static int      (*xavaInitOutput)                (struct XAVA_HANDLE*);
+static void     (*xavaOutputClear)               (struct XAVA_HANDLE*);
+static int      (*xavaOutputApply)               (struct XAVA_HANDLE*);
+static XG_EVENT (*xavaOutputHandleInput)         (struct XAVA_HANDLE*);
+static void     (*xavaOutputDraw)                (struct XAVA_HANDLE*);
+static void     (*xavaOutputCleanup)             (struct XAVA_HANDLE*);
 
 static _Bool kys = 0, should_reload = 0;
 static float lastSens;
 
 // teh main XAVA handle (made just to not piss off MinGW)
-static struct state_params s;
+static struct XAVA_HANDLE hand;
 
 // XAVA magic variables, too many of them indeed
 static float *fc = NULL, *fre, *fpeak, *k;
@@ -72,13 +73,16 @@ static fftw_plan pl, pr;
 
 // general: cleanup
 void cleanup(void) {
+	struct config_params *p     = &hand.conf;
+	struct audio_data    *audio = &hand.audio;
+
 	#if defined(__linux__)||defined(__WIN32__)
 		// we need to do this since the inode watcher is a seperate thread
 		destroyFileWatcher();
 	#endif
 
 	// telling audio thread to terminate 
-	s.audio.terminate = 1;
+	audio->terminate = 1;
 
 	// waiting for all background threads and other stuff to terminate properly
 	xavaSleep(100, 0);
@@ -86,11 +90,11 @@ void cleanup(void) {
 	// kill the audio thread
 	pthread_join(p_thread, NULL);
 
-	xavaOutputCleanup(&s);
+	xavaOutputCleanup(&hand);
 
 	// destroy modules
-	destroy_module(s.conf.inputModule);
-	destroy_module(s.conf.outputModule);
+	destroy_module(p->inputModule);
+	destroy_module(p->outputModule);
 
 	// clean up XAVA internal variables
 	free(fc);
@@ -113,15 +117,15 @@ void cleanup(void) {
 	fftw_destroy_plan(pr);
 	fftw_cleanup();
 
-	free(s.audio.source);
-	free(s.conf.smooth);
+	free(audio->source);
+	free(p->smooth);
 
 	// cleanup remaining FFT buffers (abusing C here)
-	switch(s.audio.channels) {
+	switch(audio->channels) {
 		case 2:
-			free(s.audio.audio_out_r);
+			free(audio->audio_out_r);
 		default:
-			free(s.audio.audio_out_l);
+			free(audio->audio_out_l);
 			break;
 	}
 
@@ -215,7 +219,7 @@ int main(int argc, char **argv)
 	//int thr_id;
 
 	int sleep = 0;
-	int i, n, o, height, c, rest, silence;
+	int i, n, o, height, c, silence;
 	//int cont = 1;
 	//float temp;
 	float g;
@@ -287,11 +291,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	// general: main loop
 	while (1) {
 		// extract the shorthand sub-handles
-		struct config_params *p = &s.conf;
-		struct audio_data *audio = &s.audio;
+		struct config_params *p = &hand.conf;
+		struct audio_data *audio = &hand.audio;
 
 		// load config
-		load_config(configPath, p);
+		load_config(configPath, &hand);
 
 		// load symbols
 		xavaInput                    = get_symbol_address(p->inputModule, "xavaInput");
@@ -306,10 +310,10 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		xavaOutputHandleConfiguration = get_symbol_address(p->outputModule, "xavaOutputHandleConfiguration");
 
 		// load input config
-		xavaInputHandleConfiguration(get_config_pointer(), (void*)audio);
+		xavaInputHandleConfiguration((void*)get_config_pointer(), (void*)audio);
 
 		// load output config
-		xavaOutputHandleConfiguration(&s, get_config_pointer());
+		xavaOutputHandleConfiguration(&hand, (void*)get_config_pointer());
 
 		audio->inputsize = p->inputsize;
 		audio->fftsize = p->fftsize;
@@ -347,7 +351,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		bool reloadConf = false;
 		bool senseLow = true;
 
-		if(xavaInitOutput(&s))
+		if(xavaInitOutput(&hand))
 			exit(EXIT_FAILURE);
 
 		while(!reloadConf) { //jumbing back to this loop means that you resized the screen
@@ -407,7 +411,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				fl = malloc(sizeof(int)*bars+1);
 				fr = malloc(sizeof(int)*bars+1);
 				peak = malloc(sizeof(double)*(bars+1)+1);
-			} 
+			}
+
+			// update pointers for the main handle
+			hand.f  = f;
+			hand.fl = flastd;
 
 			for (i = 0; i < bars; i++) {
 				flast[i] = 0;
@@ -426,14 +434,15 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				k[i] = .0;
 			}
 
-			xavaOutputApply(&s);
+			xavaOutputApply(&hand);
 
 			// process [smoothing]: calculate gravity
 			g = p->gravity * ((float)height / 2160) * (60 / (float)p->framerate);
 
 			// checks if there is stil extra room, will use this to center
-			rest = (p->w - bars * p->bw - bars * p->bs + p->bs) / 2;
-			if (rest < 0)rest = 0;
+			hand.rest = (p->w - bars * p->bw - bars * p->bs + p->bs) / 2;
+			if(hand.rest < 0)
+				hand.rest = 0;
 
 			// TODO
 			//#ifdef DEBUG
@@ -496,11 +505,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 			if (p->stereo) bars = bars * 2;
 
+			hand.bars = bars;
+
 			bool resizeWindow = false;
 			bool redrawWindow = false;
 
 			while  (!resizeWindow) {
-				switch(xavaOutputHandleInput(&s)) {
+				switch(xavaOutputHandleInput(&hand)) {
 					case XAVA_QUIT:
 						cleanup();
 						return EXIT_SUCCESS;
@@ -569,7 +580,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						separate_freq_bands(outl, calcbars, 1, p->sens, p->ignore, audio->fftsize);
 					}
 
-					s.pauseRendering = false;
+					hand.pauseRendering = false;
 				} else { // if in sleep mode wait and continue
 					// TODO
 					//#ifdef DEBUG
@@ -579,7 +590,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					xavaSleep(100, 0);
 
 					// signal to any potential rendering threads to stop
-					s.pauseRendering = true;
+					hand.pauseRendering = true;
 
 					// unless the user requested that the program ends
 					if(kys||should_reload) sleep = 0;
@@ -691,11 +702,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 				// output: draw processed input
 				if(redrawWindow) {
-					xavaOutputClear(&s);
+					xavaOutputClear(&hand);
 					memset(flastd, 0x00, sizeof(int)*bars);
 					redrawWindow = FALSE;
 				}
-				xavaOutputDraw((void*)&s, bars, rest, f, flastd);
+				xavaOutputDraw(&hand);
 
 				if(!p->vsync) // the window handles frametimes instead of XAVA
 					oldTime = xavaSleep(oldTime, p->framerate);

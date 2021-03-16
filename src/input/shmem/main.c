@@ -49,7 +49,7 @@ typedef struct {
 
 
 //input: SHMEM
-void* xavaInput(void* data)
+EXP_FUNC void* xavaInput(void* data)
 {
 	struct audio_data *audio = (struct audio_data *)data;
 	vis_t *mmap_area;
@@ -113,7 +113,7 @@ void* xavaInput(void* data)
 	return 0;
 }
 
-void xavaInputHandleConfiguration(void *data1, void *data2) {
+EXP_FUNC void xavaInputHandleConfiguration(void *data1, void *data2) {
 	dictionary *ini = (dictionary*) data1;
 	struct audio_data *audio = (struct audio_data*) data2; 
 	audio->rate = 44100;

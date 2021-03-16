@@ -120,7 +120,7 @@ static _Bool directory_exists(const char * path) {
 	return exists;
 }
 
-void* xavaInput(void* data) {
+EXP_FUNC void* xavaInput(void* data) {
 	int err;
 	struct audio_data* audio = (struct audio_data*)data;
 	snd_pcm_t* handle;
@@ -141,7 +141,7 @@ void* xavaInput(void* data) {
 
 	initialize_audio_parameters(&handle, audio, &frames);
 	snd_pcm_get_params(handle, &buffer_size, &period_size);
-	
+
 	int16_t buf[period_size];
 	frames = period_size / ((audio->format / 8) * CHANNELS_COUNT);
 	//printf("period size: %lu\n", period_size);
@@ -197,7 +197,7 @@ void* xavaInput(void* data) {
 	}
 }
 
-void xavaInputHandleConfiguration(void *data1, void *data2) {
+EXP_FUNC void xavaInputHandleConfiguration(void *data1, void *data2) {
 	dictionary *ini = (dictionary*) data1;
 	struct audio_data *audio = (struct audio_data*) data2; 
 	audio->rate = 44100;
