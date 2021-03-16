@@ -289,7 +289,7 @@ EXP_FUNC int xavaOutputDraw(struct XAVA_HANDLE *hand) {
 				//change_colors(k, height);
 				int kdiff=hand->f[i]-k; if(kdiff > 8) kdiff = 8;
 				for(int j=0; j<p->bw; j++) {
-					mvaddch(height-k/8, xoffset+j, 0x41 + kdiff);
+					mvaddch(height-k/8, xoffset+j, 0x40 + kdiff);
 				}
 			}
 		} else {
@@ -300,7 +300,7 @@ EXP_FUNC int xavaOutputDraw(struct XAVA_HANDLE *hand) {
 					if(kdiff<=0)
 						mvaddch(height-k/8, xoffset+j, ' ');
 					else
-						mvaddch(height-k/8, xoffset+j, 0x41 + kdiff);
+						mvaddch(height-k/8, xoffset+j, 0x40 + kdiff);
 				}
 			}
 		}
