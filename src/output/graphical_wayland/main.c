@@ -57,6 +57,7 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
 	wl_compositor_destroy(wd.compositor);
 	wl_registry_destroy(xavaWLRegistry);
 	wl_display_disconnect(wd.display);
+	free(monitorName);
 }
 
 EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
@@ -97,6 +98,9 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 				"safety reasons!\n");
 		backgroundLayer = 0;
 	}
+
+	// needed to be done twice for xdg_output to do it's frickin' job
+	wl_display_roundtrip(wd.display);
 
 	wd.surface = wl_compositor_create_surface(wd.compositor);
 
@@ -225,8 +229,8 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 
 	backgroundLayer = iniparser_getboolean
 		(ini, "wayland:background_layer", 1);
-	monitorName = iniparser_getstring
-		(ini, "wayland:monitor_num", "ignore");
+	monitorName = strdup(iniparser_getstring
+		(ini, "wayland:monitor_name", "ignore"));
 
 	// Vsync is implied, although system timers must be used
 	p->vsync = 0;

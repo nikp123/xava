@@ -29,17 +29,16 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 	} else if (strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0) {
 		xavaWLRLayerShell = wl_registry_bind(xavaWLRegistry, name,
 				&zwlr_layer_shell_v1_interface, 1);
-	} else if (strcmp(interface, zwlr_output_manager_v1_interface.name) == 0) {
+	} else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
 		xavaXDGOutputManager = wl_registry_bind(xavaWLRegistry, name,
-			&zwlr_output_manager_v1_interface, 2);
-		printf("lol");
+			&zxdg_output_manager_v1_interface, 2);
 	} else if (strcmp(interface, wl_output_interface.name) == 0) {
 		struct wlOutput *output = malloc(sizeof(struct wlOutput));
 		output->output = 
 			wl_registry_bind(xavaWLRegistry, name, &wl_output_interface, 3);
 		output->name = name;
 		wl_output_add_listener(output->output, &output_listener, output);
-		wl_list_insert(&wd->wl_output, &output->link);
+		wl_list_insert(&wd->outputs, &output->link);
 
 		output->xdg_output = zxdg_output_manager_v1_get_xdg_output(
 			xavaXDGOutputManager, output->output);

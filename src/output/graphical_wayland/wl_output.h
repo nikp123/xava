@@ -2,7 +2,7 @@
 #define __WAYLAND_WL_OUTPUT_H
 
 #include "gen/xdg-output-unstable-v1-client-protocol.h"
-#include "gen/wlr-output-managment-unstable-v1.h"
+#include "gen/wlr-layer-shell-unstable-v1-client-protocol.h"
 
 #include "main.h"
 

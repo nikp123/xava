@@ -20,7 +20,7 @@ struct waydata {
 	uint32_t             *fb;
 	int                  shmfd;
 	_Bool                fbUnsafe;
-	struct wl_list       wl_output;
+	struct wl_list       outputs;
 };
 
 

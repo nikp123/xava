@@ -37,7 +37,7 @@ const struct wl_output_listener output_listener = {
 void wl_output_cleanup(struct waydata *wd) {
 	struct wlOutput *output, *tmp;
 
-	wl_list_for_each_safe(output, tmp, &wd->wl_output, link) {
+	wl_list_for_each_safe(output, tmp, &wd->outputs, link) {
 		#ifdef DEBUG
 			printf("Destroying output %s\n", output->displayName);
 		#endif
@@ -48,18 +48,20 @@ void wl_output_cleanup(struct waydata *wd) {
 }
 
 void wl_output_init(struct waydata *wd) {
-	wl_list_init(&wd->wl_output);
+	wl_list_init(&wd->outputs);
 }
 
 struct wlOutput *wl_output_get_desired(struct waydata *wd) {
-	struct wlOutput *output, *tmp;
+	struct wlOutput *output, *tmp, *lastGood;
 
-	wl_list_for_each_safe(output, tmp, &wd->wl_output, link) {
+	wl_list_for_each_safe(output, tmp, &wd->outputs, link) {
 		if(!strcmp(output->displayName, monitorName)) {
 			return output;
-		}
-	} 
-	return NULL;
+		} else lastGood = output;
+	}
+
+	// in case none are available, just send the last display
+	return lastGood;
 }
 
 
@@ -78,6 +80,9 @@ static void xdg_output_handle_logical_size(void *data,
 static void xdg_output_handle_name(void *data,
 		struct zxdg_output_v1 *xdg_output, const char *name) {
 	struct wlOutput *output = data;
+	#ifdef DEBUG
+		printf("Output %s loaded\n", name);
+	#endif
 	output->displayName = strdup(name);
 }
 
