@@ -76,8 +76,8 @@ dictionary *get_config_pointer(void) {
 	return ini;
 }
 
-void validate_config(void* params, dictionary *ini) {
-	struct config_params *p = (struct config_params *)params;
+void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
+	struct config_params *p = &hand->conf;
 
 	// validate: input method
 	p->inputModule = load_input_module(inputMethod);
@@ -100,15 +100,16 @@ void validate_config(void* params, dictionary *ini) {
 	}
 
 	// validate: output channels
-	p->stereo = -1;
-	if (strcmp(channels, "mono") == 0) p->stereo = 0;
-	if (strcmp(channels, "stereo") == 0) p->stereo = 1;
-	if (p->stereo == -1) {
+	int stereo = -1;
+	if (strcmp(channels, "mono") == 0)   stereo = 0;
+	if (strcmp(channels, "stereo") == 0) stereo = 1;
+	if (stereo == -1) {
 		fprintf(stderr,
 			"output channels %s is not supported, supported channelss are: 'mono' and 'stereo'\n",
 						channels);
 		exit(EXIT_FAILURE);
 	}
+	p->stereo = stereo ? 1 : 0; // makes the C compilers happy :D
 
 	// validate: bars
 	p->autobars = 1;
@@ -217,8 +218,8 @@ void validate_config(void* params, dictionary *ini) {
 	}
 }
 
-void load_config(char *configPath, void* params) {
-	struct config_params *p = (struct config_params *)params;
+void load_config(char *configPath, struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 	FILE *fp;
 
 	//config: creating path to default config file
@@ -395,7 +396,7 @@ void load_config(char *configPath, void* params) {
 	}
 
 	// config: input
-	validate_config(params, ini);
+	validate_config(hand, ini);
 
 	#if defined(__linux__)||defined(__WIN32__)
 		// spawn a thread which will check if the file had been changed in any way

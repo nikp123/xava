@@ -82,9 +82,9 @@ extern uint32_t handle_window_alignment(struct config_params *p) {
 }
 
 void zwlr_init(struct waydata *wd) {
-	struct state_params *s = wd->s;
-	struct config_params *p = &s->conf;
-	struct wlOutput *output = wl_output_get_desired();
+	struct XAVA_HANDLE     *hand   = wd->hand;
+	struct config_params   *p      = &hand->conf;
+	struct wlOutput        *output = wl_output_get_desired();
 
 	// Create a "wallpaper" surface
 	xavaWLRLayerSurface = zwlr_layer_shell_v1_get_layer_surface(

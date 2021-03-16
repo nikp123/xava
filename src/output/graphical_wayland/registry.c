@@ -51,8 +51,8 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 static void xava_wl_registry_global_remove(void *data, struct wl_registry *wl_registry,
 		uint32_t name) {
 	struct waydata           *wd   = data;
-	struct state_params      *s    = wd->s;
-	struct function_pointers *func = &s->func;
+	struct XAVA_HANDLE       *hand = wd->hand;
+	struct function_pointers *func = &hand->func;
 
 	// This sometimes happens when displays get reconfigured
 	func->pushXAVAEventStack(wd->events, XAVA_RELOAD);

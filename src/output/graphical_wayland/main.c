@@ -59,11 +59,10 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
 	wl_display_disconnect(wd.display);
 }
 
-EXP_FUNC int xavaInitOutput(void *v) {
-	struct state_params      *s    = v;
-	struct function_pointers *func = &s->func;
+EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
+	struct function_pointers *func = &hand->func;
 
-	wd.s      = v;
+	wd.hand      = hand;
 	wd.events = func->newXAVAEventStack();
 
 	wd.display = wl_display_connect(NULL);
@@ -126,9 +125,8 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	return EXIT_SUCCESS;
 }
 
-EXP_FUNC void xavaOutputClear(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	if(wd.fbUnsafe) return; 
 
@@ -138,9 +136,8 @@ EXP_FUNC void xavaOutputClear(void *v) {
 	wd.fbUnsafe = false;
 }
 
-EXP_FUNC int xavaOutputApply(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	// TODO: Fullscreen support
 	//if(p->fullF) xdg_toplevel_set_fullscreen(xavaWLSurface, NULL);
@@ -153,15 +150,14 @@ EXP_FUNC int xavaOutputApply(void *v) {
 	fgcol = wayland_color_blend(p->col, p->foreground_opacity*255);
 	bgcol = wayland_color_blend(p->bgcol, p->background_opacity*255);
 
-	xavaOutputClear(s);
+	xavaOutputClear(hand);
 
 	return EXIT_SUCCESS;
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
-	struct state_params      *s    = (struct state_params*)v;
+EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 	//struct config_params     *p    = &s->conf;
-	struct function_pointers *func = &s->func;
+	struct function_pointers *func = &hand->func;
 
 	XG_EVENT event = XAVA_IGNORE;
 
@@ -182,29 +178,28 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 }
 
 // super optimized, because cpus are shit at graphics
-EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
-	struct state_params      *s    = v;
-	struct config_params     *p    = &s->conf;
+EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
+	struct config_params     *p    = &hand->conf;
 
 	if(wd.fbUnsafe) return;
 
 	wd.fbUnsafe = true;
-	for(int i = 0; i < bars; i++) {
+	for(int i = 0; i < hand->bars; i++) {
 		// get the properly aligned starting pointer
-		register uint32_t *fbDataPtr = &wd.fb[rest+i*(p->bs+p->bw)];
+		register uint32_t *fbDataPtr = &wd.fb[hand->rest+i*(p->bs+p->bw)];
 		register int bw = p->bw;
 
 		// beginning and end of bars, depends on the order
-		register int a = p->h - f[i];
-		register int b = p->h - flastd[i];
+		register int a = p->h - hand->f[i];
+		register int b = p->h - hand->fl[i];
 		register uint32_t brush = fgcol;
-		if(f[i] < flastd[i]) {
+		if(hand->f[i] < hand->fl[i]) {
 			brush = bgcol;
 			a^=b; b^=a; a^=b;
 		}
 
 		// Update damage only where necessary
-		wl_surface_damage_buffer(wd.surface, rest+i*(p->bs+p->bw),
+		wl_surface_damage_buffer(wd.surface, hand->rest+i*(p->bs+p->bw),
 				a, p->bw, b-a);
 
 		// advance the pointer by undrawn pixels amount
@@ -223,9 +218,8 @@ EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int *f, int *flastd) {
 	wl_display_roundtrip(wd.display);
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data) {
+	struct config_params *p = &hand->conf;
 
 	dictionary *ini = (dictionary*)data;
 

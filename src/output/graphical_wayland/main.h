@@ -14,7 +14,7 @@ struct waydata {
 	struct wl_shm        *shm;
 	struct wl_display    *display;
 	struct wl_compositor *compositor;
-	struct state_params  *s;
+	struct XAVA_HANDLE   *hand;
 	XG_EVENT_STACK       *events;
 	uint32_t             maxSize;
 	uint32_t             *fb;
@@ -28,6 +28,6 @@ extern const struct wl_callback_listener wl_surface_frame_listener;
 
 extern char* monitorName;
 
-EXP_FUNC void xavaOutputClear(void *v);
+EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand);
 
 #endif

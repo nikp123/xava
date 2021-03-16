@@ -74,7 +74,7 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 	return finished;
 }
 
-void* xavaInput(void *audiodata) {
+EXP_FUNC void* xavaInput(void *audiodata) {
 	audio = (struct audio_data *)audiodata;
 
 	PaStreamParameters inputParameters;
@@ -191,7 +191,7 @@ void* xavaInput(void *audiodata) {
 	return 0;
 } 
 
-void xavaInputHandleConfiguration(void *data1, void *data2) {
+EXP_FUNC void xavaInputHandleConfiguration(void *data1, void *data2) {
 	dictionary *ini = (dictionary*) data1;
 	struct audio_data *audio = (struct audio_data*) data2; 
 	audio->rate = 44100;

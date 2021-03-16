@@ -23,9 +23,9 @@ static void xdg_toplevel_handle_configure(void *data,
 		struct xdg_toplevel *xdg_toplevel, int32_t w, int32_t h,
 		struct wl_array *states) {
 	struct waydata           *wd   = data;
-	struct state_params      *s    = wd->s;
-	struct function_pointers *func = &s->func;
-	struct config_params     *p    = &s->conf;
+	struct XAVA_HANDLE       *hand = wd->hand;
+	struct function_pointers *func = &hand->func;
+	struct config_params     *p    = &hand->conf;
 
 	if(w == 0 && h == 0) return;
 
@@ -50,9 +50,9 @@ static void xdg_toplevel_handle_configure(void *data,
 
 static void xdg_toplevel_handle_close(void *data,
 		struct xdg_toplevel *xdg_toplevel) {
-	struct waydata *wd = data;
-	struct state_params      *s    = wd->s;
-	struct function_pointers *func = &s->func;
+	struct waydata           *wd   = data;
+	struct XAVA_HANDLE       *hand = wd->hand;
+	struct function_pointers *func = &hand->func;
 
 	func->pushXAVAEventStack(wd->events, XAVA_QUIT);
 }
@@ -77,18 +77,18 @@ const struct xdg_surface_listener xdg_surface_listener = {
 	.configure = xdg_surface_configure,
 };
 
-void xdg_init(struct waydata *s) {
+void xdg_init(struct waydata *wd) {
 	// create window, or "surface" in waland terms
-	xavaXDGSurface = xdg_wm_base_get_xdg_surface(xavaXDGWMBase, s->surface);
+	xavaXDGSurface = xdg_wm_base_get_xdg_surface(xavaXDGWMBase, wd->surface);
 
 	// for those unaware, the compositor baby sits everything that you
 	// make, thus it needs a function through which the compositor
 	// will manage your application
-	xdg_surface_add_listener(xavaXDGSurface, &xdg_surface_listener, s);
+	xdg_surface_add_listener(xavaXDGSurface, &xdg_surface_listener, wd);
 
 	xavaXDGToplevel = xdg_surface_get_toplevel(xavaXDGSurface);
 	xdg_toplevel_set_title(xavaXDGToplevel, "XAVA");
-	xdg_toplevel_add_listener(xavaXDGToplevel, &xdg_toplevel_listener, s);
+	xdg_toplevel_add_listener(xavaXDGToplevel, &xdg_toplevel_listener, wd);
 }
 
 void xdg_cleanup() {

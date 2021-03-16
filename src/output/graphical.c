@@ -10,10 +10,8 @@
 	GLXFBConfig* xavaFBConfig;
 #endif
 
-void calculate_win_pos(void *v, int scrW, int scrH) {
-	struct config_params *p = v;
-
-	#if !defined(GLX)
+void calculate_win_pos(struct config_params *p, int scrW, int scrH) {
+	#if !defined(GL)
 		p->shdw = 0;
 	#endif
 
@@ -50,9 +48,11 @@ void calculate_win_pos(void *v, int scrW, int scrH) {
 }
 
 #ifdef GL
-int drawGLBars(void *v, int rest, int bars, double colors[8], double gradColors[24], int *f) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+int drawGLBars(struct XAVA_HANDLE *hand, double colors[8], double gradColors[24]) {
+	struct config_params *p = &hand->conf;
+	int rest = hand->rest;
+	int bars = hand->bars;
+	int *f =   hand->f;
 
 	for(int i = 0; i < bars; i++) {
 		double point[4];

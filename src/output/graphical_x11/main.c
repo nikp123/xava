@@ -142,9 +142,8 @@ void calculateColors(struct config_params *p) {
 	snatchColor("color4", p->bcolor, p->bgcol, &xbgcol, databaseName, &xavaXResDB);
 }
 
-EXP_FUNC int xavaInitOutput(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	// NVIDIA CPU cap utilization in Vsync fix
 	setenv("__GL_YIELD", "USLEEP", 0);
@@ -330,9 +329,8 @@ int render_gradient_x(struct config_params *p) {
 	return 0;
 }
 
-EXP_FUNC void xavaOutputClear(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	#if defined(GLX)
 		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p->transF ? 1.0*p->background_opacity : 1.0); // TODO BG transparency
@@ -355,9 +353,8 @@ EXP_FUNC void xavaOutputClear(void *v) {
 	#endif
 }
 
-EXP_FUNC int xavaOutputApply(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	calculateColors(p);
 	// Gets the monitors resolution
@@ -403,7 +400,7 @@ EXP_FUNC int xavaOutputApply(void *v) {
 	// Vsync causes problems on NVIDIA GPUs, looking for possible workarounds/fixes
 	glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p->vsync);
 	#endif
-	xavaOutputClear(v);
+	xavaOutputClear(hand);
 
 	if(!p->interactF){
 		XRectangle rect;
@@ -415,9 +412,8 @@ EXP_FUNC int xavaOutputApply(void *v) {
 	return 0;
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	// this way we avoid event stacking which requires a full frame to process a single event
 	XG_EVENT action = XAVA_IGNORE;
@@ -516,13 +512,11 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 	return action;
 }
 
-EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200])
-{
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	// im lazy, but i just wanna make it work
-	int xoffset = rest, yoffset = p->h;
+	int xoffset = hand->rest, yoffset = p->h;
 	if(rootWindowEnabled) {
 		xoffset+=p->wx;
 		yoffset+=p->wy;
@@ -536,35 +530,40 @@ EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd
 			gradColors[i*3+1] = xgrad[i].green/65535.0;
 			gradColors[i*3+2] = xgrad[i].blue/65535.0;
 		}
-		if(drawGLBars(v, rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
+		if(drawGLBars(hand, glColors, gradColors)) exit(EXIT_FAILURE);
 		
 		glXSwapBuffers(xavaXDisplay, xavaXWindow);
 		glFinish();
 		glXWaitGL();
 	#else
 		// draw bars on the X11 window
-		for(int i = 0; i < bars; i++) {
+		for(int i = 0; i < hand->bars; i++) {
 			// this fixes a rendering bug
-			if(f[i] > p->h) f[i] = p->h;
+			if(hand->f[i] > p->h) hand->f[i] = p->h;
 
-			if(f[i] > flastd[i]) {
+			if(hand->f[i] > hand->fl[i]) {
 				if(p->gradients)
-					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 0, p->h - f[i], (unsigned int)p->bw, (unsigned int)(f[i]-flastd[i]), rest + i*(p->bs+p->bw), p->h - f[i]);
+					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 
+						0, p->h - hand->f[i], p->bw, hand->f[i]-hand->fl[i],
+						hand->rest + i*(p->bs+p->bw), p->h - hand->f[i]);
 				else {
 					XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
-					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, xoffset + i*(p->bs+p->bw), yoffset - f[i], (unsigned int)p->bw, (unsigned int)(f[i]-flastd[i]));
+					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics,
+						xoffset + i*(p->bs+p->bw), yoffset - hand->f[i], 
+						p->bw, hand->f[i]-hand->fl[i]);
 				}
+			} else if (hand->f[i] < hand->fl[i]) {
+				XClearArea(xavaXDisplay, xavaXWindow,
+					xoffset + i*(p->bs+p->bw), yoffset - hand->fl[i], 
+					p->bw, hand->fl[i]-hand->f[i], 0);
 			}
-			else if (f[i] < flastd[i])
-				XClearArea(xavaXDisplay, xavaXWindow, xoffset + i*(p->bs+p->bw), yoffset - flastd[i], (unsigned int)p->bw, (unsigned int)(flastd[i]-f[i]), 0);
 		}
 		XSync(xavaXDisplay, 0);
 	#endif
 	return;
 }
 
-EXP_FUNC void xavaOutputCleanup(void *v)
-{
+EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	// Root mode leaves artifacts on screen even though the window is dead
 	XClearWindow(xavaXDisplay, xavaXWindow);
 
@@ -585,9 +584,8 @@ EXP_FUNC void xavaOutputCleanup(void *v)
 	return;
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data) {
+	struct config_params *p = &hand->conf;
 
 	dictionary *ini = (dictionary*)data;
 

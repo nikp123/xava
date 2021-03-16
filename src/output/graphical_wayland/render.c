@@ -20,7 +20,7 @@ static const struct wl_buffer_listener wl_buffer_listener = {
 };
 
 struct wl_buffer *wl_create_framebuffer(struct waydata *wd) {
-	struct config_params *p = &wd->s->conf;
+	struct config_params *p = &wd->hand->conf;
 
 	int width = p->w, height = p->h;
 	int stride = width*4;
@@ -41,7 +41,7 @@ void update_frame(struct waydata *wd) {
 	//struct function_pointers *func = &wd->s->func;
 
 	// stop updating frames while XAVA's having a nice sleep
-	while(wd->s->pauseRendering) {
+	while(wd->hand->pauseRendering) {
 		sleep(100);
 	}
 
@@ -53,8 +53,8 @@ void update_frame(struct waydata *wd) {
 }
 
 void reallocSHM(struct waydata *wd) {
-	struct state_params *s = wd->s;
-	struct config_params *p = &s->conf;
+	struct XAVA_HANDLE   *hand = wd->hand;
+	struct config_params *p    = &hand->conf;
 
 	munmap(wd->fb, wd->maxSize);
 
@@ -77,8 +77,8 @@ void reallocSHM(struct waydata *wd) {
 }
 
 void closeSHM(struct waydata *wd) { 
-	struct state_params  *s = wd->s;
-	struct config_params *p = &s->conf;
+	struct XAVA_HANDLE   *hand = wd->hand;
+	struct config_params *p = &hand->conf;
 
 	close(wd->shmfd);
 	munmap(wd->fb, p->w*p->h*sizeof(uint32_t));
