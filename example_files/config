@@ -121,11 +121,11 @@
 ; background_layer = true
 
 # When background_layer is enabled, this options offers you to select
-# which monitor XAVA should occupy (for now, incomplete)
+# which monitor XAVA should occupy (examples: eDP-1, HDMI-A-1...) 
 #
 # Specifying an invalid monitor would cause XAVA to fall back onto the
-# first available
-; monitor = 0
+# last monitor available
+; monitor_name = 0
 
 
 [input]
