@@ -78,7 +78,7 @@
 
 # Draw directly on the root window (or wallpaper) itself
 # You need to stop any form of compositing for this to even work properly
-; rootwindow = false
+; root_window = false
 
 # Sets the override any redirection by the host WM, that is the window cannot change
 # the it's order in the window stack
@@ -90,6 +90,14 @@
 # As this can cause constant reloading (https://github.com/nikp123/xava/issues/20)
 # it is left off by default (X11 only)
 ; reload_on_display_configure = false
+
+# This option lets you choose a specific monitor that XAVA should occupy
+# The name of the monitor is exactly the same as that of in XRandr 
+# Examples being: HDMI1, VGA-1
+#
+# If no value has been specified, XAVA treats the whole display area as a single
+# monitor (if that makes sense :\)
+; monitor_name = none
 
 
 [wayland]
