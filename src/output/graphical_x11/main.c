@@ -172,7 +172,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	// select appropriate screen
 	xavaXScreenResources = XRRGetScreenResources(xavaXDisplay, 
 		DefaultRootWindow(xavaXDisplay));
-	char *screenname;
+	char *screenname = NULL; // potential bugfix if X server has no displays
 	for(int i = 0; i < xavaXScreenResources->noutput; i++) {
 		int screenwidth, screenheight, screenx, screeny;
 
