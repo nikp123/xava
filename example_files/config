@@ -90,7 +90,7 @@
 # it is left off by default (X11 only)
 ; reload_on_display_configure = false
 
-# This options lets you choose a specific monitor that XAVA should occupy
+# This option lets you choose a specific monitor that XAVA should occupy
 # The name of the monitor is exactly the same as that of in XRandr 
 # Examples being: HDMI1, VGA-1
 #
