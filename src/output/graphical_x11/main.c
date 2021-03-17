@@ -20,6 +20,9 @@
 #include "../../shared.h"
 #include "main.h"
 
+// random magic values go here
+#define SCREEN_CONNECTED 0
+
 static Pixmap gradientBox = 0;
 static XColor xbgcol, xcol, *xgrad;
 
@@ -39,9 +42,14 @@ static XEvent xev;
 static Bool xavaSupportsRR;
 static int xavaRREventBase;
 
-_Bool rootWindowEnabled;
-_Bool overrideRedirectEnabled;
-_Bool reloadOnDisplayConfigure;
+static XRRScreenResources *xavaXScreenResources;
+static XRROutputInfo      *xavaXOutputInfo;
+static XRRCrtcInfo        *xavaXCrtcInfo;
+
+static char  *monitorName;
+static _Bool rootWindowEnabled;
+static _Bool overrideRedirectEnabled;
+static _Bool reloadOnDisplayConfigure;
 
 #ifdef GLX
 static int VisData[] = {
@@ -161,7 +169,50 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	xavaXScreenNumber = DefaultScreen(xavaXDisplay);
 	xavaXRoot = RootWindow(xavaXDisplay, xavaXScreenNumber);
 
-	calculate_win_pos(p, xavaXScreen->width, xavaXScreen->height);
+	// select appropriate screen
+	xavaXScreenResources = XRRGetScreenResources(xavaXDisplay, 
+		DefaultRootWindow(xavaXDisplay));
+	char *screenname;
+	for(int i = 0; i < xavaXScreenResources->noutput; i++) {
+		int screenwidth, screenheight, screenx, screeny;
+
+		xavaXOutputInfo = XRRGetOutputInfo(xavaXDisplay, xavaXScreenResources,
+			xavaXScreenResources->outputs[i]);
+
+		if(xavaXOutputInfo->connection != SCREEN_CONNECTED)
+			continue;
+
+		xavaXCrtcInfo = XRRGetCrtcInfo(xavaXDisplay, xavaXScreenResources,
+			xavaXOutputInfo->crtc);
+
+		screenwidth  = xavaXCrtcInfo->width;
+		screenheight = xavaXCrtcInfo->height;
+		screenx      = xavaXCrtcInfo->x;
+		screeny      = xavaXCrtcInfo->y;
+		screenname   = strdup(xavaXOutputInfo->name);
+
+		XRRFreeCrtcInfo(xavaXCrtcInfo);
+		XRRFreeOutputInfo(xavaXOutputInfo);
+
+		if(!strcmp(screenname, monitorName)) {
+			calculate_win_pos(p, screenwidth, screenheight);
+
+			// correct window offsets
+			p->wx += screenx;
+			p->wy += screeny;
+			break;
+		} else {
+			free(screenname);
+			// magic value for no screen found
+			screenname = NULL;
+		}
+	}
+	XRRFreeScreenResources(xavaXScreenResources);
+
+	// in case that no screen matches, just use default behavior
+	if(screenname == NULL) {
+		calculate_win_pos(p, xavaXScreen->width, xavaXScreen->height);
+	}
 
 	// 32 bit color means alpha channel support
 	#ifdef GLX
@@ -581,6 +632,7 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	XFreeColormap(xavaXDisplay, xavaXColormap);
 	XCloseDisplay(xavaXDisplay);
 	free(xgrad);
+	free(monitorName);
 	return;
 }
 
@@ -595,6 +647,8 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 		(ini, "x11:root_window", 0);
 	overrideRedirectEnabled = iniparser_getboolean
 		(ini, "x11:override_redirect", 0);
+	monitorName = strdup(iniparser_getstring
+		(ini, "x11:monitor_name", "none"));
 
 	// who knew that messing with some random properties breaks things
 	if(rootWindowEnabled&&overrideRedirectEnabled) {
