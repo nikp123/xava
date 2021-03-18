@@ -9,7 +9,7 @@ if(SDL2)
 		add_library(out_sdl2 SHARED 
 			"${XAVA_MODULE_DIR}/main.c"
 			"src/output/graphical.c")
-		target_link_libraries(out_sdl2 "${SDL2_LIBRARIES}")
+		target_link_libraries(out_sdl2 "${SDL2_LIBRARIES}" iniparser)
 		target_include_directories(out_sdl2 PRIVATE "${SDL2_INCLUDE_DIRS}")
 		target_link_directories(out_sdl2 PRIVATE "${SDL2_LIBRARY_DIRS}")
 		set_target_properties(out_sdl2 PROPERTIES PREFIX "")
