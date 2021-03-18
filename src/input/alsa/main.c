@@ -1,6 +1,5 @@
 #include <alsa/asoundlib.h>
 
-#include <dictionary.h>
 #include <sys/types.h>
 #include <dirent.h>
 
