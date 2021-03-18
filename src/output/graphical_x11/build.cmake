@@ -14,7 +14,7 @@ if(X11)
 			target_include_directories(out_x11 PRIVATE "${X11_INCLUDE_DIR}"
 				"${X11_Xfixes_INCLUDE_PATH}" "${X11_Xrandr_INCLUDE_PATH}" )
 			target_link_libraries(out_x11 "${X11_LIBRARIES}"
-				"${X11_Xfixes_LIB}" "${X11_Xrandr_LIB}")
+				"${X11_Xfixes_LIB}" "${X11_Xrandr_LIB}" iniparser)
 			set_target_properties(out_x11 PROPERTIES PREFIX "")
 			install(TARGETS out_x11 DESTINATION lib/xava)
 		else()
@@ -28,7 +28,7 @@ if(X11)
 											"src/output/graphical.c")
 			target_link_directories(out_x11 PRIVATE "${X11_LIBRARY_DIRS}")
 			target_include_directories(out_x11 PRIVATE "${X11_INCLUDE_DIRS}")
-			target_link_libraries(out_x11 "${X11_LIBRARIES}")
+			target_link_libraries(out_x11 "${X11_LIBRARIES}" iniparser)
 			set_target_properties(out_x11 PROPERTIES PREFIX "")
 			install(TARGETS out_x11 DESTINATION lib/xava)
 			# GLX
@@ -41,7 +41,7 @@ if(X11)
 				target_include_directories(out_glx PRIVATE 
 					"${GL_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
 				target_link_libraries(out_glx 
-					"${GL_LIBRARIES}" "${X11_LIBRARIES}")
+					"${GL_LIBRARIES}" "${X11_LIBRARIES}" iniparser)
 				target_compile_definitions(out_glx PUBLIC -DGLX -DGL)
 				set_target_properties(out_glx PROPERTIES PREFIX "")
 				install(TARGETS out_glx DESTINATION lib/xava)
