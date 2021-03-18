@@ -49,7 +49,7 @@ if(WAYLAND)
 			"${XAVA_MODULE_DIR}/gen/xdg-output-unstable-v1-client-protocol.c"
 			"${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c"
 			"${XAVA_MODULE_DIR}/gen/wlr-layer-shell-unstable-v1-client-protocol.c")
-		target_link_libraries(out_wayland "${WAYLAND_LIBRARIES}")
+		target_link_libraries(out_wayland "${WAYLAND_LIBRARIES}" iniparser)
 		target_include_directories(out_wayland PRIVATE "${WAYLAND_INCLUDE_DIRS}")
 		target_link_directories(out_wayland PRIVATE "${WAYLAND_LIBRARY_DIRS} -lrt")
 		set_target_properties(out_wayland PROPERTIES PREFIX "")
