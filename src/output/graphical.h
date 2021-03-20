@@ -42,11 +42,6 @@ static const unsigned int colorNumbers[] = {0x000000, 0xFF0000, 0x00FF00, 0xFFFF
 #define G_ARGB_64(x) ((x&0xffff)<<16)
 #define B_ARGB_64(x) (x&0xffff)
 
-#define MIN(x,y) (x>y? y:x)
-#define MAX(x,y) (x>y? x:y)
-
-#define DIFF(x,y) (MAX(x,y)-MIN(x,y))
-
 #define TRANS_FROM_MIN(x, y, z) ((typeof(x))(DIFF(x,y)*z)+MIN(x,y))
 #define TRANS_FROM_MAX(x, y, z) (MAX(x,y)-(typeof(x))(DIFF(x,y)*z))
 
