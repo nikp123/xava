@@ -35,28 +35,27 @@ void pulseaudio_context_state_callback(pa_context *pulseaudio_context,
 	//make sure loop is ready
 	switch (pa_context_get_state(pulseaudio_context)) {
 		case PA_CONTEXT_UNCONNECTED:
-			//printf("UNCONNECTED\n");
+			xavaSpam("UNCONNECTED");
 			break;
 		case PA_CONTEXT_CONNECTING:
-			//printf("CONNECTING\n");
-		break;
+			xavaSpam("CONNECTING");
+			break;
 		case PA_CONTEXT_AUTHORIZING:
-			//printf("AUTHORIZING\n");
+			xavaSpam("AUTHORIZING");
 			break;
 		case PA_CONTEXT_SETTING_NAME:
-			//printf("SETTING_NAME\n");
+			xavaSpam("SETTING_NAME");
 			break;
 		case PA_CONTEXT_READY://extract default sink name
-			//printf("READY\n");
+			xavaSpam("READY");
 			pa_operation_unref(pa_context_get_server_info(
 			pulseaudio_context, cb, userdata));
 			break;
 		case PA_CONTEXT_FAILED:
-			printf("failed to coennect to pulseaudio server\n");
-			exit(EXIT_FAILURE);
+			xavaBail("Fail to connect to pulseaudio server");
 			break;
 		case PA_CONTEXT_TERMINATED:
-			//printf("TERMINATED\n");
+			xavaSpam("TERMINATED");
 			pa_mainloop_quit(m_pulseaudio_mainloop, 0);
 			break;  
 	}
@@ -78,23 +77,18 @@ void getPulseDefaultSink(void* data) {
 	// This function connects to the pulse server
 	pa_context_connect(pulseaudio_context, NULL, PA_CONTEXT_NOFLAGS, NULL);
 
-// printf("connecting to server\n");
+	xavaSpam("Connecting to PulseAudio server");
 
-	//This function defines a callback so the server will tell us its state.
+	// This function defines a callback so the server will tell us its state.
 	pa_context_set_state_callback(pulseaudio_context,
 		pulseaudio_context_state_callback, (void*)audio);
 
-	//starting a mainloop to get default sink
+	// starting a mainloop to get default sink
 
-	//starting with one nonblokng iteration in case pulseaudio is not able to run
-	if (!(ret = pa_mainloop_iterate(m_pulseaudio_mainloop, 0, &ret))){
-		printf("Could not open pulseaudio mainloop to "
-			"find default device name: %d\n"
-			"check if pulseaudio is running\n",
-			ret);
-
-		exit(EXIT_FAILURE);
-	}
+	// starting with one nonblokng iteration in case pulseaudio is not able to run
+	xavaBailCondition(!(ret=pa_mainloop_iterate(m_pulseaudio_mainloop, 0, &ret)),
+			"Could not open PulseAudio mainloop to find device name: %d\n"
+			"Check if PulseAudio is running!\n", ret);
 
 	pa_mainloop_run(m_pulseaudio_mainloop, &ret);
 }

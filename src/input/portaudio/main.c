@@ -84,18 +84,14 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 
 	// start portaudio
 	err = Pa_Initialize();
-	if(err != paNoError) {
-		fprintf(stderr, "Error: unable to initilize portaudio - %s\n", Pa_GetErrorText(err));
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(err != paNoError,
+			"Unable to initialize portaudio: %s", Pa_GetErrorText(err));
 
 	// get portaudio device
 	int deviceNum = -1, numOfDevices = Pa_GetDeviceCount();
 	if(!strcmp(audio->source, "list")) {
-		if(numOfDevices < 0) {
-			fprintf(stderr, "Error: portaudio was unable to find a audio device! Code: 0x%x\n", numOfDevices);
-			exit(EXIT_FAILURE);
-		}
+		xavaErrorCondition(numOfDevices<0, "PortAudio was not able to find any audio devices (code 0x%x)",
+				numOfDevices);
 		for(int i = 0; i < numOfDevices; i++) {
 			const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(i);
 			printf("Device #%d: %s\n"
@@ -109,15 +105,11 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 	} else if(!strcmp(audio->source, "auto")) {
 		deviceNum = Pa_GetDefaultInputDevice();
 
-		if(deviceNum == paNoDevice) {
-			fprintf(stderr, "Error: no portaudio input device found\n");
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(deviceNum == paNoDevice,
+				"PortAudio was not able to find any input devices!");
 	} else if(sscanf(audio->source,"%d", &deviceNum)) {
-		if(deviceNum > numOfDevices) {
-			fprintf(stderr, "Error: Invalid input device!\n");
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(deviceNum>numOfDevices,
+				"Invalid input device!");
 		deviceNum--;
 	} else {
 		for(int i = 0; i < numOfDevices; i++) {
@@ -127,10 +119,8 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 				break;
 			} 
 		}
-		if(deviceNum==-1) {
-			fprintf(stderr, "Error: No such device '%s'!\n", audio->source);
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(deviceNum==-1,
+				"No such device '%s'", audio->source);
 	}
 	inputParameters.device = deviceNum;
 
@@ -138,10 +128,10 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 	size_t audioLenght = audio->inputsize > 1024 ? 1024 : audio->inputsize;
 	data.maxFrameIndex = audioLenght;
 	data.recordedSamples = (SAMPLE *)malloc(2*audioLenght*sizeof(SAMPLE));
-	if(data.recordedSamples == NULL) {
-		fprintf(stderr, "Error: failure in memory allocation!\n");
-		exit(EXIT_FAILURE);
-	} else memset(data.recordedSamples, 0x00, 2*audioLenght);
+
+	xavaBailCondition(!data.recordedSamples,
+			"Memory allocation error!");
+	memset(data.recordedSamples, 0x00, 2*audioLenght);
 
 	inputParameters.channelCount = 2;
 	inputParameters.sampleFormat = PA_SAMPLE_TYPE;
@@ -151,40 +141,31 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 	// set it to work
 	err = Pa_OpenStream(&stream, &inputParameters, NULL, audio->rate, audioLenght,
 		paClipOff, recordCallback, &data);
-	if(err != paNoError) {
-		fprintf(stderr, "Error: failure in opening stream (%x)\n", err);
-		exit(EXIT_FAILURE);
-	}
+
+	xavaBailCondition(err!=paNoError, "Failure in opening stream (0x%x)", err);
 
 	// main loop
 	while(1){
 		// start recording
 		data.frameIndex = 0;
 		err = Pa_StartStream(stream);
-		if(err != paNoError) {
-			fprintf(stderr, "Error: failure in starting stream (%x)\n", err);
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(err!=paNoError, "Failure in starting stream (0x%x)", err);
 
 		//  record
 		while((err = Pa_IsStreamActive(stream)) == 1) {
 			Pa_Sleep(5);
 			if(audio->terminate == 1) break;
 		}
+
 		// check for errors
-		if(err < 0) {
-			fprintf(stderr, "Error: failure in recording audio (%x)\n", err);
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(err<0, "Failure during audio recording (%x)", err);
 
 		// check if it bailed
 		if(audio->terminate == 1) break;
 	}
 	// close stream
-	if((err = Pa_CloseStream(stream)) != paNoError) {
-		fprintf(stderr, "Error: failure in closing stream (%x)\n", err);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition((err = Pa_CloseStream(stream)) != paNoError,
+			"Failure in closing stream (0x%x)", err);
 
 	Pa_Terminate();
 	free(data.recordedSamples);

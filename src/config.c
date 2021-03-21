@@ -81,34 +81,23 @@ void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
 
 	// validate: input method
 	p->inputModule = load_input_module(inputMethod);
-	if(!is_module_valid(p->inputModule)) {
-		fprintf(stderr, "Input method '%s' does not exist, exiting...\n",
-				inputMethod);
-		fprintf(stderr, "Details:\n");
-		print_module_error();
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(!is_module_valid(p->inputModule),
+			"Input method '%s' could not load.\nReason: %s",
+			inputMethod, get_module_error(p->inputModule));
 
 	// validate: output method
 	p->outputModule = load_output_module(outputMethod);
-	if(!is_module_valid(p->outputModule)) {
-		fprintf(stderr, "Output method '%s' does not exist, exiting...\n",
-				outputMethod);
-		fprintf(stderr, "Details:\n");
-		print_module_error();
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(!is_module_valid(p->outputModule),
+			"Output method '%s' could not load.\nReason: %s",
+			inputMethod, get_module_error(p->outputModule));
 
 	// validate: output channels
 	int stereo = -1;
 	if (strcmp(channels, "mono") == 0)   stereo = 0;
 	if (strcmp(channels, "stereo") == 0) stereo = 1;
-	if (stereo == -1) {
-		fprintf(stderr,
-			"output channels %s is not supported, supported channelss are: 'mono' and 'stereo'\n",
-						channels);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(stereo == -1, "Output channels '%s' is not supported,"
+			" supported channels are: 'mono' and 'stereo'", channels);
+
 	p->stereo = stereo ? 1 : 0; // makes the C compilers happy :D
 
 	// validate: bars
@@ -119,82 +108,65 @@ void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
 	if (p->bw < 1) p->bw = 1;
 
 	// validate: framerate
-	if (p->framerate < 1) {
-		fprintf(stderr,
-			"framerate can't lower than 1!\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(p->framerate < 1, "Framerate cannot be below 1!");
 
 	// validate: framerate
-	if (p->vsync < -1) {
-		fprintf(stderr,
-			"Vsync cannot be below -1, no such Vsync mode exists!\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(p->vsync < -1, "VSync cannot be below -1! "
+			"No such VSync mode exists!\n");
 
 	// validate: color
-	if (!validate_color(p->color)) {
-		fprintf(stderr, "The value for 'foreground' is invalid.\n"
-			"It can be either one of the 7 named colors or a HTML color of the form '#xxxxxx'.\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(!validate_color(p->color),
+			"The value for 'foreground' is invalid!\n"
+			"It can be either one of the 7 named colors or a HTML color of"
+			" the form '#xxxxxx'");
 
 	// validate: background color
-	if (!validate_color(p->bcolor)) {
-		fprintf(stderr, "The value for 'background' is invalid.\n"
-			"It can be either one of the 7 named colors or a HTML color of the form '#xxxxxx'.\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(!validate_color(p->bcolor),
+			"The value for 'background' is invalid!\n"
+			"It can be either one of the 7 named colors or a HTML color of"
+			" the form '#xxxxxx'");
 
 	// validate: gradient colors
 	for(unsigned int i = 0; i < p->gradients; i++){
-		if (!validate_color(p->gradient_colors[i])) {
-			fprintf(stderr, "The first gradient color is invalid.\n"
-				"It must be HTML color of the form '#xxxxxx'.\n");
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(!validate_color(p->gradient_colors[i]),
+			"The gradient color %d is invalid!\n"
+			"It can only be a HTML color of the form '#xxxxxx'", i+1);
 	}
 
 	// actually parse colors
 	p->col = parse_color(p->color, DEF_FG_COL);    // default cyan if invalid
 	p->bgcol = parse_color(p->bcolor, DEF_BG_COL); // default black if invalid
 
-	if(p->foreground_opacity > 1.0 || p->foreground_opacity < 0.0) {
-		fprintf(stderr, "foreground_opacity cannot be above 1.0 or below 0.0\n");
-		exit(EXIT_FAILURE);
-	}
-	if(p->background_opacity > 1.0 || p->foreground_opacity < 0.0) {
-		fprintf(stderr, "background_opacity cannot be above 1.0 or below 0.0\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition((p->foreground_opacity > 1.0 || p->foreground_opacity < 0.0),
+			"'foreground_opacity' must be in range of 0.0 to 1.0");
+	xavaBailCondition((p->background_opacity > 1.0 || p->background_opacity < 0.0),
+			"'background_opacity' must be in range of 0.0 to 1.0");
 
 	// validate: gravity
 	p->gravity = p->gravity / 100;
 	if (p->gravity < 0) {
+		xavaWarn("Gravity cannot be below 0");
 		p->gravity = 0;
 	} 
 
 	// validate: oddoneout
-	if(p->stereo&&p->oddoneout) {
-		fprintf(stderr, "oddoneout cannot work with stereo mode on\n");
-		exit(EXIT_FAILURE);
-	}
-	
+	xavaBailCondition((p->stereo&&p->oddoneout), 
+			"'oddoneout' and stereo channels do not work together!"); 
+
 	// validate: integral
 	p->integral = p->integral / 100;
 	if (p->integral < 0) {
+		xavaWarn("Integral cannot be below 0");
 		p->integral = 0;
 	} else if (p->integral > 1) {
+		xavaWarn("Integral cannot be above 100");
 		p->integral = 1;
 	}
 
 	// validate: cutoff
 	if (p->lowcf == 0 ) p->lowcf++;
-	if (p->lowcf > p->highcf) {
-		fprintf(stderr,
-			"lower cutoff frequency can't be higher than higher cutoff frequency\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(p->lowcf > p->highcf,
+			"Lower frequency cutoff cannot be higher than the higher cutoff\n");
 
 	// validate: window settings
 	// validate: alignment
@@ -207,15 +179,12 @@ void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
 			break;
 		}
 	}
-	if(!foundAlignment)
-		fprintf(stderr, "The value for alignment is invalid, '%s'!", p->winA);
+	xavaBailCondition(!foundAlignment, "Alignment '%s' is invalid!\n",
+			p->winA);
 
 	// validate: shadow
-	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
-	{
-		fprintf(stderr, "shadow color is improperly formatted!\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1,
+			"Shadow color should be a HTML color in the form '#xxxxxx'");
 }
 
 void load_config(char *configPath, struct XAVA_HANDLE *hand) {
@@ -230,10 +199,7 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 			// editing files without an extension on windows is a pain
 			char *configFile = "config.cfg";
 		#endif
-		if(xavaGetConfigDir(configPath)) {
-			fprintf(stderr, "No HOME found (ERR_HOMELESS), exiting...");
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(xavaGetConfigDir(configPath), "No $HOME found!");
 
 		// config: create directory
 		xavaMkdir(configPath);
@@ -246,8 +212,8 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 			#if defined(__unix__)||defined(__APPLE__)
 				char *configFile = "config.example";
 			#endif
-			printf("Default config doesn't exist!\n"
-					"Trying to find a default config file...");
+			xavaLog("User configuration file does not exist!\n"
+					"Trying to find the default config file...\n");
 
 			char *installPath = xavaGetInstallDir();
 			// don't trust sizeof(), it's evil
@@ -261,15 +227,12 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 
 			if(!source) {
 				// inipaser magic time triggered here
-				fprintf(stderr, "FAIL\nDefault configuration file doesn't exist. "
-					"Please provide one if you can!\n");
+				xavaWarn("Default configuration file does not exist.\n"
+						"Please report this issue!");
 			} else {
 				fp = fopen(configPath, "w");
-				if(!fp) {
-					fprintf(stderr, "FAIL\n"
-						"Couldn't create config file! The program will now end.\n");
-					exit(EXIT_FAILURE);
-				}
+				xavaBailCondition(!fp, "Creating config file '%s' failed!\n"
+						"The program will now end.", configPath);
 
 				// Copy file in the most C way possible
 				short c = fgetc(source); 
@@ -279,18 +242,16 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 				}
 				fclose(source);
 				fclose(fp);
-				printf("DONE\n");
+
+				xavaLog("Creating config file '%s' successful", configPath);
 			}
 			free(targetFile);
 		}
 	} else { //opening specified file
 		fp = fopen(configPath, "rb+");
-		if (fp) {
-			fclose(fp);
-		} else {
-			printf("Unable to open file '%s', exiting...\n", configPath);
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(!fp, "Specified config file '%s' does not exist!",
+				configPath);
+		fclose(fp);
 	}
 
 	// config: parse ini
@@ -319,23 +280,18 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 
 	p->gradients = iniparser_getint(ini, "color:gradient_count", 0);
 	if(p->gradients) {
-		if(p->gradients < 2){
-			printf("\nAtleast two colors must be given as gradient!\n");
-			exit(EXIT_FAILURE);
-		}
-		if(p->gradients > 8){
-			printf("\nMaximum 8 colors can be specified as gradient!\n");
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(p->gradients < 2,
+				"At least two colors must be given as gradient!\n");
+		xavaBailCondition(p->gradients > 8,
+				"Maximum 8 colors can be specified as gradient!\n");
+
 		p->gradient_colors = (char **)malloc(sizeof(char*) * p->gradients);
 		for(int i = 0;i < p->gradients;i++){
 			char ini_config[33];
 			sprintf(ini_config, "color:gradient_color_%d", (i + 1));
 			p->gradient_colors[i] = (char *)iniparser_getstring(ini, ini_config, NULL);
-			if(p->gradient_colors[i] == NULL){
-				printf("\nGradient color not specified : gradient_color_%d\n", (i + 1));
-				exit(EXIT_FAILURE);
-			}
+			xavaBailCondition(!p->gradient_colors[i],
+					"'gradient_color_%d' is not specified!\n", i+1);
 		}
 	}
 
@@ -368,11 +324,6 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	// config: shadow
 	p->shdw = iniparser_getint(ini, "shadow:size", 7);
 	p->shadow_color = (char *)iniparser_getstring(ini, "shadow:color", "#ff000000");
-	if(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1)
-	{
-		fprintf(stderr, "shadow color is improperly formatted!\n");
-		exit(EXIT_FAILURE);
-	}
 
 	// read & validate: eq
 	p->smcount = iniparser_getsecnkeys(ini, "eq");

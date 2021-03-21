@@ -23,16 +23,12 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *s)
 {
 	struct config_params *p = &s->conf;
 
-	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
-	{
-		fprintf(stderr, "unable to initilize SDL2: %s\n", SDL_GetError());
-		return 1;
-	}
+	xavaBailCondition(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS),
+			"Unable to initailize SDL2: %s", SDL_GetError());
+
 	// calculating window x and y position
-	if(SDL_GetCurrentDisplayMode(0, &xavaSDLVInfo)){
-		fprintf(stderr, "Error opening display! %s\n", SDL_GetError());
-		return 1;
-	}
+	xavaBailCondition(SDL_GetCurrentDisplayMode(0, &xavaSDLVInfo),
+			"Error opening display: %s", SDL_GetError());
 	calculate_win_pos(p, xavaSDLVInfo.w, xavaSDLVInfo.h);
 
 	// creating a window
@@ -41,13 +37,8 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *s)
 	if(!p->borderF) windowFlags |= SDL_WINDOW_BORDERLESS;
 	if(p->vsync) windowFlags |= SDL_RENDERER_PRESENTVSYNC;
 	xavaSDLWindow = SDL_CreateWindow("XAVA", p->wx, p->wy, p->w, p->h, windowFlags);
-	if(!xavaSDLWindow)
-	{
-		fprintf(stderr, "SDL window cannot be created: %s\n", SDL_GetError());
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "cannot create SDL window", NULL);
-		SDL_Quit();
-		return 1;
-	}
+	xavaBailCondition(!xavaSDLWindow, "SDL window cannot be created: %s", SDL_GetError());
+	//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "cannot create SDL window", NULL);
 
 	if(p->gradients) {
 		gradCol = malloc(sizeof(int)*p->gradients);

@@ -88,6 +88,8 @@ int xavaGetConfigDir(char *configPath) {
 			sprintf(configPath,"%s/%s/", configHome, PACKAGE);
 		#endif
 	} else {
+		xavaSpam("The current system does not support XDG_CONFIG_HOME");
+
 		configHome = getenv("HOME");
 		if (configHome != NULL)
 			sprintf(configPath,"%s/%s/%s/", configHome, ".config", PACKAGE);
@@ -155,6 +157,8 @@ unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 
 // XAVA event stack
 void pushXAVAEventStack(XG_EVENT_STACK *stack, XG_EVENT event) {
+	xavaSpam("XAVA event %d added (id=%d)", stack->pendingEvents, event);
+
 	stack->pendingEvents++;
 
 	XG_EVENT *newStack = reallocarray(stack->events, stack->pendingEvents, sizeof(XG_EVENT));
@@ -174,6 +178,8 @@ XG_EVENT popXAVAEventStack(XG_EVENT_STACK *stack) {
 
 	newStack = reallocarray(stack->events, MIN(stack->pendingEvents, 1), sizeof(XG_EVENT));
 	stack->events = newStack;
+
+	xavaSpam("XAVA event %d destroyed (id=%d)", stack->pendingEvents, event);
 
 	return event;
 }

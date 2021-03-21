@@ -275,10 +275,8 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	FreeConsole();
 
 	// register window class
-	if(!register_window_win(xavaWinModule)) {
-		MessageBox(NULL, "RegisterClassEx - failed", "Error", MB_OK | MB_ICONERROR);
-		return 1;
-	}
+	xavaBailCondition(!register_window_win(xavaWinModule), "RegisterClassEx failed");
+	//MessageBox(NULL, "RegisterClassEx - failed", "Error", MB_OK | MB_ICONERROR);
 
 	// get window size etc..
 	int screenWidth, screenHeight;
@@ -287,13 +285,8 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	// adjust window position etc...
 	calculate_win_pos(p, screenWidth, screenHeight);
 
-	// Some error checking
-#ifdef DEBUG
-	if(p->wx > screenWidth - p->w) printf("Warning: Screen out of bounds (X axis)!");
-	if(p->wy > screenHeight - p->h) printf("Warning: Screen out of bounds (Y axis)!");
-#endif
-
-	if(!p->transF) p->interactF=1; // correct practicality error
+	// why?
+	//if(!p->transF) p->interactF=1; // correct practicality error
 
 	// extended and standard window styles
 	DWORD dwExStyle=0, dwStyle=0;
@@ -301,17 +294,15 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	if(!p->interactF) dwExStyle|=WS_EX_LAYERED|WS_EX_COMPOSITED;
 	if(!p->taskbarF) dwExStyle|=WS_EX_TOOLWINDOW;
 	if(p->borderF) dwStyle|=WS_CAPTION;
+
 	// create window
 	xavaWinWindow = CreateWindowEx(dwExStyle, szAppName, wcWndName, WS_POPUP | WS_VISIBLE | dwStyle,
 		p->wx, p->wy, p->w, p->h, NULL, NULL, xavaWinModule, NULL);
-	if(xavaWinWindow == NULL) {
-		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
-		return 1;
-	}
+	xavaBailCondition(!xavaWinWindow, "CreateWindowEx failed");
+
 	// transparency fix
 	if(p->transF) SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
 	SetWindowPos(xavaWinWindow, p->bottomF ? HWND_BOTTOM : HWND_NOTOPMOST, p->wx, p->wy, p->w, p->h, SWP_SHOWWINDOW);
-
 
 	// we need the desktop window manager to enable transparent background (from Vista ...onward)
 	DWM_BLURBEHIND bb = {0};
@@ -332,10 +323,7 @@ EXP_FUNC int xavaInitOutput(void *v) {
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
 		p->col = fancyVariable;
-		if(!SUCCEEDED(error)) {
-			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
-			return 1;
-		}
+		xavaWarnCondition(!SUCCEDED(error), "DwmGetColorizationColor failed");
 	} // as for the other case, we don't have to do any more processing
 
 	if(!strcmp(p->bcolor, "default")) {
@@ -344,10 +332,7 @@ EXP_FUNC int xavaInitOutput(void *v) {
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
 		p->bgcol = fancyVariable;
-		if(!SUCCEEDED(error)) {
-			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
-			return 1;
-		}
+		xavaWarnCondition(!SUCCEDED(error), "DwmGetColorizationColor failed");
 	}
 
 	// parse all of the values
@@ -359,10 +344,9 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	init_opengl_win(p);
 
 	// set up precise timers (otherwise unstable framerate)
-	if(timeGetDevCaps(&xavaPeriod, sizeof(TIMECAPS))!=MMSYSERR_NOERROR) {
-		MessageBox(NULL, "Failed setting up precise timers", "Error", MB_OK | MB_ICONERROR);
-		return 1;
-	}
+	xavaWarnCondition(timeGetDevCaps(&xavaPeriod, sizeof(TIMECAPS))!=MMSYSERR_NOERROR,
+			"Unable to obtain precise system timers! Stability may be of concern!");
+
 	timeEndPeriod(0);
 	timeBeginPeriod(xavaPeriod.wPeriodMin);
 

@@ -89,31 +89,19 @@ EXP_FUNC external void* xavaInput(void *audiodata) {
 			CLSID_MMDeviceEnumerator, NULL,
 			CLSCTX_ALL, IID_IMMDeviceEnumerator,
 			(void**)&pEnumerator);
-	if(hr) {
-		MessageBox(NULL, "CoCreateInstance failed - Couldn't get IMMDeviceEnumerator", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "CoCreateInstance failed - Couldn't get IMMDeviceEnumerator");
 
 	hr = pEnumerator->GetDefaultAudioEndpoint(
 			strcmp(audio->source, "loopback") ? eCapture : eRender, eConsole, &pDevice);
-	if(hr) {
-		MessageBox(NULL, "Failed to get default audio endpoint", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "Failed to get default audio endpoint");
 
 	hr = pDevice->Activate(
 		IID_IAudioClient, CLSCTX_ALL,
 		NULL, (void**)&pAudioClient);
-	if(hr) {
-		MessageBox(NULL, "Failed setting up default audio endpoint", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "Failed setting up default audio endpoint");
 
 	hr = pAudioClient->GetMixFormat(&pwfx);
-	if(hr) {
-		MessageBox(NULL, "Failed getting default audio endpoint mix format", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "Failed getting default audio endpoint mix format");
 
 	hr = pAudioClient->Initialize(
 			AUDCLNT_SHAREMODE_SHARED,
@@ -122,44 +110,26 @@ EXP_FUNC external void* xavaInput(void *audiodata) {
 			0,
 			pwfx,
 			NULL);
-	if(hr) {
-		MessageBox(NULL, "Failed initilizing default audio endpoint", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "Failed initilizing default audio endpoint");
 
 	// Get the size of the allocated buffer.
 	hr = pAudioClient->GetBufferSize(&bufferFrameCount);
-	if(hr) {
-		MessageBox(NULL, "Failed getting buffer size", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "Failed getting buffer size");
 
 	hr = pAudioClient->GetService(
 		IID_IAudioCaptureClient,
 		(void**)&pCaptureClient);
-	if(hr) {
-		MessageBox(NULL, "Failed getting capture service", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "Failed getting capture service");
 
 	// Set the audio sink format to use.
 	hr = sinkSetFormat(pwfx);
-	if(hr) {
-		MessageBox(NULL, "Failed setting format", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "Failed setting format");
 
 	hr = pAudioClient->Start();  // Start recording.
-	if(hr) {
-		MessageBox(NULL, "Failed starting capture", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
-	
+	xavaBailCondition(hr, "Failed starting capture");
+
 	hr = pAudioClient->GetDevicePeriod(&hnsDefaultDevicePeriod, NULL);
-	if(hr) {
-		MessageBox(NULL, "Error getting device period", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "Error getting device period");
 
 	LONG lTimeBetweenFires = (LONG)hnsDefaultDevicePeriod / 2 / (10 * 1000); // convert to milliseconds
 
@@ -168,10 +138,7 @@ EXP_FUNC external void* xavaInput(void *audiodata) {
 		Sleep(lTimeBetweenFires);
 
 		hr = pCaptureClient->GetNextPacketSize(&packetLength);
-		if(hr) {
-			MessageBox(NULL, "Failure getting buffer size", "Error", MB_OK | MB_ICONERROR);
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(hr, "Failure getting buffer size");
 
 		while (packetLength != 0) {
 			// Get the available data in the shared buffer.
@@ -179,39 +146,24 @@ EXP_FUNC external void* xavaInput(void *audiodata) {
 					&pData,
 					&numFramesAvailable,
 					&flags, NULL, NULL);
-			if(hr) {
-				MessageBox(NULL, "Failure to capture available buffer data", "Error", MB_OK | MB_ICONERROR);
-				exit(EXIT_FAILURE);
-			}
+			xavaBailCondition(hr, "Failure to capture available buffer data");
 
 			//if (flags & AUDCLNT_BUFFERFLAGS_SILENT) pData = NULL;  // Tell CopyData to write silence.
 
 			// Copy the available capture data to the audio sink.
 			hr = sinkCopyData(pData, numFramesAvailable);
-			if(hr) {
-				MessageBox(NULL, "Failure copying buffer data", "Error", MB_OK | MB_ICONERROR);
-				exit(EXIT_FAILURE);
-			}
+			xavaBailCondition(hr, "Failure copying buffer data");
 
 			hr = pCaptureClient->ReleaseBuffer(numFramesAvailable);
-			if(hr) {
-				MessageBox(NULL, "Failed to release buffer", "Error", MB_OK | MB_ICONERROR);
-				exit(EXIT_FAILURE);
-			}
+			xavaBailCondition(hr, "Failed to release buffer");
 
 			hr = pCaptureClient->GetNextPacketSize(&packetLength);
-			if(hr) {
-				MessageBox(NULL, "Failure getting buffer size", "Error", MB_OK | MB_ICONERROR);
-				exit(EXIT_FAILURE);
-			}
+			xavaBailCondition(hr, "Failure getting buffer size");
 		}
 	}
 
 	hr = pAudioClient->Stop();  // Stop recording.
-	if(hr) {
-		MessageBox(NULL, "Failure stopping capture", "Error", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(hr, "Failure stopping capture");
 
 	CoTaskMemFree(pwfx);
 	pEnumerator->Release();

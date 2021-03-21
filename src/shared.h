@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "module.h"
+#include "log.h"
 
 // XAVA event stuff
 typedef enum XAVA_GRAHPICAL_EVENT {

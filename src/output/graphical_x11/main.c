@@ -160,10 +160,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	// connect to the X server
 	xavaXDisplay = XOpenDisplay(NULL);
-	if(xavaXDisplay == NULL) {
-		fprintf(stderr, "cannot open X display\n");
-		return 1;
-	}
+	xavaBailCondition(!xavaXDisplay, "Could not find X11 display");
 
 	xavaXScreen = DefaultScreenOfDisplay(xavaXDisplay);
 	xavaXScreenNumber = DefaultScreen(xavaXDisplay);
@@ -555,7 +552,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 				break;
 			default:
 				if(xavaXEvent.type == xavaRREventBase + RRScreenChangeNotify) {
-					printf("Display change detected - Restarting...\n");
+					xavaLog("Display change detected - Restarting...\n");
 					return XAVA_RELOAD;
 				}
 		}
@@ -651,15 +648,11 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 		(ini, "x11:monitor_name", "none"));
 
 	// who knew that messing with some random properties breaks things
-	if(rootWindowEnabled&&overrideRedirectEnabled) {
-		fprintf(stderr,
-				"root_window and override_redirect "
-				"don't mix well together!\n");
-	}
-	if(rootWindowEnabled && p->gradients) {
-		fprintf(stderr, "root_window and gradients don't work!\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaWarnCondition(rootWindowEnabled&&overrideRedirectEnabled,
+			"'root_window' and 'override_redirect' don't work together!");
+
+	xavaBailCondition(rootWindowEnabled&&p->gradients,
+			"'root_window' and gradients don't work together!");
 
 	// Xquartz doesnt support ARGB windows
 	// Therefore transparency is impossible on macOS

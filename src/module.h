@@ -20,7 +20,7 @@ typedef struct xavamodule {
 
 #include <stdbool.h>
 
-void print_module_error();
+char *get_module_error(XAVAMODULE *module);
 bool is_module_valid(XAVAMODULE *module);
 void *get_symbol_address(XAVAMODULE *module, char *symbol);
 XAVAMODULE *load_input_module(char *name);
