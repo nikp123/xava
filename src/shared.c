@@ -157,7 +157,7 @@ unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 void pushXAVAEventStack(XG_EVENT_STACK *stack, XG_EVENT event) {
 	stack->pendingEvents++;
 
-	XG_EVENT *newStack = reallocarray(stack->events, stack->pendingEvents, sizeof(XG_EVENT));
+	XG_EVENT *newStack = realloc(stack->events, stack->pendingEvents*sizeof(XG_EVENT));
 	stack->events = newStack;
 
 	stack->events[stack->pendingEvents-1] = event;
@@ -172,7 +172,7 @@ XG_EVENT popXAVAEventStack(XG_EVENT_STACK *stack) {
 		stack->events[i] = stack->events[i+1];
 	}
 
-	newStack = reallocarray(stack->events, MIN(stack->pendingEvents, 1), sizeof(XG_EVENT));
+	newStack = realloc(stack->events, MIN(stack->pendingEvents, 1)*sizeof(XG_EVENT));
 	stack->events = newStack;
 
 	return event;
