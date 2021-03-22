@@ -33,6 +33,9 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 		xavaXDGOutputManager = wl_registry_bind(xavaWLRegistry, name,
 			&zxdg_output_manager_v1_interface, 2);
 	} else if (strcmp(interface, wl_output_interface.name) == 0) {
+		if(!xavaXDGOutputManager)
+			return;
+
 		struct wlOutput *output = malloc(sizeof(struct wlOutput));
 		output->output = 
 			wl_registry_bind(xavaWLRegistry, name, &wl_output_interface, 3);
