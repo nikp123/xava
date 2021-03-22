@@ -21,7 +21,7 @@ if(MINGW)
 	add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
 endif()
 
-set(BUILD_FLAGS "-D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+set(BUILD_FLAGS "-D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"' -Wl,--export-dynamic")
 
 set(CMAKE_C_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")

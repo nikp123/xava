@@ -168,7 +168,6 @@ void separate_freq_bands(fftw_complex *out, int bars, int channel, double sens, 
 			peak[o] += y[i]; //adding upp band
 		}
 
-
 		peak[o] = peak[o] / (hcf[o]-lcf[o] + 1); //getting average
 		temp = peak[o] * sens * k[o] / 800000; //multiplying with k and sens
 		if (temp <= ignore) temp = 0;
@@ -293,19 +292,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		// extract the shorthand sub-handles
 		struct config_params     *p     = &hand.conf;
 		struct audio_data        *audio = &hand.audio;
-		struct function_pointers *func  = &hand.func;
-
-		// assign all valid function pointers
-		// 
-		// this is done in order to allow functions from the main executable
-		// to run in the modules because linkers apparently don't like it
-		// when I import those functions through header files
-		func->destroyXAVAEventStack = destroyXAVAEventStack;
-		func->newXAVAEventStack = newXAVAEventStack;
-		func->pendingXAVAEventStack = pendingXAVAEventStack;
-		func->popXAVAEventStack = popXAVAEventStack;
-		func->pushXAVAEventStack = pushXAVAEventStack;
-		func->isEventPendingXAVA = isEventPendingXAVA;
 
 		// load config
 		load_config(configPath, &hand);
