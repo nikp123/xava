@@ -27,9 +27,7 @@ static void layer_surface_configure(void *data,
 static void layer_surface_closed(void *data,
 		struct zwlr_layer_surface_v1 *surface) {
 	//destroy_swaybg_output(output);
-	#ifdef DEBUG
-		fprintf(stderr, "wayland: zwlr_layer_surface lost\n");
-	#endif
+	xavaLog("zwlr_layer_surface lost");
 }
 
 const struct zwlr_layer_surface_v1_listener layer_surface_listener = {

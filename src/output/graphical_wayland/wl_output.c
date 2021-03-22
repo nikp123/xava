@@ -38,9 +38,7 @@ void wl_output_cleanup(struct waydata *wd) {
 	struct wlOutput *output, *tmp;
 
 	wl_list_for_each_safe(output, tmp, &wd->outputs, link) {
-		#ifdef DEBUG
-			printf("Destroying output %s\n", output->displayName);
-		#endif
+		xavaSpam("Destroying output %s", output->displayName);
 		wl_list_remove(&output->link);
 		free(output->displayName);
 		free(output);
@@ -80,9 +78,7 @@ static void xdg_output_handle_logical_size(void *data,
 static void xdg_output_handle_name(void *data,
 		struct zxdg_output_v1 *xdg_output, const char *name) {
 	struct wlOutput *output = data;
-	#ifdef DEBUG
-		printf("Output %s loaded\n", name);
-	#endif
+	xavaSpam("Output %s loaded", name);
 	output->displayName = strdup(name);
 }
 

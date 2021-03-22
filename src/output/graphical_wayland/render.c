@@ -1,4 +1,5 @@
 #include <sys/mman.h>
+#include <errno.h>
 
 #include "render.h"
 #include "main.h"
@@ -61,17 +62,13 @@ void reallocSHM(struct waydata *wd) {
 	int size = p->w*p->h*sizeof(uint32_t);
 	if(size > wd->maxSize) {
 		wd->maxSize = size;
-		if(ftruncate(wd->shmfd, size) == -1) {
-			perror("Error ");
-		}
+		xavaErrorCondition(ftruncate(wd->shmfd, size) == -1,
+				"%s", strerror(errno));
 	}
 
 	wd->fb = mmap(NULL, wd->maxSize, PROT_READ | PROT_WRITE, MAP_SHARED, wd->shmfd, 0);
-	if(wd->fb == MAP_FAILED) {
-		perror("Failed to create a shared memory buffer\nError:");
-		close(wd->shmfd);
-		exit(EXIT_FAILURE); // don't care, just crash
-	}
+	xavaBailCondition(wd->fb == MAP_FAILED,
+			"%s", strerror(errno));
 
 	wl_surface_commit(wd->surface);
 }

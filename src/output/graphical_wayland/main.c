@@ -65,10 +65,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	wd.events = newXAVAEventStack();
 
 	wd.display = wl_display_connect(NULL);
-	if(wd.display == NULL) {
-		fprintf(stderr, "Failed to connect to Wayland server\n");
-		return EXIT_FAILURE;
-	}
+	xavaBailCondition(!wd.display, "Failed to connect to Wayland server");
 
 	// Before the registry shananigans, outputs must be initialized
 	wl_output_init(&wd);
@@ -77,23 +74,15 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	// TODO: Check failure states
 	wl_registry_add_listener(xavaWLRegistry, &xava_wl_registry_listener, &wd);
 	wl_display_roundtrip(wd.display);
-	if(wd.shm == NULL) {
-		fprintf(stderr, "Your compositor doesn't support wl_shm, failing....\n");
-		return EXIT_FAILURE;
-	}
-	if(wd.compositor == NULL) {
-		fprintf(stderr, "Your compositor doesn't support wl_compositor, failing....\n");
-		return EXIT_FAILURE;
-	}
-	if(xavaXDGWMBase == NULL) {
-		fprintf(stderr, "Your compositor doesn't support xdg_wm_base, failing....\n");
-		return EXIT_FAILURE;
-	}
+	xavaBailCondition(!wd.shm,        "Your compositor doesn't support wl_shm, failing...");
+	xavaBailCondition(!wd.compositor, "Your compositor doesn't support wl_compositor, failing...");
+	xavaBailCondition(!xavaXDGWMBase, "Your compositor doesn't support xdg_wm_base, failing...");
+
 	if(xavaWLRLayerShell == NULL || xavaXDGOutputManager == NULL) {
-		fprintf(stderr, "Your compositor doesn't support any of the following:\n"
-				"zwlr_layer_shell_v1a and/or zwlr_output_manager_v1\n"
-				"This will DISABLE the ability to use the background layer for\n"
-				"safety reasons!\n");
+		xavaWarn("Your compositor doesn't support any of the following:\n"
+				"zwlr_layer_shell_v1 and/or zwlr_output_manager_v1\n"
+				"This will DISABLE the ability to use the background layer for"
+				"safety reasons!");
 		backgroundLayer = 0;
 	}
 

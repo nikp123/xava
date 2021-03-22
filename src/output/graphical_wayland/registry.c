@@ -56,9 +56,7 @@ static void xava_wl_registry_global_remove(void *data, struct wl_registry *wl_re
 	// This sometimes happens when displays get reconfigured
 	func->pushXAVAEventStack(wd->events, XAVA_RELOAD);
 
-	#ifdef DEBUG
-		fprintf(stderr, "wayland: wl_registry died\n");
-	#endif
+	xavaLog("wl_registry died");
 }
 
 const struct wl_registry_listener xava_wl_registry_listener = {
