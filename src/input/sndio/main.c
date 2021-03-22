@@ -27,27 +27,19 @@ EXP_FUNC void* xavaInput(void* data)
 	par.rchan = channels;
 	par.appbufsz = sizeof(buf) / channels;
 
-	if ((hdl = sio_open(audio->source, SIO_REC, 0)) == NULL) {
-		fprintf(stderr, __FILE__": Could not open sndio source: %s\n", audio->source);
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition((hdl = sio_open(audio->source, SIO_REC, 0)) == NULL,
+		"Could not open sndio source: %s", audio->source);
 
-	if (!sio_setpar(hdl, &par) || !sio_getpar(hdl, &par) || par.sig != 1 || par.le != 1 || par.rate != 44100 || par.rchan != channels) {
-		fprintf(stderr, __FILE__": Could not set required audio parameters\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(!sio_setpar(hdl, &par) || !sio_getpar(hdl, &par) || par.sig != 1
+			|| par.le != 1 || par.rate != 44100 || par.rchan != channels,
+			"Could not set required audio parameters");
 
-	if (!sio_start(hdl)) {
-		fprintf(stderr, __FILE__": sio_start() failed\n");
-		exit(EXIT_FAILURE);
-	}
+	xavaBailCondition(!sio_start(hdl), "sio_start() failed");
 
 	n = 0;
 	while (audio->terminate != 1) {
-		if (sio_read(hdl, buf, sizeof(buf)) == 0) {
-			fprintf(stderr, __FILE__": sio_read() failed: %s\n", strerror(errno));
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(sio_read(hdl, buf, sizeof(buf)) == 0,
+			"sio_read() failed: %s\n", strerror(errno));
 
 		for (i = 0; i < sizeof(buf)/sizeof(buf[0]); i += 2) {
 			if (par.rchan == 1) {

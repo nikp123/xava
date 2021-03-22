@@ -125,9 +125,8 @@ LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	return XAVA_IGNORE;
 }
 
-EXP_FUNC void xavaOutputClear(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	glColors[0] = ARGB_R_32(p->col)/255.0;
 	glColors[1] = ARGB_G_32(p->col)/255.0;
@@ -259,9 +258,8 @@ void resize_framebuffer(struct config_params *p) {
 	glLoadIdentity();
 }
 
-EXP_FUNC int xavaInitOutput(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	// reset event trackers
 	resized=FALSE;
@@ -275,10 +273,8 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	FreeConsole();
 
 	// register window class
-	if(!register_window_win(xavaWinModule)) {
-		MessageBox(NULL, "RegisterClassEx - failed", "Error", MB_OK | MB_ICONERROR);
-		return 1;
-	}
+	xavaBailCondition(!register_window_win(xavaWinModule), "RegisterClassEx failed");
+	//MessageBox(NULL, "RegisterClassEx - failed", "Error", MB_OK | MB_ICONERROR);
 
 	// get window size etc..
 	int screenWidth, screenHeight;
@@ -287,13 +283,8 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	// adjust window position etc...
 	calculate_win_pos(p, screenWidth, screenHeight);
 
-	// Some error checking
-#ifdef DEBUG
-	if(p->wx > screenWidth - p->w) printf("Warning: Screen out of bounds (X axis)!");
-	if(p->wy > screenHeight - p->h) printf("Warning: Screen out of bounds (Y axis)!");
-#endif
-
-	if(!p->transF) p->interactF=1; // correct practicality error
+	// why?
+	//if(!p->transF) p->interactF=1; // correct practicality error
 
 	// extended and standard window styles
 	DWORD dwExStyle=0, dwStyle=0;
@@ -301,17 +292,15 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	if(!p->interactF) dwExStyle|=WS_EX_LAYERED|WS_EX_COMPOSITED;
 	if(!p->taskbarF) dwExStyle|=WS_EX_TOOLWINDOW;
 	if(p->borderF) dwStyle|=WS_CAPTION;
+
 	// create window
 	xavaWinWindow = CreateWindowEx(dwExStyle, szAppName, wcWndName, WS_POPUP | WS_VISIBLE | dwStyle,
 		p->wx, p->wy, p->w, p->h, NULL, NULL, xavaWinModule, NULL);
-	if(xavaWinWindow == NULL) {
-		MessageBox(NULL, "CreateWindowEx - failed", "Error", MB_OK | MB_ICONERROR);
-		return 1;
-	}
+	xavaBailCondition(!xavaWinWindow, "CreateWindowEx failed");
+
 	// transparency fix
 	if(p->transF) SetLayeredWindowAttributes(xavaWinWindow, 0, 255, LWA_ALPHA);
 	SetWindowPos(xavaWinWindow, p->bottomF ? HWND_BOTTOM : HWND_NOTOPMOST, p->wx, p->wy, p->w, p->h, SWP_SHOWWINDOW);
-
 
 	// we need the desktop window manager to enable transparent background (from Vista ...onward)
 	DWM_BLURBEHIND bb = {0};
@@ -332,10 +321,7 @@ EXP_FUNC int xavaInitOutput(void *v) {
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
 		p->col = fancyVariable;
-		if(!SUCCEEDED(error)) {
-			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
-			return 1;
-		}
+		xavaWarnCondition(!SUCCEDED(error), "DwmGetColorizationColor failed");
 	} // as for the other case, we don't have to do any more processing
 
 	if(!strcmp(p->bcolor, "default")) {
@@ -344,10 +330,7 @@ EXP_FUNC int xavaInitOutput(void *v) {
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
 		p->bgcol = fancyVariable;
-		if(!SUCCEEDED(error)) {
-			MessageBox(NULL, "DwmGetColorizationColor - failed", "Error", MB_OK | MB_ICONERROR);
-			return 1;
-		}
+		xavaWarnCondition(!SUCCEDED(error), "DwmGetColorizationColor failed");
 	}
 
 	// parse all of the values
@@ -359,10 +342,9 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	init_opengl_win(p);
 
 	// set up precise timers (otherwise unstable framerate)
-	if(timeGetDevCaps(&xavaPeriod, sizeof(TIMECAPS))!=MMSYSERR_NOERROR) {
-		MessageBox(NULL, "Failed setting up precise timers", "Error", MB_OK | MB_ICONERROR);
-		return 1;
-	}
+	xavaWarnCondition(timeGetDevCaps(&xavaPeriod, sizeof(TIMECAPS))!=MMSYSERR_NOERROR,
+			"Unable to obtain precise system timers! Stability may be of concern!");
+
 	timeEndPeriod(0);
 	timeBeginPeriod(xavaPeriod.wPeriodMin);
 
@@ -371,9 +353,8 @@ EXP_FUNC int xavaInitOutput(void *v) {
 	return 0;
 }
 
-EXP_FUNC int xavaOutputApply(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	//ReleaseDC(xavaWinWindow, xavaWinFrame);
 
@@ -414,7 +395,7 @@ EXP_FUNC int xavaOutputApply(void *v) {
 			SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 	}
 
-	xavaOutputClear(s);
+	xavaOutputClear(hand);
 	resize_framebuffer(p);
 
 	// TODO: find a better solution, original issue:
@@ -427,9 +408,8 @@ EXP_FUNC int xavaOutputApply(void *v) {
 	return 0;
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	// don't even fucking ask
 	configParamsForWindowFuncBecauseWinAPIIsOutdated = p;
@@ -458,16 +438,15 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(void *v) {
 	return XAVA_IGNORE;
 }
 
-EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd[200]) {
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
 
 	// clear color and calculate pixel witdh in double
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if(drawGLBars(s, rest, bars, glColors, gradColors, f)) exit(EXIT_FAILURE);
+	if(drawGLBars(hand, glColors, gradColors)) exit(EXIT_FAILURE);
 
 	// dumb workarounds for dumb OSes
 	glBegin(GL_QUADS);
@@ -484,7 +463,7 @@ EXP_FUNC void xavaOutputDraw(void *v, int bars, int rest, int f[200], int flastd
 	SwapBuffers(xavaWinFrame);
 }
 
-EXP_FUNC void xavaOutputCleanup(void *v) {
+EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	timeEndPeriod(xavaPeriod.wPeriodMin);
 	free(gradientColor);
 	wglMakeCurrent(NULL, NULL);
@@ -495,10 +474,9 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
 	//CloseHandle(xavaWinModule);
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(void *v, void *data) {
+EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data) {
 	//dictionary *ini = (dictionary*) data;
-	struct state_params *s = v;
-	struct config_params *p = &s->conf;
+	struct config_params *p = &hand->conf;
 
 	// VSync is a must due to shit Windows timers
 	p->vsync = 1;

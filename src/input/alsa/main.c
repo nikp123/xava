@@ -16,13 +16,8 @@ static void initialize_audio_parameters(snd_pcm_t** handle, struct audio_data* a
 snd_pcm_uframes_t* frames) {
 	// alsa: open device to capture audio
 	int err = snd_pcm_open(handle, audio->source, SND_PCM_STREAM_CAPTURE, 0);
-	if (err < 0) {
-		fprintf(stderr, "error opening stream: %s\n", snd_strerror(err));
-		exit(EXIT_FAILURE);
-	}
-	#ifdef DEBUG
-		else printf("open stream successful\n");
-	#endif
+	xavaBailCondition(err<0, "Error opening ALSA stream: %s", snd_strerror(err));
+	xavaSpam("Opening ALSA stream successful");
 
 	snd_pcm_hw_params_t* params;
 	snd_pcm_hw_params_alloca(&params); // assembling params
@@ -42,16 +37,11 @@ snd_pcm_uframes_t* frames) {
 	// number of frames pr read
 	snd_pcm_hw_params_set_period_size_near(*handle, params, frames, NULL);
 	err = snd_pcm_hw_params(*handle, params); // attempting to set params
-	if (err < 0) {
-		fprintf(stderr, "unable to set hw parameters: %s\n", snd_strerror(err));
-		exit(EXIT_FAILURE);
-	}
-
-	if ((err = snd_pcm_prepare (*handle)) < 0) {
-		fprintf (stderr, "cannot prepare audio interface for use (%s)\n",
+	xavaBailCondition(err<0, "Failed to set hardware parameters: %s",
 			snd_strerror(err));
-		exit(EXIT_FAILURE);
-	}
+
+	xavaBailCondition((err = snd_pcm_prepare(*handle))<0,
+			"Failed to prepare audio interface for use: %s", snd_strerror(err));
 
 	// getting actual format
 	snd_pcm_hw_params_get_format(params, (snd_pcm_format_t*)&sample_rate);
@@ -129,12 +119,9 @@ EXP_FUNC void* xavaInput(void* data) {
 
 	if(is_loop_device_for_sure(audio->source)) {
 		if(directory_exists("/sys/")) {
-			if(!directory_exists("/sys/module/snd_aloop/")) {
-				fprintf(stderr,
-				"Linux kernel module \"snd_aloop\" does not seem to  be loaded.\n"
-				"Maybe run \"sudo modprobe snd_aloop\".\n");
-				exit(EXIT_FAILURE);
-			}
+			xavaBailCondition(!directory_exists("/sys/module/snd_aloop/"),
+					"Linux kernel module 'snd_aloop' does not seem to be loaded!\n"
+					"Maybe run \"sudo modprobe snd_aloop\"");
 		}
 	}
 
@@ -143,8 +130,7 @@ EXP_FUNC void* xavaInput(void* data) {
 
 	int16_t buf[period_size];
 	frames = period_size / ((audio->format / 8) * CHANNELS_COUNT);
-	//printf("period size: %lu\n", period_size);
-	//exit(0);
+	xavaSpam("Period size: %lu", period_size);
 
 	// frames * bits/8 * channels
 	//const int size = frames * (audio->format / 8) * CHANNELS_COUNT;
@@ -174,18 +160,12 @@ EXP_FUNC void* xavaInput(void* data) {
 
 		if(err == -EPIPE) {
 			/* EPIPE means overrun */
-			#ifdef DEBUG
-				fprintf(stderr, "overrun occurred\n");
-			#endif
+			xavaError("Buffer overrun detected!\n");
 			snd_pcm_prepare(handle);
 		} else if(err < 0) {
-			#ifdef DEBUG
-				fprintf(stderr, "error from read: %s\n", snd_strerror(err));
-			#endif
+			xavaError("Read error: %s", snd_strerror(err));
 		} else if(err != (int)frames) {
-			#ifdef DEBUG
-				fprintf(stderr, "short read, read %d %d frames\n", err, (int)frames);
-			#endif
+			xavaError("Short read. Read %d instead of %d frames!", err, (int)frames); 
 		}
 
 		if (audio->terminate == 1) {

@@ -88,6 +88,8 @@ int xavaGetConfigDir(char *configPath) {
 			sprintf(configPath,"%s/%s/", configHome, PACKAGE);
 		#endif
 	} else {
+		xavaSpam("The current system does not support XDG_CONFIG_HOME");
+
 		configHome = getenv("HOME");
 		if (configHome != NULL)
 			sprintf(configPath,"%s/%s/%s/", configHome, ".config", PACKAGE);
@@ -154,16 +156,18 @@ unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 
 
 // XAVA event stack
-void pushXAVAEventStack(XG_EVENT_STACK *stack, XG_EVENT event) {
+EXP_FUNC void pushXAVAEventStack(XG_EVENT_STACK *stack, XG_EVENT event) {
+	xavaSpam("XAVA event %d added (id=%d)", stack->pendingEvents, event);
+
 	stack->pendingEvents++;
 
-	XG_EVENT *newStack = reallocarray(stack->events, stack->pendingEvents, sizeof(XG_EVENT));
+	XG_EVENT *newStack = realloc(stack->events, stack->pendingEvents*sizeof(XG_EVENT));
 	stack->events = newStack;
 
 	stack->events[stack->pendingEvents-1] = event;
 }
 
-XG_EVENT popXAVAEventStack(XG_EVENT_STACK *stack) {
+EXP_FUNC XG_EVENT popXAVAEventStack(XG_EVENT_STACK *stack) {
 	XG_EVENT *newStack;
 	XG_EVENT event = stack->events[0];
 
@@ -172,31 +176,33 @@ XG_EVENT popXAVAEventStack(XG_EVENT_STACK *stack) {
 		stack->events[i] = stack->events[i+1];
 	}
 
-	newStack = reallocarray(stack->events, MAX(stack->pendingEvents, 1), sizeof(XG_EVENT));
+	newStack = realloc(stack->events, MIN(stack->pendingEvents, 1)*sizeof(XG_EVENT));
 	stack->events = newStack;
+
+	xavaSpam("XAVA event %d destroyed (id=%d)", stack->pendingEvents, event);
 
 	return event;
 }
 
-XG_EVENT_STACK *newXAVAEventStack() {
+EXP_FUNC XG_EVENT_STACK *newXAVAEventStack() {
 	XG_EVENT_STACK *stack = calloc(1, sizeof(XG_EVENT_STACK));
 	stack->pendingEvents = 0;
 	stack->events = malloc(1); // needs a valid pointer here
 	return stack;
 }
 
-void destroyXAVAEventStack(XG_EVENT_STACK *stack) {
+EXP_FUNC void destroyXAVAEventStack(XG_EVENT_STACK *stack) {
 	free(stack->events);
 	free(stack);
 }
 
-_Bool pendingXAVAEventStack(XG_EVENT_STACK *stack) {
+EXP_FUNC _Bool pendingXAVAEventStack(XG_EVENT_STACK *stack) {
 	return (stack->pendingEvents > 0) ? true : false;
 }
 
 // used for blocking in case an processing an event at the wrong
 // time can cause disaster
-_Bool isEventPendingXAVA(XG_EVENT_STACK *stack, XG_EVENT event) {
+EXP_FUNC _Bool isEventPendingXAVA(XG_EVENT_STACK *stack, XG_EVENT event) {
 	for(int i = 0; i < stack->pendingEvents; i++) {
 		if(stack->events[i] == event) return true;
 	}

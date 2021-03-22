@@ -64,21 +64,16 @@ EXP_FUNC void* xavaInput(void* data)
 	int n = 0;
 	int i;
 
-	printf("input_shmem: source: %s", audio->source);
+	xavaSpam("SHMEM source: %s", audio->source);
 
 	fd = shm_open(audio->source, O_RDWR, 0666);
 
-	if (fd < 0 ) {
-		printf("Could not open source '%s': %s\n", audio->source, strerror( errno ) );
-		exit(EXIT_FAILURE);
-	} else {
-		mmap_area = mmap(NULL, sizeof( vis_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-		if ((intptr_t)mmap_area == -1) {
-			printf("mmap failed - check if squeezelite is running with visualization enabled\n");
-			exit(EXIT_FAILURE);
-		}
-	}
-	printf("bufs: %u / run: %u / rate: %u\n",mmap_area->buf_size, mmap_area->running, mmap_area->rate);
+	xavaBailCondition(fd<0, "Could not open source '%s': %s", audio->source, strerror(errno));
+
+	mmap_area = mmap(NULL, sizeof( vis_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	xavaBailCondition((intptr_t)mmap_area==-1, "mmap failed - check if squeezelite is running with visualization enabled");
+
+	xavaSpam("bufs: %u / run: %u / rate: %u\n",mmap_area->buf_size, mmap_area->running, mmap_area->rate);
 	audio->rate = mmap_area->rate;
 
 	while (1) {
@@ -99,17 +94,11 @@ EXP_FUNC void* xavaInput(void* data)
 	}
 
 	// cleanup
-	if ( fd > 0 ) {
-		if ( close( fd ) != 0 ) {
-			printf("Could not close file descriptor %d: %s", fd, strerror( errno ) );
-		}
-	} else {
-		printf("Wrong file descriptor %d", fd );
-	}
+	xavaErrorCondition(fd<1, "Wrong file descriptor %d", fd);
+	xavaErrorCondition(close(fd)!=0, "Could not close file descriptor %d: %s", fd, strerror(errno));
 
-	if ( munmap( mmap_area, mmap_count ) != 0 ) {
-		printf("Could not munmap() area %p+%d. %s", mmap_area, mmap_count, strerror( errno ) );
-	}
+	xavaErrorCondition(munmap(mmap_area, mmap_count)!=0, "Could not munmap() area %p+%d. %s",
+			mmap_area, mmap_count, strerror(errno));
 	return 0;
 }
 

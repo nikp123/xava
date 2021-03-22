@@ -42,8 +42,10 @@ void calculate_win_pos(struct config_params *p, int scrW, int scrH) {
 	}
 	// Some error checking
 	#ifdef DEBUG
-		if(p->wx > scrW - p->w) printf("Warning: Screen out of bounds (X axis)!\n");
-		if(p->wy > scrH - p->h) printf("Warning: Screen out of bounds (Y axis)!\n");
+		xavaLogCondition(p->wx > scrW-p->w, 
+				"Screen out of bounds (X axis)");
+		xavaLogCondition(p->wy > scrH-p->h, 
+				"Screen out of bounds (Y axis)");
 	#endif
 }
 

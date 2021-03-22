@@ -61,10 +61,8 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
 }
 
 EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
-	struct function_pointers *func = &hand->func;
-
-	wd.hand      = hand;
-	wd.events = func->newXAVAEventStack();
+	wd.hand   = hand;
+	wd.events = newXAVAEventStack();
 
 	wd.display = wl_display_connect(NULL);
 	if(wd.display == NULL) {
@@ -161,12 +159,11 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 
 EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 	//struct config_params     *p    = &s->conf;
-	struct function_pointers *func = &hand->func;
 
 	XG_EVENT event = XAVA_IGNORE;
 
-	while(func->pendingXAVAEventStack(wd.events)) {
-		event = func->popXAVAEventStack(wd.events);
+	while(pendingXAVAEventStack(wd.events)) {
+		event = popXAVAEventStack(wd.events);
 
 		switch(event) {
 			case XAVA_RESIZE:

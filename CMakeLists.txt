@@ -19,12 +19,16 @@ if(MINGW)
 	add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
 endif()
 
-set(CMAKE_C_FLAGS "-Wall -fvisibility='internal'")
+set(BUILD_FLAGS "-D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"' -Wl,--export-dynamic")
+
+set(CMAKE_C_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS "-Wall -fvisibility='internal'")
+set(CMAKE_CXX_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+
 
 set(CMAKE_C_STANDARD 11)
 set(xava_VERSION_MAJOR 0)
@@ -126,6 +130,7 @@ endforeach()
 add_executable(
 	xava
 	${ADDITIONAL_SOURCES}
+	src/log.c
 	src/module.c
 	src/shared.c
 	src/config.c

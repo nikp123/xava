@@ -141,11 +141,11 @@ void sig_handler(int sig_no) {
 			should_reload = true;
 			break;
 		case SIGINT:
-			printf("CTRL-C pressed -- goodbye\n");
+			xavaLog("CTRL-C pressed -- goodbye\n");
 			kys=1;
 			return;
 		case SIGTERM:
-			printf("Process termination requested -- goodbye\n");
+			xavaLog("Process termination requested -- goodbye\n");
 			kys=1;
 			return;
 	}
@@ -167,7 +167,6 @@ void separate_freq_bands(fftw_complex *out, int bars, int channel, double sens, 
 			y[i] = hypot(out[i][0], out[i][1]);
 			peak[o] += y[i]; //adding upp band
 		}
-
 
 		peak[o] = peak[o] / (hcf[o]-lcf[o] + 1); //getting average
 		temp = peak[o] * sens * k[o] / 800000; //multiplying with k and sens
@@ -291,21 +290,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 	// general: main loop
 	while (1) {
 		// extract the shorthand sub-handles
-		struct config_params *p = &hand.conf;
-		struct audio_data *audio = &hand.audio;
-		struct function_pointers *func = &hand.func;
-
-		// assign all valid function pointers
-		// 
-		// this is done in order to allow functions from the main executable
-		// to run in the modules because linkers apparently don't like it
-		// when I import those functions through header files
-		func->destroyXAVAEventStack = destroyXAVAEventStack;
-		func->newXAVAEventStack = newXAVAEventStack;
-		func->pendingXAVAEventStack = pendingXAVAEventStack;
-		func->popXAVAEventStack = popXAVAEventStack;
-		func->pushXAVAEventStack = pushXAVAEventStack;
-		func->isEventPendingXAVA = isEventPendingXAVA;
+		struct config_params     *p     = &hand.conf;
+		struct audio_data        *audio = &hand.audio;
 
 		// load config
 		load_config(configPath, &hand);
@@ -353,13 +339,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		// thr_id = below
 		pthread_create(&p_thread, NULL, xavaInput, (void*)audio);
-		if (p->highcf > audio->rate / 2) {
-			cleanup();
-			fprintf(stderr,
-				"higher cuttoff frequency can't be higher then sample rate / 2"
-			);
-			exit(EXIT_FAILURE);
-		}
+		xavaBailCondition(p->highcf > audio->rate / 2,
+				"Higher cutoff cannot be higher than the sample rate / 2");
 
 		bool reloadConf = false;
 		bool senseLow = true;
@@ -457,12 +438,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			if(hand.rest < 0)
 				hand.rest = 0;
 
-			// TODO
-			//#ifdef DEBUG
-			//	printw("height: %d width: %d bars:%d bar width: %d rest: %d\n",
-			//				 w,
-			//				 h, bars, p->bw, rest);
-			//#endif
+			xavaSpam("w=%d, h=%d, bars=%d, bw=%d, rest=%d",
+						p->w, p->h, bars, p->bw, hand.rest);
 
 			if (p->stereo) bars = bars / 2; // in stereo onle half number of bars per channel
 
@@ -498,12 +475,10 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					hcf[n-1] = lcf[n]; 
 				}
 
-				//#ifdef DEBUG
-				//	if (n != 0) {
-				//		printf("%d: %f -> %f (%d -> %d) \n", 
-				//			n, fc[n - 1], fc[n], lcf[n - 1], hcf[n - 1]);
-				//	}
-				//#endif
+				if (n != 0) {
+					xavaSpam("%d: %f -> %f (%d -> %d)", 
+						n, fc[n - 1], fc[n], lcf[n - 1], hcf[n - 1]);
+				}
 			}
 			hcf[n-1] = p->highcf*audio->fftsize/audio->rate;
 
@@ -595,10 +570,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 					hand.pauseRendering = false;
 				} else { // if in sleep mode wait and continue
-					// TODO
-					//#ifdef DEBUG
-					//	printw("no sound detected for 5 sec, going to sleep mode\n");
-					//#endif
+					xavaSpam("Going to sleep!");
+
 					// wait 100ms, then check sound again.
 					xavaSleep(100, 0);
 
@@ -667,12 +640,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						double div = 1 / (diff + 1);
 						//f[o] = f[o] - pow(div, 10) * (height + 1); 
 						fmem[o] = fmem[o] * (1 - div / 20); 
-
-						// TODO
-						//#ifdef DEBUG
-						//	mvprintw(o,0,"%d: f:%f->%f (%d->%d), k-value: %f, peak:%d \n",
-						//		o, fc[o], fc[o + 1], lcf[o], hcf[o], k[o], f[o]);
-						//#endif
 					}
 				}
 
@@ -733,12 +700,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 
 				// checking if audio thread has exited unexpectedly
-				if(audio->terminate == 1) {
-					cleanup();
-					fprintf(stderr,
-					"Audio thread exited unexpectedly. %s\n", audio->error_message);
-					exit(EXIT_FAILURE); 
-				} 
+				xavaBailCondition(audio->terminate,
+						"Audio thread has exited unexpectedly.\nReason: %s", 
+						audio->error_message);
 			} // resize window
 		} // reloading config
 

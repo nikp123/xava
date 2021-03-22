@@ -56,9 +56,8 @@ static void parse_color(char *color_string, struct colors *color) {
 	if (color_string[0] == '#') {
 		if (!can_change_color()) {
 			xavaOutputCleanup(NULL); // lol
-			fprintf(stderr, "Your terminal can not change color definitions, "
+			xavaBail("Your terminal cannot change color definitions, "
 					"please use one of the predefined colors.\n");
-			exit(EXIT_FAILURE);
 		}
 		color->color = COLOR_REDEFINITION;
 		sscanf(++color_string, "%02hx%02hx%02hx", &color->R, &color->G, &color->B);

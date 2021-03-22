@@ -33,12 +33,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "module.h"
+#include "log.h"
 
 // XAVA event stuff
 typedef enum XAVA_GRAHPICAL_EVENT {
 	XAVA_REDRAW, XAVA_IGNORE, XAVA_RESIZE, XAVA_RELOAD,
 	XAVA_QUIT
 } XG_EVENT;
+
 typedef struct XAVA_GRAHPICAL_EVENT_STACK {
 	int pendingEvents;
 	XG_EVENT *events;

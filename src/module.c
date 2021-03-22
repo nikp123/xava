@@ -1,4 +1,5 @@
 #include "module.h"
+#include "log.h"
 
 #ifdef __unix__
 #include <stdio.h>
@@ -49,10 +50,8 @@ XAVAMODULE *load_module(char *name) {
 	module->moduleHandle = dlopen(new_name, RTLD_NOW);
 	module->name = new_name;
 
-	#ifdef DEBUG
-		printf("Module loaded '%s' loaded at %p\n",
-			module->name, module->moduleHandle);
-	#endif
+	xavaLog("Module loaded '%s' loaded at %p", 
+		module->name, module->moduleHandle);
 
 	return module;
 }
@@ -73,25 +72,19 @@ XAVAMODULE *load_input_module(char *name) {
 	return module;
 }
 
-void print_module_error() {
-	fprintf(stderr, "%s\n", dlerror());
+char *get_module_error(XAVAMODULE *module) {
+	return dlerror();
 }
 
 void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 	void *address = dlsym(module->moduleHandle, symbol);
 
-	if(address == NULL) {
-		fprintf(stderr, "Failed to find symbol '%s' in file %s\n",
-			symbol, module->name);
-		print_module_error();
-		exit(EXIT_FAILURE);
-		// the program would crash with an NULL address error anyway
-	}
+	// the program would crash with an NULL pointer error anyway
+	xavaBailCondition(!address, "Failed to find symbol '%s' in file '%s'",
+		symbol, module->name);
 
-	#ifdef DEBUG
-		printf("Symbol '%s' of '%s' found at: %p\n",
+	xavaLog("Symbol '%s' of '%s' found at: %p",
 			symbol, module->name, address);
-	#endif
 
 	return address;
 }
@@ -112,8 +105,8 @@ bool is_module_valid(XAVAMODULE *module) {
 
 char *LIBRARY_EXTENSION = ".dll";
 
-void print_module_error() {
-	return;
+char *get_module_error(XAVAMODULE *module) {
+	return "";
 }
 
 bool is_module_valid(XAVAMODULE *module) {
@@ -125,7 +118,7 @@ bool is_module_valid(XAVAMODULE *module) {
 
 void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 	void *addr = GetProcAddress(module->moduleHandle, symbol);
-	
+
 	if(addr == NULL) {
 		int error = GetLastError();
 		char *message;
@@ -138,12 +131,10 @@ void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			(LPTSTR) &message,
 			0, NULL );
-		
-		fprintf(stderr, "Finding symbol '%s' in '%s' failed! (code '%x')\n"
-				"Error message: %s",
-				symbol, module->name, error, message);
-	}
 
+		xavaBail("Finding symbol '%s' in '%s' failed! Code %x\n"
+				"Message: %s", symbol, module->name, error, message);
+	}
 
 	return addr;
 }
