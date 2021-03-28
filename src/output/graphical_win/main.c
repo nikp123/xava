@@ -321,7 +321,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
 		p->col = fancyVariable;
-		xavaWarnCondition(!SUCCEDED(error), "DwmGetColorizationColor failed");
+		xavaWarnCondition(!SUCCEEDED(error), "DwmGetColorizationColor failed");
 	} // as for the other case, we don't have to do any more processing
 
 	if(!strcmp(p->bcolor, "default")) {
@@ -330,7 +330,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 		DWORD fancyVariable;
 		HRESULT error = DwmGetColorizationColor(&fancyVariable, &opaque);
 		p->bgcol = fancyVariable;
-		xavaWarnCondition(!SUCCEDED(error), "DwmGetColorizationColor failed");
+		xavaWarnCondition(!SUCCEEDED(error), "DwmGetColorizationColor failed");
 	}
 
 	// parse all of the values

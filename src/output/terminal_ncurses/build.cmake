@@ -6,7 +6,8 @@ if(NCURSES)
 	pkg_check_modules(NCURSES QUIET ncurses)
 	if(NCURSES_FOUND)
 		add_library(out_ncurses SHARED 
-			"${XAVA_MODULE_DIR}/main.c")
+			"${XAVA_MODULE_DIR}/main.c"
+			"${GLOBAL_FUNCTION_SOURCES}")
 		target_link_libraries(out_ncurses "${NCURSES_LIBRARIES}" iniparser)
 		target_include_directories(out_ncurses PRIVATE "${NCURSES_INCLUDE_DIRS}")
 		target_link_directories(out_ncurses PRIVATE "${NCURSES_LIBRARY_DIRS}")

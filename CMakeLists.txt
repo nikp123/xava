@@ -16,12 +16,20 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+set(BUILD_FLAGS "-D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+set(GLOBAL_FUNCTION_SOURCES "")
+
 if(MINGW)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
 	add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
+
+	# Statically link dynamic functions because PE limitations
+	list(APPEND GLOBAL_FUNCTION_SOURCES "src/log.c")
+	list(APPEND GLOBAL_FUNCTION_SOURCES "src/shared.c")
+else()
+	set(BUILD_FLAGS "${BUILD_FLAGS} -Wl,--export-dynamic")
 endif()
 
-set(BUILD_FLAGS "-D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"' -Wl,--export-dynamic")
 
 set(CMAKE_C_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
@@ -78,7 +86,7 @@ endif()
 # math lib
 find_library(MATH_LIB m HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 if(NOT MATH_LIB)
-  message(FATAL_ERROR "math library not found")
+	message(FATAL_ERROR "math library not found")
 endif()
 
 # pthread
