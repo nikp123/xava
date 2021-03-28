@@ -8,7 +8,10 @@
 #include <functiondiscoverykeys_devpkey.h>
 
 #include "main.h"
-#include "../../shared.h"
+
+extern "C" {
+	#include "../../shared.h"
+}
 
 // This variable is read by the main executable
 const char XAVA_DEFAULT_AUDIO_SORUCE[] = "loopback";
@@ -65,7 +68,9 @@ HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
 #define REFTIMES_PER_SEC  10000000
 #define REFTIMES_PER_MILLISEC  10000
 
-EXP_FUNC external void* xavaInput(void *audiodata) {
+extern "C" {
+
+EXP_FUNC void* xavaInput(void *audiodata) {
 	HRESULT hr;
 	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
 	UINT32 bufferFrameCount;
@@ -177,7 +182,7 @@ EXP_FUNC external void* xavaInput(void *audiodata) {
 }
 
 
-EXP_FUNC external void xavaInputHandleConfiguration(void *data1, void *data2) {
+EXP_FUNC void xavaInputHandleConfiguration(void *data1, void *data2) {
 	dictionary *ini = (dictionary*)data1;
 	struct audio_data *audio = (struct audio_data*)data2;
 
@@ -185,3 +190,4 @@ EXP_FUNC external void xavaInputHandleConfiguration(void *data1, void *data2) {
 	audio->source = (char *)iniparser_getstring(ini, "input:source", "loopback");
 }
 
+}

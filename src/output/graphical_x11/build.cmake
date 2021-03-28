@@ -8,7 +8,8 @@ if(X11)
 		if(X11_FOUND)
 			add_definitions(-DXLIB)
 			add_library(out_x11 SHARED "${XAVA_MODULE_DIR}/main.c"
-											"src/output/graphical.c")
+										"src/output/graphical.c"
+										"${GLOBAL_FUNCTION_SOURCES}")
 			target_link_directories(out_x11 PRIVATE "${X11_INCLUDE_DIR}"
 				"${X11_Xfixes_INCLUDE_PATH}" "${X11_Xrandr_INCLUDE_PATH}" )
 			target_include_directories(out_x11 PRIVATE "${X11_INCLUDE_DIR}"
@@ -25,7 +26,8 @@ if(X11)
 		if(X11_FOUND)
 			add_definitions(-DXLIB)
 			add_library(out_x11 SHARED "${XAVA_MODULE_DIR}/main.c"
-											"src/output/graphical.c")
+											"src/output/graphical.c"
+											"${GLOBAL_FUNCTION_SOURCES}")
 			target_link_directories(out_x11 PRIVATE "${X11_LIBRARY_DIRS}")
 			target_include_directories(out_x11 PRIVATE "${X11_INCLUDE_DIRS}")
 			target_link_libraries(out_x11 "${X11_LIBRARIES}" iniparser)
@@ -35,7 +37,8 @@ if(X11)
 			pkg_check_modules(GL QUIET gl xrender)
 			if(GL_FOUND)
 				add_library(out_glx SHARED "${XAVA_MODULE_DIR}/main.c"
-											   "src/output/graphical.c")
+											"src/output/graphical.c"
+											"${GLOBAL_FUNCTION_SOURCES}")
 				target_link_directories(out_glx PRIVATE 
 					"${GL_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
 				target_include_directories(out_glx PRIVATE 
