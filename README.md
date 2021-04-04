@@ -51,7 +51,7 @@ What it is
 ----------
 
 X.A.V.A. is a bar spectrum audio visualizer in a graphical window
- (X11, WINAPI, SDL2).
+ (X11, Wayland (wlroots), WINAPI, SDL2).
 
 This program is not intended for scientific use. It's written
  to look responsive and aesthetic when used to visualize music. 
@@ -72,25 +72,25 @@ All the requirements can be installed easily in all major distros:
 
 Debian/Raspbian:
 
-    apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake git
+    apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake git wayland-protocols
 
 On Ubuntu 20.04+:
 
-    apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio2 cmake git
+    apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio2 cmake git wayland-protocols
 
 Meanwhile on previous Ubuntu releases swap ``libportaudio2`` with ``libportaudio-dev``
 
 ArchLinux:
 
-    pacman -S base-devel fftw alsa-lib iniparser pulseaudio libx11 sdl2 portaudio cmake git
+    pacman -S base-devel fftw alsa-lib iniparser pulseaudio libx11 sdl2 portaudio cmake git wayland-protocols
 
 openSUSE:
 
-    zypper install alsa-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake git
+    zypper install alsa-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake git wayland-protocols
 
 Fedora:
 
-    dnf install alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake git
+    dnf install alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake git wayland-protocols
 
 MSYS2 (Windows):
 
@@ -429,7 +429,7 @@ have been amplified while 5 is being lowered.
 
 ### Output modes
 
-XAVA supports outputing as `x11`, `sdl2` and `win`. You can change the output
+XAVA supports outputing as `x11`, `glx`, `wayland`, `sdl2` and `win`. You can change the output
 mode in the ``[general]`` section of the config file, provided that the 
 feature was actaully built in.
 
