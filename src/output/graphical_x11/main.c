@@ -170,6 +170,9 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	xavaXScreenResources = XRRGetScreenResources(xavaXDisplay, 
 		DefaultRootWindow(xavaXDisplay));
 	char *screenname = NULL; // potential bugfix if X server has no displays
+
+	xavaSpam("Number of detected screens: %d", xavaXScreenResources->noutput);
+
 	for(int i = 0; i < xavaXScreenResources->noutput; i++) {
 		int screenwidth, screenheight, screenx, screeny;
 
@@ -177,6 +180,11 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 			xavaXScreenResources->outputs[i]);
 
 		if(xavaXOutputInfo->connection != SCREEN_CONNECTED)
+			continue;
+
+		// If the current mode is above the number of modes supported, that means
+		// that THAT display is actually just disabled, so we ignore it
+		if(xavaXScreenResources->ncrtc > xavaXOutputInfo->ncrtc)
 			continue;
 
 		xavaXCrtcInfo = XRRGetCrtcInfo(xavaXDisplay, xavaXScreenResources,
