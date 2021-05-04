@@ -26,12 +26,6 @@
 #include <pthread.h>
 #include <dirent.h>
 
-#ifdef INIPARSER
-	#include "../lib/iniparser/src/iniparser.h"
-#else
-	#include <iniparser.h>
-#endif
-
 #if defined(__linux__)||defined(WIN)
 	#include "misc/inode_watcher.h"
 #endif
@@ -63,6 +57,7 @@ static XG_EVENT (*xavaOutputHandleInput)         (struct XAVA_HANDLE*);
 static void     (*xavaOutputDraw)                (struct XAVA_HANDLE*);
 static void     (*xavaOutputCleanup)             (struct XAVA_HANDLE*);
 
+static void     (*xavaFilterHandleConfiguration) (struct XAVA_HANDLE*, void*);
 static int      (*xavaFilterInit)                (struct XAVA_HANDLE*);
 static int      (*xavaFilterApply)               (struct XAVA_HANDLE*);
 static int      (*xavaFilterLoop)                (struct XAVA_HANDLE*);
@@ -106,7 +101,6 @@ void cleanup(void) {
 
 	// clean up XAVA internal variables
 	free(audio->source);
-	free(p->smooth);
 
 	// cleanup remaining FFT buffers (abusing C here)
 	switch(audio->channels) {
@@ -232,12 +226,16 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		xavaFilterApply               = get_symbol_address(p->filterModule, "xavaFilterApply");
 		xavaFilterLoop                = get_symbol_address(p->filterModule, "xavaFilterLoop");
 		xavaFilterCleanup             = get_symbol_address(p->filterModule, "xavaFilterCleanup");
+		xavaFilterHandleConfiguration = get_symbol_address(p->filterModule, "xavaFilterHandleConfiguration");
 
 		// load input config
 		xavaInputHandleConfiguration((void*)get_config_pointer(), (void*)audio);
 
 		// load output config
 		xavaOutputHandleConfiguration(&xava, (void*)get_config_pointer());
+
+		// load filter config
+		xavaFilterHandleConfiguration(&xava, (void*)get_config_pointer());
 
 		audio->inputsize = p->inputsize;
 		audio->fftsize   = p->fftsize;
@@ -258,8 +256,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		// thr_id = below
 		pthread_create(&p_thread, NULL, xavaInput, (void*)audio);
-		xavaBailCondition(p->highcf > audio->rate / 2,
-				"Higher cutoff cannot be higher than the sample rate / 2");
 
 		bool reloadConf = false;
 

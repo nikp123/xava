@@ -15,16 +15,13 @@
 // are exposed as symbols within the final library/obj files
 #define EXP_FUNC __attribute__ ((visibility ("default")))
 
-static float *fc = NULL, *fre, *fpeak, *k;
+// i wont even bother deciphering this mess
+static float *fc, *fre, *fpeak, *k, g;
 static int *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;
-
-double smh = 0.0;
-
-float g;
-
-int calcbars;
-
-static double *peak;
+static double* smooth, gravity, integral, eqBalance, logScale, ignore;
+static double monstercat, *peak, smh;
+static bool oddoneout;
+static uint32_t smcount, highcf, lowcf, waves, overshoot, calcbars;
 
 static fftw_plan pl, pr;
 fftw_complex *outl, *outr;
@@ -103,6 +100,9 @@ EXP_FUNC int xavaFilterInit(struct XAVA_HANDLE *hand) {
 		pr = fftw_plan_dft_r2c_1d(audio->fftsize, audio->audio_out_r, outr, FFTW_MEASURE);
 	}
 
+	xavaBailCondition(highcf > audio->rate / 2,
+			"Higher cutoff cannot be higher than the sample rate / 2");
+
 	fc = malloc(sizeof(float)*hand->bars+1);
 	fre = malloc(sizeof(float)*hand->bars+1);
 	fpeak = malloc(sizeof(float)*hand->bars+1);
@@ -143,7 +143,7 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
 	temp = realloc(peak,sizeof(double)*(hand->bars+1)+1);assert(temp);peak=temp;
 
 	// oddoneout only works if the number of bars is odd, go figure
-	if(p->oddoneout) {
+	if(oddoneout) {
 		if (!(hand->bars%2))
 			hand->bars--;
 	}
@@ -176,7 +176,7 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
 		lastSens = p->sens;
 
 	// process [smoothing]: calculate gravity
-	g = p->gravity * ((float)(p->h-1) / 2160) * (60 / (float)p->framerate);
+	g = gravity * ((float)(p->h-1) / 2160) * (60 / (float)p->framerate);
 
 	// checks if there is stil extra room, will use this to center
 	hand->rest = (p->w - hand->bars * p->bw - hand->bars * p->bs + p->bs) / 2;
@@ -188,22 +188,22 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
 
 	if (p->stereo) hand->bars = hand->bars / 2; // in stereo onle half number of bars per channel
 
-	if ((p->smcount > 0) && (hand->bars > 0)) {
-		smh = (double)(((double)p->smcount)/((double)hand->bars));
+	if ((smcount > 0) && (hand->bars > 0)) {
+		smh = (double)(((double)smcount)/((double)hand->bars));
 	}
 
 	// since oddoneout requires every odd bar, why not split them in half?
-	calcbars = p->oddoneout ? hand->bars/2+1 : hand->bars;
+	calcbars = oddoneout ? hand->bars/2+1 : hand->bars;
 
 	// frequency constant that we'll use for logarithmic progression of frequencies
-	double freqconst = log(p->highcf-p->lowcf)/log(pow(calcbars, p->logScale));
+	double freqconst = log(highcf-lowcf)/log(pow(calcbars, logScale));
 	//freqconst = -2;
 
 	// process: calculate cutoff frequencies
 	int n;
 	for (n=0; n < calcbars; n++) {
-		fc[n] = pow(powf(n, (p->logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0),
-						 freqconst)+p->lowcf;
+		fc[n] = pow(powf(n, (logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0),
+						 freqconst)+lowcf;
 		fre[n] = fc[n] / (audio->rate / 2.0); 
 		// Remember nyquist!, pr my calculations this should be rate/2 
 		// and  nyquist freq in M/2 but testing shows it is not... 
@@ -226,13 +226,13 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
 				n, fc[n - 1], fc[n], lcf[n - 1], hcf[n - 1]);
 		}
 	}
-	hcf[n-1] = p->highcf*audio->fftsize/audio->rate;
+	hcf[n-1] = highcf*audio->fftsize/audio->rate;
 
 	// process: weigh signal to frequencies height and EQ
 	for (n = 0; n < calcbars; n++) {
-		k[n] = pow(fc[n], p->eqBalance);
+		k[n] = pow(fc[n], eqBalance);
 		k[n] *= (float)(p->h-1) / 100;
-		k[n] *= p->smooth[(int)floor(((double)n) * smh)];
+		k[n] *= smooth[(int)floor(((double)n) * smh)];
 	}
 
 	if (p->stereo)
@@ -249,14 +249,14 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
 		fftw_execute(pl);
 		fftw_execute(pr);
 
-		separate_freq_bands(outl, calcbars, 1, p->sens, p->ignore, audio->fftsize);
-		separate_freq_bands(outr, calcbars, 2, p->sens, p->ignore, audio->fftsize);
+		separate_freq_bands(outl, calcbars, 1, p->sens, ignore, audio->fftsize);
+		separate_freq_bands(outr, calcbars, 2, p->sens, ignore, audio->fftsize);
 	} else {
 		fftw_execute(pl);
-		separate_freq_bands(outl, calcbars, 1, p->sens, p->ignore, audio->fftsize);
+		separate_freq_bands(outl, calcbars, 1, p->sens, ignore, audio->fftsize);
 	}
 
-	if(p->oddoneout) {
+	if(oddoneout) {
 		for(int i=hand->bars/2; i>0; i--) {
 			fl[i*2-1+hand->bars%2]=fl[i];
 			fl[i]=0;
@@ -264,12 +264,12 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
 	}
 
 	// process [smoothing]
-	if (p->monstercat) {
+	if (monstercat) {
 		if (p->stereo) {
-			monstercat_filter(hand->bars / 2, p->waves, p->monstercat, fl);
-			monstercat_filter(hand->bars / 2, p->waves, p->monstercat, fr);
+			monstercat_filter(hand->bars / 2, waves, monstercat, fl);
+			monstercat_filter(hand->bars / 2, waves, monstercat, fr);
 		} else {
-			monstercat_filter(calcbars, p->waves, p->monstercat, fl);
+			monstercat_filter(calcbars, waves, monstercat, fl);
 		}
 	}
 
@@ -302,9 +302,9 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
 	}
 
 	// process [smoothing]: integral
-	if (p->integral > 0) {
+	if (integral > 0) {
 		for (i=0; i<hand->bars; i++) {
-			f[i] = fmem[i] * p->integral + f[i];
+			f[i] = fmem[i] * integral + f[i];
 			fmem[i] = f[i];
 
 			int diff = p->h - f[i]; 
@@ -316,7 +316,7 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
 	}
 
 	// process [oddoneout]
-	if(p->oddoneout) {
+	if(oddoneout) {
 		for(i=1; i<hand->bars-1; i+=2) {
 			f[i] = f[i+1]/2 + f[i-1]/2;
 		}
@@ -352,6 +352,10 @@ EXP_FUNC void xavaFilterCleanup(struct XAVA_HANDLE *hand) {
 	fftw_destroy_plan(pr);
 	fftw_cleanup();
 
+	free(smooth);
+
+	// honestly even I don't know what these mean
+	// but for the meantime, they are moved here and I won't touch 'em
 	free(fc);
 	free(fre);
 	free(fpeak);
@@ -366,6 +370,71 @@ EXP_FUNC void xavaFilterCleanup(struct XAVA_HANDLE *hand) {
 	free(fl);
 	free(fr);
 	free(peak);
-	fc = NULL;
 }
 
+EXP_FUNC void xavaFilterHandleConfiguration(struct XAVA_HANDLE *hand, void *dictHand) {
+	dictionary *ini = dictHand;
+
+	struct config_params *p = &hand->conf;
+
+	p->sens =      iniparser_getdouble(ini, "filter:sensitivity", 100.0) *
+		XAVA_PREDEFINED_SENS_VALUE; // check shared.h for details
+	p->autosens = iniparser_getboolean(ini, "filter:autosens", 1);
+	overshoot =       iniparser_getint(ini, "filter:overshoot", 0);
+	lowcf =           iniparser_getint(ini, "filter:lower_cutoff_freq", 26);
+	highcf =          iniparser_getint(ini, "filter:higher_cutoff_freq", 15000);
+
+	monstercat = iniparser_getdouble(ini, "filter:monstercat", 0.0) * 1.5;
+	waves =         iniparser_getint(ini, "filter:waves", 0);
+	integral =   iniparser_getdouble(ini, "filter:integral", 85);
+	gravity =    iniparser_getdouble(ini, "filter:gravity", 100) * 50.0;
+	ignore =     iniparser_getdouble(ini, "filter:ignore", 0);
+	logScale =   iniparser_getdouble(ini, "filter:log", 1.55);
+	oddoneout = iniparser_getboolean(ini, "filter:oddoneout", 1);
+	eqBalance =  iniparser_getdouble(ini, "filter:eq_balance", 0.67);
+
+	// read & validate: eq
+	smcount = iniparser_getsecnkeys(ini, "eq");
+	if (smcount > 0) {
+		smooth = malloc(smcount*sizeof(double));
+		#ifndef LEGACYINIPARSER
+		const char *keys[smcount];
+		iniparser_getseckeys(ini, "eq", keys);
+		#else
+		char **keys = iniparser_getseckeys(ini, "eq");
+		#endif
+		for (int sk = 0; sk < smcount; sk++) {
+			smooth[sk] = iniparser_getdouble(ini, keys[sk], 1);
+		}
+	} else {
+		smcount = 64; //back to the default one
+		smooth = malloc(smcount*sizeof(double));
+		for(int i=0; i<64; i++) smooth[i]=1.0f;
+	}
+
+	// validate: gravity
+	gravity = gravity / 100;
+	if (gravity < 0) {
+		xavaWarn("Gravity cannot be below 0");
+		gravity = 0;
+	} 
+
+	// validate: oddoneout
+	xavaBailCondition((p->stereo&&oddoneout), 
+			"'oddoneout' and stereo channels do not work together!"); 
+
+	// validate: integral
+	integral = integral / 100;
+	if (integral < 0) {
+		xavaWarn("Integral cannot be below 0");
+		integral = 0;
+	} else if (integral > 1) {
+		xavaWarn("Integral cannot be above 100");
+		integral = 1;
+	}
+
+	// validate: cutoff
+	if (lowcf == 0 ) lowcf++;
+	xavaBailCondition(lowcf > highcf,
+			"Lower frequency cutoff cannot be higher than the higher cutoff\n");
+}

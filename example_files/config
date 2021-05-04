@@ -27,12 +27,6 @@
 ; bar_width = 13
 ; bar_spacing = 5
 
-# Lower and higher cutoff frequencies for lowest and highest bars
-# the bandwidth of the visualizer.
-# XAVA will automatically increase the higher cutoff if a too low band is specified.
-; lower_cutoff_freq = 26
-; higher_cutoff_freq = 15000
-
 
 [window]
 
@@ -175,6 +169,9 @@
 ; method = wasapi
 ; source = loopback
 
+# Adjusts the input buffer size (in samples, calculated by 2^input_size)
+; size = 12
+
 
 [output]
 
@@ -218,8 +215,23 @@
 ; gradient_color_2 = '#ff3399'
 
 
+[shadow]
 
-[smoothing]
+# Fake shadow effect (works with transparency only)
+# To disable shadows, set size to 0
+; size = 7
+
+# Color format is #aarrggbb
+; color = "#ff000000"
+
+
+[filter]
+
+# Lower and higher cutoff frequencies for lowest and highest bars
+# the bandwidth of the visualizer.
+# XAVA will automatically increase the higher cutoff if a too low band is specified.
+; lower_cutoff_freq = 26
+; higher_cutoff_freq = 15000
 
 # Percentage value for integral smoothing. Takes values from 0 - 100.
 # Higher values means smoother, but less precise. 0 to disable.
@@ -247,21 +259,8 @@
 # lower value->lower frequencies, higher value->higher frequencies
 ; eq_balance = 0.67
 
-# Adjusts the input buffer size (in samples, calculated by 2^input_size)
-; input_size = 12
-
 # Adjusts the FFT buffer size (calculated by 2^fft_size)
 ; fft_size = 14
-
-
-[shadow]
-
-# Fake shadow effect (works with transparency only)
-# To disable shadows, set size to 0
-; size = 7
-
-# Color format is #aarrggbb
-; color = "#ff000000"
 
 
 [eq]

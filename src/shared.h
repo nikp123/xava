@@ -78,13 +78,11 @@ struct audio_data {
 // configuration parameters
 struct config_params {
 	// for internal use only
-	double monstercat, integral, gravity, ignore, sens, logScale, logBegin, logEnd,
- eqBalance; 
-	double* smooth;
-	uint32_t lowcf, highcf, fftsize;
-	int32_t smcount, overshoot, fixedbars, waves;
-	bool autobars, stereo, autosens, oddoneout; 
+	double sens; 
+	int32_t fixedbars;
+	bool autobars, stereo, autosens; 
 	XAVAMODULE *inputModule, *outputModule, *filterModule;
+	uint32_t fftsize;
 
 	// input/output related options
 

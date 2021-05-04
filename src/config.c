@@ -148,32 +148,6 @@ void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
 	xavaBailCondition((p->background_opacity > 1.0 || p->background_opacity < 0.0),
 			"'background_opacity' must be in range of 0.0 to 1.0");
 
-	// validate: gravity
-	p->gravity = p->gravity / 100;
-	if (p->gravity < 0) {
-		xavaWarn("Gravity cannot be below 0");
-		p->gravity = 0;
-	} 
-
-	// validate: oddoneout
-	xavaBailCondition((p->stereo&&p->oddoneout), 
-			"'oddoneout' and stereo channels do not work together!"); 
-
-	// validate: integral
-	p->integral = p->integral / 100;
-	if (p->integral < 0) {
-		xavaWarn("Integral cannot be below 0");
-		p->integral = 0;
-	} else if (p->integral > 1) {
-		xavaWarn("Integral cannot be above 100");
-		p->integral = 1;
-	}
-
-	// validate: cutoff
-	if (p->lowcf == 0 ) p->lowcf++;
-	xavaBailCondition(p->lowcf > p->highcf,
-			"Lower frequency cutoff cannot be higher than the higher cutoff\n");
-
 	// validate: window settings
 	// validate: alignment
 	_Bool foundAlignment = 0;
@@ -262,22 +236,14 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 
 	// config: parse ini
 	ini = iniparser_load(configPath);
+
+	// config: input
 	inputMethod = (char *)iniparser_getstring(ini, "input:method", XAVA_DEFAULT_INPUT);
+	p->inputsize = (int)exp2((float)iniparser_getint(ini, "input:size", 12));
 
 	// config: output
 	outputMethod = (char *)iniparser_getstring(ini, "output:method", XAVA_DEFAULT_OUTPUT);
 	channels =  (char *)iniparser_getstring(ini, "output:channels", "mono");
-
-	p->inputsize = (int)exp2((float)iniparser_getint(ini, "smoothing:input_size", 12));
-	p->fftsize = (int)exp2((float)iniparser_getint(ini, "smoothing:fft_size", 14));
-	p->monstercat = 1.5 * iniparser_getdouble(ini, "smoothing:monstercat", 0.0);
-	p->waves = iniparser_getint(ini, "smoothing:waves", 0);
-	p->integral = iniparser_getdouble(ini, "smoothing:integral", 85);
-	p->gravity = 50.0 * iniparser_getdouble(ini, "smoothing:gravity", 100);
-	p->ignore = iniparser_getdouble(ini, "smoothing:ignore", 0);
-	p->logScale = iniparser_getdouble(ini, "smoothing:log", 1.55);
-	p->oddoneout = iniparser_getboolean(ini, "smoothing:oddoneout", 1);
-	p->eqBalance = iniparser_getdouble(ini, "smoothing:eq_balance", 0.67);
 
 	p->color = (char *)iniparser_getstring(ini, "color:foreground", "default");
 	p->bcolor = (char *)iniparser_getstring(ini, "color:background", "default");
@@ -302,19 +268,11 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	}
 
 	// config: default
-	filterMethod = (char *)iniparser_getstring(ini, "default:filter", XAVA_DEFAULT_FILTER);
-
 	p->fixedbars = iniparser_getint(ini, "general:bars", 0);
 	p->bw = iniparser_getint(ini, "general:bar_width", 13);
 	p->bs = iniparser_getint(ini, "general:bar_spacing", 5);
 	p->framerate = iniparser_getint(ini, "general:framerate", 60);
 	p->vsync = iniparser_getboolean(ini, "general:vsync", 1);
-	p->sens = iniparser_getdouble(ini, "general:sensitivity", 100.0) *
-		XAVA_PREDEFINED_SENS_VALUE; // check shared.h for details
-	p->autosens = iniparser_getboolean(ini, "general:autosens", 1);
-	p->overshoot = iniparser_getint(ini, "general:overshoot", 0);
-	p->lowcf = iniparser_getint(ini, "general:lower_cutoff_freq", 26);
-	p->highcf = iniparser_getint(ini, "general:higher_cutoff_freq", 15000);
 
 	// config: window
 	p->w = iniparser_getint(ini, "window:width", 1180);
@@ -336,26 +294,10 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	p->shdw = iniparser_getint(ini, "shadow:size", 7);
 	p->shadow_color = (char *)iniparser_getstring(ini, "shadow:color", "#ff000000");
 
-	// read & validate: eq
-	p->smcount = iniparser_getsecnkeys(ini, "eq");
-	if (p->smcount > 0) {
-		p->smooth = malloc(p->smcount*sizeof(double));
-		#ifndef LEGACYINIPARSER
-		const char *keys[p->smcount];
-		iniparser_getseckeys(ini, "eq", keys);
-		#else
-		char **keys = iniparser_getseckeys(ini, "eq");
-		#endif
-		for (int sk = 0; sk < p->smcount; sk++) {
-			p->smooth[sk] = iniparser_getdouble(ini, keys[sk], 1);
-		}
-	} else {
-		p->smcount = 64; //back to the default one
-		p->smooth = malloc(p->smcount*sizeof(double));
-		for(int i=0; i<64; i++) p->smooth[i]=1.0f;
-	}
+	// config: filter
+	filterMethod = (char *)iniparser_getstring(ini, "filter:name", XAVA_DEFAULT_FILTER);
+	p->fftsize = (int)exp2((float)iniparser_getint(ini, "filter:fft_size", 14));
 
-	// config: input
 	validate_config(hand, ini);
 
 	#if defined(__linux__)||defined(__WIN32__)
