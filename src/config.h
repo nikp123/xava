@@ -7,6 +7,9 @@
 	#ifndef XAVA_DEFAULT_OUTPUT
 		#define XAVA_DEFAULT_OUTPUT "x11"
 	#endif
+	#ifndef XAVA_DEFAULT_FILTER
+		#define XAVA_DEFAULT_FILTER "default"
+	#endif
 
 	#include "shared.h"
 

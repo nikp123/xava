@@ -20,7 +20,7 @@ static const char *colorStrings[8] = {"black", "red", "green", "yellow",
 
 static dictionary* ini;
 
-static char *inputMethod, *outputMethod, *channels;
+static char *inputMethod, *outputMethod, *filterMethod, *channels;
 
 int validate_color(char *checkColor)
 {
@@ -89,7 +89,13 @@ void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
 	p->outputModule = load_output_module(outputMethod);
 	xavaBailCondition(!is_module_valid(p->outputModule),
 			"Output method '%s' could not load.\nReason: %s",
-			inputMethod, get_module_error(p->outputModule));
+			outputMethod, get_module_error(p->outputModule));
+
+	// validate: filter method
+	p->filterModule = load_filter_module(filterMethod);
+	xavaBailCondition(!is_module_valid(p->filterModule),
+			"Filter method '%s' could not load.\nReason: %s",
+			filterMethod, get_module_error(p->outputModule));
 
 	// validate: output channels
 	int stereo = -1;
@@ -294,6 +300,9 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 					"'gradient_color_%d' is not specified!\n", i+1);
 		}
 	}
+
+	// config: default
+	filterMethod = (char *)iniparser_getstring(ini, "default:filter", XAVA_DEFAULT_FILTER);
 
 	p->fixedbars = iniparser_getint(ini, "general:bars", 0);
 	p->bw = iniparser_getint(ini, "general:bar_width", 13);

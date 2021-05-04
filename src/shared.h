@@ -84,7 +84,7 @@ struct config_params {
 	uint32_t lowcf, highcf, fftsize;
 	int32_t smcount, overshoot, fixedbars, waves;
 	bool autobars, stereo, autosens, oddoneout; 
-	XAVAMODULE *inputModule, *outputModule;
+	XAVAMODULE *inputModule, *outputModule, *filterModule;
 
 	// input/output related options
 

@@ -93,11 +93,6 @@ if(NOT THREAD_LIB)
 	message(FATAL_ERROR "pthread library not found")
 endif()
 
-# fftw3
-pkg_check_modules(FFTW3 REQUIRED fftw3)
-list(APPEND INCLUDE_DIRS "${FFTW3_INCLUDE_DIRS}")
-list(APPEND LINK_DIRS "${FFTW3_LIBRARY_DIRS}")
-
 # Optional features
 set(ADDITIONAL_SOURCES "")
 set(ADDITIONAL_LIBRARIES "")
@@ -120,6 +115,13 @@ if(UNIX)
 	list(APPEND ADDITIONAL_LIBRARIES "dl")
 endif()
 
+# Build filter modules
+file(GLOB filters "src/filters/*/build.cmake" )
+foreach(dir ${filters})
+	get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
+	include(${dir})
+endforeach()
+
 # Build output modules
 file(GLOB outputs "src/output/*/build.cmake" )
 foreach(dir ${outputs})
@@ -128,8 +130,8 @@ foreach(dir ${outputs})
 endforeach()
 
 # Build input modules
-file(GLOB outputs "src/input/*/build.cmake" )
-foreach(dir ${outputs})
+file(GLOB inputs "src/input/*/build.cmake" )
+foreach(dir ${inputs})
 	get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
 	include(${dir})
 endforeach()
@@ -149,7 +151,7 @@ include_directories(${INCLUDE_DIRS})
 link_directories(${LINK_DIRS})
 
 # Link executable
-target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m ${FFTW3_LIBRARIES} pthread iniparser)
+target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m pthread iniparser)
 
 # Install
 install (TARGETS xava DESTINATION bin)
