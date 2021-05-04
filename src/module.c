@@ -124,12 +124,50 @@ void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 }
 
 XAVAMODULE *load_module(char *name) {
-	char *new_name = malloc(strlen(name)+strlen(LIBRARY_EXTENSION));
+
+	// hacker prevention system 9000
+	for(int i=0; i<strlen(name); i++) {
+		// Disallow directory injections
+		if(name[i] == '\\') return NULL;
+	}
+
+	char *new_name = malloc(strlen(name)+strlen(LIBRARY_EXTENSION)+1);
 	sprintf(new_name, "%s%s", name, LIBRARY_EXTENSION);
+
 	XAVAMODULE *module = malloc(sizeof(XAVAMODULE));
 	module->name = new_name;
 	module->moduleHandle = LoadLibrary(new_name);
-	return module;
+
+	if(module->moduleHandle) // if loading is done, we are successful
+		return module;
+
+	// Windows uses widechars internally
+	WCHAR wpath[MAX_PATH];
+	char *path = malloc(MAX_PATH);
+
+	// Get path of where the executable is installed
+	HMODULE hModule = GetModuleHandleW(NULL);
+	GetModuleFileNameW(hModule, wpath, MAX_PATH);
+	wcstombs(path, wpath, MAX_PATH);
+
+	// remove program filename from the path
+	for(int i=strlen(path)-1; i>0; i--) {
+		if(path[i-1] == '\\') {
+			path[i] = '\0';
+			break;
+		}
+	}
+
+	// append new filename to path
+	strcat(path, new_name);
+
+	// try again
+	module->moduleHandle = LoadLibrary(new_name);
+
+	// cleanup
+	free(path);
+
+	return module; // if it failed XAVA would know (no error checks needed)
 }
 
 void destroy_module(XAVAMODULE *module) {
