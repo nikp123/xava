@@ -379,6 +379,11 @@ Exit by pressing Q, ESC or by closing the window ;)
 Configuration
 -------------
 
+Important note:
+
+    Starting from 0.7.0.0, the configuration layout has been SIGNIFICANTLY CHANGED. Please check
+    ``examples_files/config`` before filing a bug. This has been done to ease further development.
+
 If you're running Windows and you used the installer, you'll find a ``Configure XAVA`` shortcut
 in your Start Menu.
 
