@@ -343,14 +343,14 @@ Latency notes
 
 If you see latency issues, ie. visualizer not reacting on time,
  try turning off demanding graphical effects and/or shrinking the window,
- or just lower the ``fft_size`` and ``input_size`` (as increasing capture
- time creates a delay).
+ or just lower the ``fft_size`` and ``size`` (within ``[input]``), as
+ increasing capture time creates a delay.
 
 If your audio device has a huge buffer, you might experience that xava
  is actually ahead than the audio you hear. This reduces the experience
  of the visualization. To fix this, try decreasing the buffer settings
  in your audio playing software. Or in case of MPD, just quickly pause
- and resume playback (yes, this is a bug).
+ and resume playback (yes, this is a bug with MPD's pulse implementation).
 
 Usage
 -----
