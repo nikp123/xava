@@ -123,6 +123,15 @@ void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 	return addr;
 }
 
+XAVAMODULE *load_module(char *name) {
+	char *new_name = malloc(strlen(name)+strlen(LIBRARY_EXTENSION));
+	sprintf(new_name, "%s%s", name, LIBRARY_EXTENSION);
+	XAVAMODULE *module = malloc(sizeof(XAVAMODULE));
+	module->name = new_name;
+	module->moduleHandle = LoadLibrary(new_name);
+	return module;
+}
+
 void destroy_module(XAVAMODULE *module) {
 	FreeLibrary(module->moduleHandle);
 	free(module->name);
