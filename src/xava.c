@@ -148,8 +148,6 @@ int main(int argc, char **argv)
 
 	int sleep = 0;
 	int i, c, silence;
-	//int cont = 1;
-	//float temp;
 	char configPath[255];
 	char *usage = "\n\
 Usage : " PACKAGE " [options]\n\
@@ -173,8 +171,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	unsigned long oldTime = 0;
 
-	//int maxvalue = 0;
-
 	configPath[0] = '\0';
 
 	setlocale(LC_ALL, "C");
@@ -183,12 +179,12 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	// general: handle Ctrl+C
 	#if defined(__unix__)||defined(__APPLE__)
-	struct sigaction action;
-	memset(&action, 0, sizeof(action));
-	action.sa_handler = &sig_handler;
-	sigaction(SIGINT, &action, NULL);
-	sigaction(SIGTERM, &action, NULL);
-	sigaction(SIGUSR1, &action, NULL);
+		struct sigaction action;
+		memset(&action, 0, sizeof(action));
+		action.sa_handler = &sig_handler;
+		sigaction(SIGINT, &action, NULL);
+		sigaction(SIGTERM, &action, NULL);
+		sigaction(SIGUSR1, &action, NULL);
 	#endif
 
 	// general: handle command-line arguments
@@ -244,7 +240,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		xavaOutputHandleConfiguration(&xava, (void*)get_config_pointer());
 
 		audio->inputsize = p->inputsize;
-		audio->fftsize = p->fftsize;
+		audio->fftsize   = p->fftsize;
 		audio->audio_out_l = malloc(sizeof(double)*p->fftsize+1);
 		if(p->stereo) {
 			audio->audio_out_r = malloc(sizeof(double)*p->fftsize+1);
@@ -291,8 +287,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 			if (p->stereo) { // stereo must have even numbers of bars
 				if (xava.bars%2) xava.bars--;
-			} else if(p->oddoneout) { // and oddoneout needs to have odd number of bars
-				if (!(xava.bars%2)) xava.bars--;
 			}
 
 			xavaFilterApply(&xava);

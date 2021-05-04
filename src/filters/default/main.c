@@ -140,7 +140,13 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
 	temp = realloc(fall,sizeof(int)*hand->bars+1);assert(temp);fall=temp;
 	temp = realloc(fl,sizeof(int)*hand->bars+1);assert(temp);fl=temp;
 	temp = realloc(fr,sizeof(int)*hand->bars+1);assert(temp);fr=temp;
-	temp = malloc(sizeof(double)*(hand->bars+1)+1);assert(temp);peak=temp;
+	temp = realloc(peak,sizeof(double)*(hand->bars+1)+1);assert(temp);peak=temp;
+
+	// oddoneout only works if the number of bars is odd, go figure
+	if(p->oddoneout) {
+		if (!(hand->bars%2))
+			hand->bars--;
+	}
 
 	// update pointers for the main handle
 	hand->f  = f;
