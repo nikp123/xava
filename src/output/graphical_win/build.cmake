@@ -18,7 +18,7 @@ if(WINAPI)
 					add_library(out_win SHARED "${XAVA_MODULE_DIR}/main.c"
 						"src/output/graphical.c"
 						"${GLOBAL_FUNCTION_SOURCES}")
-					target_link_libraries(out_win "-lgdi32 -lwinmm -lopengl32 -lglu32 -ldwmapi" iniparser)
+					target_link_libraries(out_win xava-log "-lgdi32 -lwinmm -lopengl32 -lglu32 -ldwmapi" iniparser)
 					target_compile_definitions(out_win PUBLIC -DWIN -DGL)
 					set_target_properties(out_win PROPERTIES PREFIX "")
 				else()
@@ -32,13 +32,5 @@ if(WINAPI)
 		endif()
 	else()
 		message(STATUS "GDI library not found")
-	endif()
-
-	if(CMAKE_BUILD_TYPE STREQUAL "Release")
-		message(STATUS "Since release build, console is being disabled")
-		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -mwindows")
-
-		# Prepare NSI file for compilation
-		configure_file("assets/windows/xava.nsi.template" "xava.nsi" NEWLINE_STYLE CRLF)
 	endif()
 endif()

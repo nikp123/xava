@@ -10,7 +10,7 @@ if(SDL2)
 			"${XAVA_MODULE_DIR}/main.c"
 			"src/output/graphical.c"
 			"${GLOBAL_FUNCTION_SOURCES}")
-		target_link_libraries(out_sdl2 "${SDL2_LIBRARIES}" iniparser)
+		target_link_libraries(out_sdl2 xava-log "${SDL2_LIBRARIES}" iniparser)
 		target_include_directories(out_sdl2 PRIVATE "${SDL2_INCLUDE_DIRS}")
 		target_link_directories(out_sdl2 PRIVATE "${SDL2_LIBRARY_DIRS}")
 		set_target_properties(out_sdl2 PROPERTIES PREFIX "")

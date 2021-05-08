@@ -17,18 +17,6 @@ endif()
 set(BUILD_FLAGS "-D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 set(GLOBAL_FUNCTION_SOURCES "")
 
-if(MINGW)
-	set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
-	add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
-
-	# Statically link dynamic functions because PE limitations
-	list(APPEND GLOBAL_FUNCTION_SOURCES "src/log.c")
-	list(APPEND GLOBAL_FUNCTION_SOURCES "src/shared.c")
-else()
-	set(BUILD_FLAGS "${BUILD_FLAGS} -Wl,--export-dynamic")
-endif()
-
-
 set(CMAKE_C_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
@@ -48,6 +36,23 @@ set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PAT
 
 add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION}")
 add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
+
+if(MINGW)
+	set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
+	add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
+
+	if(CMAKE_BUILD_TYPE STREQUAL "Release")
+		message(STATUS "Since release build, console is being disabled")
+		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -mwindows")
+
+		# Prepare NSI file for compilation
+		configure_file("assets/windows/xava.nsi.template" "xava.nsi" NEWLINE_STYLE CRLF)
+	endif()
+else()
+	set(BUILD_FLAGS "${BUILD_FLAGS} -Wl,--export-dynamic")
+endif()
+
+
 
 find_package(PkgConfig REQUIRED)
 
@@ -136,6 +141,9 @@ foreach(dir ${inputs})
 	include(${dir})
 endforeach()
 
+# Build shared logging library
+add_library(xava-log SHARED "src/log.c")
+
 # Build executable
 add_executable(
 	xava
@@ -151,7 +159,7 @@ include_directories(${INCLUDE_DIRS})
 link_directories(${LINK_DIRS})
 
 # Link executable
-target_link_libraries(xava ${ADDITIONAL_LIBRARIES} m pthread iniparser)
+target_link_libraries(xava xava-log ${ADDITIONAL_LIBRARIES} m pthread iniparser)
 
 # Install
 install (TARGETS xava DESTINATION bin)

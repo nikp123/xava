@@ -8,7 +8,7 @@ if(ALSA)
 		add_definitions(-DALSA)
 		add_library(in_alsa SHARED "${XAVA_MODULE_DIR}/main.c"
 									"${GLOBAL_FUNCTION_SOURCES}")
-		target_link_libraries(in_alsa "${ALSA_LIBRARIES}" iniparser)
+		target_link_libraries(in_alsa xava-log "${ALSA_LIBRARIES}" iniparser)
 		target_include_directories(in_alsa PRIVATE "${ALSA_INCLUDE_DIRS}")
 		target_link_directories(in_alsa PRIVATE "${ALSA_LIBRARY_DIRS}")
 		set_target_properties(in_alsa PROPERTIES PREFIX "")

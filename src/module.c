@@ -14,6 +14,7 @@ void destroy_module(XAVAMODULE *module) {
 	dlclose(module->moduleHandle);
 	module->moduleHandle = 0;
 	free(module->name);
+	free(module);
 }
 
 XAVAMODULE *load_module(char *name) {
