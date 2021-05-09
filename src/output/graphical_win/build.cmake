@@ -18,7 +18,7 @@ if(WINAPI)
 					add_library(out_win SHARED "${XAVA_MODULE_DIR}/main.c"
 						"src/output/graphical.c"
 						"${GLOBAL_FUNCTION_SOURCES}")
-					target_link_libraries(out_win xava-log "-lgdi32 -lwinmm -lopengl32 -lglu32 -ldwmapi" iniparser)
+					target_link_libraries(out_win xava-shared "-lgdi32 -lwinmm -lopengl32 -lglu32 -ldwmapi" iniparser)
 					target_compile_definitions(out_win PUBLIC -DWIN -DGL)
 					set_target_properties(out_win PROPERTIES PREFIX "")
 				else()

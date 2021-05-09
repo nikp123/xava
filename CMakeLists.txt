@@ -141,8 +141,10 @@ foreach(dir ${inputs})
 	include(${dir})
 endforeach()
 
-# Build shared logging library
-add_library(xava-log SHARED "src/log.c")
+# Build xava shared library
+add_library(xava-shared SHARED
+	src/log.c
+	src/shared.c)
 
 # Build executable
 add_executable(
@@ -150,7 +152,6 @@ add_executable(
 	${ADDITIONAL_SOURCES}
 	src/log.c
 	src/module.c
-	src/shared.c
 	src/config.c
 	src/xava.c
 )
@@ -159,10 +160,11 @@ include_directories(${INCLUDE_DIRS})
 link_directories(${LINK_DIRS})
 
 # Link executable
-target_link_libraries(xava xava-log ${ADDITIONAL_LIBRARIES} m pthread iniparser)
+target_link_libraries(xava xava-shared ${ADDITIONAL_LIBRARIES} m pthread iniparser)
 
 # Install
 install (TARGETS xava DESTINATION bin)
+install (TARGETS xava-shared DESTINATION lib)
 install (FILES LICENSE DESTINATION share/licenses/xava)
 install (FILES example_files/config RENAME config.example DESTINATION share/xava)
 if(UNIX AND NOT APPLE)

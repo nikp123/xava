@@ -32,7 +32,7 @@
 	#define mkdir(dir) mkdir(dir)
 #endif
 
-int xavaMkdir(char *dir) {
+EXP_FUNC int xavaMkdir(char *dir) {
 	/* Stolen from: https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950 */
 	/* Adapted from http://stackoverflow.com/a/2336245/119527 */
 	const size_t len = strlen(dir);
@@ -70,7 +70,7 @@ int xavaMkdir(char *dir) {
 	return 0;
 }
 
-int xavaGetConfigDir(char *configPath) {
+EXP_FUNC int xavaGetConfigDir(char *configPath) {
 	#if defined(__unix__)
 		char *configHome = getenv("XDG_CONFIG_HOME");
 	#elif defined(__APPLE__)
@@ -101,7 +101,7 @@ int xavaGetConfigDir(char *configPath) {
 	return 0;
 }
 
-char *xavaGetInstallDir() {
+EXP_FUNC char *xavaGetInstallDir() {
 	#ifdef __WIN32__
 		// Windows uses widechars internally
 		WCHAR wpath[MAX_PATH];
@@ -125,7 +125,7 @@ char *xavaGetInstallDir() {
 	return path;
 }
 
-unsigned long xavaSleep(unsigned long oldTime, int framerate) {
+EXP_FUNC unsigned long xavaSleep(unsigned long oldTime, int framerate) {
 	unsigned long newTime = 0;
 	if(framerate) {
 	#ifdef WIN
@@ -196,13 +196,13 @@ EXP_FUNC void destroyXAVAEventStack(XG_EVENT_STACK *stack) {
 	free(stack);
 }
 
-EXP_FUNC _Bool pendingXAVAEventStack(XG_EVENT_STACK *stack) {
+EXP_FUNC bool pendingXAVAEventStack(XG_EVENT_STACK *stack) {
 	return (stack->pendingEvents > 0) ? true : false;
 }
 
 // used for blocking in case an processing an event at the wrong
 // time can cause disaster
-EXP_FUNC _Bool isEventPendingXAVA(XG_EVENT_STACK *stack, XG_EVENT event) {
+EXP_FUNC bool isEventPendingXAVA(XG_EVENT_STACK *stack, XG_EVENT event) {
 	for(int i = 0; i < stack->pendingEvents; i++) {
 		if(stack->events[i] == event) return true;
 	}

@@ -50,13 +50,13 @@ extern void            pushXAVAEventStack    (XG_EVENT_STACK *stack, XG_EVENT ev
 extern XG_EVENT        popXAVAEventStack     (XG_EVENT_STACK *stack);
 extern XG_EVENT_STACK *newXAVAEventStack     ();
 extern void            destroyXAVAEventStack (XG_EVENT_STACK *stack);
-extern _Bool           pendingXAVAEventStack (XG_EVENT_STACK *stack);
-extern _Bool           isEventPendingXAVA    (XG_EVENT_STACK *stack, XG_EVENT event);
+extern bool            pendingXAVAEventStack (XG_EVENT_STACK *stack);
+extern bool            isEventPendingXAVA    (XG_EVENT_STACK *stack, XG_EVENT event);
 
-int xavaMkdir(char *dir);
-int xavaGetConfigDir(char *configPath);
-char *xavaGetInstallDir(void);
-unsigned long xavaSleep(unsigned long oldTime, int framerate);
+extern int xavaMkdir(char *dir);
+extern int xavaGetConfigDir(char *configPath);
+extern char *xavaGetInstallDir(void);
+extern unsigned long xavaSleep(unsigned long oldTime, int framerate);
 
 // This funcion is in config.h
 // Yes, I commited a sin. Don't shoot, please.
