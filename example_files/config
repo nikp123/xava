@@ -225,6 +225,21 @@
 ; color = "#ff000000"
 
 
+[stars]
+
+# For stars to work, you need a speical output mode that supports it
+# One such mode is "x11_stars"
+
+# Controls the number of stars on screen
+; count = 100
+
+# Controls how reactive the stars are to changess in sound (exponential)
+; sensitivity = 1.2
+
+# Linearly multiples the resulting star velocity
+; velocity = 1.0
+
+
 [filter]
 
 # These are settings related to the audio processing engine, or a audio "filter"

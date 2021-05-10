@@ -8,6 +8,7 @@
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xrandr.h>
+#include <iniparser.h>
 #ifdef GLX
 #include <X11/extensions/Xrender.h>
 #endif
@@ -23,9 +24,19 @@
 #ifdef STARS
 	#include <math.h>
 
-	static float stars[100][3];
-	static double speed = 0.0;
-	static int tallestBar;
+	typedef struct star {
+		float x;	// because movements are so small ints may not capture them properly
+		float y;
+		float angle;
+		char size;
+	} star;
+
+	static star *stars;
+	static double speed;
+	static float kineticScore;
+
+	static int starsCount;
+	static double starsSens, starsVelocity;
 #endif
 
 // random magic values go here
@@ -365,6 +376,11 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 		}
 	}
 
+	#ifdef STARS
+		// star count doesn't change in runtime, so allocation is only done during init
+		stars = calloc(starsCount, sizeof(star));
+	#endif
+
 	return 0;
 }
 
@@ -474,11 +490,19 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 	}
 
 	#ifdef STARS
+		// when display is resize, all information is considered unsafe
+		// which is why initial star positions are calcuated here
+
+		int displayWidth  = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
 		int displayHeight = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
-		for(int i=0; i<100; i++) {
-			stars[i][0] = rand()%p->w;
-			stars[i][1] = rand()%displayHeight;
-			stars[i][2] = (5-sqrt(rand()%26))+1;
+		for(int i=0; i<starsCount; i++) {
+			stars[i].x = rand()%displayWidth;
+			stars[i].y = rand()%displayHeight;
+
+			// it is absolutely critical that this angle be in range(-pi/2, +pi/2)
+			// going outside of this will cause numerous bugs
+			stars[i].angle = pow((float)(rand()%1200-600)/1000.0, 3.0);
+			stars[i].size = (5-sqrt(rand()%26))+1;
 		}
 	#endif
 
@@ -596,25 +620,36 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 	}
 
 	#ifdef STARS
-		for(int i=0; i<100; i++) {
-			//XClearArea(xavaXDisplay, xavaXWindow, stars[i][0], sin((float)stars[i][0]/100)*10+stars[i][1], (unsigned int)stars[i][2], (unsigned int)stars[i][2], 0);
+		// since it's impossible to do delta draws with stars, we'll
+		// just redraw the framebuffer each time (even if that costs CPU time)
+		float displayWidth  = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
+		float displayHeight = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
+		XClearWindow(xavaXDisplay, xavaXWindow);
 
-			stars[i][0] += stars[i][2]*speed;
+		for(int i=0; i<starsCount; i++) {
+			stars[i].x += cos(stars[i].angle)*stars[i].size*speed;
+			stars[i].y += sin(stars[i].angle)*stars[i].size*speed;
 
-			//int add = speed*(rand()%4-1);
-			//if(0-add > stars[i][1])
-			//	stars[i][1] = p.h-add;
-			//else stars[i][1] += add;
+			if(stars[i].x > displayWidth) {
+				stars[i].x = 0;
+				stars[i].y = fmod((float)rand(), displayHeight);
+			}
 
-			int displayHeight = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
-			if(stars[i][0] > p->w+2*xoffset) {
-				stars[i][0] = 0;
-				stars[i][1] = rand()%displayHeight;
+			if(stars[i].y > displayHeight || stars[i].y < -stars[i].size) {
+				stars[i].y = fmod((float)rand(), displayWidth);
+				stars[i].y = stars[i].angle > 0.0 ? 1.0 : displayHeight-1.0;
 			}
 
 			XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
-			XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, stars[i][0], sin((float)stars[i][0]/100)*10+stars[i][1], stars[i][2], stars[i][2]);
+			XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, stars[i].x,
+					stars[i].y, stars[i].size, stars[i].size);
 		}
+
+		// size the framebuffer is reset on each frame
+		// last bars should always be 0
+		memset(hand->fl, 0x00, sizeof(int)*hand->bars);
+
+		kineticScore=0.0;
 	#endif
 
 	#if defined(GLX)
@@ -637,7 +672,11 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 			if(hand->f[i] > p->h) hand->f[i] = p->h;
 
 			#ifdef STARS
-				if(hand->f[i]>tallestBar) tallestBar=hand->f[i];
+				// kinetic score has a low-freq bias as they are more "physical"
+				float bar_percentage = (float)(hand->f[i]-1)/(float)p->h;
+				if(bar_percentage > 0.0) {
+					kineticScore+=pow(bar_percentage, 2.0*(float)i/(float)hand->bars);
+				}
 			#endif
 
 			if(hand->f[i] > hand->fl[i]) {
@@ -661,7 +700,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 	#endif
 
 	#ifdef STARS
-		speed = pow((double)tallestBar/p->h, 2.0);
+		speed = pow(kineticScore/(float)hand->bars, 1.0/starsSens)*starsVelocity;
 	#endif
 	return;
 }
@@ -674,7 +713,11 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	XSync(xavaXDisplay, 1);
 
 	if(gradientBox != 0) { XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0; };
- 
+
+	#ifdef STARS
+		free(stars);
+	#endif
+
 	#ifdef GLX
 		glXMakeCurrent(xavaXDisplay, 0, 0);
 		glXDestroyContext(xavaXDisplay, xavaGLXContext);
@@ -721,6 +764,17 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 	#else
 		// OGL + Root Window = completely broken
 		rootWindowEnabled = 0;
+	#endif
+
+	#ifdef STARS
+		starsCount = iniparser_getint(ini,   "stars:count", 100);
+		xavaBailCondition(starsCount < 1, "Stars do not work if their number is below 1");
+
+		starsSens = iniparser_getdouble(ini, "stars:sensitivity", 1.2);
+		xavaBailCondition(starsSens<=0.0, "Stars sensitivity needs to be above 0.0");
+
+		starsVelocity = 2.0*iniparser_getdouble(ini, "stars:velocity", 1.0);
+		xavaBailCondition(starsVelocity<=0.0, "Stars velocity needs to be above 0.0");
 	#endif
 }
 
