@@ -20,6 +20,14 @@
 #include "../../shared.h"
 #include "main.h"
 
+#ifdef STARS
+	#include <math.h>
+
+	static float stars[100][3];
+	static double speed = 0.0;
+	static int tallestBar;
+#endif
+
 // random magic values go here
 #define SCREEN_CONNECTED 0
 
@@ -448,7 +456,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 	glViewport(0, 0, p->w, p->h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	
+
 	glOrtho(0, (double)p->w, 0, (double)p->h, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -464,6 +472,15 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 		XFixesSetWindowShapeRegion(xavaXDisplay, xavaXWindow, ShapeInput, 0, 0, region);
 		XFixesDestroyRegion(xavaXDisplay, region);
 	}
+
+	#ifdef STARS
+		int displayHeight = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
+		for(int i=0; i<100; i++) {
+			stars[i][0] = rand()%p->w;
+			stars[i][1] = rand()%displayHeight;
+			stars[i][2] = (5-sqrt(rand()%26))+1;
+		}
+	#endif
 
 	return 0;
 }
@@ -578,6 +595,28 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 		yoffset+=p->wy;
 	}
 
+	#ifdef STARS
+		for(int i=0; i<100; i++) {
+			//XClearArea(xavaXDisplay, xavaXWindow, stars[i][0], sin((float)stars[i][0]/100)*10+stars[i][1], (unsigned int)stars[i][2], (unsigned int)stars[i][2], 0);
+
+			stars[i][0] += stars[i][2]*speed;
+
+			//int add = speed*(rand()%4-1);
+			//if(0-add > stars[i][1])
+			//	stars[i][1] = p.h-add;
+			//else stars[i][1] += add;
+
+			int displayHeight = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
+			if(stars[i][0] > p->w+2*xoffset) {
+				stars[i][0] = 0;
+				stars[i][1] = rand()%displayHeight;
+			}
+
+			XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
+			XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, stars[i][0], sin((float)stars[i][0]/100)*10+stars[i][1], stars[i][2], stars[i][2]);
+		}
+	#endif
+
 	#if defined(GLX)
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -597,6 +636,10 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 			// this fixes a rendering bug
 			if(hand->f[i] > p->h) hand->f[i] = p->h;
 
+			#ifdef STARS
+				if(hand->f[i]>tallestBar) tallestBar=hand->f[i];
+			#endif
+
 			if(hand->f[i] > hand->fl[i]) {
 				if(p->gradients)
 					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 
@@ -615,6 +658,10 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 			}
 		}
 		XSync(xavaXDisplay, 0);
+	#endif
+
+	#ifdef STARS
+		speed = pow((double)tallestBar/p->h, 2.0);
 	#endif
 	return;
 }

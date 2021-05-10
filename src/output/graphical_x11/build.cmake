@@ -33,6 +33,18 @@ if(X11)
 			target_link_libraries(out_x11 xava-shared "${X11_LIBRARIES}" iniparser)
 			set_target_properties(out_x11 PROPERTIES PREFIX "")
 			install(TARGETS out_x11 DESTINATION lib/xava)
+
+			# Stars
+			add_library(out_x11_stars SHARED "${XAVA_MODULE_DIR}/main.c"
+											"src/output/graphical.c"
+											"${GLOBAL_FUNCTION_SOURCES}")
+			target_link_directories(out_x11_stars PRIVATE "${X11_LIBRARY_DIRS}")
+			target_include_directories(out_x11_stars PRIVATE "${X11_INCLUDE_DIRS}")
+			target_link_libraries(out_x11_stars xava-shared "${X11_LIBRARIES}" iniparser)
+			set_target_properties(out_x11_stars PROPERTIES PREFIX "")
+			install(TARGETS out_x11_stars DESTINATION lib/xava)
+			target_compile_definitions(out_x11_stars PUBLIC -DSTARS)
+
 			# GLX
 			pkg_check_modules(GL QUIET gl xrender)
 			if(GL_FOUND)
