@@ -68,7 +68,6 @@ struct xdg_toplevel_listener xdg_toplevel_listener = {
 static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surface,
 		uint32_t serial) {
 	struct waydata           *wd   = data;
-	//struct function_pointers *func = &wd->s->func; 
 
 	// confirm that you exist to the compositor
 	xdg_surface_ack_configure(xdg_surface, serial);

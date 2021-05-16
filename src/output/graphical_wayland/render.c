@@ -39,7 +39,6 @@ struct wl_buffer *wl_create_framebuffer(struct waydata *wd) {
 
 void update_frame(struct waydata *wd) {
 	//struct config_params     *p    = &wd->s->conf;
-	//struct function_pointers *func = &wd->s->func;
 
 	// stop updating frames while XAVA's having a nice sleep
 	while(wd->hand->pauseRendering) {
