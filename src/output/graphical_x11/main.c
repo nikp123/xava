@@ -61,14 +61,15 @@ static XEvent xev;
 static Bool xavaSupportsRR;
 static int xavaRREventBase;
 
+static XWindowAttributes  windowAttribs;
 static XRRScreenResources *xavaXScreenResources;
 static XRROutputInfo      *xavaXOutputInfo;
 static XRRCrtcInfo        *xavaXCrtcInfo;
 
 static char  *monitorName;
-static _Bool rootWindowEnabled;
-static _Bool overrideRedirectEnabled;
-static _Bool reloadOnDisplayConfigure;
+static bool rootWindowEnabled;
+static bool overrideRedirectEnabled;
+static bool reloadOnDisplayConfigure;
 
 #ifdef GLX
 static int VisData[] = {
@@ -192,9 +193,8 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	xavaSpam("Number of detected screens: %d", xavaXScreenResources->noutput);
 
+	int screenwidth, screenheight, screenx, screeny;
 	for(int i = 0; i < xavaXScreenResources->noutput; i++) {
-		int screenwidth, screenheight, screenx, screeny;
-
 		xavaXOutputInfo = XRRGetOutputInfo(xavaXDisplay, xavaXScreenResources,
 			xavaXScreenResources->outputs[i]);
 
@@ -272,8 +272,13 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	int xavaWindowFlags = CWOverrideRedirect | CWBackingStore |  CWEventMask | CWColormap | CWBorderPixel | CWBackPixel;
 
 	if(rootWindowEnabled) xavaXWindow = xavaXRoot;
+	#ifdef STARS
+	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, screenx, screeny, screenwidth,
+			screenheight, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
+	#else
 	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p->wx, p->wy, (unsigned int)p->w,
 		(unsigned int)p->h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
+	#endif
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
 	// The "X" button is handled by the window manager and not Xorg, so we set up a Atom
@@ -354,7 +359,12 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	XWindowAttributes xwa;
 	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &xwa);
 	if(strcmp(p->winA, "none"))
+	#ifdef STARS
+		//XMoveWindow(xavaXDisplay, xavaXWindow, screenx, screeny);
+		XMoveWindow(xavaXDisplay, xavaXWindow, 0, 0);
+	#else
 		XMoveWindow(xavaXDisplay, xavaXWindow, p->wx, p->wy);
+	#endif
 
 	// query for the RR extension in X11
 	int error;
@@ -506,6 +516,8 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 		}
 	#endif
 
+	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &windowAttribs);
+
 	return 0;
 }
 
@@ -614,7 +626,11 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 
 	// im lazy, but i just wanna make it work
 	int xoffset = hand->rest, yoffset = p->h;
-	if(rootWindowEnabled) {
+
+	#ifndef STARS
+	if(rootWindowEnabled)
+	#endif
+	{
 		xoffset+=p->wx;
 		yoffset+=p->wy;
 	}
@@ -624,7 +640,11 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 		// just redraw the framebuffer each time (even if that costs CPU time)
 		float displayWidth  = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
 		float displayHeight = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
-		XClearWindow(xavaXDisplay, xavaXWindow);
+		//XClearWindow(xavaXDisplay, xavaXWindow);
+
+		// FIXME: Bugged screen coordinates on multimonitor (THIS FIX IS A MUST)
+		//printf("%d %d\n", windowAttribs.width, windowAttribs.height);
+		XClearArea(xavaXDisplay, xavaXWindow, 0, 0, windowAttribs.width, windowAttribs.height, 0);
 
 		for(int i=0; i<starsCount; i++) {
 			stars[i].x += cos(stars[i].angle)*stars[i].size*speed;
