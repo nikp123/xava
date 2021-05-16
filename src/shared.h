@@ -128,17 +128,6 @@ struct config_params {
 	// toggle, taskbarF = taskbar icon toggle
 };
 
-// this is cringe but my linker isn't cooperating,
-// so this will have to do
-struct function_pointers {
-	void            (*pushXAVAEventStack)    (XG_EVENT_STACK *stack, XG_EVENT event);
-	XG_EVENT        (*popXAVAEventStack)     (XG_EVENT_STACK *stack);
-	XG_EVENT_STACK* (*newXAVAEventStack)     ();
-	void            (*destroyXAVAEventStack) (XG_EVENT_STACK *stack);
-	_Bool           (*pendingXAVAEventStack) (XG_EVENT_STACK *stack);
-	_Bool           (*isEventPendingXAVA)    (XG_EVENT_STACK *stack, XG_EVENT event);
-};
-
 // XAVA handle 
 struct XAVA_HANDLE {
 	// variables that XAVA outputs
@@ -152,7 +141,6 @@ struct XAVA_HANDLE {
 	// handles to both config variables and the audio state
 	struct audio_data audio;
 	struct config_params conf;
-	struct function_pointers func;
 };
 
 #endif
