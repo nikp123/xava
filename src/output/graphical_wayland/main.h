@@ -5,6 +5,12 @@
 // are exposed as symbols within the final library/obj files
 #define EXP_FUNC __attribute__ ((visibility ("default")))
 
+#ifdef EGL
+	#include <stdint.h>
+	#include <EGL/egl.h>
+	#include <GLES2/gl2.h>
+#endif
+
 #include <wayland-client.h>
 
 #include "../../shared.h" 
@@ -21,6 +27,18 @@ struct waydata {
 	int                  shmfd;
 	_Bool                fbUnsafe;
 	struct wl_list       outputs;
+	#ifdef EGL
+		struct _escontext {
+			EGLNativeWindowType native_window;
+			uint16_t window_width, window_height;
+			/// EGL display
+			EGLDisplay  display;
+			/// EGL context
+			EGLContext  context;
+			/// EGL surface
+			EGLSurface  surface;
+		} ESContext;
+	#endif
 };
 
 

@@ -15,6 +15,7 @@
 #include "registry.h"
 #include "zwlr.h"
 #include "xdg.h"
+#include "egl.h"
 
 /* Globals */
 struct waydata wd;
@@ -46,6 +47,10 @@ const struct wl_callback_listener wl_surface_frame_listener = {
 
 EXP_FUNC void xavaOutputCleanup(void *v) {
 	closeSHM(&wd);
+
+	#ifdef EGL
+		waylandEGLDestroy(&wd);
+	#endif
 
 	if(backgroundLayer) {
 		zwlr_cleanup(&wd);
@@ -103,15 +108,21 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	// process all of this, FINALLY
 	wl_surface_commit(wd.surface);
 
-	wd.shmfd = syscall(SYS_memfd_create, "buffer", 0);
+	#ifdef EGL
+		// creates everything EGL related
+		waylandEGLCreate(&wd);
+	#else
+		wd.shmfd = syscall(SYS_memfd_create, "buffer", 0);
 
-	wd.maxSize = 0;
-	wd.fbUnsafe = false;
+		wd.maxSize = 0;
+		wd.fbUnsafe = false;
 
-	reallocSHM(&wd);
+		reallocSHM(&wd);
 
-	struct wl_callback *cb = wl_surface_frame(wd.surface);
-	wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
+		// when using non-EGL wayland, the framerate is controlled by the wl_callbacks
+		struct wl_callback *cb = wl_surface_frame(wd.surface);
+		wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
+	#endif
 
 	return EXIT_SUCCESS;
 }
@@ -119,12 +130,15 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
 
-	if(wd.fbUnsafe) return; 
+	// GPUs are wasteful ;(
+	#ifndef EGL
+		if(wd.fbUnsafe) return; 
 
-	wd.fbUnsafe = true;
-	for(register int i=0; i<p->w*p->h; i++)
-		wd.fb[i] = bgcol;
-	wd.fbUnsafe = false;
+		wd.fbUnsafe = true;
+		for(register int i=0; i<p->w*p->h; i++)
+			wd.fb[i] = bgcol;
+		wd.fbUnsafe = false;
+	#endif
 }
 
 EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
@@ -171,6 +185,12 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 	struct config_params     *p    = &hand->conf;
 
+#ifdef EGL
+	glClearColor((float)hand->f[0]/(float)p->h, 0.0, 0.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface); 
+#else
 	if(wd.fbUnsafe) return;
 
 	wd.fbUnsafe = true;
@@ -204,8 +224,9 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 		}
 	}
 	wd.fbUnsafe = false;
+#endif
 
-	wl_display_roundtrip(wd.display);
+	wl_display_dispatch_pending(wd.display);
 }
 
 EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data) {

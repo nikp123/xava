@@ -24,27 +24,31 @@ static void xdg_toplevel_handle_configure(void *data,
 		struct wl_array *states) {
 	struct waydata           *wd   = data;
 	struct XAVA_HANDLE       *hand = wd->hand;
-	struct function_pointers *func = &hand->func;
 	struct config_params     *p    = &hand->conf;
 
 	if(w == 0 && h == 0) return;
 
 	if(p->w != w && p->h != h) {
-		while(wd->fbUnsafe)
-			usleep(10);
+		#ifndef EGL
+			while(wd->fbUnsafe)
+				usleep(10);
 
-		wd->fbUnsafe = true;
+			wd->fbUnsafe = true;
+		#endif
 
 		p->w = w;
 		p->h = h;
 
-		reallocSHM(wd);
+		#ifdef EGL
+			wl_egl_window_resize(wd->ESContext.native_window, w, h, 0, 0);
+			wl_surface_commit(wd->surface);
+		#else
+			reallocSHM(wd);
+			wd->fbUnsafe = false;
+		#endif
 
-		func->pushXAVAEventStack(wd->events, XAVA_REDRAW);
-
-		func->pushXAVAEventStack(wd->events, XAVA_RESIZE);
-
-		wd->fbUnsafe = false;
+		pushXAVAEventStack(wd->events, XAVA_REDRAW);
+		pushXAVAEventStack(wd->events, XAVA_RESIZE);
 	}
 }
 
@@ -52,9 +56,8 @@ static void xdg_toplevel_handle_close(void *data,
 		struct xdg_toplevel *xdg_toplevel) {
 	struct waydata           *wd   = data;
 	struct XAVA_HANDLE       *hand = wd->hand;
-	struct function_pointers *func = &hand->func;
 
-	func->pushXAVAEventStack(wd->events, XAVA_QUIT);
+	pushXAVAEventStack(wd->events, XAVA_QUIT);
 }
 
 struct xdg_toplevel_listener xdg_toplevel_listener = {
@@ -70,7 +73,9 @@ static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surface,
 	// confirm that you exist to the compositor
 	xdg_surface_ack_configure(xdg_surface, serial);
 
-	update_frame(wd);
+	#ifndef EGL
+		update_frame(wd);
+	#endif
 }
 
 const struct xdg_surface_listener xdg_surface_listener = {
