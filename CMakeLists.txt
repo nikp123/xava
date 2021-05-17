@@ -10,33 +10,27 @@ if(CMAKE_FIND_ROOT_PATH)
     set(ENV{PKG_CONFIG_SYSROOT_DIR} ${CMAKE_SYSROOT})
 endif()
 
+# Debug is default
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-set(BUILD_FLAGS "-D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-set(GLOBAL_FUNCTION_SOURCES "")
+# This hack is a of courtesy of: https://stackoverflow.com/a/40947954/3832385
+string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
+add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
 
-set(CMAKE_C_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
-set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-
-
-
-set(CMAKE_C_STANDARD 11)
+# Define XAVA version
 set(xava_VERSION_MAJOR 0)
 set(xava_VERSION_MINOR 7)
 set(xava_VERSION_PATCH 0)
 set(xava_VERSION_TWEAK 0)
-
 set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
 
+# Definitions
 add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION}")
 add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
 
+# Windows-y things
 if(MINGW)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
 	add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
@@ -52,6 +46,15 @@ else()
 	set(BUILD_FLAGS "${BUILD_FLAGS} -Wl,--export-dynamic")
 endif()
 
+
+# Set appropriate C flags
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
+set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
 find_package(PkgConfig REQUIRED)
