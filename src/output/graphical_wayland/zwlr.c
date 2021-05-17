@@ -13,8 +13,6 @@ struct zwlr_layer_shell_v1 *xavaWLRLayerShell;
 static void layer_surface_configure(void *data,
 		struct zwlr_layer_surface_v1 *surface,
 		uint32_t serial, uint32_t width, uint32_t height) {
-	struct waydata *s = data;
-
 	//screenWidth = width;
 	//screenHeight = height;
 
@@ -22,6 +20,7 @@ static void layer_surface_configure(void *data,
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 
 	#ifndef EGL
+		struct waydata *s = data;
 		update_frame(s);
 	#endif
 }

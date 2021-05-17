@@ -1,9 +1,13 @@
+#include <wayland-client-core.h>
+
 #include "gen/xdg-shell-client-protocol.h"
 
 #include "render.h"
 #include "xdg.h"
 #include "main.h"
-#include <wayland-client-core.h>
+#ifdef EGL
+	#include "egl.h"
+#endif
 
 static struct xdg_surface *xavaXDGSurface;
 static struct xdg_toplevel *xavaXDGToplevel;
@@ -40,7 +44,7 @@ static void xdg_toplevel_handle_configure(void *data,
 		p->h = h;
 
 		#ifdef EGL
-			wl_egl_window_resize(wd->ESContext.native_window, w, h, 0, 0);
+			wl_egl_window_resize((struct wl_egl_window *)wd->ESContext.native_window, w, h, 0, 0);
 			wl_surface_commit(wd->surface);
 		#else
 			reallocSHM(wd);
@@ -55,7 +59,6 @@ static void xdg_toplevel_handle_configure(void *data,
 static void xdg_toplevel_handle_close(void *data,
 		struct xdg_toplevel *xdg_toplevel) {
 	struct waydata           *wd   = data;
-	struct XAVA_HANDLE       *hand = wd->hand;
 
 	pushXAVAEventStack(wd->events, XAVA_QUIT);
 }
@@ -67,12 +70,11 @@ struct xdg_toplevel_listener xdg_toplevel_listener = {
 
 static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surface,
 		uint32_t serial) {
-	struct waydata           *wd   = data;
-
 	// confirm that you exist to the compositor
 	xdg_surface_ack_configure(xdg_surface, serial);
 
 	#ifndef EGL
+		struct waydata *wd = data;
 		update_frame(wd);
 	#endif
 }

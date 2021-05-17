@@ -128,10 +128,10 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 }
 
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
-	struct config_params *p = &hand->conf;
-
 	// GPUs are wasteful ;(
 	#ifndef EGL
+		struct config_params *p = &hand->conf;
+
 		if(wd.fbUnsafe) return; 
 
 		wd.fbUnsafe = true;

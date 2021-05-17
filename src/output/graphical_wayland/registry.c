@@ -53,7 +53,6 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 static void xava_wl_registry_global_remove(void *data, struct wl_registry *wl_registry,
 		uint32_t name) {
 	struct waydata           *wd   = data;
-	struct XAVA_HANDLE       *hand = wd->hand;
 
 	// This sometimes happens when displays get reconfigured
 	pushXAVAEventStack(wd->events, XAVA_RELOAD);
