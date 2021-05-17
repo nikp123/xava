@@ -224,6 +224,8 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 		}
 	}
 	wd.fbUnsafe = false;
+
+	wl_display_roundtrip(wd.display);
 #endif
 
 	wl_display_dispatch_pending(wd.display);
