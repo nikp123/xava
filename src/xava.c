@@ -343,24 +343,28 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					}
 				}
 
-				if (silence == 1) sleep++;
-				else sleep = 0;
+				if (silence == 1) {
+					sleep++;
+				} else {
+					sleep = 0;
+					xavaSpamCondition(xava.pauseRendering, "Resuming from sleep");
+				}
 
 				// process: if input was present for the last 5 seconds apply FFT to it
 				if (sleep < p->framerate * 5) {
 					xava.pauseRendering = false;
-				} else { // if in sleep mode wait and continue
-					xavaSpam("Going to sleep!");
+				} else if(xava.pauseRendering) {
+					// unless the user requested that the program ends
+					if(kys||should_reload) sleep = 0;
 
 					// wait 100ms, then check sound again.
 					xavaSleep(100, 0);
+					continue;
+				} else { // if in sleep mode wait and continue
+					xavaSpam("Going to sleep!");
 
 					// signal to any potential rendering threads to stop
 					xava.pauseRendering = true;
-
-					// unless the user requested that the program ends
-					if(kys||should_reload) sleep = 0;
-					continue;
 				}
 
 				// Calculate the result through filters

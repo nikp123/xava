@@ -34,6 +34,8 @@ extern void __internal_xavaDie  (void);
 	__internal_xavaDie(); \
 }
 
+#define xavaSpamCondition(condition, fmt, ...) \
+	if(condition) { __internal_xavaSpam(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
 #define xavaLogCondition(condition, fmt, ...) \
 	if(condition) { __internal_xavaLog(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
 #define xavaWarnCondition(condition, fmt, ...) \
