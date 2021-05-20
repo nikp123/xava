@@ -18,23 +18,6 @@
 #ifdef EGL
 	#include "egl.h"
 
-	static const char *vert_shader_text =
-		//"uniform mat4 rotation;\n"
-		"attribute vec4 pos;\n"
-		"attribute vec4 color;\n"
-		"varying vec4 v_color;\n"
-		"void main() {\n"
-		"  gl_Position = pos;\n"
-		"  v_color = color;\n"
-		"}\n";
-
-	static const char *frag_shader_text =
-		"precision mediump float;\n"
-		"varying vec4 v_color;\n"
-		"void main() {\n"
-		"  gl_FragColor = v_color;\n"
-		"}\n";
-
 	GLuint GL_POS;
 	GLuint GL_COL;
 #endif
@@ -134,14 +117,16 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 		// creates everything EGL related
 		waylandEGLCreate(&wd);
 
-		EGLint program, frag, vert, status;
-
-		frag = waylandEGLShaderBuild(&wd, frag_shader_text, GL_FRAGMENT_SHADER);
-		vert = waylandEGLShaderBuild(&wd, vert_shader_text, GL_VERTEX_SHADER);
+		EGLint fragment, vertex, program, status;
 
 		program = glCreateProgram();
-		glAttachShader(program, frag);
-		glAttachShader(program, vert);
+		fragment = waylandEGLShaderBuild(wd.fragSHD->data, GL_FRAGMENT_SHADER); 
+		vertex   = waylandEGLShaderBuild(wd.vertSHD->data, GL_VERTEX_SHADER);
+		close_file(wd.fragSHD);
+		close_file(wd.vertSHD);
+
+		glAttachShader(program, fragment);
+		glAttachShader(program, vertex);
 		glLinkProgram(program);
 		glUseProgram(program);
 
@@ -157,6 +142,9 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 		GL_POS = glGetAttribLocation(program, "pos");
 		GL_COL = glGetAttribLocation(program, "color");
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	#else
 		wd.shmfd = syscall(SYS_memfd_create, "buffer", 0);
 
@@ -310,6 +298,10 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 		(ini, "wayland:background_layer", 1);
 	monitorName = strdup(iniparser_getstring
 		(ini, "wayland:monitor_name", "ignore"));
+
+	#ifdef EGL
+		waylandEGLShadersLoad(&wd);
+	#endif
 
 	// Vsync is implied, although system timers must be used
 	p->vsync = 0;

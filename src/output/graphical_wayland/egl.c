@@ -4,9 +4,38 @@
 #include <EGL/egl.h>
 
 // this is so that my static analyser doesn't bitch as much
-#define EGL
+#ifndef EGL
+	#define EGL
+#endif
 
+#include "egl.h"
 #include "main.h"
+
+// stupidly unsafe function, now behave yourselves
+raw_data *load_file(const char *file) {
+	raw_data *data = malloc(sizeof(raw_data));
+
+	FILE *fp = fopen(file, "r");
+
+	fseek(fp, 0, SEEK_END);
+	data->size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	data->data = malloc(data->size+1);
+	fread(data->data, data->size, 1, fp);
+
+	// pro-gamer move (NOTE: might not work if char is bigger than 8 bits)
+	((char*)data->data)[data->size] = 0x00;
+
+	fclose(fp);
+
+	return data;
+}
+
+void close_file(raw_data *file) {
+	free(file->data);
+	free(file);
+}
 
 void EGLCreateWindow(struct waydata *wd) {
 	//region = wl_compositor_create_region(wd->compositor);
@@ -103,7 +132,7 @@ EGLBoolean EGLCreateContext(struct waydata *wd) {
 
 }
 
-EGLint waylandEGLShaderBuild(struct waydata *wd, const char *source, GLenum shader_type) {
+EGLint waylandEGLShaderBuild(const char *source, GLenum shader_type) {
 	EGLint shader;
 	EGLint status;
 
@@ -138,5 +167,19 @@ void waylandEGLCreate(struct waydata *wd) {
 void waylandEGLDestroy(struct waydata *wd) {
 	eglDestroySurface(wd->ESContext.display, wd->ESContext.surface);
 	wl_egl_window_destroy(wd->ESContext.native_window);
+}
+
+void waylandEGLShadersLoad(struct waydata *wd) {
+	char *fragmentShaderPath, *vertexShaderPath;
+	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, "egl/shaders/fragment.glsl", &fragmentShaderPath) == false, 
+			"Failed to load fragment shader!");
+	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, "egl/shaders/vertex.glsl", &vertexShaderPath) == false,
+			"Failed to load vertex shader!");
+
+	wd->fragSHD = load_file(fragmentShaderPath);
+	wd->vertSHD = load_file(vertexShaderPath);
+
+	free(vertexShaderPath);
+	free(fragmentShaderPath);
 }
 
