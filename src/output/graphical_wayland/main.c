@@ -15,7 +15,29 @@
 #include "registry.h"
 #include "zwlr.h"
 #include "xdg.h"
-#include "egl.h"
+#ifdef EGL
+	#include "egl.h"
+
+	static const char *vert_shader_text =
+		//"uniform mat4 rotation;\n"
+		"attribute vec4 pos;\n"
+		"attribute vec4 color;\n"
+		"varying vec4 v_color;\n"
+		"void main() {\n"
+		"  gl_Position = pos;\n"
+		"  v_color = color;\n"
+		"}\n";
+
+	static const char *frag_shader_text =
+		"precision mediump float;\n"
+		"varying vec4 v_color;\n"
+		"void main() {\n"
+		"  gl_FragColor = v_color;\n"
+		"}\n";
+
+	GLuint GL_POS;
+	GLuint GL_COL;
+#endif
 
 /* Globals */
 struct waydata wd;
@@ -111,6 +133,30 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	#ifdef EGL
 		// creates everything EGL related
 		waylandEGLCreate(&wd);
+
+		EGLint program, frag, vert, status;
+
+		frag = waylandEGLShaderBuild(&wd, frag_shader_text, GL_FRAGMENT_SHADER);
+		vert = waylandEGLShaderBuild(&wd, vert_shader_text, GL_VERTEX_SHADER);
+
+		program = glCreateProgram();
+		glAttachShader(program, frag);
+		glAttachShader(program, vert);
+		glLinkProgram(program);
+		glUseProgram(program);
+
+		glGetProgramiv(program, GL_LINK_STATUS, &status);
+		if (!status) {
+			char log[1000];
+			GLsizei len;
+			glGetProgramInfoLog(program, 1000, &len, log);
+			fprintf(stderr, "Error: linking:\n%*s\n", len, log);
+			exit(1);
+		}
+
+
+		GL_POS = glGetAttribLocation(program, "pos");
+		GL_COL = glGetAttribLocation(program, "color");
 	#else
 		wd.shmfd = syscall(SYS_memfd_create, "buffer", 0);
 
@@ -186,8 +232,32 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 	struct config_params     *p    = &hand->conf;
 
 #ifdef EGL
-	glClearColor((float)hand->f[0]/(float)p->h, 0.0, 0.0, 1.0);
+	static const GLfloat verts[3][2] = {
+		{ -0.5, -0.5 },
+		{  0.5, -0.5 },
+		{  0,    0.5 }
+	};
+	static const GLfloat colors[3][3] = {
+		{ 1., 0., 0. },
+		{ 0., 1., 0. },
+		{ 0., 0., 1. }
+	};
+
+	glClearColor((float)hand->f[0]/(float)p->h, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	glViewport(0, 0, p->w, p->h);
+	//glViewport(-1.0, -1.0, 1.0, 1.0);
+
+	glVertexAttribPointer(GL_POS, 2, GL_FLOAT, GL_FALSE, 0, verts);
+	glVertexAttribPointer(GL_COL, 3, GL_FLOAT, GL_FALSE, 0, colors);
+	glEnableVertexAttribArray(GL_POS);
+	glEnableVertexAttribArray(GL_COL);
+
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glDisableVertexAttribArray(GL_POS);
+	glDisableVertexAttribArray(GL_COL);
 
 	eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface); 
 #else

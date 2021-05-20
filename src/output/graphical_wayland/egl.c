@@ -1,3 +1,4 @@
+#include <GLES2/gl2.h>
 #include <wayland-egl-core.h>
 #include <wayland-egl.h>
 #include <EGL/egl.h>
@@ -56,6 +57,8 @@ EGLBoolean EGLCreateContext(struct waydata *wd) {
 		return EGL_FALSE;
 	}
 
+	eglBindAPI(EGL_OPENGL_ES_API);
+
 	// Get configs
 	if ( (eglGetConfigs(display, NULL, 0, &numConfigs) != EGL_TRUE) || (numConfigs == 0))
 	{
@@ -98,6 +101,32 @@ EGLBoolean EGLCreateContext(struct waydata *wd) {
 	wd->ESContext.context = context;
 	return EGL_TRUE;
 
+}
+
+EGLint waylandEGLShaderBuild(struct waydata *wd, const char *source, GLenum shader_type) {
+	EGLint shader;
+	EGLint status;
+
+	shader = glCreateShader(shader_type);
+	xavaBailCondition(shader == 0, "Failed to build shader");
+
+	glShaderSource(shader, 1, (const char **) &source, NULL);
+	glCompileShader(shader);
+
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	if (!status) {
+		char log[1000];
+		GLsizei len;
+		glGetShaderInfoLog(shader, 1000, &len, log);
+		xavaBail("Error: compiling %s: %*s\n",
+				shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment",
+				len, log);
+	}
+
+	xavaSpam("Compiling %s shader successful",
+			shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment");
+
+	return shader;
 }
 
 void waylandEGLCreate(struct waydata *wd) {
