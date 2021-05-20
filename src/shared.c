@@ -282,6 +282,31 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 			break;
 	}
 
+	// this special little routine copies the path from the filename (if there is any)
+	size_t last_dir_offset = 0;
+	size_t path_size = strlen((*actualPath)); // DO NOT USE THIS LATER ON IN THE CODE
+	const char *new_filename = filename;
+	for(int i=0; i<strlen(filename); i++) {
+		// caught a directory
+		if(filename[i] == '/') {
+			for(int j=last_dir_offset; j<i; j++) {
+				(*actualPath)[path_size+j] = filename[j]; 
+			}
+			#if defined(__APPLE__) || defined(__unix__)
+				(*actualPath)[path_size+i] = '/';
+			#elif defined(__WIN32__)
+				(*actualPath)[path_size+i] = '\\';
+			#else
+				#error "Platform not supported"
+			#endif
+
+			(*actualPath)[path_size+i+1] = '\0'; // because C
+
+			last_dir_offset = i+1;
+			new_filename = &filename[last_dir_offset];
+		}
+	}
+
 	// config: create directory
 	if(writeCheck)
 		xavaMkdir((*actualPath));
@@ -291,10 +316,10 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 		case XAVA_FILE_TYPE_PACKAGE:
 		case XAVA_FILE_TYPE_CONFIG:
 		case XAVA_FILE_TYPE_CACHE:
-			strcat((*actualPath), filename);
+			strcat((*actualPath), new_filename);
 			break;
 		default:
-			(*actualPath) = (char*)filename;
+			(*actualPath) = (char*)new_filename;
 			break;
 	}
 
@@ -309,6 +334,8 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 
 				// if that particular config file does not exist, try copying the default one
 				char *found;
+
+				// use old filename, because it carries the sub-directories with it
 				char *defaultConfigFileName = malloc(strlen(filename)+1+strlen(".example"));
 				sprintf(defaultConfigFileName, "%s.example", filename);
 
