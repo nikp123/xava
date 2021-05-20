@@ -1,7 +1,12 @@
 #ifndef __XAVA_LOG_H
 #define __XAVA_LOG_H
 
-#define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
+// static analyser, please shut the fuck up
+#ifdef SOURCE_PATH_SIZE
+	#define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
+#else
+	#define __FILENAME__ __FILE__
+#endif
 
 extern void __internal_xavaSpam (const char *func, char *file, int line, char *fmt, ...);
 extern void __internal_xavaLog  (const char *func, char *file, int line, char *fmt, ...);
