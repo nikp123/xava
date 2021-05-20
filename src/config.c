@@ -169,69 +169,25 @@ void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
 
 void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
-	FILE *fp;
 
-	//config: creating path to default config file
+	// config: creating path to default config file
 	if (configPath[0] == '\0') {
-		#if defined(__unix__)
-			char *configFile = "config";
-		#elif defined(__WIN32__)||defined(__APPLE__)
-			// editing files without an extension on windows is a pain
-			char *configFile = "config.cfg";
-		#endif
-		xavaBailCondition(xavaGetConfigDir(configPath), "No $HOME found!");
-
-		// config: create directory
-		xavaMkdir(configPath);
-
-		// config: adding default filename file
-		strcat(configPath, configFile);
-
-		fp = fopen(configPath, "r");
-		if (!fp) {
-			#if defined(__unix__)||defined(__APPLE__)
-				char *configFile = "config.example";
+		char *found;
+		bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, 
+			#if defined(__WIN32__)||defined(__APPLE__)
+				"config.cfg",
+			#elif defined(__unix__)
+				"config",
 			#endif
-			xavaLog("User configuration file does not exist!\n"
-					"Trying to find the default config file...\n");
+			&found);
 
-			char *installPath = xavaGetInstallDir();
-			// don't trust sizeof(), it's evil
-			char *targetFile = malloc(strlen(installPath)+strlen(configFile)+1);
-			strcpy(targetFile, installPath);
-			free(installPath);
-			strcat(targetFile, configFile);
-
-			// because the program is not priviledged, read-only only
-			FILE *source = fopen(targetFile, "r");
-
-			if(!source) {
-				// inipaser magic time triggered here
-				xavaWarn("Default configuration file does not exist.\n"
-						"Please report this issue!");
-			} else {
-				fp = fopen(configPath, "w");
-				xavaBailCondition(!fp, "Creating config file '%s' failed!\n"
-						"The program will now end.", configPath);
-
-				// Copy file in the most C way possible
-				short c = fgetc(source); 
-				while (c != EOF) { 
-					fputc(c, fp); 
-					c = fgetc(source); 
-				}
-				fclose(source);
-				fclose(fp);
-
-				xavaLog("Creating config file '%s' successful", configPath);
-			}
-			free(targetFile);
-		}
+		configPath = found;
+		xavaBailCondition(!success, "Failed to create default config file!");
 	} else { //opening specified file
-		fp = fopen(configPath, "rb+");
-		xavaBailCondition(!fp, "Specified config file '%s' does not exist!",
-				configPath);
-		fclose(fp);
+		bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_CUSTOM_READ,
+				configPath, &configPath);
+		xavaBailCondition(success == false, "Specified config file '%s' does not exist!",
+									configPath);
 	}
 
 	// config: parse ini

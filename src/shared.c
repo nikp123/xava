@@ -9,6 +9,7 @@
 
 #include <unistd.h>
 
+#include "log.h"
 #include "shared.h"
 
 #ifdef __WIN32__
@@ -32,7 +33,7 @@
 	#define mkdir(dir) mkdir(dir)
 #endif
 
-EXP_FUNC int xavaMkdir(char *dir) {
+EXP_FUNC int xavaMkdir(const char *dir) {
 	/* Stolen from: https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950 */
 	/* Adapted from http://stackoverflow.com/a/2336245/119527 */
 	const size_t len = strlen(dir);
@@ -68,61 +69,6 @@ EXP_FUNC int xavaMkdir(char *dir) {
 			return -1;
 	}
 	return 0;
-}
-
-EXP_FUNC int xavaGetConfigDir(char *configPath) {
-	#if defined(__unix__)
-		char *configHome = getenv("XDG_CONFIG_HOME");
-	#elif defined(__APPLE__)
-		char *configHome = malloc(MAX_PATH);
-		sprintf(configHome, "%s//Library//Application Support", getenv("HOME"));
-	#elif defined(__WIN32__)
-		// editing files without an extension on windows is a pain
-		char *configHome = getenv("APPDATA");
-	#endif
-	// don't worry, this will never happen on windows unless you are running like 98
-	if (configHome != NULL) {
-		#ifdef __WIN32__
-			sprintf(configPath,"%s\\%s\\", configHome, PACKAGE);
-		#else
-			sprintf(configPath,"%s/%s/", configHome, PACKAGE);
-		#endif
-	} else {
-		xavaSpam("The current system does not support XDG_CONFIG_HOME");
-
-		configHome = getenv("HOME");
-		if (configHome != NULL)
-			sprintf(configPath,"%s/%s/%s/", configHome, ".config", PACKAGE);
-		else return -1;
-	}
-	#if defined(__APPLE__)
-		free(configHome);
-	#endif
-	return 0;
-}
-
-EXP_FUNC char *xavaGetInstallDir() {
-	#ifdef __WIN32__
-		// Windows uses widechars internally
-		WCHAR wpath[MAX_PATH];
-		char *path = malloc(MAX_PATH);
-
-		// Get path of where the executable is installed
-		HMODULE hModule = GetModuleHandleW(NULL);
-		GetModuleFileNameW(hModule, wpath, MAX_PATH);
-		wcstombs(path, wpath, MAX_PATH);
-
-		// Hardcoded things pain me, but writing a 100 line-long
-		// string replace function for windows is a no-no.
-		// This is supposed to find and replace %PROGRAM_NAME%.exe 
-		// at the end of the string
-		size_t executableNameSize = strlen(PACKAGE".exe");
-		path[strlen(path)-executableNameSize] = '\0';
-	#else 
-		// everything non-windows is simple as fuck, go look at the mess above
-		char *path = strdup(PREFIX"/share/"PACKAGE"/");
-	#endif
-	return path;
 }
 
 EXP_FUNC unsigned long xavaSleep(unsigned long oldTime, int framerate) {
@@ -208,5 +154,262 @@ EXP_FUNC bool isEventPendingXAVA(XG_EVENT_STACK *stack, XG_EVENT event) {
 	}
 
 	return false;
+}
+
+// this function is an abstraction for checking whether or not a certain file is usable
+// You define what kind of behaviour a certain file should have, then it's filename
+// inside of the "file container" (for configs that would be ~/.config/xava/...) and
+// actualPath (if successful) will return the path where that file could be found
+// (this string is heap allocated, so a free is a must)
+EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **actualPath) {
+	bool writeCheck = false;
+	switch(type) {
+		case XAVA_FILE_TYPE_CACHE:
+			writeCheck = true;
+
+			// TODO: When you use it, FINISH IT!
+			{
+				xavaError("XAVA_FILE_TYPE_CACHE is not implemented yet!");
+				return false;
+			}
+			break;
+		case XAVA_FILE_TYPE_CONFIG:
+		{
+			#if defined(__unix__) // FOSS-y/Linux-y implementation
+				char *configHome = getenv("XDG_CONFIG_HOME");
+
+				if(configHome == NULL) {
+					xavaWarn("The current system does not support XDG_CONFIG_HOME.\n"
+							"There is a high likelyhood that something may be broken");
+
+					char *homeDir;
+					xavaErrorCondition(homeDir = getenv("HOME"),
+							"This system is $HOME-less. Aborting execution...");
+
+					configHome = malloc(sizeof(char)*
+							(strlen(homeDir)+strlen(PACKAGE)+3+strlen(filename)));
+
+					if(configHome == NULL) {
+						xavaError("Allocation failed");
+						return false;
+					}
+
+					// filename is added in post
+					sprintf(configHome, "%s/%s/", homeDir, PACKAGE); 
+					(*actualPath) = configHome;
+					return true;
+				} else {
+					(*actualPath) = malloc((strlen(configHome)+strlen(PACKAGE)+strlen(filename)+3)*sizeof(char));
+
+					if((*actualPath) == NULL) {
+						xavaError("Allocation failed");
+						return false;
+					}
+
+					sprintf((*actualPath), "%s/%s/", configHome, PACKAGE);
+				}
+			#elif defined(__APPLE__) // App-lol implementation
+				char *configHome = malloc(MAX_PATH);
+				char *homeDir;
+
+				// you must have a really broken system for this to be false
+				if((homeDir = getenv("HOME")) == NULL) {
+					xavaError("macOS is $HOME-less. Bailing out!!!");
+					free(configHome);
+					return false;
+				}
+
+				sprintf(configHome, "%s//Library//Application Support//", homeDir);
+				(*actualPath) = configHome;
+			#elif defined(__WIN32__) // Windows-y implementation
+				char *configHome = malloc(MAX_PATH);
+				char *homeDir;
+
+				// stop using windows 98 ffs
+				if((homeDir = getenv("APPDATA")) == NULL) {
+					xavaError("XAVA could not find %AppData%! Something's REALLY wrong.");
+					free(configHome);
+					return false;
+				}
+
+				sprintf(configHome, "%s\\%s\\", homedir, PACKAGE);
+				(*actualPath) = configHome;
+			#else
+				#error "Platform not supported"
+			#endif
+
+			writeCheck = true;
+			break;
+		}
+		case XAVA_FILE_TYPE_PACKAGE:
+		{
+			#if defined(__APPLE__)||defined(__unix__)
+				// TODO: Support non-installed configurations
+				char *path = malloc(MAX_PATH);
+				strcpy(path, PREFIX"/share/"PACKAGE"/");
+				(*actualPath) = path;
+			#elif defined(__WIN32__)
+				// Windows uses widechars internally
+				WCHAR wpath[MAX_PATH];
+				char *path = malloc(MAX_PATH);
+
+				// Get path of where the executable is installed
+				HMODULE hModule = GetModuleHandleW(NULL);
+				GetModuleFileNameW(hModule, wpath, MAX_PATH);
+				wcstombs(path, wpath, MAX_PATH);
+
+				// bullshit string hacks with nikp123 (ep. 1)
+				for(int i = strlen(path)-1; i > 0; i--) { // go from end of the string
+					if(path[i] == '\\') { // if we've hit a path, change the characters in front
+						path[i+1] = '\0'; // end the string after the path
+					}
+				}
+			#else
+				#error "Platform not supported"
+			#endif
+			writeCheck = false;
+			break;
+		}
+		case XAVA_FILE_TYPE_CUSTOM_READ:
+			writeCheck = false;
+			break;
+		case XAVA_FILE_TYPE_CUSTOM_WRITE:
+			writeCheck = true;
+			break;
+		default:
+		case XAVA_FILE_TYPE_NONE:
+			xavaBail("Your code broke. The file type is invalid");
+			break;
+	}
+
+	// config: create directory
+	if(writeCheck)
+		xavaMkdir((*actualPath));
+
+	// add filename
+	switch(type) {
+		case XAVA_FILE_TYPE_PACKAGE:
+		case XAVA_FILE_TYPE_CONFIG:
+		case XAVA_FILE_TYPE_CACHE:
+			strcat((*actualPath), filename);
+			break;
+		default:
+			(*actualPath) = (char*)filename;
+			break;
+	}
+
+	switch(type) {
+		case XAVA_FILE_TYPE_CONFIG:
+		{
+			// don't be surprised if you find a lot of bugs here, beware!
+
+			FILE *fp = fopen((*actualPath), "r"), *fn;
+			if (!fp) {
+				xavaWarn("File '%s' does not exist!\nTrying to make a new one...", (*actualPath));
+
+				// if that particular config file does not exist, try copying the default one
+				char *found;
+				char *defaultConfigFileName = malloc(strlen(filename)+1+strlen(".example"));
+				sprintf(defaultConfigFileName, "%s.example", filename);
+
+				if(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, defaultConfigFileName, &found) == false) {
+					xavaError("Could not find default config file! Bailing out...");
+					free((*actualPath));
+					return false;
+				}
+
+				free(defaultConfigFileName);
+
+				// try to save the default file
+				fp = fopen((*actualPath), "w");
+				fn = fopen(found, "r"); // don't bother checking, it'll succeed anyway
+
+				if(fp==NULL) {
+					xavaError("Failed to save the default config file '%s' to '%s'!",
+							found, (*actualPath));
+					free(found);
+					free((*actualPath));
+					fclose(fn);
+					return false;
+				}
+
+				size_t filesize;
+
+				// jump to end of file
+				fseek(fn, 0, SEEK_END);
+				// report offset == filesize
+				filesize = ftell(fn);
+				// jump back to beginning
+				fseek(fn, 0, SEEK_SET);
+
+				// allocate buffer
+				void *fileBuffer = malloc(filesize);
+				if(fileBuffer == NULL) {
+					xavaError("Could not allocate config file!");
+					fclose(fn);
+					fclose(fp);
+					free(found);
+					free((*actualPath));
+					return false;
+				}
+
+				// read into buffer
+				fread(fileBuffer, filesize, 1, fn);
+				// write out that buffer
+				fwrite(fileBuffer, filesize, 1, fp);
+				// free the buffer
+				free(fileBuffer);
+				// close handles
+				fclose(fn);
+				fclose(fp);
+				// close the default location string
+				free(found);
+
+				xavaLog("Successfully created default config file on '%s'!", (*actualPath));
+			}
+
+			// we can finally say that this has finished
+			return true;
+			break; // this break doesn't do shit apart from shutting up the static analyser
+		}
+		default:
+		{
+			FILE *fp;
+			if(writeCheck) {
+				fp = fopen((*actualPath), "w");
+				if(fp == NULL) {
+					xavaError("Could not open '%s' for writing!", (*actualPath));
+					switch(type) {
+						case XAVA_FILE_TYPE_PACKAGE:
+						case XAVA_FILE_TYPE_CACHE:
+							free((*actualPath));
+							break;
+						default:
+							break;
+					}
+					return false;
+				}
+			} else {
+				fp = fopen((*actualPath), "r");
+				if(fp == NULL) {
+					xavaError("Could not open '%s' for reading!", (*actualPath));
+					switch(type) {
+						case XAVA_FILE_TYPE_PACKAGE:
+						case XAVA_FILE_TYPE_CACHE:
+							free((*actualPath));
+							break;
+						default:
+							break;
+					}
+					return false;
+				}
+			}
+			fclose(fp);
+			return true;
+			break; // this also never gets executed sadly
+		}
+	}
+
+	return false; // if you somehow ended up here, it's probably something breaking so "failure" it is
 }
 
