@@ -11,6 +11,9 @@
 #include "egl.h"
 #include "main.h"
 
+static GLuint GL_POS;
+static GLuint GL_COL;
+
 // stupidly unsafe function, now behave yourselves
 raw_data *load_file(const char *file) {
 	raw_data *data = malloc(sizeof(raw_data));
@@ -41,7 +44,7 @@ void EGLCreateWindow(struct waydata *wd) {
 	//region = wl_compositor_create_region(wd->compositor);
 	//wl_region_add(region, 0, 0, width, height);
 	//wl_surface_set_opaque_region(surface, region);
-	
+
 	struct wl_egl_window *egl_window = wl_egl_window_create(wd->surface,
 			wd->hand->conf.w, wd->hand->conf.h);
 
@@ -158,12 +161,6 @@ EGLint waylandEGLShaderBuild(const char *source, GLenum shader_type) {
 	return shader;
 }
 
-void waylandEGLCreate(struct waydata *wd) {
-	EGLCreateWindow(wd);
-	xavaBailCondition(EGLCreateContext(wd) == EGL_FALSE,
-			"Failed to create EGL context");
-}
-
 void waylandEGLDestroy(struct waydata *wd) {
 	eglDestroySurface(wd->ESContext.display, wd->ESContext.surface);
 	wl_egl_window_destroy(wd->ESContext.native_window);
@@ -183,3 +180,71 @@ void waylandEGLShadersLoad(struct waydata *wd) {
 	free(fragmentShaderPath);
 }
 
+void waylandEGLInit(struct waydata *wd) {
+	// creates everything EGL related
+	EGLCreateWindow(wd);
+	xavaBailCondition(EGLCreateContext(wd) == EGL_FALSE,
+			"Failed to create EGL context");
+
+	EGLint fragment, vertex, program, status;
+
+	program = glCreateProgram();
+	fragment = waylandEGLShaderBuild(wd->fragSHD->data, GL_FRAGMENT_SHADER); 
+	vertex   = waylandEGLShaderBuild(wd->vertSHD->data, GL_VERTEX_SHADER);
+	close_file(wd->fragSHD);
+	close_file(wd->vertSHD);
+
+	glAttachShader(program, fragment);
+	glAttachShader(program, vertex);
+	glLinkProgram(program);
+	glUseProgram(program);
+
+	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	if (!status) {
+		char log[1000];
+		GLsizei len;
+		glGetProgramInfoLog(program, 1000, &len, log);
+		fprintf(stderr, "Error: linking:\n%*s\n", len, log);
+		exit(1);
+	}
+
+	GL_POS = glGetAttribLocation(program, "pos");
+	GL_COL = glGetAttribLocation(program, "color");
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+void waylandEGLDraw(struct waydata *wd) {
+	struct XAVA_HANDLE *xava = wd->hand;
+	struct config_params *conf = &xava->conf;
+
+	static const GLfloat verts[3][2] = {
+		{ -0.5, -0.5 },
+		{  0.5, -0.5 },
+		{  0,    0.5 }
+	};
+	static const GLfloat colors[3][3] = {
+		{ 1., 0., 0. },
+		{ 0., 1., 0. },
+		{ 0., 0., 1. }
+	};
+
+	glClearColor((float)xava->f[0]/(float)conf->h, 0.0, 0.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glViewport(0, 0, conf->w, conf->h);
+	//glViewport(-1.0, -1.0, 1.0, 1.0);
+
+	glVertexAttribPointer(GL_POS, 2, GL_FLOAT, GL_FALSE, 0, verts);
+	glVertexAttribPointer(GL_COL, 3, GL_FLOAT, GL_FALSE, 0, colors);
+	glEnableVertexAttribArray(GL_POS);
+	glEnableVertexAttribArray(GL_COL);
+
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glDisableVertexAttribArray(GL_POS);
+	glDisableVertexAttribArray(GL_COL);
+
+	eglSwapBuffers(wd->ESContext.display, wd->ESContext.surface); 
+}

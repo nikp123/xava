@@ -11,8 +11,9 @@
 	raw_data *load_file(const char *file);
 	void      close_file(raw_data *file);
 
-	void   waylandEGLCreate(struct waydata *wd);
 	void   waylandEGLDestroy(struct waydata *wd);
 	EGLint waylandEGLShaderBuild(const char *source, EGLenum shader_type);
 	void   waylandEGLShadersLoad(struct waydata *wd);
+	void   waylandEGLDraw(struct waydata *wd);
+	void   waylandEGLInit(struct waydata *wd);
 #endif

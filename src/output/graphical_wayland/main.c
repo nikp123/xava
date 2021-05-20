@@ -17,9 +17,6 @@
 #include "xdg.h"
 #ifdef EGL
 	#include "egl.h"
-
-	GLuint GL_POS;
-	GLuint GL_COL;
 #endif
 
 /* Globals */
@@ -114,37 +111,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	wl_surface_commit(wd.surface);
 
 	#ifdef EGL
-		// creates everything EGL related
-		waylandEGLCreate(&wd);
-
-		EGLint fragment, vertex, program, status;
-
-		program = glCreateProgram();
-		fragment = waylandEGLShaderBuild(wd.fragSHD->data, GL_FRAGMENT_SHADER); 
-		vertex   = waylandEGLShaderBuild(wd.vertSHD->data, GL_VERTEX_SHADER);
-		close_file(wd.fragSHD);
-		close_file(wd.vertSHD);
-
-		glAttachShader(program, fragment);
-		glAttachShader(program, vertex);
-		glLinkProgram(program);
-		glUseProgram(program);
-
-		glGetProgramiv(program, GL_LINK_STATUS, &status);
-		if (!status) {
-			char log[1000];
-			GLsizei len;
-			glGetProgramInfoLog(program, 1000, &len, log);
-			fprintf(stderr, "Error: linking:\n%*s\n", len, log);
-			exit(1);
-		}
-
-
-		GL_POS = glGetAttribLocation(program, "pos");
-		GL_COL = glGetAttribLocation(program, "color");
-
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		waylandEGLInit(&wd);
 	#else
 		wd.shmfd = syscall(SYS_memfd_create, "buffer", 0);
 
@@ -217,38 +184,10 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 
 // super optimized, because cpus are shit at graphics
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
-	struct config_params     *p    = &hand->conf;
-
 #ifdef EGL
-	static const GLfloat verts[3][2] = {
-		{ -0.5, -0.5 },
-		{  0.5, -0.5 },
-		{  0,    0.5 }
-	};
-	static const GLfloat colors[3][3] = {
-		{ 1., 0., 0. },
-		{ 0., 1., 0. },
-		{ 0., 0., 1. }
-	};
-
-	glClearColor((float)hand->f[0]/(float)p->h, 0.0, 0.0, 0.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glViewport(0, 0, p->w, p->h);
-	//glViewport(-1.0, -1.0, 1.0, 1.0);
-
-	glVertexAttribPointer(GL_POS, 2, GL_FLOAT, GL_FALSE, 0, verts);
-	glVertexAttribPointer(GL_COL, 3, GL_FLOAT, GL_FALSE, 0, colors);
-	glEnableVertexAttribArray(GL_POS);
-	glEnableVertexAttribArray(GL_COL);
-
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-
-	glDisableVertexAttribArray(GL_POS);
-	glDisableVertexAttribArray(GL_COL);
-
-	eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface); 
+	waylandEGLDraw(&wd);
 #else
+	struct config_params     *p    = &hand->conf;
 	if(wd.fbUnsafe) return;
 
 	wd.fbUnsafe = true;
