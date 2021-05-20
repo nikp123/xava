@@ -35,15 +35,15 @@ extern void __internal_xavaDie  (void);
 }
 
 #define xavaSpamCondition(condition, fmt, ...) \
-	if(condition) { __internal_xavaSpam(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
+	if((condition)) { __internal_xavaSpam(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
 #define xavaLogCondition(condition, fmt, ...) \
-	if(condition) { __internal_xavaLog(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
+	if((condition)) { __internal_xavaLog(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
 #define xavaWarnCondition(condition, fmt, ...) \
-	if(condition) { __internal_xavaWarn(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
+	if((condition)) { __internal_xavaWarn(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
 #define xavaErrorCondition(condition, fmt, ...) \
-	if(condition) { __internal_xavaError(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
+	if((condition)) { __internal_xavaError(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
 #define xavaBailCondition(condition, fmt, ...) { \
-	if(condition) { \
+	if((condition)) { \
 		__internal_xavaError(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); \
 		__internal_xavaDie(); \
 	} \
