@@ -14,6 +14,6 @@
 	void   waylandEGLDestroy(struct waydata *wd);
 	EGLint waylandEGLShaderBuild(const char *source, EGLenum shader_type);
 	void   waylandEGLShadersLoad(struct waydata *wd);
-	void   waylandEGLDraw(struct waydata *wd);
 	void   waylandEGLInit(struct waydata *wd);
+	void   waylandEGLDraw(struct XAVA_HANDLE *xava);
 #endif

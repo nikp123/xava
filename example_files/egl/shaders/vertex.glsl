@@ -1,8 +1,20 @@
 attribute vec4 pos;
-attribute vec4 color;
+
+// foreground color
+uniform vec4  color;
+
+// screen width and height
+uniform float width;
+uniform float height;
+
+// projection matrix precalculated by XAVA
+uniform mat4  projectionMatrix;
+
+// output color used by the fragment shader
 varying vec4 v_color;
 
 void main() {
 	gl_Position = pos;
+	gl_Position *= projectionMatrix;
 	v_color = color;
 }

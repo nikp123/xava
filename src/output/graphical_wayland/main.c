@@ -158,6 +158,10 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 
 	xavaOutputClear(hand);
 
+	#ifdef EGL
+		waylandEGLApply(hand);
+	#endif
+
 	return EXIT_SUCCESS;
 }
 
@@ -185,7 +189,8 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 // super optimized, because cpus are shit at graphics
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 #ifdef EGL
-	waylandEGLDraw(&wd);
+	waylandEGLDraw(hand);
+	eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface); 
 #else
 	struct config_params     *p    = &hand->conf;
 	if(wd.fbUnsafe) return;

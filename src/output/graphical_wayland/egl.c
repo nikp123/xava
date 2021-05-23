@@ -1,4 +1,5 @@
 #include <GLES2/gl2.h>
+#include <stdint.h>
 #include <wayland-egl-core.h>
 #include <wayland-egl.h>
 #include <EGL/egl.h>
@@ -8,11 +9,22 @@
 	#define EGL
 #endif
 
+#include "../graphical.h"
+
 #include "egl.h"
 #include "main.h"
 
+static GLfloat *vertexData;
+static GLfloat projectionMatrix[16] = 
+	{2.0, 0.0, 0.0, -1.0,
+	0.0, 2.0, 0.0, -1.0,
+	0.0, 0.0, -1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0};
+
 static GLuint GL_POS;
-static GLuint GL_COL;
+static GLuint GL_FGCOL;
+static GLuint GL_W, GL_H;
+static GLuint GL_PROJMATRIX;
 
 // stupidly unsafe function, now behave yourselves
 raw_data *load_file(const char *file) {
@@ -59,6 +71,8 @@ void EGLCreateWindow(struct waydata *wd) {
 }
 
 EGLBoolean EGLCreateContext(struct waydata *wd) {
+	struct XAVA_HANDLE *xava = wd->hand;
+	struct config_params *conf = &xava->conf;
 	EGLint numConfigs;
 	EGLint majorVersion;
 	EGLint minorVersion;
@@ -72,6 +86,7 @@ EGLBoolean EGLCreateContext(struct waydata *wd) {
 		EGL_RED_SIZE,        8,
 		EGL_GREEN_SIZE,      8,
 		EGL_BLUE_SIZE,       8,
+		EGL_ALPHA_SIZE,      conf->transF ? 8 : 0,
 		EGL_NONE
 	};
 	EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE, EGL_NONE };
@@ -208,43 +223,75 @@ void waylandEGLInit(struct waydata *wd) {
 		exit(1);
 	}
 
-	GL_POS = glGetAttribLocation(program, "pos");
-	GL_COL = glGetAttribLocation(program, "color");
+	GL_POS        = glGetAttribLocation(program,  "pos");
+	GL_FGCOL      = glGetUniformLocation(program, "color");
+	GL_W          = glGetUniformLocation(program, "width");
+	GL_H          = glGetUniformLocation(program, "height");
+	GL_PROJMATRIX = glGetUniformLocation(program, "projectionMatrix");
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// we just need working pointers so that realloc() works
+	vertexData = malloc(1);
 }
 
-void waylandEGLDraw(struct waydata *wd) {
-	struct XAVA_HANDLE *xava = wd->hand;
+void waylandEGLApply(struct XAVA_HANDLE *xava) {
 	struct config_params *conf = &xava->conf;
 
-	static const GLfloat verts[3][2] = {
-		{ -0.5, -0.5 },
-		{  0.5, -0.5 },
-		{  0,    0.5 }
-	};
-	static const GLfloat colors[3][3] = {
-		{ 1., 0., 0. },
-		{ 0., 1., 0. },
-		{ 0., 0., 1. }
-	};
+	// define viewport size
+	glViewport(0, 0, conf->w, conf->h);
 
-	glClearColor((float)xava->f[0]/(float)conf->h, 0.0, 0.0, 0.0);
+	// reallocate and attach verticies data
+	vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*12);
+	glVertexAttribPointer(GL_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+
+	// update screen width and height uniforms
+	glUniform1f(GL_W, xava->conf.w);
+	glUniform1f(GL_H, xava->conf.h);
+
+	// update projection matrix
+	projectionMatrix[0] = 2.0/xava->conf.w;
+	projectionMatrix[5] = 2.0/xava->conf.h;
+
+	glUniformMatrix4fv(GL_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
+
+	// set and attach foreground color
+	uint32_t fgcol = xava->conf.col;
+	glUniform4f(GL_FGCOL, ARGB_R_32(fgcol)/255.0, ARGB_G_32(fgcol)/255.0,
+			ARGB_B_32(fgcol)/255.0, xava->conf.foreground_opacity);
+
+	// set background clear color
+	uint32_t bgcol = xava->conf.bgcol;
+	glClearColor(ARGB_R_32(bgcol)/255.0, ARGB_G_32(bgcol)/255.0,
+			ARGB_B_32(bgcol), xava->conf.background_opacity);
+}
+
+void waylandEGLDraw(struct XAVA_HANDLE *xava) {
+	struct config_params *conf = &xava->conf;
+
+	// do all of the vertex math needed
+	for(int i=0; i<xava->bars; i++) {
+		vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);  
+		vertexData[i*12+1]  = xava->f[i];
+		vertexData[i*12+2]  = vertexData[i*12];  
+		vertexData[i*12+3]  = 0.0;
+		vertexData[i*12+4]  = vertexData[i*12]+conf->bw;
+		vertexData[i*12+5]  = 0.0; 
+		vertexData[i*12+6]  = vertexData[i*12+4];
+		vertexData[i*12+7]  = vertexData[i*12+1];
+		vertexData[i*12+8]  = vertexData[i*12+4];
+		vertexData[i*12+9]  = 0.0;
+		vertexData[i*12+10] = vertexData[i*12];
+		vertexData[i*12+11] = vertexData[i*12+1]; 
+	}
+
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glViewport(0, 0, conf->w, conf->h);
-	//glViewport(-1.0, -1.0, 1.0, 1.0);
-
-	glVertexAttribPointer(GL_POS, 2, GL_FLOAT, GL_FALSE, 0, verts);
-	glVertexAttribPointer(GL_COL, 3, GL_FLOAT, GL_FALSE, 0, colors);
 	glEnableVertexAttribArray(GL_POS);
-	glEnableVertexAttribArray(GL_COL);
 
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	// You use the number of verticies, but not the actual polygon count
+	glDrawArrays(GL_TRIANGLES, 0, xava->bars*6);
 
 	glDisableVertexAttribArray(GL_POS);
-	glDisableVertexAttribArray(GL_COL);
-
-	eglSwapBuffers(wd->ESContext.display, wd->ESContext.surface); 
 }
