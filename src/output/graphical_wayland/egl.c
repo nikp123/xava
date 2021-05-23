@@ -13,6 +13,7 @@
 
 #include "egl.h"
 #include "main.h"
+#include "render.h"
 
 static GLfloat *vertexData;
 static GLfloat projectionMatrix[16] = 
@@ -257,14 +258,14 @@ void waylandEGLApply(struct XAVA_HANDLE *xava) {
 	glUniformMatrix4fv(GL_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
 	// set and attach foreground color
-	uint32_t fgcol = xava->conf.col;
+	uint32_t fgcol = wayland_color_blend(conf->col, conf->foreground_opacity*255);
 	glUniform4f(GL_FGCOL, ARGB_R_32(fgcol)/255.0, ARGB_G_32(fgcol)/255.0,
-			ARGB_B_32(fgcol)/255.0, xava->conf.foreground_opacity);
+			ARGB_B_32(fgcol)/255.0, conf->foreground_opacity);
 
 	// set background clear color
-	uint32_t bgcol = xava->conf.bgcol;
+	uint32_t bgcol = wayland_color_blend(conf->bgcol, conf->background_opacity*255);
 	glClearColor(ARGB_R_32(bgcol)/255.0, ARGB_G_32(bgcol)/255.0,
-			ARGB_B_32(bgcol), xava->conf.background_opacity);
+			ARGB_B_32(bgcol)/255.0, conf->background_opacity);
 }
 
 void waylandEGLDraw(struct XAVA_HANDLE *xava) {
