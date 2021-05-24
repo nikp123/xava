@@ -26,6 +26,16 @@ static GLfloat projectionMatrix[16] =
 	0.0, 0.0, -1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0};
 
+static GLfloat postVertices[] = {
+	-1.0f, -1.0f,  // Position 0
+	 0.0f,  0.0f,  // TexCoord 0
+	 1.0f, -1.0f,  // Position 1
+	 1.0f,  0.0f,  // TexCoord 1
+	 1.0f,  1.0f,  // Position 2
+	 1.0f,  1.0f,  // TexCoord 2
+	-1.0f,  1.0f,  // Position 3
+	 0.0f,  1.0f}; // TexCoord 3
+
 static GLuint PRE_POS;
 static GLuint PRE_FGCOL;
 static GLuint PRE_W, PRE_H;
@@ -201,6 +211,22 @@ void waylandEGLApply(struct XAVA_HANDLE *xava) {
 	vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*12);
 	glVertexAttribPointer(PRE_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
+	// since most of this information remains untouched, let's precalculate
+	for(int i=0; i<xava->bars; i++) {
+		vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);
+		vertexData[i*12+1]  = 1.0f;
+		vertexData[i*12+2]  = vertexData[i*12];
+		vertexData[i*12+3]  = 0.0f;
+		vertexData[i*12+4]  = vertexData[i*12]+conf->bw;
+		vertexData[i*12+5]  = 0.0;
+		vertexData[i*12+6]  = vertexData[i*12+4];
+		vertexData[i*12+7]  = 1.0f;
+		vertexData[i*12+8]  = vertexData[i*12+4];
+		vertexData[i*12+9]  = 0.0;
+		vertexData[i*12+10] = vertexData[i*12];
+		vertexData[i*12+11] = 1.0f;
+	}
+
 	// update screen width and height uniforms
 	glUniform1f(PRE_W, xava->conf.w);
 	glUniform1f(PRE_H, xava->conf.h);
@@ -232,7 +258,16 @@ void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 
 	/**
 	 * Here we start rendering to the texture
-	 * */
+	 **/
+
+	// i am speed
+	register GLfloat *d = vertexData;
+	for(register int i=0; i<xava->bars; i++) {
+		*(++d) = xava->f[i];
+		*(d+=6) = xava->f[i];
+		*(d+=4) = xava->f[i];
+		d++;
+	}
 
 	// bind render target to texture
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
@@ -241,26 +276,9 @@ void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 	// switch to pre shaders
 	glUseProgram(pre.program);
 
-	// do all of the vertex math needed
-	for(int i=0; i<xava->bars; i++) {
-		vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);  
-		vertexData[i*12+1]  = xava->f[i];
-		vertexData[i*12+2]  = vertexData[i*12];  
-		vertexData[i*12+3]  = 0.0;
-		vertexData[i*12+4]  = vertexData[i*12]+conf->bw;
-		vertexData[i*12+5]  = 0.0; 
-		vertexData[i*12+6]  = vertexData[i*12+4];
-		vertexData[i*12+7]  = vertexData[i*12+1];
-		vertexData[i*12+8]  = vertexData[i*12+4];
-		vertexData[i*12+9]  = 0.0;
-		vertexData[i*12+10] = vertexData[i*12];
-		vertexData[i*12+11] = vertexData[i*12+1]; 
-	}
-
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	// for some fucking reason this pointer gets reset after a context switch
-	// this is to prevent the thing from killing itself when using glUseProgram()
+	// pointers get reset after each glUseProgram(), that's why this is done
 	glVertexAttribPointer(PRE_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
 	glEnableVertexAttribArray(PRE_POS);
@@ -276,6 +294,7 @@ void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 	 * shader writing
 	 * */
 
+	// Change framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, conf->w, conf->h);
 
@@ -283,26 +302,15 @@ void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 	glUseProgram(post.program);
 
 	// Clear the color buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	GLfloat vVertices[] = { 
-		-1.0f, -1.0f, // Position 0
-		0.0f, 0.0f,   // TexCoord 0 
-		1.0f, -1.0f,  // Position 1
-		1.0f, 0.0f,   // TexCoord 1
-		1.0f, 1.0f,   // Position 2
-		1.0f, 1.0f,   // TexCoord 2
-		-1.0f, 1.0f,  // Position 3
-		0.0f, 1.0f    // TexCoord 3
-	};
-
-	// Load the vertex position
+	// set attribute array pointers for the texture unit and vertex unit
 	glVertexAttribPointer(POST_POS, 2, GL_FLOAT,
-		GL_FALSE, 4 * sizeof(GLfloat), vVertices);
-	// Load the texture coordinate
+		GL_FALSE, 4 * sizeof(GLfloat), postVertices);
 	glVertexAttribPointer(POST_TEXCOORD, 2, GL_FLOAT,
-		GL_FALSE, 4 * sizeof(GLfloat), &vVertices[2]);
+		GL_FALSE, 4 * sizeof(GLfloat), &postVertices[2]);
 
+	// enable the use of the following attribute elements
 	glEnableVertexAttribArray(POST_POS);
 	glEnableVertexAttribArray(POST_TEXCOORD);
 
@@ -312,7 +320,10 @@ void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 	glBindTexture(GL_TEXTURE_2D, FBO.texture);
 	glUniform1i(POST_TEXTURE, 0);
 
-	// This looks like every frame.
+	// draw frame
 	GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+
+	glDisableVertexAttribArray(POST_POS);
+	glDisableVertexAttribArray(POST_POS);
 }
