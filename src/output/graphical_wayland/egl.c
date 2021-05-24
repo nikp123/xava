@@ -10,10 +10,14 @@
 #endif
 
 #include "../graphical.h"
+#include "../shared/egl.h"
 
 #include "egl.h"
 #include "main.h"
 #include "render.h"
+
+static struct EGLprogram pre, post;
+static struct FBO        FBO;
 
 static GLfloat *vertexData;
 static GLfloat projectionMatrix[16] = 
@@ -22,38 +26,16 @@ static GLfloat projectionMatrix[16] =
 	0.0, 0.0, -1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0};
 
-static GLuint GL_POS;
-static GLuint GL_FGCOL;
-static GLuint GL_W, GL_H;
-static GLuint GL_PROJMATRIX;
+static GLuint PRE_POS;
+static GLuint PRE_FGCOL;
+static GLuint PRE_W, PRE_H;
+static GLuint PRE_PROJMATRIX;
 
-// stupidly unsafe function, now behave yourselves
-raw_data *load_file(const char *file) {
-	raw_data *data = malloc(sizeof(raw_data));
+static GLuint POST_POS;
+static GLuint POST_TEXCOORD;
+static GLuint POST_TEXTURE;
 
-	FILE *fp = fopen(file, "r");
-
-	fseek(fp, 0, SEEK_END);
-	data->size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	data->data = malloc(data->size+1);
-	fread(data->data, data->size, 1, fp);
-
-	// pro-gamer move (NOTE: might not work if char is bigger than 8 bits)
-	((char*)data->data)[data->size] = 0x00;
-
-	fclose(fp);
-
-	return data;
-}
-
-void close_file(raw_data *file) {
-	free(file->data);
-	free(file);
-}
-
-void EGLCreateWindow(struct waydata *wd) {
+void waylandEGLCreateWindow(struct waydata *wd) {
 	//region = wl_compositor_create_region(wd->compositor);
 	//wl_region_add(region, 0, 0, width, height);
 	//wl_surface_set_opaque_region(surface, region);
@@ -71,7 +53,7 @@ void EGLCreateWindow(struct waydata *wd) {
 	wd->ESContext.window_height = wd->hand->conf.h;
 }
 
-EGLBoolean EGLCreateContext(struct waydata *wd) {
+EGLBoolean waylandEGLCreateContext(struct waydata *wd) {
 	struct XAVA_HANDLE *xava = wd->hand;
 	struct config_params *conf = &xava->conf;
 	EGLint numConfigs;
@@ -151,84 +133,31 @@ EGLBoolean EGLCreateContext(struct waydata *wd) {
 
 }
 
-EGLint waylandEGLShaderBuild(const char *source, GLenum shader_type) {
-	EGLint shader;
-	EGLint status;
-
-	shader = glCreateShader(shader_type);
-	xavaBailCondition(shader == 0, "Failed to build shader");
-
-	glShaderSource(shader, 1, (const char **) &source, NULL);
-	glCompileShader(shader);
-
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-	if (!status) {
-		char log[1000];
-		GLsizei len;
-		glGetShaderInfoLog(shader, 1000, &len, log);
-		xavaBail("Error: compiling %s: %*s\n",
-				shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment",
-				len, log);
-	}
-
-	xavaSpam("Compiling %s shader successful",
-			shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment");
-
-	return shader;
-}
-
 void waylandEGLDestroy(struct waydata *wd) {
 	eglDestroySurface(wd->ESContext.display, wd->ESContext.surface);
 	wl_egl_window_destroy(wd->ESContext.native_window);
 }
 
-void waylandEGLShadersLoad(struct waydata *wd) {
-	char *fragmentShaderPath, *vertexShaderPath;
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, "egl/shaders/fragment.glsl", &fragmentShaderPath) == false, 
-			"Failed to load fragment shader!");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, "egl/shaders/vertex.glsl", &vertexShaderPath) == false,
-			"Failed to load vertex shader!");
-
-	wd->fragSHD = load_file(fragmentShaderPath);
-	wd->vertSHD = load_file(vertexShaderPath);
-
-	free(vertexShaderPath);
-	free(fragmentShaderPath);
-}
 
 void waylandEGLInit(struct waydata *wd) {
 	// creates everything EGL related
-	EGLCreateWindow(wd);
-	xavaBailCondition(EGLCreateContext(wd) == EGL_FALSE,
+	waylandEGLCreateWindow(wd);
+	xavaBailCondition(waylandEGLCreateContext(wd) == EGL_FALSE,
 			"Failed to create EGL context");
 
-	EGLint fragment, vertex, program, status;
+	EGLCreateProgram(&pre);
+	EGLCreateProgram(&post);
 
-	program = glCreateProgram();
-	fragment = waylandEGLShaderBuild(wd->fragSHD->data, GL_FRAGMENT_SHADER); 
-	vertex   = waylandEGLShaderBuild(wd->vertSHD->data, GL_VERTEX_SHADER);
-	close_file(wd->fragSHD);
-	close_file(wd->vertSHD);
+	PRE_POS        = glGetAttribLocation(pre.program,  "pos");
+	PRE_FGCOL      = glGetUniformLocation(pre.program, "color");
+	PRE_W          = glGetUniformLocation(pre.program, "width");
+	PRE_H          = glGetUniformLocation(pre.program, "height");
+	PRE_PROJMATRIX = glGetUniformLocation(pre.program, "projectionMatrix");
 
-	glAttachShader(program, fragment);
-	glAttachShader(program, vertex);
-	glLinkProgram(program);
-	glUseProgram(program);
-
-	glGetProgramiv(program, GL_LINK_STATUS, &status);
-	if (!status) {
-		char log[1000];
-		GLsizei len;
-		glGetProgramInfoLog(program, 1000, &len, log);
-		fprintf(stderr, "Error: linking:\n%*s\n", len, log);
-		exit(1);
-	}
-
-	GL_POS        = glGetAttribLocation(program,  "pos");
-	GL_FGCOL      = glGetUniformLocation(program, "color");
-	GL_W          = glGetUniformLocation(program, "width");
-	GL_H          = glGetUniformLocation(program, "height");
-	GL_PROJMATRIX = glGetUniformLocation(program, "projectionMatrix");
+	POST_POS       = glGetAttribLocation(post.program, "a_position");
+	POST_TEXCOORD  = glGetAttribLocation(post.program, "a_texCoord");
+	POST_TEXTURE   = glGetUniformLocation(post.program, "s_texture");
+	glUseProgram(pre.program);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -240,26 +169,51 @@ void waylandEGLInit(struct waydata *wd) {
 void waylandEGLApply(struct XAVA_HANDLE *xava) {
 	struct config_params *conf = &xava->conf;
 
-	// define viewport size
-	glViewport(0, 0, conf->w, conf->h);
+	glUseProgram(post.program);
+
+	// allocate three buffers
+	glGenFramebuffers(1,  &FBO.framebuffer);
+	glGenTextures(1,      &FBO.texture);
+
+	// set texture properties
+	glBindTexture(GL_TEXTURE_2D, FBO.texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, conf->w, conf->h,
+			0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	// set framebuffer properties
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, FBO.texture, 0);
+
+	// check if it borked
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	xavaBailCondition(status != GL_FRAMEBUFFER_COMPLETE, 
+			"Framebuffer Objects are not supported! Error code 0x%X\n",
+			status);
+
+	glUseProgram(pre.program);
 
 	// reallocate and attach verticies data
 	vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*12);
-	glVertexAttribPointer(GL_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+	glVertexAttribPointer(PRE_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
 	// update screen width and height uniforms
-	glUniform1f(GL_W, xava->conf.w);
-	glUniform1f(GL_H, xava->conf.h);
+	glUniform1f(PRE_W, xava->conf.w);
+	glUniform1f(PRE_H, xava->conf.h);
 
 	// update projection matrix
 	projectionMatrix[0] = 2.0/xava->conf.w;
 	projectionMatrix[5] = 2.0/xava->conf.h;
 
-	glUniformMatrix4fv(GL_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
+	glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
 	// set and attach foreground color
 	uint32_t fgcol = wayland_color_blend(conf->col, conf->foreground_opacity*255);
-	glUniform4f(GL_FGCOL, ARGB_R_32(fgcol)/255.0, ARGB_G_32(fgcol)/255.0,
+	glUniform4f(PRE_FGCOL, ARGB_R_32(fgcol)/255.0, ARGB_G_32(fgcol)/255.0,
 			ARGB_B_32(fgcol)/255.0, conf->foreground_opacity);
 
 	// set background clear color
@@ -268,8 +222,24 @@ void waylandEGLApply(struct XAVA_HANDLE *xava) {
 			ARGB_B_32(bgcol)/255.0, conf->background_opacity);
 }
 
+// dummy abstraction function
+void waylandEGLShadersLoad(void) {
+	EGLShadersLoad(&pre, &post);
+}
+
 void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 	struct config_params *conf = &xava->conf;
+
+	/**
+	 * Here we start rendering to the texture
+	 * */
+
+	// bind render target to texture
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
+	glViewport(0, 0, conf->w, conf->h);
+
+	// switch to pre shaders
+	glUseProgram(pre.program);
 
 	// do all of the vertex math needed
 	for(int i=0; i<xava->bars; i++) {
@@ -289,10 +259,60 @@ void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glEnableVertexAttribArray(GL_POS);
+	// for some fucking reason this pointer gets reset after a context switch
+	// this is to prevent the thing from killing itself when using glUseProgram()
+	glVertexAttribPointer(PRE_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+
+	glEnableVertexAttribArray(PRE_POS);
 
 	// You use the number of verticies, but not the actual polygon count
 	glDrawArrays(GL_TRIANGLES, 0, xava->bars*6);
 
-	glDisableVertexAttribArray(GL_POS);
+	glDisableVertexAttribArray(PRE_POS);
+
+	/**
+	 * Once the texture has been conpleted, we now activate a seperate pipeline
+	 * which just displays that texture to the actual framebuffer for easier
+	 * shader writing
+	 * */
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, conf->w, conf->h);
+
+	// Switch to post shaders
+	glUseProgram(post.program);
+
+	// Clear the color buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	GLfloat vVertices[] = { 
+		-1.0f, -1.0f, // Position 0
+		0.0f, 0.0f,   // TexCoord 0 
+		1.0f, -1.0f,  // Position 1
+		1.0f, 0.0f,   // TexCoord 1
+		1.0f, 1.0f,   // Position 2
+		1.0f, 1.0f,   // TexCoord 2
+		-1.0f, 1.0f,  // Position 3
+		0.0f, 1.0f    // TexCoord 3
+	};
+
+	// Load the vertex position
+	glVertexAttribPointer(POST_POS, 2, GL_FLOAT,
+		GL_FALSE, 4 * sizeof(GLfloat), vVertices);
+	// Load the texture coordinate
+	glVertexAttribPointer(POST_TEXCOORD, 2, GL_FLOAT,
+		GL_FALSE, 4 * sizeof(GLfloat), &vVertices[2]);
+
+	glEnableVertexAttribArray(POST_POS);
+	glEnableVertexAttribArray(POST_TEXCOORD);
+
+	// Bind the texture
+	// Set the sampler texture unit to 0
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, FBO.texture);
+	glUniform1i(POST_TEXTURE, 0);
+
+	// This looks like every frame.
+	GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }

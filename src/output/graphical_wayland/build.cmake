@@ -64,6 +64,7 @@ if(WAYLAND)
 			"${XAVA_MODULE_DIR}/registry.c"
 			"${XAVA_MODULE_DIR}/xdg.c"
 			"${XAVA_MODULE_DIR}/egl.c"
+			"${XAVA_MODULE_DIR}/../shared/egl.c"
 			"${XAVA_MODULE_DIR}/zwlr.c"
 			"src/output/graphical.c"
 			"${XAVA_MODULE_DIR}/gen/xdg-shell-client-protocol.c"

@@ -9,11 +9,6 @@
 	#include <stdint.h>
 	#include <EGL/egl.h>
 	#include <GLES2/gl2.h>
-
-	typedef struct data {
-		size_t size;
-		void*  data;
-	} raw_data;
 #endif
 
 #include <wayland-client.h>
@@ -43,7 +38,6 @@ struct waydata {
 			/// EGL surface
 			EGLSurface  surface;
 		} ESContext;
-		raw_data *fragSHD, *vertSHD;
 	#endif
 };
 

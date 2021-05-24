@@ -5,15 +5,9 @@
 	#include <EGL/egl.h>
 	#include "main.h"
 
-	/**
-	 * Unsafe function, as it assumes that the file is valid in front of time!
-	 * */
-	raw_data *load_file(const char *file);
-	void      close_file(raw_data *file);
-
 	void   waylandEGLDestroy(struct waydata *wd);
-	EGLint waylandEGLShaderBuild(const char *source, EGLenum shader_type);
-	void   waylandEGLShadersLoad(struct waydata *wd);
 	void   waylandEGLInit(struct waydata *wd);
+	void   waylandEGLApply(struct XAVA_HANDLE *xava);
 	void   waylandEGLDraw(struct XAVA_HANDLE *xava);
+	void   waylandEGLShadersLoad(void);
 #endif
