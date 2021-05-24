@@ -8,7 +8,7 @@
 
 #include "main.h"
 
-extern uint32_t wayland_color_blend (uint32_t color, uint16_t alpha);
+extern uint32_t wayland_color_blend (uint32_t color, uint8_t alpha);
 extern void     update_frame        (struct waydata *s);
 extern void     reallocSHM          (struct waydata *wd);
 extern void     closeSHM            (struct waydata *wd);
