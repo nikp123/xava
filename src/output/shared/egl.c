@@ -2,8 +2,18 @@
 #include "egl.h"
 #include "../graphical.h"
 
-static struct EGLprogram pre, post;
-static struct FBO        FBO;
+// this is so that loading shaders is managable
+struct EGLprogram {
+	char *fragText, *vertText;
+	GLuint vert, frag;
+	GLuint program;
+} pre, post;
+
+static struct FBO {
+	GLuint framebuffer;
+	GLuint final_texture;
+	GLuint depth_texture;
+} FBO;
 
 static GLfloat *vertexData;
 static GLfloat projectionMatrix[16] = 
