@@ -619,7 +619,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 				if(p->gradients)
 					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 
 						0, p->h - hand->f[i], p->bw, hand->f[i]-hand->fl[i],
-						hand->rest + i*(p->bs+p->bw), p->h - hand->f[i]);
+						xoffset + i*(p->bs+p->bw), yoffset - hand->f[i]);
 				else {
 					XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
 					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics,
