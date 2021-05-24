@@ -190,7 +190,6 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 #ifdef EGL
 	waylandEGLDraw(hand);
-	eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface); 
 #else
 	struct config_params     *p    = &hand->conf;
 	if(wd.fbUnsafe) return;

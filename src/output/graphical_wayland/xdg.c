@@ -44,8 +44,7 @@ static void xdg_toplevel_handle_configure(void *data,
 		p->h = h;
 
 		#ifdef EGL
-			wl_egl_window_resize((struct wl_egl_window *)wd->ESContext.native_window, w, h, 0, 0);
-			wl_surface_commit(wd->surface);
+			waylandEGLWindowResize(wd, w, h);
 		#else
 			reallocSHM(wd);
 			wd->fbUnsafe = false;

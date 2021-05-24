@@ -27,18 +27,6 @@ struct waydata {
 	int                  shmfd;
 	_Bool                fbUnsafe;
 	struct wl_list       outputs;
-	#ifdef EGL
-		struct _escontext {
-			EGLNativeWindowType native_window;
-			uint16_t window_width, window_height;
-			/// EGL display
-			EGLDisplay  display;
-			/// EGL context
-			EGLContext  context;
-			/// EGL surface
-			EGLSurface  surface;
-		} ESContext;
-	#endif
 };
 
 
