@@ -440,3 +440,42 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 	return false; // if you somehow ended up here, it's probably something breaking so "failure" it is
 }
 
+EXP_FUNC RawData *xavaReadFile(const char *file) {
+	RawData *data = malloc(sizeof(RawData));
+
+	FILE *fp = fopen(file, "r");
+	if(fp == NULL) {
+		return NULL;
+	}
+
+	fseek(fp, 0, SEEK_END);
+	data->size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	data->data = malloc(data->size+1);
+	if(data->data == NULL) {
+		fclose(fp);
+		return NULL;
+	}
+
+	fread(data->data, data->size, 1, fp);
+
+	// pro-gamer move (NOTE: might not work if char is bigger than 8 bits)
+	((char*)data->data)[data->size] = 0x00;
+
+	fclose(fp);
+
+	return data;
+}
+
+EXP_FUNC void xavaCloseFile(RawData *file) {
+	free(file->data);
+	free(file);
+}
+
+EXP_FUNC void *xavaDuplicateMemory(void *memory, size_t size) {
+	void *duplicate = malloc(size);
+	memcpy(duplicate, memory, size);
+	return duplicate;
+}
+
