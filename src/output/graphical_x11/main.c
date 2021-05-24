@@ -9,14 +9,12 @@
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xrandr.h>
 #include <iniparser.h>
-#ifdef GLX
-#include <X11/extensions/Xrender.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "../graphical.h"
+#include "../shared/egl.h"
 #include "../../config.h"
 #include "../../shared.h"
 #include "main.h"
@@ -71,27 +69,9 @@ static bool rootWindowEnabled;
 static bool overrideRedirectEnabled;
 static bool reloadOnDisplayConfigure;
 
-#ifdef GLX
-static int VisData[] = {
-	GLX_RENDER_TYPE, GLX_RGBA_BIT,
-	GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
-	GLX_DOUBLEBUFFER, True,
-	GLX_RED_SIZE, 8,
-	GLX_GREEN_SIZE, 8,
-	GLX_BLUE_SIZE, 8,
-	GLX_ALPHA_SIZE, 8,
-	GLX_DEPTH_SIZE, 16,
-	None
-};
-static double glColors[8], gradColors[24];
-static XRenderPictFormat *pict_format;
-
-static GLXFBConfig *fbconfigs, fbconfig;
-static int numfbconfigs;
-
-void glXSwapIntervalEXT (Display *dpy, GLXDrawable drawable, int interval);
+#ifdef EGL
+	static struct _escontext ESContext;
 #endif
-
 
 // mwmHints helps us comunicate with the window manager
 struct mwmHints {
@@ -119,23 +99,6 @@ enum {
 #define _NET_WM_STATE_REMOVE 0
 #define _NET_WM_STATE_ADD 1
 #define _NET_WM_STATE_TOGGLE 2
-
-
-#ifdef GLX
-int XGLInit(struct config_params *p) {
-	// we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
-	xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
-	glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
-	if(p->transF) {
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-	return 0;
-}
-#endif
 
 // Pull from the terminal colors, and afterwards, do the usual
 void snatchColor(char *name, char *colorStr, int colorNum, XColor *colorObj,
@@ -239,25 +202,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	}
 
 	// 32 bit color means alpha channel support
-	#ifdef GLX
-	if(p->transF) {
-		fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
-		fbconfig = 0;
-		for(int i = 0; i<numfbconfigs; i++) {
-			XVisualInfo *visInfo = glXGetVisualFromFBConfig(xavaXDisplay, fbconfigs[i]);
-			if(!visInfo) continue;
-			else xavaVInfo = *visInfo;
-
-			pict_format = XRenderFindVisualFormat(xavaXDisplay, xavaVInfo.visual);
-			if(!pict_format) continue;
-
-			fbconfig = fbconfigs[i];
-
-			if(pict_format->direct.alphaMask > 0) break;
-		}
-	} else
-	#endif
-		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p->transF ? 32 : 24, TrueColor, &xavaVInfo);
+	XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p->transF ? 32 : 24, TrueColor, &xavaVInfo);
 
 	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 	xavaXColormap = xavaAttr.colormap;
@@ -293,8 +238,11 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask | VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
 
-	#ifdef GLX
-		if(XGLInit(p)) return 1;
+	#ifdef EGL
+		ESContext.native_window = xavaXWindow;
+		ESContext.native_display = xavaXDisplay;
+		EGLCreateContext(hand, &ESContext);
+		EGLInit(hand);
 	#endif
 
 	XMapWindow(xavaXDisplay, xavaXWindow);
@@ -420,22 +368,9 @@ int render_gradient_x(struct config_params *p) {
 }
 
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
-	struct config_params *p = &hand->conf;
+	#if !defined(EGL)
+		struct config_params *p = &hand->conf;
 
-	#if defined(GLX)
-		glClearColor(xbgcol.red/65535.0, xbgcol.green/65535.0, xbgcol.blue/65535.0, p->transF ? 1.0*p->background_opacity : 1.0); // TODO BG transparency
-		glColors[0] = xcol.red/65535.0;
-		glColors[1] = xcol.green/65535.0;
-		glColors[2] = xcol.blue/65535.0;
-		glColors[3] = p->transF ? p->foreground_opacity : 1.0;
-
-		if(p->shdw) {
-			glColors[4] = ARGB_A_32(p->shdw_col);
-			glColors[5] = ARGB_R_32(p->shdw_col);
-			glColors[6] = ARGB_G_32(p->shdw_col);
-			glColors[7] = ARGB_B_32(p->shdw_col);
-		}
-	#else
 		XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
 		XClearWindow(xavaXDisplay, xavaXWindow);
 
@@ -477,19 +412,6 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 	xev.xclient.data.l[2] = 0;
 	XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
-	// do the usual stuff :P
-	#ifdef GLX
-	glViewport(0, 0, p->w, p->h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	glOrtho(0, (double)p->w, 0, (double)p->h, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	// Vsync causes problems on NVIDIA GPUs, looking for possible workarounds/fixes
-	glXSwapIntervalEXT(xavaXDisplay, xavaXWindow, p->vsync);
-	#endif
 	xavaOutputClear(hand);
 
 	if(!p->interactF){
@@ -517,6 +439,10 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 	#endif
 
 	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &windowAttribs);
+
+	#ifdef EGL
+		EGLApply(hand);
+	#endif
 
 	return 0;
 }
@@ -672,19 +598,9 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 		kineticScore=0.0;
 	#endif
 
-	#if defined(GLX)
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		for(int i=0; i<p->gradients; i++) {
-			gradColors[i*3] = xgrad[i].red/65535.0;
-			gradColors[i*3+1] = xgrad[i].green/65535.0;
-			gradColors[i*3+2] = xgrad[i].blue/65535.0;
-		}
-		if(drawGLBars(hand, glColors, gradColors)) exit(EXIT_FAILURE);
-		
-		glXSwapBuffers(xavaXDisplay, xavaXWindow);
-		glFinish();
-		glXWaitGL();
+	#if defined(EGL)
+		EGLDraw(hand);
+		eglSwapBuffers(ESContext.display, ESContext.surface); 
 	#else
 		// draw bars on the X11 window
 		for(int i = 0; i < hand->bars; i++) {
@@ -738,10 +654,6 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 		free(stars);
 	#endif
 
-	#ifdef GLX
-		glXMakeCurrent(xavaXDisplay, 0, 0);
-		glXDestroyContext(xavaXDisplay, xavaGLXContext);
-	#endif
 	XFreeGC(xavaXDisplay, xavaXGraphics);
 	XDestroyWindow(xavaXDisplay, xavaXWindow);
 	XFreeColormap(xavaXDisplay, xavaXColormap);
@@ -778,7 +690,7 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 		p->transF = 0;
 	#endif
 
-	#ifndef GLX
+	#ifndef EGL
 		// VSync doesnt work without OpenGL :(
 		p->vsync = 0;
 	#else
@@ -795,6 +707,10 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 
 		starsVelocity = 2.0*iniparser_getdouble(ini, "stars:velocity", 1.0);
 		xavaBailCondition(starsVelocity<=0.0, "Stars velocity needs to be above 0.0");
+	#endif
+
+	#ifdef EGL
+		EGLShadersLoad();
 	#endif
 }
 

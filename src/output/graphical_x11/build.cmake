@@ -45,23 +45,24 @@ if(X11)
 			install(TARGETS out_x11_stars DESTINATION lib/xava)
 			target_compile_definitions(out_x11_stars PUBLIC -DSTARS)
 
-			# GLX
-			pkg_check_modules(GL QUIET gl xrender)
-			if(GL_FOUND)
-				add_library(out_glx SHARED "${XAVA_MODULE_DIR}/main.c"
+			# EGL
+			pkg_check_modules(EGL QUIET egl glesv2)
+			if(EGL_FOUND)
+				add_library(out_x11_egl SHARED "${XAVA_MODULE_DIR}/main.c"
 											"src/output/graphical.c"
+											"src/output/shared/egl.c"
 											"${GLOBAL_FUNCTION_SOURCES}")
-				target_link_directories(out_glx PRIVATE 
-					"${GL_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
-				target_include_directories(out_glx PRIVATE 
-					"${GL_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
-				target_link_libraries(out_glx xava-shared 
-					"${GL_LIBRARIES}" "${X11_LIBRARIES}" iniparser)
-				target_compile_definitions(out_glx PUBLIC -DGLX -DGL)
-				set_target_properties(out_glx PROPERTIES PREFIX "")
-				install(TARGETS out_glx DESTINATION lib/xava)
+				target_link_directories(out_x11_egl PRIVATE 
+					"${EGL_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
+				target_include_directories(out_x11_egl PRIVATE 
+					"${EGL_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
+				target_link_libraries(out_x11_egl xava-shared 
+					"${EGL_LIBRARIES}" "${X11_LIBRARIES}" iniparser)
+				target_compile_definitions(out_x11_egl PUBLIC -DEGL)
+				set_target_properties(out_x11_egl PROPERTIES PREFIX "")
+				install(TARGETS out_x11_egl DESTINATION lib/xava)
 			else()
-				message(STATUS "GL and or Xrender library not found")
+				message(STATUS "EGL and or Xrender library not found")
 			endif()
 		else()
 			message(STATUS "X11, Xrandr and/or Xfixes library not found")
