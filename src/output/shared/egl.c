@@ -234,16 +234,17 @@ void EGLApply(struct XAVA_HANDLE *xava){
 
 	glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
+	// enable superior color blending (change my mind)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// set and attach foreground color
-	uint32_t fgcol = conf->col;// wayland_color_blend(conf->col, conf->foreground_opacity*255);
+	uint32_t fgcol = conf->col;
 	glUniform4f(PRE_FGCOL, ARGB_R_32(fgcol)/255.0, ARGB_G_32(fgcol)/255.0,
 			ARGB_B_32(fgcol)/255.0, conf->foreground_opacity);
 
 	// set background clear color
-	uint32_t bgcol = conf->bgcol; //wayland_color_blend(conf->bgcol, conf->background_opacity*255);
+	uint32_t bgcol = conf->bgcol;
 	glClearColor(ARGB_R_32(bgcol)/255.0, ARGB_G_32(bgcol)/255.0,
 			ARGB_B_32(bgcol)/255.0, conf->background_opacity);
 
@@ -402,7 +403,7 @@ EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESConte
 	// Make the context current
 	if ( !eglMakeCurrent(display, surface, surface, context) )
 	{
-		xavaError("EGL was unable to switch to the wayland window");
+		xavaError("EGL was not able to switch to to the current window");
 		return EGL_FALSE;
 	}
 
