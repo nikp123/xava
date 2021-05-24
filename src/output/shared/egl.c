@@ -261,7 +261,7 @@ void EGLApply(struct XAVA_HANDLE *xava){
 	PRE_GRAD_SECT_COUNT = glGetUniformLocation(pre.program, "gradient_sections");
 	PRE_GRADIENTS  = glGetUniformLocation(pre.program, "gradient_color");
 
-	glUniform1f(PRE_GRAD_SECT_COUNT, conf->gradients-1);
+	glUniform1f(PRE_GRAD_SECT_COUNT, conf->gradients ? conf->gradients-1 : 0);
 	glUniform4fv(PRE_GRADIENTS, conf->gradients, gradientColor); 
 }
 
