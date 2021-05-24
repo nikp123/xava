@@ -1,14 +1,14 @@
+// input vertex
 attribute vec4 pos;
 
 // foreground color
-uniform vec4  color;
+uniform vec4 color;
 
 // screen width and height
-uniform float width;
-uniform float height;
+uniform vec2 u_resolution;
 
 // projection matrix precalculated by XAVA
-uniform mat4  projectionMatrix;
+uniform mat4 projectionMatrix;
 
 // output color used by the fragment shader
 varying vec4 v_color;

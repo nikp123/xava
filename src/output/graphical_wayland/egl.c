@@ -36,10 +36,14 @@ static GLfloat postVertices[] = {
 	-1.0f,  1.0f,  // Position 3
 	 0.0f,  1.0f}; // TexCoord 3
 
+static GLfloat *gradientColor;
+
 static GLuint PRE_POS;
 static GLuint PRE_FGCOL;
-static GLuint PRE_W, PRE_H;
+static GLuint PRE_RESOLUTION;
 static GLuint PRE_PROJMATRIX;
+static GLuint PRE_GRAD_SECT_COUNT;
+static GLuint PRE_GRADIENTS;
 
 static GLuint POST_POS;
 static GLuint POST_TEXCOORD;
@@ -150,6 +154,9 @@ void waylandEGLDestroy(struct waydata *wd) {
 
 
 void waylandEGLInit(struct waydata *wd) {
+	struct XAVA_HANDLE *xava = wd->hand;
+	struct config_params *conf = &xava->conf; 
+
 	// creates everything EGL related
 	waylandEGLCreateWindow(wd);
 	xavaBailCondition(waylandEGLCreateContext(wd) == EGL_FALSE,
@@ -160,8 +167,7 @@ void waylandEGLInit(struct waydata *wd) {
 
 	PRE_POS        = glGetAttribLocation(pre.program,  "pos");
 	PRE_FGCOL      = glGetUniformLocation(pre.program, "color");
-	PRE_W          = glGetUniformLocation(pre.program, "width");
-	PRE_H          = glGetUniformLocation(pre.program, "height");
+	PRE_RESOLUTION = glGetUniformLocation(pre.program, "u_resolution");
 	PRE_PROJMATRIX = glGetUniformLocation(pre.program, "projectionMatrix");
 
 	POST_POS       = glGetAttribLocation(post.program, "a_position");
@@ -174,6 +180,20 @@ void waylandEGLInit(struct waydata *wd) {
 
 	// we just need working pointers so that realloc() works
 	vertexData = malloc(1);
+
+	// gradients
+	if(conf->gradients)
+		gradientColor = malloc(4*sizeof(GLfloat)*conf->gradients);
+
+	for(int i=0; i<conf->gradients; i++) {
+		uint32_t grad_col;
+		sscanf(conf->gradient_colors[i], "#%x", &grad_col);
+		gradientColor[i*4+0] = ARGB_R_32(grad_col) / 255.0;
+		gradientColor[i*4+1] = ARGB_G_32(grad_col) / 255.0;
+		gradientColor[i*4+2] = ARGB_B_32(grad_col) / 255.0;
+		//gradientColor[i*4+3] = ARGB_A_32(grad_col) / 255.0;
+		gradientColor[i*4+3] = conf->foreground_opacity;
+	}
 }
 
 void waylandEGLApply(struct XAVA_HANDLE *xava) {
@@ -227,9 +247,8 @@ void waylandEGLApply(struct XAVA_HANDLE *xava) {
 		vertexData[i*12+11] = 1.0f;
 	}
 
-	// update screen width and height uniforms
-	glUniform1f(PRE_W, xava->conf.w);
-	glUniform1f(PRE_H, xava->conf.h);
+	// update screen resoltion
+	glUniform2f(PRE_RESOLUTION, conf->w, conf->h);
 
 	// update projection matrix
 	projectionMatrix[0] = 2.0/xava->conf.w;
@@ -246,6 +265,12 @@ void waylandEGLApply(struct XAVA_HANDLE *xava) {
 	uint32_t bgcol = wayland_color_blend(conf->bgcol, conf->background_opacity*255);
 	glClearColor(ARGB_R_32(bgcol)/255.0, ARGB_G_32(bgcol)/255.0,
 			ARGB_B_32(bgcol)/255.0, conf->background_opacity);
+
+	PRE_GRAD_SECT_COUNT = glGetUniformLocation(pre.program, "gradient_sections");
+	PRE_GRADIENTS  = glGetUniformLocation(pre.program, "gradient_color");
+
+	glUniform1f(PRE_GRAD_SECT_COUNT, conf->gradients-1);
+	glUniform4fv(PRE_GRADIENTS, conf->gradients, gradientColor); 
 }
 
 // dummy abstraction function

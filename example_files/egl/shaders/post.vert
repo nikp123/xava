@@ -1,6 +1,8 @@
+// input vertex and texture coordinate
 attribute vec4 a_position;
 attribute vec2 a_texCoord;
 
+// output texture map coordinate
 varying vec2 v_texCoord;
 
 void main() {
