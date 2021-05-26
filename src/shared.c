@@ -183,11 +183,11 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 							"There is a high likelyhood that something may be broken");
 
 					char *homeDir;
-					xavaErrorCondition(homeDir = getenv("HOME"),
+					xavaErrorCondition((homeDir = getenv("HOME")) == NULL,
 							"This system is $HOME-less. Aborting execution...");
 
-					configHome = malloc(sizeof(char)*
-							(strlen(homeDir)+strlen(PACKAGE)+3+strlen(filename)));
+					// fuck strings, REEEEEEEEEEEEEEEEEEe
+					configHome = malloc(MAX_PATH);
 
 					if(configHome == NULL) {
 						xavaError("Allocation failed");
@@ -195,9 +195,8 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 					}
 
 					// filename is added in post
-					sprintf(configHome, "%s/%s/", homeDir, PACKAGE); 
+					sprintf(configHome, "%s/.config/%s/", homeDir, PACKAGE); 
 					(*actualPath) = configHome;
-					return true;
 				} else {
 					(*actualPath) = malloc((strlen(configHome)+strlen(PACKAGE)+strlen(filename)+3)*sizeof(char));
 
