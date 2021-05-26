@@ -183,9 +183,6 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
 	if(hand->rest < 0)
 		hand->rest = 0;
 
-	xavaSpam("w=%d, h=%d, bars=%d, bw=%d, rest=%d",
-				p->w, p->h, hand->bars, p->bw, hand->rest);
-
 	if (p->stereo) hand->bars = hand->bars / 2; // in stereo onle half number of bars per channel
 
 	if ((smcount > 0) && (hand->bars > 0)) {
@@ -219,11 +216,6 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
 			// You can see why in https://github.com/nikp123/xava/issues/29
 			// I did reverse the "next_bar_lcf-1" change
 			hcf[n-1] = lcf[n]; 
-		}
-
-		if (n != 0) {
-			xavaSpam("%d: %f -> %f (%d -> %d)", 
-				n, fc[n - 1], fc[n], lcf[n - 1], hcf[n - 1]);
 		}
 	}
 	hcf[n-1] = highcf*audio->fftsize/audio->rate;
