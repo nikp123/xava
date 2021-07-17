@@ -20,8 +20,6 @@ void GLInit(struct XAVA_HANDLE *xava) {
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
