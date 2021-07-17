@@ -143,7 +143,7 @@ EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
 		gradColors[i*3+2] = ARGB_B_32(gradientColor[i])/255.0;;
 	}
 
-	//glClearColor(ARGB_R_32(p->bgcol)/255.0, ARGB_G_32(p->bgcol)/255.0, ARGB_B_32(p->bgcol)/255.0, 0.0);
+	glClearColor(ARGB_R_32(p->bgcol)/255.0, ARGB_G_32(p->bgcol)/255.0, ARGB_B_32(p->bgcol)/255.0, 0.0);
 }
 
 unsigned char register_window_win(HINSTANCE HIn) {
@@ -200,7 +200,6 @@ void init_opengl_win(struct config_params *p) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	glClearColor(0, 0, 0, 0);
 	return;
 }
 
@@ -448,16 +447,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 
 	if(drawGLBars(hand, glColors, gradColors)) exit(EXIT_FAILURE);
 
-	// dumb workarounds for dumb OSes
-	glBegin(GL_QUADS);
-		glColor4d(ARGB_R_32(p->bgcol)/255.0, ARGB_G_32(p->bgcol)/255.0, ARGB_B_32(p->bgcol)/255.0, p->background_opacity);
-		glVertex2d(0.0, 0.0);
-		glVertex2d(0.0, p->h);
-		glVertex2d(p->w, p->h);
-		glVertex2d(p->w, 0.0);
-	glEnd();
-
-	glFlush();
+	glFinish();
 
 	// swap buffers
 	SwapBuffers(xavaWinFrame);
