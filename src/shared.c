@@ -460,16 +460,15 @@ EXP_FUNC RawData *xavaReadFile(const char *file) {
 	data->size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	data->data = malloc(data->size+1);
+	// you cant even trust yourself
+	data->data = calloc(data->size+100, sizeof(char));
 	if(data->data == NULL) {
 		fclose(fp);
 		return NULL;
 	}
 
 	fread(data->data, sizeof(char), data->size, fp);
-
-	// pro-gamer move (NOTE: might not work if char is bigger than 8 bits)
-	((char*)data->data)[data->size] = 0x00;
+	fflush(fp);
 
 	fclose(fp);
 
