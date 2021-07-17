@@ -1,18 +1,18 @@
 #include <assert.h>
-#include <tchar.h>
 #include <stdio.h>
 #include <time.h>
 
+#include <tchar.h>
 #include <windows.h>
 #include <windowsx.h>
 #include <dwmapi.h>
 
-#include <GL/glu.h>
+// it must be in this OCD breaking order or it will fail to compile ;(
+#include "../shared/gl.h"
 #include <GL/wglext.h>
 
-#include "../../shared.h"
 #include "../graphical.h"
-#include "../shared/gl.h"
+#include "../../shared.h"
 
 #include "main.h"
 
@@ -26,7 +26,6 @@ WNDCLASSEX xavaWinClass;
 HDC xavaWinFrame;
 HGLRC xavaWinGLFrame;
 TIMECAPS xavaPeriod;
-unsigned int shadowSize;
 
 // These hold the size and position of the window if you're switching to fullscreen mode
 // because Windows (or rather WIN32) doesn't do it internally
@@ -295,8 +294,6 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	timeEndPeriod(0);
 	timeBeginPeriod(xavaPeriod.wPeriodMin);
 
-	shadowSize = p->shdw;
-
 	return 0;
 }
 
@@ -343,11 +340,6 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 	}
 
 	xavaOutputClear(hand);
-
-	// TODO: find a better solution, original issue:
-	// transparent polys draw over opaque ones on windows
-	if(shadowSize > p->bw)
-		p->shdw = p->bw;
 
 	// WGL stuff
 	GLApply(hand);
@@ -414,5 +406,7 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 
 	// VSync is a must due to shit Windows timers
 	p->vsync = 1;
+
+	GLShadersLoad();
 }
 
