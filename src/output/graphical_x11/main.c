@@ -8,16 +8,25 @@
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xrandr.h>
+
 #include <iniparser.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "../graphical.h"
-#include "../shared/egl.h"
 #include "../../config.h"
 #include "../../shared.h"
 #include "main.h"
+
+#ifdef GL
+	#include "../shared/gl.h"
+	#include <X11/extensions/Xrender.h>
+	#include <GL/glx.h>
+#endif
+#ifdef EGL
+	#include "../shared/egl.h"
+#endif
 
 #ifdef STARS
 	#include <math.h>
@@ -69,6 +78,30 @@ static bool rootWindowEnabled;
 static bool overrideRedirectEnabled;
 static bool reloadOnDisplayConfigure;
 
+#ifdef GL
+	static int VisData[] = {
+		GLX_RENDER_TYPE, GLX_RGBA_BIT,
+		GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+		GLX_DOUBLEBUFFER, True,
+		GLX_RED_SIZE, 8,
+		GLX_GREEN_SIZE, 8,
+		GLX_BLUE_SIZE, 8,
+		GLX_ALPHA_SIZE, 8,
+		GLX_DEPTH_SIZE, 16,
+		None
+	};
+
+	GLXContext xavaGLXContext;
+	GLXFBConfig* xavaFBConfig;
+
+	static XRenderPictFormat *pict_format;
+
+	static GLXFBConfig *fbconfigs, fbconfig;
+	static int numfbconfigs;
+
+	void glXSwapIntervalEXT (Display *dpy, GLXDrawable drawable, int interval);
+#endif
+
 #ifdef EGL
 	static struct _escontext ESContext;
 #endif
@@ -99,6 +132,22 @@ enum {
 #define _NET_WM_STATE_REMOVE 0
 #define _NET_WM_STATE_ADD 1
 #define _NET_WM_STATE_TOGGLE 2
+
+#ifdef GL
+int XGLInit(struct config_params *p) {
+	// we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
+	xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
+	glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
+	if(p->transF) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	return 0;
+}
+#endif
 
 // Pull from the terminal colors, and afterwards, do the usual
 void snatchColor(char *name, char *colorStr, int colorNum, XColor *colorObj,
@@ -202,7 +251,25 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	}
 
 	// 32 bit color means alpha channel support
-	XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p->transF ? 32 : 24, TrueColor, &xavaVInfo);
+	#ifdef GL
+	if(p->transF) {
+		fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
+		fbconfig = 0;
+		for(int i = 0; i<numfbconfigs; i++) {
+			XVisualInfo *visInfo = glXGetVisualFromFBConfig(xavaXDisplay, fbconfigs[i]);
+			if(!visInfo) continue;
+			else xavaVInfo = *visInfo;
+
+			pict_format = XRenderFindVisualFormat(xavaXDisplay, xavaVInfo.visual);
+			if(!pict_format) continue;
+
+			fbconfig = fbconfigs[i];
+
+			if(pict_format->direct.alphaMask > 0) break;
+		}
+	} else
+	#endif
+		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p->transF ? 32 : 24, TrueColor, &xavaVInfo);
 
 	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 	xavaXColormap = xavaAttr.colormap;
@@ -237,6 +304,11 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, NULL, 0, NULL, &xavaXWMHints, &xavaXClassHint);
 
 	XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask | VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
+
+	#ifdef GL
+		xavaBailCondition(XGLInit(p), "Failed to load GLX extensions");
+		GLInit(hand);
+	#endif
 
 	#ifdef EGL
 		ESContext.native_window = xavaXWindow;
@@ -370,6 +442,8 @@ int render_gradient_x(struct config_params *p) {
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
 	#if defined(EGL)
 		EGLClear(hand);
+	#elif defined(GL)
+		GLClear(hand);
 	#else
 		struct config_params *p = &hand->conf;
 
@@ -442,8 +516,10 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 
 	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &windowAttribs);
 
-	#ifdef EGL
+	#if defined(EGL)
 		EGLApply(hand);
+	#elif defined(GL)
+		GLApply(hand);
 	#endif
 
 	return 0;
@@ -612,7 +688,11 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 
 	#if defined(EGL)
 		EGLDraw(hand);
-		eglSwapBuffers(ESContext.display, ESContext.surface); 
+		eglSwapBuffers(ESContext.display, ESContext.surface);
+	#elif defined(GL)
+		GLDraw(hand);
+		glXSwapBuffers(xavaXDisplay, xavaXWindow);
+		glXWaitGL();
 	#else
 		// draw bars on the X11 window
 		for(int i = 0; i < hand->bars; i++) {
@@ -660,8 +740,12 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	// make sure that all events are dead by this point
 	XSync(xavaXDisplay, 1);
 
-	#ifdef EGL
+	#if defined(EGL)
 		EGLCleanup(&ESContext);
+	#elif defined(GL)
+		glXMakeCurrent(xavaXDisplay, 0, 0);
+		glXDestroyContext(xavaXDisplay, xavaGLXContext);
+		GLCleanup();
 	#endif
 
 	if(gradientBox != 0) { XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0; };
@@ -706,7 +790,7 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 		p->transF = 0;
 	#endif
 
-	#ifndef EGL
+	#if !defined(GL)&&!defined(EGL)
 		// VSync doesnt work without OpenGL :(
 		p->vsync = 0;
 	#else
@@ -725,8 +809,10 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 		xavaBailCondition(starsVelocity<=0.0, "Stars velocity needs to be above 0.0");
 	#endif
 
-	#ifdef EGL
+	#if defined(EGL)
 		EGLShadersLoad();
+	#elif defined(GL)
+		GLShadersLoad();
 	#endif
 }
 

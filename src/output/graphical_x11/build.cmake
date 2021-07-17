@@ -45,6 +45,27 @@ if(X11)
 			install(TARGETS out_x11_stars DESTINATION lib/xava)
 			target_compile_definitions(out_x11_stars PUBLIC -DSTARS)
 
+			# OpenGL/GLX
+			pkg_check_modules(GLX QUIET gl xrender glew)
+			if(GLX_FOUND)
+				add_library(out_x11_gl SHARED "${XAVA_MODULE_DIR}/main.c"
+											"src/output/graphical.c"
+											"src/output/shared/gl.c"
+											"src/output/shared/gl_shared.c"
+											"${GLOBAL_FUNCTION_SOURCES}")
+				target_link_directories(out_x11_gl PRIVATE 
+					"${GLX_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
+				target_include_directories(out_x11_gl PRIVATE 
+					"${GLX_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
+				target_link_libraries(out_x11_gl xava-shared 
+					"${GLX_LIBRARIES}" "${X11_LIBRARIES}" iniparser)
+				target_compile_definitions(out_x11_gl PUBLIC -DGL)
+				set_target_properties(out_x11_gl PROPERTIES PREFIX "")
+				install(TARGETS out_x11_gl DESTINATION lib/xava)
+			else()
+				message(STATUS "GLEW, OpenGL and or Xrender library not found")
+			endif()
+
 			# EGL
 			pkg_check_modules(EGL QUIET egl glesv2)
 			if(EGL_FOUND)
@@ -63,7 +84,7 @@ if(X11)
 				set_target_properties(out_x11_egl PROPERTIES PREFIX "")
 				install(TARGETS out_x11_egl DESTINATION lib/xava)
 			else()
-				message(STATUS "EGL and or Xrender library not found")
+				message(STATUS "EGL and or GLESv2 library not found")
 			endif()
 		else()
 			message(STATUS "X11, Xrandr and/or Xfixes library not found")
