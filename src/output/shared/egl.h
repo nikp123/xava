@@ -1,6 +1,10 @@
-#include <EGL/eglplatform.h>
-#include <GLES2/gl2.h>
-#include <EGL/egl.h>
+#ifndef __EGL_H
+#define __EGL_H
+
+#ifndef EGL
+	#define EGL
+#endif
+#include "gl_shared.h"
 
 struct _escontext {
 	// because windowing systems are complicated
@@ -16,10 +20,11 @@ struct _escontext {
 };
 
 void       EGLShadersLoad(void);
+EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESContext);
 void       EGLInit(struct XAVA_HANDLE *xava);
 void       EGLApply(struct XAVA_HANDLE *xava);
 void       EGLClear(struct XAVA_HANDLE *xava);
 void       EGLDraw(struct XAVA_HANDLE *xava);
-EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESContext);
-void       EGLClean(struct _escontext *ESContext);
+void       EGLCleanup(struct _escontext *ESContext);
+#endif
 
