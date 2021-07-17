@@ -7,13 +7,13 @@
 #include <windowsx.h>
 #include <dwmapi.h>
 
-#include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/wglext.h>
 
-#include "../graphical.h"
-#include "../../config.h"
 #include "../../shared.h"
+#include "../graphical.h"
+#include "../shared/gl.h"
+
 #include "main.h"
 
 const char szAppName[] = "XAVA";
@@ -26,11 +26,7 @@ WNDCLASSEX xavaWinClass;
 HDC xavaWinFrame;
 HGLRC xavaWinGLFrame;
 TIMECAPS xavaPeriod;
-unsigned int *gradientColor;
 unsigned int shadowSize;
-
-static double glColors[8];
-static double gradColors[24];
 
 // These hold the size and position of the window if you're switching to fullscreen mode
 // because Windows (or rather WIN32) doesn't do it internally
@@ -126,24 +122,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
-	struct config_params *p = &hand->conf;
-
-	glColors[0] = ARGB_R_32(p->col)/255.0;
-	glColors[1] = ARGB_G_32(p->col)/255.0;
-	glColors[2] = ARGB_B_32(p->col)/255.0;
-	glColors[3] = p->transF ? p->foreground_opacity : 1.0;
-	glColors[4] = ARGB_A_32(p->shdw_col)/255.0;
-	glColors[5] = ARGB_R_32(p->shdw_col)/255.0;
-	glColors[6] = ARGB_G_32(p->shdw_col)/255.0;
-	glColors[7] = ARGB_B_32(p->shdw_col)/255.0;
-
-	for(int i=0; i<p->gradients; i++) {
-		gradColors[i*3] = ARGB_R_32(gradientColor[i])/255.0;
-		gradColors[i*3+1] = ARGB_G_32(gradientColor[i])/255.0;
-		gradColors[i*3+2] = ARGB_B_32(gradientColor[i])/255.0;;
-	}
-
-	glClearColor(ARGB_R_32(p->bgcol)/255.0, ARGB_G_32(p->bgcol)/255.0, ARGB_B_32(p->bgcol)/255.0, 0.0);
+	GLClear(hand);
 }
 
 unsigned char register_window_win(HINSTANCE HIn) {
@@ -184,22 +163,6 @@ void GetDesktopResolution(int *horizontal, int *vertical) {
 	(*horizontal) = desktop.right;
 	(*vertical) = desktop.bottom;
 
-	return;
-}
-
-void init_opengl_win(struct config_params *p) {
-	glEnable(GL_ALPHA_TEST);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_COLOR_MATERIAL);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-
-	if(p->transF) {
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
 	return;
 }
 
@@ -245,16 +208,6 @@ unsigned char CreateHGLRC(HWND hWnd) {
 	}
 
 	return TRUE;
-}
-
-void resize_framebuffer(struct config_params *p) {
-	glViewport(0, 0, p->w, p->h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	glOrtho(0, p->w, 0, p->h, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 }
 
 EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
@@ -311,7 +264,6 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	xavaWinFrame = GetDC(xavaWinWindow);
 	CreateHGLRC(xavaWinWindow);
-	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
 
 	// process colors
 	if(!strcmp(p->color, "default")) {
@@ -332,13 +284,9 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 		xavaWarnCondition(!SUCCEEDED(error), "DwmGetColorizationColor failed");
 	}
 
-	// parse all of the values
-	gradientColor = malloc(sizeof(int)*p->gradients);
-	for(int i=0; i<p->gradients; i++)
-		sscanf(p->gradient_colors[i], "#%06x", &gradientColor[i]);
-
-	// set up opengl and stuff
-	init_opengl_win(p);
+	// WGL
+	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
+	GLInit(hand);
 
 	// set up precise timers (otherwise unstable framerate)
 	xavaWarnCondition(timeGetDevCaps(&xavaPeriod, sizeof(TIMECAPS))!=MMSYSERR_NOERROR,
@@ -395,15 +343,17 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 	}
 
 	xavaOutputClear(hand);
-	resize_framebuffer(p);
 
 	// TODO: find a better solution, original issue:
 	// transparent polys draw over opaque ones on windows
 	if(shadowSize > p->bw)
 		p->shdw = p->bw;
 
+	// WGL stuff
+	GLApply(hand);
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT"); 
 	wglSwapIntervalEXT(p->vsync);
+
 	return 0;
 }
 
@@ -438,26 +388,20 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 }
 
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
-	struct config_params *p = &hand->conf;
-
+	// WGL
 	wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
-
-	// clear color and calculate pixel witdh in double
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	if(drawGLBars(hand, glColors, gradColors)) exit(EXIT_FAILURE);
-
-	glFinish();
-
-	// swap buffers
+	GLDraw(hand);
 	SwapBuffers(xavaWinFrame);
 }
 
 EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
-	timeEndPeriod(xavaPeriod.wPeriodMin);
-	free(gradientColor);
+	// WGL
+	GLCleanup();
 	wglMakeCurrent(NULL, NULL);
 	wglDeleteContext(xavaWinGLFrame);
+
+	// Normal Win32 stuff
+	timeEndPeriod(xavaPeriod.wPeriodMin);
 	ReleaseDC(xavaWinWindow, xavaWinFrame);
 	DestroyWindow(xavaWinWindow);
 	UnregisterClass(szAppName, xavaWinModule);
