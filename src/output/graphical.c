@@ -3,10 +3,6 @@
 #include "graphical.h"
 
 void calculate_win_pos(struct config_params *p, int scrW, int scrH) {
-	#if !defined(GL)
-		p->shdw = 0;
-	#endif
-
 	if(!strcmp(p->winA, "top")){
 		p->wx = (scrW - p->w) / 2 + p->wx;
 		p->wy -= p->shdw;
