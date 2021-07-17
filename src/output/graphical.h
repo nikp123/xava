@@ -3,18 +3,7 @@
 
 #include "../shared.h"
 
-#ifdef GLX
-	#include <GL/glx.h>
-	extern GLXContext xavaGLXContext;
-	extern GLXFBConfig* xavaFBConfig;
-#endif
-
-#ifdef GL
-	#include <GL/gl.h>
-	extern int drawGLBars(struct XAVA_HANDLE *hand, double colors[8], double gradColors[24]);
-#endif
-
-extern void calculate_win_pos(struct config_params *p, int scrW, int scrH);
+void calculate_win_pos(struct config_params *p, int scrW, int scrH);
 
 #define DEF_FG_COL 6
 #define DEF_BG_COL 0
