@@ -319,7 +319,7 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
 		// don't adjust on complete silence
 		// as when switching tracks for example
 		for (i=0; i<hand->bars; i++) {
-			if (f[i] > (p->h-1)*(100+overshoot)/100 ) {
+			if (f[i] > (int)((p->h-1)*(100+overshoot)/100) ) {
 				senseLow = false;
 				p->sens *= 0.985;
 				break;
