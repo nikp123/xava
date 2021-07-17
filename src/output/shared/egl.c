@@ -231,13 +231,13 @@ void EGLApply(struct XAVA_HANDLE *xava){
 		vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);
 		vertexData[i*12+1]  = 1.0f;
 		vertexData[i*12+2]  = vertexData[i*12];
-		vertexData[i*12+3]  = xava->conf.shdw;
+		vertexData[i*12+3]  = 0.0f;
 		vertexData[i*12+4]  = vertexData[i*12]+conf->bw;
-		vertexData[i*12+5]  = xava->conf.shdw;
+		vertexData[i*12+5]  = 0.0f;
 		vertexData[i*12+6]  = vertexData[i*12+4];
 		vertexData[i*12+7]  = 1.0f;
 		vertexData[i*12+8]  = vertexData[i*12+4];
-		vertexData[i*12+9]  = xava->conf.shdw;
+		vertexData[i*12+9]  = 0.0f;
 		vertexData[i*12+10] = vertexData[i*12];
 		vertexData[i*12+11] = 1.0f;
 	}
@@ -246,8 +246,16 @@ void EGLApply(struct XAVA_HANDLE *xava){
 	glUniform2f(PRE_RESOLUTION, conf->w, conf->h);
 
 	// update projection matrix
+	// trick: use projection matrix to optimize for shadows so our CPU doesn't have
+	// to work as hard -> math found here: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glOrtho.xml
+
+	// horizontal scaling not done due to artifacting
+	//projectionMatrix[0] = 2.0/(conf->w+conf->shdw);
+	//projectionMatrix[3] = -((float)conf->w/(float)(conf->w+conf->shdw));
+
 	projectionMatrix[0] = 2.0/conf->w;
-	projectionMatrix[5] = 2.0/conf->h;
+	projectionMatrix[5] = 2.0/(conf->h+conf->shdw);
+	projectionMatrix[7] = -((float)conf->h/(float)(conf->h+conf->shdw));
 
 	glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
