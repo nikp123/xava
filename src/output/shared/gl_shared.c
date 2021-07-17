@@ -104,7 +104,6 @@ GLint SGLShaderBuild(const char *source, GLenum shader_type) {
 		char log[1000];
 		GLsizei len;
 		glGetShaderInfoLog(shader, 1000, &len, log);
-		fputs(source, stdout);
 		xavaBail("Error: compiling %s: %*s\n",
 				shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment",
 				len, log);
