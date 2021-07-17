@@ -51,6 +51,7 @@ if(X11)
 				add_library(out_x11_egl SHARED "${XAVA_MODULE_DIR}/main.c"
 											"src/output/graphical.c"
 											"src/output/shared/egl.c"
+											"src/output/shared/gl_shared.c"
 											"${GLOBAL_FUNCTION_SOURCES}")
 				target_link_directories(out_x11_egl PRIVATE 
 					"${EGL_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")

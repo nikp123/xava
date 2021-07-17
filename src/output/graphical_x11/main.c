@@ -661,7 +661,7 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	XSync(xavaXDisplay, 1);
 
 	#ifdef EGL
-		EGLClean(&ESContext);
+		EGLCleanup(&ESContext);
 	#endif
 
 	if(gradientBox != 0) { XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0; };
