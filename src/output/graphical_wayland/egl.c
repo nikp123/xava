@@ -67,7 +67,7 @@ void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 }
 
 void waylandEGLDestroy(struct waydata *wd) {
-	EGLClean(&ESContext);
+	EGLCleanup(&ESContext);
 	wl_egl_window_destroy(ESContext.native_window);
 }
 
