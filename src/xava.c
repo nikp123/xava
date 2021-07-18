@@ -102,6 +102,9 @@ void cleanup(void) {
 	// clean up XAVA internal variables
 	free(audio->source);
 
+	// color information
+	free(p->gradient_colors);
+
 	// cleanup remaining FFT buffers (abusing C here)
 	switch(audio->channels) {
 		case 2:
