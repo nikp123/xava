@@ -460,15 +460,18 @@ EXP_FUNC RawData *xavaReadFile(const char *file) {
 	data->size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	// you cant even trust yourself
-	data->data = calloc(data->size+100, sizeof(char));
+	data->data = malloc(data->size+1);
 	if(data->data == NULL) {
 		fclose(fp);
 		return NULL;
 	}
 
 	fread(data->data, sizeof(char), data->size, fp);
-	fflush(fp);
+
+	((char*)data->data)[data->size] = 0x00;
+
+	// makes sure to include the NULL byte
+	data->size++;
 
 	fclose(fp);
 
@@ -481,7 +484,7 @@ EXP_FUNC void xavaCloseFile(RawData *file) {
 }
 
 EXP_FUNC void *xavaDuplicateMemory(void *memory, size_t size) {
-	void *duplicate = malloc(size);
+	void *duplicate = malloc(size+1);
 	memcpy(duplicate, memory, size);
 	return duplicate;
 }
