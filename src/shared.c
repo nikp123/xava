@@ -396,12 +396,12 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 				free(fileBuffer);
 				// close handles
 				fclose(fn);
-				fclose(fp);
 				// close the default location string
 				free(found);
 
 				xavaLog("Successfully created default config file on '%s'!", (*actualPath));
 			}
+			fclose(fp);
 
 			// we can finally say that this has finished
 			return true;
