@@ -386,7 +386,32 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	glDisableVertexAttribArray(POST_POS);
 }
 
+void SGLDestroyProgram(struct SGLprogram *program) {
+	glDeleteShader(program->frag);
+	glDeleteShader(program->vert);
+	glDeleteProgram(program->program);
+}
+
 void SGLCleanup(void) {
+	// restore framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// unbind textures
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// cleanup FBO left-overs
+	glDeleteFramebuffers(1, &FBO.framebuffer);
+	glDeleteTextures(1, &FBO.depth_texture);
+	glDeleteTextures(1, &FBO.final_texture);
+
+	// delete both pipelines
+	SGLDestroyProgram(&pre);
+	SGLDestroyProgram(&post);
+
+	free(gradientColor);
 	free(vertexData);
 }
 
