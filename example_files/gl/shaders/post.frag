@@ -26,6 +26,7 @@ void main() {
 	// test if infinite
 	if(depth.r == 1.0) {
 		float color = 1.0 - blur5(s_depth, shadow_offset+v_texCoord, vec2(2.0, 2.0), shadow_offset).r;
+		color *= 1.6; // strenghten shadows
 		gl_FragColor = mix(texture2D(s_texture, v_texCoord), shadow_color, color);
 	} else {
 		gl_FragColor = texture2D(s_texture, v_texCoord);
