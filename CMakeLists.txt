@@ -49,12 +49,13 @@ endif()
 
 # Set appropriate C flags
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
-set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS "-Wall -fvisibility='internal' ${BUILD_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS "-Wall ${BUILD_FLAGS}")
+set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG -rdynamic")
+set(CMAKE_C_FLAGS_RELEASE "-O3 -fvisibility='internal'")
+set(CMAKE_CXX_FLAGS "-Wall ${BUILD_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG -rdynamic")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fvisibility='internal' ")
+set(CMAKE_SHARED_LINKER_FLAGS "-rdynamic")
 
 
 find_package(PkgConfig REQUIRED)
