@@ -5,6 +5,10 @@
 
 #include "shared.h"
 
+#ifdef __linux__
+	#include <execinfo.h>
+#endif
+
 // internal stuff below
 
 enum XAVA_MESSAGE_TYPE {
@@ -19,14 +23,18 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
 
 	FILE *output = stdout;
 
+	bool stack_trace = false;
+
 	// process message headers
 	switch(mes) {
 		case XAVA_LOG_ERROR:
 			sprintf(newFmt, "[ERROR] %s at %s:%d - %s\n", func, file, line, fmt);
 			output = stderr;
+			stack_trace = true;
 			break;
 		case XAVA_LOG_WARN:
 			sprintf(newFmt, "[WARN] %s at %s:%d - %s\n", func, file, line, fmt);
+			stack_trace = true;
 			break;
 		case XAVA_LOG_NORM:
 			sprintf(newFmt, "[INFO] %s at %s:%d - %s\n", func, file, line, fmt);
@@ -39,6 +47,24 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
 	vfprintf(output, newFmt, list);
 
 	free(newFmt);
+
+	// add stack traces for better debugging
+	#ifdef __linux__
+	if(stack_trace) {
+		void *stack_pointers[12];
+		int stack_lenght = 12;
+		char **stack_names;
+
+		stack_lenght = backtrace(stack_pointers, stack_lenght);
+
+		stack_names = backtrace_symbols(stack_pointers, stack_lenght);
+
+		// skip the first two functions as they are part of the logging system itself
+		for(int i=2; i<stack_lenght; i++) {
+			printf("at %s\n", stack_names[i]); 
+		}
+	}
+	#endif
 }
 
 
