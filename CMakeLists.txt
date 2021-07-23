@@ -49,19 +49,19 @@ else()
 	# This hack is a of courtesy of: https://stackoverflow.com/a/40947954/3832385
 	string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
 	add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
+	set(BUILD_DEBUG_FLAGS "-rdynamic")
+	set(CMAKE_SHARED_LINKER_FLAGS "-rdynamic")
 endif()
 
 
 # Set appropriate C flags
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS "-Wall ${BUILD_FLAGS}")
-set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG -rdynamic")
+set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG ${BUILD_DEBUG_FLAGS}")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -fvisibility='internal'")
 set(CMAKE_CXX_FLAGS "-Wall ${BUILD_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG -rdynamic")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG ${BUILD_DEBUG_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fvisibility='internal' ")
-set(CMAKE_SHARED_LINKER_FLAGS "-rdynamic")
-
 
 find_package(PkgConfig REQUIRED)
 
