@@ -33,36 +33,40 @@ EXP_FUNC void xavaConfigClose(XAVACONFIG config) {
 }
 
 // This shouldn't exist, but yet here we are
-EXP_FUNC bool xavaConfigGetBool  (XAVACONFIG config, char *section, char *key, bool default_value) {
+EXP_FUNC bool xavaConfigGetBool  (XAVACONFIG config, const char *section, const char *key,
+		bool default_value) {
 	char ini_key[64]; // i cannot be fucked to do this shit anymore
 	snprintf(ini_key, 64, "%s:%s", section, key);
 	return iniparser_getboolean(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC int xavaConfigGetInt(XAVACONFIG config, char *section, char *key, int default_value) {
+EXP_FUNC int xavaConfigGetInt(XAVACONFIG config, const char *section, const char *key,
+		int default_value) {
 	char ini_key[64]; // i cannot be fucked to do this shit anymore
 	snprintf(ini_key, 64, "%s:%s", section, key);
 	return iniparser_getint(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC double xavaConfigGetDouble(XAVACONFIG config, char *section, char *key, double default_value) {
+EXP_FUNC double xavaConfigGetDouble(XAVACONFIG config, const char *section, const char *key,
+		double default_value) {
 	char ini_key[64]; // i cannot be fucked to do this shit anymore
 	snprintf(ini_key, 64, "%s:%s", section, key);
 	return iniparser_getdouble(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC const char* xavaConfigGetString(XAVACONFIG config, char *section, char *key, const char* default_value) {
+EXP_FUNC char* xavaConfigGetString(XAVACONFIG config, const char *section, const char *key,
+		const char* default_value) {
 	char ini_key[64]; // i cannot be fucked to do this shit anymore
 	snprintf(ini_key, 64, "%s:%s", section, key);
-	return iniparser_getstring(config->ini, ini_key, default_value);
+	return (char*)iniparser_getstring(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC int xavaConfigGetKeyNumber(XAVACONFIG config, char *section) {
+EXP_FUNC int xavaConfigGetKeyNumber(XAVACONFIG config, const char *section) {
 	return iniparser_getsecnkeys(config->ini, section);
 }
 
-EXP_FUNC char **xavaConfigGetKeys(XAVACONFIG config, char *section) {
-	char **returned_section_keys;
+EXP_FUNC char **xavaConfigGetKeys(XAVACONFIG config, const char *section) {
+	char **returned_section_keys = NULL;
 	iniparser_getseckeys(config->ini, section, (const char**)returned_section_keys);
 
 	char **translated_section_keys;
