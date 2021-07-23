@@ -13,14 +13,14 @@ typedef struct xavamodule {
 
 char *LIBRARY_EXTENSION = ".so";
 
-void destroy_module(XAVAMODULE *module) {
+EXP_FUNC void destroy_module(XAVAMODULE *module) {
 	dlclose(module->moduleHandle);
 	module->moduleHandle = 0;
 	free(module->name);
 	free(module);
 }
 
-XAVAMODULE *load_module(char *name) {
+EXP_FUNC XAVAMODULE *load_module(char *name) {
 	// Security check
 	for(int i=0; i<strlen(name); i++) {
 		// Disallow directory injections
@@ -60,11 +60,11 @@ XAVAMODULE *load_module(char *name) {
 	return module;
 }
 
-char *get_module_error(XAVAMODULE *module) {
+EXP_FUNC char *get_module_error(XAVAMODULE *module) {
 	return dlerror();
 }
 
-void *get_symbol_address(XAVAMODULE *module, char *symbol) {
+EXP_FUNC void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 	void *address = dlsym(module->moduleHandle, symbol);
 
 	// the program would crash with an NULL pointer error anyway
@@ -77,7 +77,7 @@ void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 	return address;
 }
 
-bool is_module_valid(XAVAMODULE *module) {
+EXP_FUNC bool is_module_valid(XAVAMODULE *module) {
 	if(module->moduleHandle) 
 		return 1;
 	else

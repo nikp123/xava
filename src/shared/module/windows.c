@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
+#include <stdbool.h>
 
 #include <windows.h>
+
+#include "../../shared.h"
+
 typedef struct xavamodule {
 	char *name;
 	HMODULE moduleHandle;
@@ -11,18 +14,18 @@ typedef struct xavamodule {
 
 char *LIBRARY_EXTENSION = ".dll";
 
-char *get_module_error(XAVAMODULE *module) {
+EXP_FUNC char *get_module_error(XAVAMODULE *module) {
 	return "";
 }
 
-bool is_module_valid(XAVAMODULE *module) {
+EXP_FUNC bool is_module_valid(XAVAMODULE *module) {
 	if(module->moduleHandle)
 		return 1;
 	else
 		return 0;
 }
 
-void *get_symbol_address(XAVAMODULE *module, char *symbol) {
+EXP_FUNC void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 	void *addr = GetProcAddress(module->moduleHandle, symbol);
 
 	if(addr == NULL) {
@@ -45,8 +48,7 @@ void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 	return addr;
 }
 
-XAVAMODULE *load_module(char *name) {
-
+EXP_FUNC XAVAMODULE *load_module(char *name) {
 	// hacker prevention system 9000
 	for(int i=0; i<strlen(name); i++) {
 		// Disallow directory injections
@@ -92,7 +94,7 @@ XAVAMODULE *load_module(char *name) {
 	return module; // if it failed XAVA would know (no error checks needed)
 }
 
-void destroy_module(XAVAMODULE *module) {
+EXP_FUNC void destroy_module(XAVAMODULE *module) {
 	FreeLibrary(module->moduleHandle);
 	free(module->name);
 	free(module);
