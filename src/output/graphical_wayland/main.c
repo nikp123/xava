@@ -232,15 +232,14 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 	wl_display_dispatch_pending(wd.display);
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data) {
+EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
+	XAVACONFIG config = hand->default_config.config;
 
-	dictionary *ini = (dictionary*)data;
-
-	backgroundLayer = iniparser_getboolean
-		(ini, "wayland:background_layer", 1);
-	monitorName = strdup(iniparser_getstring
-		(ini, "wayland:monitor_name", "ignore"));
+	backgroundLayer = xavaConfigGetBool
+		(config, "wayland", "background_layer", 1);
+	monitorName = strdup(xavaConfigGetString
+		(config, "wayland", "monitor_name", "ignore"));
 
 	#ifdef EGL
 		waylandEGLShadersLoad();

@@ -400,8 +400,7 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	//CloseHandle(xavaWinModule);
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data) {
-	//dictionary *ini = (dictionary*) data;
+EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
 
 	// VSync is a must due to shit Windows timers

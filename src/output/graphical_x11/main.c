@@ -9,7 +9,6 @@
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xrandr.h>
 
-#include <iniparser.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -763,19 +762,18 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	return;
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data) {
+EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
+	XAVACONFIG config = hand->default_config.config;
 
-	dictionary *ini = (dictionary*)data;
-
-	reloadOnDisplayConfigure = iniparser_getboolean
-		(ini, "x11:reload_on_display_configure", 0);
-	rootWindowEnabled = iniparser_getboolean
-		(ini, "x11:root_window", 0);
-	overrideRedirectEnabled = iniparser_getboolean
-		(ini, "x11:override_redirect", 0);
-	monitorName = strdup(iniparser_getstring
-		(ini, "x11:monitor_name", "none"));
+	reloadOnDisplayConfigure = xavaConfigGetBool
+		(config, "x11", "reload_on_display_configure", 0);
+	rootWindowEnabled = xavaConfigGetBool
+		(config, "x11", "root_window", 0);
+	overrideRedirectEnabled = xavaConfigGetBool
+		(config, "x11", "override_redirect", 0);
+	monitorName = strdup(xavaConfigGetString
+		(config, "x11", "monitor_name", "none"));
 
 	// who knew that messing with some random properties breaks things
 	xavaWarnCondition(rootWindowEnabled&&overrideRedirectEnabled,
@@ -799,13 +797,13 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand, void *data
 	#endif
 
 	#ifdef STARS
-		starsCount = iniparser_getint(ini,   "stars:count", 100);
+		starsCount = xavaConfigGetInt(config,   "stars", "count", 100);
 		xavaBailCondition(starsCount < 1, "Stars do not work if their number is below 1");
 
-		starsSens = iniparser_getdouble(ini, "stars:sensitivity", 1.2);
+		starsSens = xavaConfigGetDouble(config, "stars", "sensitivity", 1.2);
 		xavaBailCondition(starsSens<=0.0, "Stars sensitivity needs to be above 0.0");
 
-		starsVelocity = 2.0*iniparser_getdouble(ini, "stars:velocity", 1.0);
+		starsVelocity = 2.0*xavaConfigGetDouble(config, "stars", "velocity", 1.0);
 		xavaBailCondition(starsVelocity<=0.0, "Stars velocity needs to be above 0.0");
 	#endif
 

@@ -20,7 +20,7 @@ if(WINAPI)
 						"src/output/shared/gl.c"
 						"src/output/shared/gl_shared.c"
 						"${GLOBAL_FUNCTION_SOURCES}")
-					target_link_libraries(out_win xava-shared "-lgdi32 -lwinmm -lopengl32 -ldwmapi -lglew32" iniparser)
+					target_link_libraries(out_win xava-shared "-lgdi32 -lwinmm -lopengl32 -ldwmapi -lglew32")
 					target_compile_definitions(out_win PUBLIC -DWIN -DGL)
 					set_target_properties(out_win PROPERTIES PREFIX "")
 				else()

@@ -358,39 +358,33 @@ EXP_FUNC void xavaFilterCleanup(struct XAVA_HANDLE *hand) {
 	free(peak);
 }
 
-EXP_FUNC void xavaFilterHandleConfiguration(struct XAVA_HANDLE *hand, void *dictHand) {
-	dictionary *ini = dictHand;
-
+EXP_FUNC void xavaFilterHandleConfiguration(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
+	XAVACONFIG config = hand->default_config.config;
 
-	p->sens =      iniparser_getdouble(ini, "filter:sensitivity", 100.0) *
+	p->sens =      xavaConfigGetDouble(config, "filter", "sensitivity", 100.0) *
 		XAVA_PREDEFINED_SENS_VALUE; // check shared.h for details
-	p->autosens = iniparser_getboolean(ini, "filter:autosens", 1);
-	overshoot =       iniparser_getint(ini, "filter:overshoot", 0);
-	lowcf =           iniparser_getint(ini, "filter:lower_cutoff_freq", 26);
-	highcf =          iniparser_getint(ini, "filter:higher_cutoff_freq", 15000);
+	p->autosens = xavaConfigGetBool(config, "filter", "autosens", 1);
+	overshoot =       xavaConfigGetInt(config, "filter", "overshoot", 0);
+	lowcf =           xavaConfigGetInt(config, "filter", "lower_cutoff_freq", 26);
+	highcf =          xavaConfigGetInt(config, "filter", "higher_cutoff_freq", 15000);
 
-	monstercat = iniparser_getdouble(ini, "filter:monstercat", 0.0) * 1.5;
-	waves =         iniparser_getint(ini, "filter:waves", 0);
-	integral =   iniparser_getdouble(ini, "filter:integral", 85);
-	gravity =    iniparser_getdouble(ini, "filter:gravity", 100) * 50.0;
-	ignore =     iniparser_getdouble(ini, "filter:ignore", 0);
-	logScale =   iniparser_getdouble(ini, "filter:log", 1.55);
-	oddoneout = iniparser_getboolean(ini, "filter:oddoneout", 1);
-	eqBalance =  iniparser_getdouble(ini, "filter:eq_balance", 0.67);
+	monstercat = xavaConfigGetDouble(config, "filter", "monstercat", 0.0) * 1.5;
+	waves =         xavaConfigGetInt(config, "filter", "waves", 0);
+	integral =   xavaConfigGetDouble(config, "filter", "integral", 85);
+	gravity =    xavaConfigGetDouble(config, "filter", "gravity", 100) * 50.0;
+	ignore =     xavaConfigGetDouble(config, "filter", "ignore", 0);
+	logScale =   xavaConfigGetDouble(config, "filter", "log", 1.55);
+	oddoneout = xavaConfigGetBool(config, "filter", "oddoneout", 1);
+	eqBalance =  xavaConfigGetDouble(config, "filter", "eq_balance", 0.67);
 
 	// read & validate: eq
-	smcount = iniparser_getsecnkeys(ini, "eq");
+	smcount = xavaConfigGetKeyNumber(config, "eq");
 	if (smcount > 0) {
 		MALLOC_SELF(smooth, smcount);
-		#ifndef LEGACYINIPARSER
-		const char *keys[smcount];
-		iniparser_getseckeys(ini, "eq", keys);
-		#else
-		char **keys = iniparser_getseckeys(ini, "eq");
-		#endif
+		char **keys = xavaConfigGetKeys(config, "eq");
 		for (int sk = 0; sk < smcount; sk++) {
-			smooth[sk] = iniparser_getdouble(ini, keys[sk], 1);
+			smooth[sk] = xavaConfigGetDouble(config, "eq", keys[sk], 1);
 		}
 	} else {
 		smcount = 64; //back to the default one

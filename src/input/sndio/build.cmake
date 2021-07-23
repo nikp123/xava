@@ -8,7 +8,7 @@ if(SNDIO)
 		add_definitions(-DSNDIO)
 		add_library(in_sndio SHARED "${XAVA_MODULE_DIR}/main.c"
 									"${GLOBAL_FUNCTION_SOURCES}")
-		target_link_libraries(in_sndio xava-shared "-lsndio" iniparser)
+		target_link_libraries(in_sndio xava-shared "-lsndio")
 		set_target_properties(in_sndio PROPERTIES PREFIX "")
 		install(TARGETS in_sndio DESTINATION lib/xava)
 	else()

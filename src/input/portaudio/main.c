@@ -172,10 +172,10 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 	return 0;
 } 
 
-EXP_FUNC void xavaInputHandleConfiguration(void *data1, void *data2) {
-	dictionary *ini = (dictionary*) data1;
-	struct audio_data *audio = (struct audio_data*) data2; 
+EXP_FUNC void xavaInputHandleConfiguration(struct XAVA_HANDLE *xava) {
+	struct audio_data *audio = &xava->audio;
+	XAVACONFIG config = xava->default_config.config;
 	audio->rate = 44100;
-	audio->source = (char *)iniparser_getstring(ini, "input:source", "auto");
+	audio->source = (char*)xavaConfigGetString(config, "input", "source", "auto");
 }
 

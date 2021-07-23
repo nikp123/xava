@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
 #include <math.h>
@@ -9,16 +10,8 @@
 #include "config.h"
 #include "shared.h"
 
-// inode watching is a Linux(TM) feature
-// so watch out when you're compiling it
-#if defined(__linux__)||defined(__WIN32__)
-#include "misc/inode_watcher.h"
-#endif
-
 static const char *colorStrings[8] = {"black", "red", "green", "yellow", 
 										"blue", "magenta", "cyan", "white"};
-
-static dictionary* ini;
 
 static char *inputMethod, *outputMethod, *filterMethod, *channels;
 
@@ -72,29 +65,25 @@ unsigned int parse_color(char *colorStr, int defaultColor) {
 	return retColor;
 }
 
-dictionary *get_config_pointer(void) {
-	return ini;
-}
-
-void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
+void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
 	struct config_params *p = &hand->conf;
 
 	// validate: input method
 	p->inputModule = load_input_module(inputMethod);
 	xavaBailCondition(!is_module_valid(p->inputModule),
-			"Input method '%s' could not load.\nReason: %s",
+			"Input method '%s' could not load.\nReason", " %s",
 			inputMethod, get_module_error(p->inputModule));
 
 	// validate: output method
 	p->outputModule = load_output_module(outputMethod);
 	xavaBailCondition(!is_module_valid(p->outputModule),
-			"Output method '%s' could not load.\nReason: %s",
+			"Output method '%s' could not load.\nReason", " %s",
 			outputMethod, get_module_error(p->outputModule));
 
 	// validate: filter method
 	p->filterModule = load_filter_module(filterMethod);
 	xavaBailCondition(!is_module_valid(p->filterModule),
-			"Filter method '%s' could not load.\nReason: %s",
+			"Filter method '%s' could not load.\nReason", " %s",
 			filterMethod, get_module_error(p->outputModule));
 
 	// validate: output channels
@@ -102,9 +91,9 @@ void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
 	if (strcmp(channels, "mono") == 0)   stereo = 0;
 	if (strcmp(channels, "stereo") == 0) stereo = 1;
 	xavaBailCondition(stereo == -1, "Output channels '%s' is not supported,"
-			" supported channels are: 'mono' and 'stereo'", channels);
+			" supported channels are", " 'mono' and 'stereo'", channels);
 
-	p->stereo = stereo ? 1 : 0; // makes the C compilers happy :D
+	p->stereo = stereo ? 1 : 0; // makes the C compilers happy ", "D
 
 	// validate: bars
 	p->autobars = 1;
@@ -167,7 +156,7 @@ void validate_config(struct XAVA_HANDLE *hand, dictionary *ini) {
 			"Shadow color should be a HTML color in the form '#xxxxxx'");
 }
 
-void load_config(char *configPath, struct XAVA_HANDLE *hand) {
+char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
 
 	// config: creating path to default config file
@@ -191,22 +180,23 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	}
 
 	// config: parse ini
-	ini = iniparser_load(configPath);
+	hand->default_config.config = xavaConfigOpen(configPath);
+	xavaBailCondition(!hand->default_config.config, "Failed to open default XAVA config at '%s'", configPath);
 
 	// config: input
-	inputMethod = (char *)iniparser_getstring(ini, "input:method", XAVA_DEFAULT_INPUT);
-	p->inputsize = (int)exp2((float)iniparser_getint(ini, "input:size", 12));
+	inputMethod = (char *)xavaConfigGetString(hand->default_config.config, "input", "method", XAVA_DEFAULT_INPUT);
+	p->inputsize = (int)exp2((float)xavaConfigGetInt(hand->default_config.config, "input", "size", 12));
 
 	// config: output
-	outputMethod = (char *)iniparser_getstring(ini, "output:method", XAVA_DEFAULT_OUTPUT);
-	channels =  (char *)iniparser_getstring(ini, "output:channels", "mono");
+	outputMethod = (char *)xavaConfigGetString(hand->default_config.config, "output", "method", XAVA_DEFAULT_OUTPUT);
+	channels =  (char *)xavaConfigGetString(hand->default_config.config, "output", "channels", "mono");
 
-	p->color = (char *)iniparser_getstring(ini, "color:foreground", "default");
-	p->bcolor = (char *)iniparser_getstring(ini, "color:background", "default");
-	p->foreground_opacity = iniparser_getdouble(ini, "color:foreground_opacity", 1.0);
-	p->background_opacity = iniparser_getdouble(ini, "color:background_opacity", 0.0);
+	p->color = (char *)xavaConfigGetString(hand->default_config.config, "color", "foreground", "default");
+	p->bcolor = (char *)xavaConfigGetString(hand->default_config.config, "color", "background", "default");
+	p->foreground_opacity = xavaConfigGetDouble(hand->default_config.config, "color", "foreground_opacity", 1.0);
+	p->background_opacity = xavaConfigGetDouble(hand->default_config.config, "color", "background_opacity", 0.0);
 
-	p->gradients = iniparser_getint(ini, "color:gradient_count", 0);
+	p->gradients = xavaConfigGetInt(hand->default_config.config, "color", "gradient_count", 0);
 	if(p->gradients) {
 		xavaBailCondition(p->gradients < 2,
 				"At least two colors must be given as gradient!\n");
@@ -216,54 +206,46 @@ void load_config(char *configPath, struct XAVA_HANDLE *hand) {
 		p->gradient_colors = (char **)malloc(sizeof(char*) * p->gradients);
 		for(int i = 0;i < p->gradients;i++){
 			char ini_config[33];
-			sprintf(ini_config, "color:gradient_color_%d", (i + 1));
-			p->gradient_colors[i] = (char *)iniparser_getstring(ini, ini_config, NULL);
+			sprintf(ini_config, "gradient_color_%d", (i+1));
+			p->gradient_colors[i] = (char *)xavaConfigGetString(hand->default_config.config, "color", ini_config, NULL);
 			xavaBailCondition(!p->gradient_colors[i],
 					"'gradient_color_%d' is not specified!\n", i+1);
 		}
 	}
 
 	// config: default
-	p->fixedbars = iniparser_getint(ini, "general:bars", 0);
-	p->bw = iniparser_getint(ini, "general:bar_width", 13);
-	p->bs = iniparser_getint(ini, "general:bar_spacing", 5);
-	p->framerate = iniparser_getint(ini, "general:framerate", 60);
-	p->vsync = iniparser_getboolean(ini, "general:vsync", 1);
+	p->fixedbars = xavaConfigGetInt(hand->default_config.config, "general", "bars", 0);
+	p->bw = xavaConfigGetInt(hand->default_config.config, "general", "bar_width", 13);
+	p->bs = xavaConfigGetInt(hand->default_config.config, "general", "bar_spacing", 5);
+	p->framerate = xavaConfigGetInt(hand->default_config.config, "general", "framerate", 60);
+	p->vsync = xavaConfigGetBool(hand->default_config.config, "general", "vsync", 1);
 
 	// config: window
-	p->w = iniparser_getint(ini, "window:width", 1180);
-	p->h = iniparser_getint(ini, "window:height", 300);
+	p->w = xavaConfigGetInt(hand->default_config.config, "window", "width", 1180);
+	p->h = xavaConfigGetInt(hand->default_config.config, "window", "height", 300);
 
-	//p->monitor_num = iniparser_getint(ini, "window:monitor", 0);
+	//p->monitor_num = xavaConfigGetInt(hand->default_config.config, "window", "monitor", 0);
 
-	p->winA = (char *)iniparser_getstring(ini, "window:alignment", "none");
-	p->wx = iniparser_getint(ini, "window:x_padding", 0);
-	p->wy = iniparser_getint(ini, "window:y_padding", 0);
-	p->fullF = iniparser_getboolean(ini, "window:fullscreen", 0);
-	p->transF = iniparser_getboolean(ini, "window:transparency", 1);
-	p->borderF = iniparser_getboolean(ini, "window:border", 0);
-	p->bottomF = iniparser_getboolean(ini, "window:keep_below", 1);
-	p->interactF = iniparser_getboolean(ini, "window:interactable", 1);
-	p->taskbarF = iniparser_getboolean(ini, "window:taskbar_icon", 1);
+	p->winA = (char *)xavaConfigGetString(hand->default_config.config, "window", "alignment", "none");
+	p->wx = xavaConfigGetInt(hand->default_config.config, "window", "x_padding", 0);
+	p->wy = xavaConfigGetInt(hand->default_config.config, "window", "y_padding", 0);
+	p->fullF = xavaConfigGetBool(hand->default_config.config, "window", "fullscreen", 0);
+	p->transF = xavaConfigGetBool(hand->default_config.config, "window", "transparency", 1);
+	p->borderF = xavaConfigGetBool(hand->default_config.config, "window", "border", 0);
+	p->bottomF = xavaConfigGetBool(hand->default_config.config, "window", "keep_below", 1);
+	p->interactF = xavaConfigGetBool(hand->default_config.config, "window", "interactable", 1);
+	p->taskbarF = xavaConfigGetBool(hand->default_config.config, "window", "taskbar_icon", 1);
 
 	// config: shadow
-	p->shdw = iniparser_getint(ini, "shadow:size", 7);
-	p->shadow_color = (char *)iniparser_getstring(ini, "shadow:color", "#ff000000");
+	p->shdw = xavaConfigGetInt(hand->default_config.config, "shadow", "size", 7);
+	p->shadow_color = (char *)xavaConfigGetString(hand->default_config.config, "shadow", "color", "#ff000000");
 
 	// config: filter
-	filterMethod = (char *)iniparser_getstring(ini, "filter:name", XAVA_DEFAULT_FILTER);
-	p->fftsize = (int)exp2((float)iniparser_getint(ini, "filter:fft_size", 14));
+	filterMethod = (char *)xavaConfigGetString(hand->default_config.config, "filter", "name", XAVA_DEFAULT_FILTER);
+	p->fftsize = (int)exp2((float)xavaConfigGetInt(hand->default_config.config, "filter", "fft_size", 14));
 
-	validate_config(hand, ini);
+	validate_config(hand, hand->default_config.config);
 
-	#if defined(__linux__)||defined(__WIN32__)
-		// spawn a thread which will check if the file had been changed in any way
-		// to inform the main process that it needs to reload
-		watchFile(configPath);
-	#endif
+	return configPath;
 }
 
-void clean_config() {
-	// apparently fucking iniparser has a double free somewhere and it can't work... great
-	//iniparser_freedict(ini);
-}

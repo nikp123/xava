@@ -13,6 +13,6 @@
 
 	#include "shared.h"
 
-	void load_config(char *configPath, struct XAVA_HANDLE*);
+	char *load_config(char *configPath, struct XAVA_HANDLE*);
 	void clean_config();
 #endif

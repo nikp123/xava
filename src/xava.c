@@ -1,4 +1,4 @@
-#include "log.h"
+#include "shared/ionotify.h"
 #define TRUE 1
 #define FALSE 0
 
@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #if defined(__unix__)||defined(__APPLE__)
 	#include <termios.h>
+	#include <unistd.h>
 #endif
 #include <math.h>
 #include <fcntl.h> 
@@ -26,10 +27,6 @@
 #include <pthread.h>
 #include <dirent.h>
 
-#if defined(__linux__)||defined(__WIN32__)
-	#include "misc/inode_watcher.h"
-#endif
-
 #ifndef PACKAGE
 	#define PACKAGE "INSERT_PROGRAM_NAME"
 	#warning "Package name not defined!"
@@ -40,16 +37,15 @@
 	#warning "Package version not defined!"
 #endif
 
-#include "output/graphical.h"
 #include "input/fifo/main.h"
 #include "config.h"
 #include "shared.h"
 
 static void*    (*xavaInput)                     (void*); // technically it's "struct audio_data*"
                                                           // but the compiler complains :(
-static void     (*xavaInputHandleConfiguration)  (struct audio_data*, void*);
+static void     (*xavaInputHandleConfiguration)  (struct XAVA_HANDLE*);
 
-static void     (*xavaOutputHandleConfiguration) (struct XAVA_HANDLE*, void*);
+static void     (*xavaOutputHandleConfiguration) (struct XAVA_HANDLE*);
 static int      (*xavaInitOutput)                (struct XAVA_HANDLE*);
 static void     (*xavaOutputClear)               (struct XAVA_HANDLE*);
 static int      (*xavaOutputApply)               (struct XAVA_HANDLE*);
@@ -57,12 +53,13 @@ static XG_EVENT (*xavaOutputHandleInput)         (struct XAVA_HANDLE*);
 static void     (*xavaOutputDraw)                (struct XAVA_HANDLE*);
 static void     (*xavaOutputCleanup)             (struct XAVA_HANDLE*);
 
-static void     (*xavaFilterHandleConfiguration) (struct XAVA_HANDLE*, void*);
+static void     (*xavaFilterHandleConfiguration) (struct XAVA_HANDLE*);
 static int      (*xavaFilterInit)                (struct XAVA_HANDLE*);
 static int      (*xavaFilterApply)               (struct XAVA_HANDLE*);
 static int      (*xavaFilterLoop)                (struct XAVA_HANDLE*);
 static int      (*xavaFilterCleanup)             (struct XAVA_HANDLE*);
 
+char *configPath;
 
 static _Bool kys = 0, should_reload = 0;
 
@@ -72,15 +69,32 @@ static struct XAVA_HANDLE xava;
 // XAVA magic variables, too many of them indeed
 static pthread_t p_thread;
 
+void handle_ionotify_call(XAVAIONOTIFY ionotify, XAVA_IONOTIFY_EVENT event) {
+	switch(event) {
+		case XAVA_IONOTIFY_CHANGED:
+		case XAVA_IONOTIFY_DELETED:
+			should_reload = 1;
+			break;
+		case XAVA_IONOTIFY_ERROR:
+			xavaBail("ionotify event errored out! Bailing...");
+			break;
+		case XAVA_IONOTIFY_CLOSED:
+			xavaLog("ionotify socket closed");
+			break;
+		default:
+			xavaLog("Unrecognized ionotify call occured!");
+			break;
+	}
+	return;
+}
+
 // general: cleanup
 void cleanup(void) {
 	struct config_params *p     = &xava.conf;
 	struct audio_data    *audio = &xava.audio;
 
-	#if defined(__linux__)||defined(__WIN32__)
-		// we need to do this since the inode watcher is a seperate thread
-		destroyFileWatcher();
-	#endif
+	// we need to do this since the inode watcher is a seperate thread
+	xavaIONotifyKill(xava.default_config.ionotify);
 
 	// telling audio thread to terminate 
 	audio->terminate = 1;
@@ -105,6 +119,9 @@ void cleanup(void) {
 	// color information
 	free(p->gradient_colors);
 
+	// config file path
+	free(configPath);
+
 	// cleanup remaining FFT buffers (abusing C here)
 	switch(audio->channels) {
 		case 2:
@@ -115,7 +132,7 @@ void cleanup(void) {
 	}
 
 	// clean the config
-	clean_config();
+	xavaConfigClose(xava.default_config.config);
 }
 
 #if defined(__unix__)||defined(__APPLE__)
@@ -145,7 +162,6 @@ int main(int argc, char **argv)
 
 	int sleep = 0;
 	int i, c, silence;
-	char configPath[255];
 	char *usage = "\n\
 Usage : " PACKAGE " [options]\n\
 Visualize audio input in a window. \n\
@@ -168,8 +184,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 	unsigned long oldTime = 0;
 
-	configPath[0] = '\0';
-
 	setlocale(LC_ALL, "C");
 	setbuf(stdout,NULL);
 	setbuf(stderr,NULL);
@@ -184,11 +198,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		sigaction(SIGUSR1, &action, NULL);
 	#endif
 
+	MALLOC_SELF(configPath, 255);
+
 	// general: handle command-line arguments
 	while ((c = getopt (argc, argv, "p:vh")) != -1) {
 		switch (c) {
 			case 'p': // argument: fifo path
-				snprintf(configPath, sizeof(configPath), "%s", optarg);
+				optarg = strdup(optarg);
 				break;
 			case 'h': // argument: print usage
 				printf ("%s", usage);
@@ -211,7 +227,14 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		struct audio_data        *audio = &xava.audio;
 
 		// load config
-		load_config(configPath, &xava);
+		configPath[0] = '\0';
+		configPath = load_config(configPath, &xava);
+
+		// attach that config to the IONotify thing
+		struct xava_ionotify_setup thing;
+		thing.xava_ionotify_func = handle_ionotify_call;
+		thing.filename = configPath;
+		xava.default_config.ionotify = xavaIONotifySetup(&thing);
 
 		// load symbols
 		xavaInput                    = get_symbol_address(p->inputModule, "xavaInput");
@@ -232,13 +255,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		xavaFilterHandleConfiguration = get_symbol_address(p->filterModule, "xavaFilterHandleConfiguration");
 
 		// load input config
-		xavaInputHandleConfiguration((void*)get_config_pointer(), (void*)audio);
+		xavaInputHandleConfiguration(&xava);
 
 		// load output config
-		xavaOutputHandleConfiguration(&xava, (void*)get_config_pointer());
+		xavaOutputHandleConfiguration(&xava);
 
 		// load filter config
-		xavaFilterHandleConfiguration(&xava, (void*)get_config_pointer());
+		xavaFilterHandleConfiguration(&xava);
 
 		audio->inputsize = p->inputsize;
 		audio->fftsize   = p->fftsize;
@@ -312,11 +335,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 						// ignore other values
 						break;
 				}
-				#if defined(__linux__)||defined(__WIN32__)
-					// check for updates in the config file
-					if(!should_reload)
-						should_reload = getFileStatus();
-				#endif
 
 				if (should_reload) {
 					reloadConf = true;

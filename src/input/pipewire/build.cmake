@@ -8,7 +8,7 @@ if(PIPEWIRE)
 		add_definitions(-DPIPEWIRE)
 		add_library(in_pipewire SHARED "${XAVA_MODULE_DIR}/main.c"
 									"${GLOBAL_FUNCTION_SOURCES}")
-		target_link_libraries(in_pipewire xava-shared "${PIPEWIRE_LIBRARIES}" iniparser)
+		target_link_libraries(in_pipewire xava-shared "${PIPEWIRE_LIBRARIES}")
 		target_include_directories(in_pipewire PRIVATE "${PIPEWIRE_INCLUDE_DIRS}")
 		target_link_directories(in_pipewire PRIVATE "${PIPEWIRE_LIBRARY_DIRS}")
 		set_target_properties(in_pipewire PROPERTIES PREFIX "")

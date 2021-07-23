@@ -8,7 +8,7 @@ if(NCURSES)
 		add_library(out_ncurses SHARED 
 			"${XAVA_MODULE_DIR}/main.c"
 			"${GLOBAL_FUNCTION_SOURCES}")
-		target_link_libraries(out_ncurses xava-shared "${NCURSES_LIBRARIES}" iniparser)
+		target_link_libraries(out_ncurses xava-shared "${NCURSES_LIBRARIES}")
 		target_include_directories(out_ncurses PRIVATE "${NCURSES_INCLUDE_DIRS}")
 		target_link_directories(out_ncurses PRIVATE "${NCURSES_LIBRARY_DIRS}")
 		set_target_properties(out_ncurses PROPERTIES PREFIX "")

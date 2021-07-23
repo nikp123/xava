@@ -210,10 +210,9 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 	return;
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s, void *data) {
+EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s) {
 	struct config_params *p = &s->conf;
-
-	//dictionary *ini = (dictionary*) data;
+	//struct XAVA_CONFIG config = s->default_config.config;
 
 	// VSync doesnt work on SDL2 :(
 	p->vsync = 0;

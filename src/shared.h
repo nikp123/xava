@@ -1,6 +1,7 @@
 #ifndef __XAVA_SHARED_H
 #define __XAVA_SHARED_H
 
+#include <stdlib.h>
 #include <stdbool.h>
 
 #define EXP_FUNC __attribute__ ((visibility ("default")))
@@ -29,16 +30,12 @@
 #define REALLOC_SELF(x, y) { void (*z)=realloc((x), sizeof(*x)*(y)); \
 	xavaBailCondition(!(z), "Failed to reallocate memory"); (x)=(z); }
 
-#ifdef INIPARSER
-	#include "../lib/iniparser/src/iniparser.h"
-#else
-	#include <iniparser.h>
-#endif
-
 #include <stdint.h>
 #include <stdbool.h>
-#include "module.h"
-#include "log.h"
+#include "shared/module.h"
+#include "shared/log.h"
+#include "shared/ionotify.h"
+#include "shared/config.h"
 
 // XAVA file handlers
 typedef enum XAVA_FILE_TYPE {
@@ -84,10 +81,6 @@ extern unsigned long xavaSleep(unsigned long oldTime, int framerate);
 extern RawData *xavaReadFile(const char *file);
 extern void     xavaCloseFile(RawData *file);
 extern void    *xavaDuplicateMemory(void *memory, size_t size);
-
-// This funcion is in config.h
-// Yes, I commited a sin. Don't shoot, please.
-dictionary *get_config_pointer(void);
 
 // Shared audio data sturct
 struct audio_data {
@@ -168,6 +161,12 @@ struct XAVA_HANDLE {
 	// handles to both config variables and the audio state
 	struct audio_data audio;
 	struct config_params conf;
+
+	struct config {
+		// handle to the config file itself
+		XAVACONFIG config;
+		XAVAIONOTIFY ionotify;
+	} default_config;
 };
 
 #endif
