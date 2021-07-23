@@ -47,6 +47,7 @@ extern void *ioNotifySpecificWatchProcess(void *ionotify_ptr) {
 		if(data->filename[i] == DIRBRK) {
 			data->filename[i] = 0x00;
 			data->filename_offset = i+1;
+			break;
 		}
 	}
 
