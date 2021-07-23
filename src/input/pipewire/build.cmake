@@ -14,7 +14,7 @@ if(PIPEWIRE)
 		set_target_properties(in_pipewire PROPERTIES PREFIX "")
 		install(TARGETS in_pipewire DESTINATION lib/xava)
 	else()
-		message(STATUS "pipewire library not found")
+		message(WARNING "PipeWire library not found")
 	endif()
 endif()
 

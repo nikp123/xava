@@ -12,7 +12,7 @@ if(SNDIO)
 		set_target_properties(in_sndio PROPERTIES PREFIX "")
 		install(TARGETS in_sndio DESTINATION lib/xava)
 	else()
-		message(STATUS "sndio library not found")
+		message(WARNING "SNDIO library not found")
 	endif()
 endif()
 
