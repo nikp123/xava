@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "gl_shared.h"
 
 #include "../../shared.h"

@@ -49,8 +49,8 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
 	free(newFmt);
 
 	// add stack traces for better debugging
-	#ifdef __linux__
 	if(stack_trace) {
+	#ifdef __linux__
 		void *stack_pointers[12];
 		int stack_lenght = 12;
 		char **stack_names;
@@ -63,8 +63,8 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
 		for(int i=2; i<stack_lenght; i++) {
 			printf("at %s\n", stack_names[i]); 
 		}
-	}
 	#endif
+	}
 }
 
 

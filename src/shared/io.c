@@ -326,7 +326,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 			break;
 		case XAVA_FILE_TYPE_CUSTOM_READ:
 		case XAVA_FILE_TYPE_CUSTOM_WRITE:
-			(*actualPath) = filename;
+			(*actualPath) = (char*)filename;
 			break;
 		default:
 			(*actualPath) = (char*)new_filename;

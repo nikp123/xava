@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "../../shared.h"
 
 #include "zwlr.h"

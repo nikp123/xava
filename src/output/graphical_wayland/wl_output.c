@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdlib.h>
 
 #include "gen/xdg-output-unstable-v1-client-protocol.h"

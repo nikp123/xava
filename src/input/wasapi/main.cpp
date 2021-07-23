@@ -43,7 +43,9 @@ HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
 	switch(audio->channels) {
 		case 1:
 			for(UINT32 i=0; i<NumFrames; i++) {
-				audio->audio_out_l[n] = (*pBuffer++ + *pBuffer++)*16383.5f;
+				audio->audio_out_l[n] = *pBuffer++;
+				audio->audio_out_l[n] += *pBuffer++;
+				audio->audio_out_l[n] *= 16383.5f;
 				n++;
 				if(n == audio->inputsize) n = 0;
 			}

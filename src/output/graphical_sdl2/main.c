@@ -74,10 +74,10 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *s)
 }
 
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *s) {
-	struct config_params *p = &s->conf;
 	#ifdef GL
 		GLClear(s);
 	#else
+		struct config_params *p = &s->conf;
 		SDL_FillRect(xavaSDLWindowSurface, NULL, SDL_MapRGB(xavaSDLWindowSurface->format, p->bgcol/0x10000%0x100, p->bgcol/0x100%0x100, p->bgcol%0x100));
 	#endif
 }

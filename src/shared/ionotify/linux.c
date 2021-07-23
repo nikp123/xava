@@ -70,7 +70,6 @@ extern void *ioNotifySpecificWatchProcess(void *ionotify_ptr) {
 			struct inotify_event *event = (struct inotify_event *) &data->buffer[i];
 
 			if(event->mask & IN_IGNORED) {
-				xavaLog("ionotify cancelled");
 				(*ionotify->xava_ionotify_func)(ionotify, XAVA_IONOTIFY_CLOSED);
 				ionotify->alive = false;
 				break;

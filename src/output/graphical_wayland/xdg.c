@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <wayland-client-core.h>
 
 #include "gen/xdg-shell-client-protocol.h"

@@ -15,7 +15,6 @@
 #include <stdbool.h>
 #if defined(__unix__)||defined(__APPLE__)
 	#include <termios.h>
-	#include <unistd.h>
 #endif
 #include <math.h>
 #include <fcntl.h> 
@@ -26,6 +25,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #ifndef PACKAGE
 	#define PACKAGE "INSERT_PROGRAM_NAME"
