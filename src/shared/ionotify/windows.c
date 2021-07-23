@@ -1,48 +1,65 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+
 #include <pthread.h>
 
 #include <windows.h>
 #include <tchar.h>
 
-HANDLE dwFileChange;
-TCHAR *filename;
+#include "shared.h"
 
-void *watchFileProcess(void *name) {
-	filename = malloc(strlen((char*)name)+1);
-	strcpy(filename, (char*)name);
+#include "../../shared.h"
+
+#define DIRBRK '\\'
+
+struct ionotify_specific_internal_DATA {
+	HANDLE dwFileChange;
+	TCHAR *filename;
+	bool keep_alive;
+};
+
+
+void *ioNotifySpecificWatchProcess(void *ionotify_ptr) {
+	XAVAIONOTIFY         ionotify = ionotify_ptr;
+	MALLOC_SELF(ionotify->data, 1); // because we STILL need to share pointers
+
+	IONOTIFYSPECIFICDATA data     = ionotify->data;
+
+	data->filename = strdup(ionotify->filename);
+	data->keep_alive = true;
 
 	// remove filename from config file path
-	for(int i=strlen(name)-1; i>0; i--) {
-		if(filename[i] == '\\') {
-			filename[i] = '\0';
+	for(int i=strlen(data->filename)-1; i>0; i--) {
+		if(data->filename[i] == DIRBRK) {
+			data->filename[i] = '\0';
 			break;
 		}
 	}
 
-	char found = 0;
-	alive = 1;
-
-	dwFileChange = FindFirstChangeNotification(filename, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
-	while(!found) {
-		DWORD dwWaitStatus = WaitForSingleObject(dwFileChange, INFINITE);
-		switch(dwWaitStatus) {
-			case WAIT_OBJECT_0:
-				found = 1;
-				break;
-		}
+	data->dwFileChange = FindFirstChangeNotification(data->filename, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
+	xavaBailCondition(data->dwFileChange == INVALID_HANDLE_VALUE, "FindFirstChangeNotification failed");
+	xavaSpam("dwFileChange = %d", data->dwFileChange);
+	while(data->keep_alive) {
+		//DWORD dwWaitStatus = WaitForSingleObject(data->dwFileChange, INFINITE); // wait for 100ms
+		//switch(dwWaitStatus) {
+		//	case WAIT_OBJECT_0:
+		//		(*ionotify->xava_ionotify_func)(ionotify, XAVA_IONOTIFY_CHANGED);
+		//		break;
+		//}
 	}
-	free(name);
-	alive = 0;
+	(*ionotify->xava_ionotify_func)(ionotify, XAVA_IONOTIFY_CLOSED);
+
+	free(data->filename);
+	CloseHandle(data->dwFileChange);
+	free(data);
+
+	ionotify->alive = false;
+
 	return NULL;
 }
 
-
-void destroyFileWatcher() {
-	if(alive) {
-		free(filename);
-		pthread_cancel(p_thread);
-		alive = 0;
-	}
+void ioNotifyStop(const XAVAIONOTIFY ionotify) {
+	ionotify->data->keep_alive = false;
 }
