@@ -40,19 +40,24 @@ void *ioNotifySpecificWatchProcess(void *ionotify_ptr) {
 
 	data->dwFileChange = FindFirstChangeNotification(data->filename, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
 	xavaBailCondition(data->dwFileChange == INVALID_HANDLE_VALUE, "FindFirstChangeNotification failed");
-	xavaSpam("dwFileChange = %d", data->dwFileChange);
 	while(data->keep_alive) {
-		//DWORD dwWaitStatus = WaitForSingleObject(data->dwFileChange, INFINITE); // wait for 100ms
-		//switch(dwWaitStatus) {
-		//	case WAIT_OBJECT_0:
-		//		(*ionotify->xava_ionotify_func)(ionotify, XAVA_IONOTIFY_CHANGED);
-		//		break;
-		//}
+		DWORD dwWaitStatus = WaitForSingleObject(data->dwFileChange, 100); // wait for 100ms
+		switch(dwWaitStatus) {
+			case WAIT_OBJECT_0:
+				(*ionotify->xava_ionotify_func)(ionotify, XAVA_IONOTIFY_CHANGED);
+				break;
+			case WAIT_ABANDONED:
+			case WAIT_FAILED:
+				(*ionotify->xava_ionotify_func)(ionotify, XAVA_IONOTIFY_ERROR);
+				break;
+			case WAIT_TIMEOUT:
+				// this is used to keep in sync with keep_alive
+				break;
+		}
 	}
 	(*ionotify->xava_ionotify_func)(ionotify, XAVA_IONOTIFY_CLOSED);
 
 	free(data->filename);
-	CloseHandle(data->dwFileChange);
 	free(data);
 
 	ionotify->alive = false;
