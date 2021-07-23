@@ -160,7 +160,7 @@ char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
 
 	// config: creating path to default config file
-	if (configPath[0] == '\0') {
+	if (configPath == NULL) {
 		char *found;
 		bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, 
 			#if defined(__WIN32__)||defined(__APPLE__)

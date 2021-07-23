@@ -120,7 +120,7 @@ void cleanup(void) {
 	free(p->gradient_colors);
 
 	// config file path
-	free(configPath);
+	//free(configPath); don't free as the string is ONLY allocated during bootup
 
 	// cleanup remaining FFT buffers (abusing C here)
 	switch(audio->channels) {
@@ -198,13 +198,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		sigaction(SIGUSR1, &action, NULL);
 	#endif
 
-	MALLOC_SELF(configPath, 255);
+	configPath = NULL;
 
 	// general: handle command-line arguments
 	while ((c = getopt (argc, argv, "p:vh")) != -1) {
 		switch (c) {
 			case 'p': // argument: fifo path
-				optarg = strdup(optarg);
+				configPath = optarg;
 				break;
 			case 'h': // argument: print usage
 				printf ("%s", usage);
@@ -227,7 +227,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		struct audio_data        *audio = &xava.audio;
 
 		// load config
-		configPath[0] = '\0';
 		configPath = load_config(configPath, &xava);
 
 		// attach that config to the IONotify thing

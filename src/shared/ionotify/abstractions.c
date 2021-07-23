@@ -30,7 +30,8 @@ EXP_FUNC void xavaIONotifyKill(const XAVAIONOTIFY ionotify) {
 	int error = pthread_join(ionotify->checker_thread, NULL);
 	xavaErrorCondition(error, "pthread_join failed");
 
-	free(ionotify->filename);
+	// DO NOT DO THIS, NASTY EW BUG
+	//free(ionotify->filename);
 	free(ionotify);
 }
 
