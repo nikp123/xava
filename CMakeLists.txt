@@ -1,6 +1,11 @@
 project(xava C CXX)
 cmake_minimum_required(VERSION 3.13)
 
+# REQUIRE GIT to be present
+if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/.git)
+	message(FATAL_ERROR "XAVA from 0.7.0 onwards requires to be built in a .git directory")
+endif()
+
 # Fix pkg-config for cross-builds (such as MinGW on ArchLinux)
 if(CMAKE_FIND_ROOT_PATH)
     set(CMAKE_SYSROOT "${CMAKE_FIND_ROOT_PATH}")
