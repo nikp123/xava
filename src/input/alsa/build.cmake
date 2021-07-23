@@ -14,7 +14,7 @@ if(ALSA)
 		set_target_properties(in_alsa PROPERTIES PREFIX "")
 		install(TARGETS in_alsa DESTINATION lib/xava)
 	else()
-		message(WARNING "ALSA library not found")
+		message(WARNING "ALSA library not found, ALSA won't build")
 	endif()
 endif()
 

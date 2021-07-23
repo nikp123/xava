@@ -14,7 +14,7 @@ if(PULSEAUDIO)
 		set_target_properties(in_pulseaudio PROPERTIES PREFIX "")
 		install(TARGETS in_pulseaudio DESTINATION lib/xava)
 	else()
-		message(WARNING "PulseAudio library not found")
+		message(WARNING "PulseAudio library not found, PulseAudio won't build")
 	endif()
 endif()
 
