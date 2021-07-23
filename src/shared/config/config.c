@@ -27,7 +27,7 @@ EXP_FUNC XAVACONFIG xavaConfigOpen(const char *filename) {
 }
 
 EXP_FUNC void xavaConfigClose(XAVACONFIG config) {
-	iniparser_freedict(config->ini);
+	//iniparser_freedict(config->ini); // iniparser sucks balls
 	free(config->filename);
 	free(config);
 }
