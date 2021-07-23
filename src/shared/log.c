@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "shared.h"
+#include "../shared.h"
 
 #ifdef __linux__
 	#include <execinfo.h>

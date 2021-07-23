@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #include "log.h"
-#include "shared.h"
+#include "../shared.h"
 
 #ifdef __WIN32__
 #include <windows.h>
@@ -283,11 +283,10 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 			writeCheck = false;
 			break;
 		}
-		case XAVA_FILE_TYPE_CUSTOM_READ:
-			writeCheck = false;
-			break;
 		case XAVA_FILE_TYPE_CUSTOM_WRITE:
 			writeCheck = true;
+		case XAVA_FILE_TYPE_CUSTOM_READ:
+			CALLOC_SELF((*actualPath), MAX_PATH);
 			break;
 		default:
 		case XAVA_FILE_TYPE_NONE:
@@ -324,6 +323,10 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 		case XAVA_FILE_TYPE_CONFIG:
 		case XAVA_FILE_TYPE_CACHE:
 			strcat((*actualPath), new_filename);
+			break;
+		case XAVA_FILE_TYPE_CUSTOM_READ:
+		case XAVA_FILE_TYPE_CUSTOM_WRITE:
+			(*actualPath) = filename;
 			break;
 		default:
 			(*actualPath) = (char*)new_filename;

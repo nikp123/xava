@@ -1,5 +1,5 @@
-#ifndef __XAVA_LOG_H
-#define __XAVA_LOG_H
+#ifndef __XAVA_SHARED_LOG_H
+#define __XAVA_SHARED_LOG_H
 
 // static analyser, please shut the fuck up
 #ifdef SOURCE_PATH_SIZE
@@ -29,6 +29,49 @@ extern void __internal_xavaDie  (void);
 	__internal_xavaDie(); \
 }
 
+#define xavaReturnSpam(return_val, fmt, ...) { \
+	__internal_xavaSpam(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); \
+	return return_val; \
+}
+#define xavaReturnLog(return_val, fmt, ...) { \
+	__internal_xavaLog(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); \
+	return return_val; \
+}
+#define xavaReturnWarn(return_val, fmt, ...) { \
+	__internal_xavaWarn(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); \
+	return return_val; \
+}
+#define xavaReturnError(return_val, fmt, ...) { \
+	__internal_xavaError(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); \
+	return return_val; \
+}
+
+
+#define xavaReturnSpamCondition(condition, return_val, fmt, ...) { \
+	if(condition) { \
+		__internal_xavaSpam(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); \
+		return return_val; \
+	} \
+}
+#define xavaReturnLogCondition(condition, return_val, fmt, ...) { \
+	if(condition) { \
+		__internal_xavaLog(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); \
+		return return_val; \
+	} \
+}
+#define xavaReturnWarnCondition(condition, return_val, fmt, ...) { \
+	if(condition) { \
+		__internal_xavaWarn(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); \
+		return return_val; \
+	} \
+}
+#define xavaReturnErrorCondition(condition, return_val, fmt, ...) { \
+	if(condition) { \
+		__internal_xavaError(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); \
+		return return_val; \
+	} \
+}
+
 #define xavaSpamCondition(condition, fmt, ...) \
 	if((condition)) { __internal_xavaSpam(__func__, __FILENAME__, __LINE__, fmt, ## __VA_ARGS__); }
 #define xavaLogCondition(condition, fmt, ...) \
@@ -43,6 +86,7 @@ extern void __internal_xavaDie  (void);
 		__internal_xavaDie(); \
 	} \
 }
+
 
 #endif
 
