@@ -20,20 +20,6 @@ typedef short s16_t;
 // #define BUFSIZE 1024
 #define BUFSIZE 4096
 
-/*
-struct audio_data {
-	int audio_out_r[2048];
-	int audio_out_l[2048];
-	int format;
-	unsigned int rate ;
-	char *source; //alsa device, fifo path or pulse source
-	int im; //input mode alsa, fifo or pulse
-	int channels;
-	int terminate; // shared variable used to terminate audio thread
-	char error_message[1024];
-};
-*/
-
 #define VIS_BUF_SIZE 16384
 #define VB_OFFSET 8192+4096
 

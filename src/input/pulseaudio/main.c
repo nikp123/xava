@@ -158,6 +158,7 @@ EXP_FUNC void* xavaInput(void* data)
 		}
 		if (audio->terminate == 1) {
 			pa_simple_free(s);
+			free(audio->source);
 			break;
 		}
 	}

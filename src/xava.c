@@ -113,9 +113,6 @@ void cleanup(void) {
 	destroy_module(p->outputModule);
 	destroy_module(p->filterModule);
 
-	// clean up XAVA internal variables
-	free(audio->source);
-
 	// color information
 	free(p->gradient_colors);
 
