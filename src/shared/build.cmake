@@ -13,7 +13,7 @@ if(NOT INIPARSER)
 
 	# Pull submodule and install dependency
 	execute_process(COMMAND git submodule update --init)
-	add_library(iniparser SHARED
+	add_library(iniparser
 			lib/iniparser/src/dictionary.c
 			lib/iniparser/src/iniparser.c)
 	list(APPEND ADDITIONAL_SHARED_DEFINITIONS "-DINIPARSER")
