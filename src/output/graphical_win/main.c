@@ -221,7 +221,6 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	// get handle
 	xavaWinModule = GetModuleHandle(NULL);
-	FreeConsole();
 
 	// register window class
 	xavaBailCondition(!register_window_win(xavaWinModule), "RegisterClassEx failed");
