@@ -16,30 +16,6 @@
 #include <windows.h>
 #endif
 
-// define directory breaks cuz windows sucks
-#ifdef __WIN32__
-	#define DIRBRK '\\'
-#else
-	#define DIRBRK '/'
-#endif
-
-#ifdef __linux__
-	// I've gotten this from a stranger on the internet
-	#include <linux/limits.h>
-	#define MAX_PATH PATH_MAX
-#endif
-
-#ifdef __APPLE__
-	#include <sys/syslimits.h>
-	#define MAX_PATH PATH_MAX 
-#endif
-
-#if defined(__unix__)||defined(__APPLE__)
-	#define mkdir(dir) mkdir(dir, 0770)
-#else
-	#define mkdir(dir) mkdir(dir)
-#endif
-
 EXP_FUNC int xavaMkdir(const char *dir) {
 	/* Stolen from: https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950 */
 	/* Adapted from http://stackoverflow.com/a/2336245/119527 */
@@ -185,6 +161,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 			}
 			break;
 		case XAVA_FILE_TYPE_CONFIG:
+		case XAVA_FILE_TYPE_CUSTOM_CONFIG:
 		{
 			#if defined(__unix__) // FOSS-y/Linux-y implementation
 				char *configHome = getenv("XDG_CONFIG_HOME");
