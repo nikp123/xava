@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "gl_shared.h"
 
@@ -51,23 +52,53 @@ static GLuint POST_DEPTH;
 static GLuint POST_SHADOW_COLOR;
 static GLuint POST_SHADOW_OFFSET;
 
-void SGLShadersLoad() {
+
+// Better to be ugly and long then short and buggy
+void SGLShadersLoad(struct XAVA_HANDLE *xava) {
+	XAVACONFIG config = xava->default_config.config;
+
+	char *preShaderPack, *postShaderPack;
 	char *preFragPath, *preVertPath;
 	char *postFragPath, *postVertPath;
 	RawData *preFrag, *preVert, *postFrag, *postVert;
 
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-			"gl/shaders/pre.frag", &preFragPath) == false, 
+	preShaderPack  = xavaConfigGetString(config, "gl", "pre_shaderpack", "default"); 
+	postShaderPack = xavaConfigGetString(config, "gl", "post_shaderpack", "default"); 
+
+	char *file_path = malloc(MAX_PATH);
+	strcpy(file_path, "gl/shaders/pre/");
+	strcat(file_path, preShaderPack);
+	strcat(file_path, "/fragment.glsl");
+	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", preShaderPack) ? 
+			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
+			file_path, &preFragPath) == false, 
 			"Failed to load pre-render fragment shader!");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, 
-			"gl/shaders/pre.vert", &preVertPath) == false,
+
+	strcpy(file_path, "gl/shaders/pre/");
+	strcat(file_path, preShaderPack);
+	strcat(file_path, "/vertex.glsl");
+	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", preShaderPack) ?
+			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG, 
+			file_path, &preVertPath) == false,
 			"Failed to load pre-render vertex shader!");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-			"gl/shaders/post.frag", &postFragPath) == false, 
+
+	strcpy(file_path, "gl/shaders/post/");
+	strcat(file_path, postShaderPack);
+	strcat(file_path, "/fragment.glsl");
+	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", postShaderPack) ?
+			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
+			file_path, &postFragPath) == false, 
 			"Failed to load post-render fragment shader!");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, 
-			"gl/shaders/post.vert", &postVertPath) == false,
+
+	strcpy(file_path, "gl/shaders/post/");
+	strcat(file_path, postShaderPack);
+	strcat(file_path, "/vertex.glsl");
+	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", postShaderPack) ?
+			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG, 
+			file_path, &postVertPath) == false,
 			"Failed to load post-render vertex shader!");
+
+	free(file_path);
 
 	preFrag = xavaReadFile(preFragPath);
 	free(preFragPath);

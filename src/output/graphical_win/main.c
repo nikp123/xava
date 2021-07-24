@@ -405,6 +405,6 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 	// VSync is a must due to shit Windows timers
 	p->vsync = 1;
 
-	GLShadersLoad();
+	GLShadersLoad(hand);
 }
 

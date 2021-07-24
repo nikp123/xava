@@ -242,7 +242,7 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 		(config, "wayland", "monitor_name", "ignore"));
 
 	#ifdef EGL
-		waylandEGLShadersLoad();
+		waylandEGLShadersLoad(hand);
 	#endif
 
 	// Vsync is implied, although system timers must be used

@@ -218,7 +218,7 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s) {
 	p->vsync = 0;
 
 	#ifdef GL
-		GLShadersLoad();
+		GLShadersLoad(s);
 	#endif
 }
 

@@ -808,9 +808,9 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 	#endif
 
 	#if defined(EGL)
-		EGLShadersLoad();
+		EGLShadersLoad(hand);
 	#elif defined(GL)
-		GLShadersLoad();
+		GLShadersLoad(hand);
 	#endif
 }
 

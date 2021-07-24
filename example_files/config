@@ -133,6 +133,28 @@
 ; monitor_name = 0
 
 
+[gl]
+
+# Hacks and options related to the '*_gl' and '*_egl' output modes
+
+# XAVA's OpenGL and EGL renderers are split into two rendering pipelines:
+# the "pre" and "post" rendering, that's why there are two shaders
+
+# The following options allow for users to change their visualizer via
+# different "shaderpacks" which work just the same as they do on
+# Minecraft Optifine
+
+# The pre renderer is responsible for shading the visualizer BEFORE 
+# the bars are drawn, this allows the shader developer to adjust the
+# way that the bars are drawn on the screen
+; pre_shaderpack = default
+
+# Meanwhile the post rendering/shading is responsible for adjusting the
+# look of the visualizer AFTER the bars have been drawn (fxp. adding
+# shadows via depth buffer trickery)
+; post_shaderpack = default
+
+
 [input]
 
 # Audio capturing method. Possible methods are the ones listed below.

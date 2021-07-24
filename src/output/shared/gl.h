@@ -6,7 +6,7 @@
 #include "../../shared.h"
 
 
-void GLShadersLoad(void);
+void GLShadersLoad(struct XAVA_HANDLE *xava);
 void GLInit(struct XAVA_HANDLE *xava);
 void GLClear(struct XAVA_HANDLE *xava);
 void GLApply(struct XAVA_HANDLE *xava);

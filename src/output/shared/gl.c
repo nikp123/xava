@@ -9,8 +9,8 @@
 #include "../graphical.h"
 
 
-void GLShadersLoad() {
-	SGLShadersLoad();
+void GLShadersLoad(struct XAVA_HANDLE *xava) {
+	SGLShadersLoad(xava);
 }
 
 void GLInit(struct XAVA_HANDLE *xava) {
