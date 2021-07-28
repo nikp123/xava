@@ -9,6 +9,7 @@
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xrandr.h>
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,11 +35,11 @@
 		float x;	// because movements are so small ints may not capture them properly
 		float y;
 		float angle;
-		char size;
+		unsigned char size;
 	} star;
 
 	static star *stars;
-	static double speed;
+	static float speed;
 	static float kineticScore;
 
 	static int starsCount;
@@ -503,13 +504,13 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 		int displayWidth  = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
 		int displayHeight = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
 		for(int i=0; i<starsCount; i++) {
-			stars[i].x = rand()%displayWidth;
-			stars[i].y = rand()%displayHeight;
+			stars[i].x = (float)(rand()%displayWidth);
+			stars[i].y = (float)(rand()%displayHeight);
 
 			// it is absolutely critical that this angle be in range(-pi/2, +pi/2)
 			// going outside of this will cause numerous bugs
-			stars[i].angle = pow((float)(rand()%1200-600)/1000.0, 3.0);
-			stars[i].size = (5-sqrt(rand()%26))+1;
+			stars[i].angle = powf((float)(rand()%1200-600)/(float)1000.0, 3.0);
+			stars[i].size = (unsigned char)(5-sqrt(rand()%26))+1;
 		}
 	#endif
 
@@ -536,7 +537,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 			case KeyPress:
 			{
 				KeySym key_symbol;
-				key_symbol = XkbKeycodeToKeysym(xavaXDisplay, xavaXEvent.xkey.keycode, 0, xavaXEvent.xkey.state & ShiftMask ? 1 : 0);
+				key_symbol = XkbKeycodeToKeysym(xavaXDisplay, (KeyCode)xavaXEvent.xkey.keycode, 0, xavaXEvent.xkey.state & ShiftMask ? 1 : 0);
 				switch(key_symbol) {
 					// should_reload = 1
 					// resizeTerminal = 2
@@ -574,9 +575,9 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 						p->bgcol &= 0xff00000;
 						p->bgcol |= ((rand()<<16)|rand())&0x00ffffff;
 
-						xbgcol.red   = rand();
-						xbgcol.green = rand();
-						xbgcol.blue  = rand();
+						xbgcol.red   = (unsigned short)rand();
+						xbgcol.green = (unsigned short)rand();
+						xbgcol.blue  = (unsigned short)rand();
 						xbgcol.flags = DoRed | DoGreen | DoBlue;
 						XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
 						return XAVA_REDRAW;
@@ -587,40 +588,40 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 						p->col &= 0xff00000;
 						p->col |= ((rand()<<16)|rand())&0x00ffffff;
 
-						xcol.red   = rand();
-						xcol.green = rand();
-						xcol.blue  = rand();
-						xcol.flags = DoRed | DoGreen | DoBlue;
-						XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
-						return XAVA_REDRAW;
-				}
-				break;
+					xcol.red   = (unsigned short)rand();
+					xcol.green = (unsigned short)rand();
+					xcol.blue  = (unsigned short)rand();
+					xcol.flags = DoRed | DoGreen | DoBlue;
+					XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
+					return XAVA_REDRAW;
 			}
-			case ConfigureNotify:
-			{
-				// the window should not be resized when it IS the monitor
-				if(rootWindowEnabled||overrideRedirectEnabled)
-					break;
+			break;
+		}
+		case ConfigureNotify:
+		{
+			// the window should not be resized when it IS the monitor
+			if(rootWindowEnabled||overrideRedirectEnabled)
+				break;
 
-				// This is needed to track the window size
-				XConfigureEvent trackedXavaXWindow;
-				trackedXavaXWindow = xavaXEvent.xconfigure;
-				if(p->w != trackedXavaXWindow.width || p->h != trackedXavaXWindow.height) {
-					p->w = trackedXavaXWindow.width;
-					p->h = trackedXavaXWindow.height;
-				}
-				action = XAVA_RESIZE;
-				break;
+			// This is needed to track the window size
+			XConfigureEvent trackedXavaXWindow;
+			trackedXavaXWindow = xavaXEvent.xconfigure;
+			if(p->w != (uint32_t)trackedXavaXWindow.width || p->h != (uint32_t)trackedXavaXWindow.height) {
+				p->w = (unsigned int)trackedXavaXWindow.width;
+				p->h = (unsigned int)trackedXavaXWindow.height;
 			}
-			case Expose:
-				if(action != XAVA_RESIZE)
-					action = XAVA_REDRAW;
-				break;
-			case VisibilityNotify:
-				if(xavaXEvent.xvisibility.state == VisibilityUnobscured)
-					action = XAVA_RESIZE;
-				break;
-			case ClientMessage:
+			action = XAVA_RESIZE;
+			break;
+		}
+		case Expose:
+			if(action != XAVA_RESIZE)
+				action = XAVA_REDRAW;
+			break;
+		case VisibilityNotify:
+			if(xavaXEvent.xvisibility.state == VisibilityUnobscured)
+				action = XAVA_RESIZE;
+			break;
+		case ClientMessage:
 				if((Atom)xavaXEvent.xclient.data.l[0] == wm_delete_window)
 					return XAVA_QUIT;
 				break;
@@ -638,44 +639,45 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
 
 	// im lazy, but i just wanna make it work
-	int xoffset = hand->rest, yoffset = p->h;
+	uint32_t xoffset = hand->rest, yoffset = p->h;
 
 	#ifndef STARS
 	if(rootWindowEnabled)
 	#endif
 	{
-		xoffset+=p->wx;
-		yoffset+=p->wy;
+		xoffset+=(unsigned int)p->wx;
+		yoffset+=(unsigned int)p->wy;
 	}
 
 	#ifdef STARS
 		// since it's impossible to do delta draws with stars, we'll
 		// just redraw the framebuffer each time (even if that costs CPU time)
-		float displayWidth  = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
-		float displayHeight = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
+		float displayWidth  = (float)DisplayWidth(xavaXDisplay, xavaXScreenNumber);
+		float displayHeight = (float)DisplayHeight(xavaXDisplay, xavaXScreenNumber);
 		//XClearWindow(xavaXDisplay, xavaXWindow);
 
 		// FIXME: Bugged screen coordinates on multimonitor (THIS FIX IS A MUST)
 		//printf("%d %d\n", windowAttribs.width, windowAttribs.height);
-		XClearArea(xavaXDisplay, xavaXWindow, 0, 0, windowAttribs.width, windowAttribs.height, 0);
+		XClearArea(xavaXDisplay, xavaXWindow, 0, 0, (unsigned int)windowAttribs.width,
+				(unsigned int)windowAttribs.height, 0);
 
 		for(int i=0; i<starsCount; i++) {
-			stars[i].x += cos(stars[i].angle)*stars[i].size*speed;
-			stars[i].y += sin(stars[i].angle)*stars[i].size*speed;
+			stars[i].x += cosf(stars[i].angle)*stars[i].size*speed;
+			stars[i].y += sinf(stars[i].angle)*stars[i].size*speed;
 
 			if(stars[i].x > displayWidth) {
 				stars[i].x = 0;
-				stars[i].y = fmod((float)rand(), displayHeight);
+				stars[i].y = fmodf((float)rand(), displayHeight);
 			}
 
 			if(stars[i].y > displayHeight || stars[i].y < -stars[i].size) {
-				stars[i].y = fmod((float)rand(), displayWidth);
-				stars[i].y = stars[i].angle > 0.0 ? 1.0 : displayHeight-1.0;
+				stars[i].y = fmodf((float)rand(), displayWidth);
+				stars[i].y = stars[i].angle > (float)0.0 ? (float)1.0 : displayHeight-(float)1.0;
 			}
 
 			XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
-			XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, stars[i].x,
-					stars[i].y, stars[i].size, stars[i].size);
+			XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, (int)stars[i].x,
+					(int)stars[i].y, stars[i].size, stars[i].size);
 		}
 
 		// size the framebuffer is reset on each frame
@@ -694,45 +696,47 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 		glXWaitGL();
 	#else
 		// draw bars on the X11 window
-		for(int i = 0; i < hand->bars; i++) {
+		for(int i = 0; i < (int)hand->bars; i++) {
 			// this fixes a rendering bug
-			if(hand->f[i] > p->h) hand->f[i] = p->h;
+			if(hand->f[i] > (int)p->h) hand->f[i] = (int)p->h;
 
 			#ifdef STARS
 				// kinetic score has a low-freq bias as they are more "physical"
 				float bar_percentage = (float)(hand->f[i]-1)/(float)p->h;
 				if(bar_percentage > 0.0) {
-					kineticScore+=pow(bar_percentage, 2.0*(float)i/(float)hand->bars);
+					kineticScore+=powf(bar_percentage, (float)2.0*(float)i/(float)hand->bars);
 				}
 			#endif
 
 			if(hand->f[i] > hand->fl[i]) {
 				if(p->gradients)
 					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 
-						0, p->h - hand->f[i], p->bw, hand->f[i]-hand->fl[i],
-						xoffset + i*(p->bs+p->bw), yoffset - hand->f[i]);
+						0, (int)p->h - hand->f[i], p->bw, (unsigned int)(hand->f[i]-hand->fl[i]),
+						(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->f[i]);
 				else {
 					XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
 					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics,
-						xoffset + i*(p->bs+p->bw), yoffset - hand->f[i], 
-						p->bw, hand->f[i]-hand->fl[i]);
+						(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->f[i], 
+						p->bw, (unsigned int)(hand->f[i]-hand->fl[i]));
 				}
 			} else if (hand->f[i] < hand->fl[i]) {
 				XClearArea(xavaXDisplay, xavaXWindow,
-					xoffset + i*(p->bs+p->bw), yoffset - hand->fl[i], 
-					p->bw, hand->fl[i]-hand->f[i], 0);
+					(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->fl[i], 
+					p->bw, (unsigned int)(hand->fl[i]-hand->f[i]), 0);
 			}
 		}
 		XSync(xavaXDisplay, 0);
 	#endif
 
 	#ifdef STARS
-		speed = pow(kineticScore/(float)hand->bars, 1.0/starsSens)*starsVelocity;
+		speed = powf(kineticScore/(float)hand->bars, (float)1.0/(float)starsSens)*(float)starsVelocity;
 	#endif
 	return;
 }
 
 EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
+	UNUSED(hand);
+
 	// Root mode leaves artifacts on screen even though the window is dead
 	XClearWindow(xavaXDisplay, xavaXWindow);
 

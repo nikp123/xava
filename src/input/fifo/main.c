@@ -27,7 +27,7 @@ EXP_FUNC void* xavaInput(void* data)
 	int i;
 	int t = 0;
 	//int size = 1024;
-	int bytes = 0;
+	ssize_t bytes = 0;
 	int16_t buf[audio->inputsize];
 	struct timespec req = { .tv_sec = 0, .tv_nsec = 10000000 };
 
@@ -64,7 +64,7 @@ EXP_FUNC void* xavaInput(void* data)
 			// assuming samples are 16bit (as per example)
 			// also reading more than the retrieved buffer is considered memory corruption
 			for (i = 0; i < bytes/2; i += 2) {
-				if (audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
+				if (audio->channels == 1) audio->audio_out_l[n] = (float)(buf[i] + buf[i + 1]) / (float)2.0;
 
 				//stereo storing channels in buffer
 				if (audio->channels == 2) {

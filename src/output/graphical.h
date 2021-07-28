@@ -3,7 +3,7 @@
 
 #include "../shared.h"
 
-void calculate_win_pos(struct config_params *p, int scrW, int scrH);
+void calculate_win_pos(struct config_params *p, uint32_t scrW, uint32_t scrH);
 
 #define DEF_FG_COL 6
 #define DEF_BG_COL 0

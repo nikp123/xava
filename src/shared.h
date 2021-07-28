@@ -25,6 +25,8 @@
 	#define DIFF(x,y) (MAX((x),(y))-MIN((x),(y)))
 #endif
 
+#define UNUSED(x) (void)(x)
+
 #define CALLOC_SELF(x, y) (x)=calloc((y), sizeof(*x))
 #define MALLOC_SELF(x, y)  (x)=malloc(sizeof(*x)*(y))
 #define REALLOC_SELF(x, y) { void (*z)=realloc((x), sizeof(*x)*(y)); \
@@ -88,7 +90,7 @@ struct config_params {
 
 	// 4 - geometry
 	uint32_t bw, bs;								// bar width and height
-	int32_t w, h;									// display width and height
+	uint32_t w, h;									// display width and height
 	int wx, wy;										// window position on the desktop in
 													// x and y coordinates
 	char *winA;										// pointer to a string of alignment
@@ -107,8 +109,8 @@ struct config_params {
 // XAVA handle 
 struct XAVA_HANDLE {
 	// variables that XAVA outputs
-	int bars;		// number of output bars
-	int rest;		// number of screen units until first bar
+	uint32_t bars;		// number of output bars
+	uint32_t rest;		// number of screen units until first bar
 	int *f, *fl;	// array to bar data (f = current, fl = last frame)
 
 	// signals to the renderer thread to safely stop rendering (if needed)
