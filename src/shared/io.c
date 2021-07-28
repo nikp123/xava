@@ -298,6 +298,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 	switch(type) {
 		case XAVA_FILE_TYPE_PACKAGE:
 		case XAVA_FILE_TYPE_CONFIG:
+		case XAVA_FILE_TYPE_CUSTOM_CONFIG:
 		case XAVA_FILE_TYPE_CACHE:
 			strcat((*actualPath), new_filename);
 			break;
@@ -391,7 +392,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 		{
 			FILE *fp;
 			if(writeCheck) {
-				fp = fopen((*actualPath), "w");
+				fp = fopen((*actualPath), "a");
 				if(fp == NULL) {
 					xavaError("Could not open '%s' for writing!", (*actualPath));
 					switch(type) {
