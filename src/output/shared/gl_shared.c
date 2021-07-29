@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "gl_shared.h"
 
@@ -44,6 +45,7 @@ static GLuint PRE_RESOLUTION;
 static GLuint PRE_PROJMATRIX;
 static GLuint PRE_GRAD_SECT_COUNT;
 static GLuint PRE_GRADIENTS;
+static GLuint PRE_TIME;
 
 static GLuint POST_POS;
 static GLuint POST_TEXCOORD;
@@ -51,6 +53,7 @@ static GLuint POST_TEXTURE;
 static GLuint POST_DEPTH;
 static GLuint POST_SHADOW_COLOR;
 static GLuint POST_SHADOW_OFFSET;
+static GLuint POST_TIME;
 
 
 // Better to be ugly and long then short and buggy
@@ -182,6 +185,7 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	PRE_FGCOL      = glGetUniformLocation(pre.program, "color");
 	PRE_RESOLUTION = glGetUniformLocation(pre.program, "u_resolution");
 	PRE_PROJMATRIX = glGetUniformLocation(pre.program, "projectionMatrix");
+	PRE_TIME       = glGetUniformLocation(pre.program, "u_time");
 
 	POST_POS           = glGetAttribLocation(post.program, "a_position");
 	POST_TEXCOORD      = glGetAttribLocation(post.program, "a_texCoord");
@@ -189,6 +193,8 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	POST_DEPTH         = glGetUniformLocation(post.program, "s_depth");
 	POST_SHADOW_COLOR  = glGetUniformLocation(post.program, "shadow_color");
 	POST_SHADOW_OFFSET = glGetUniformLocation(post.program, "shadow_offset");
+	POST_TIME          = glGetUniformLocation(post.program, "u_time");
+
 	glUseProgram(pre.program);
 
 	glEnable(GL_BLEND);
@@ -342,6 +348,9 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 void SGLDraw(struct XAVA_HANDLE *xava) {
 	struct config_params *conf = &xava->conf;
 
+	// restrict time variable to one hour because floating point precision issues
+	float currentTime = (float)fmodl((long double)xavaGetTime()/(long double)1000.0, 3600.0);
+
 	/**
 	 * Here we start rendering to the texture
 	 **/
@@ -361,6 +370,9 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	// switch to pre shaders
 	glUseProgram(pre.program);
+
+	// update time
+	glUniform1f(PRE_TIME, currentTime);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -386,6 +398,9 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	// Switch to post shaders
 	glUseProgram(post.program);
+
+	// update time
+	glUniform1f(POST_TIME, currentTime);
 
 	// Clear the color buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
