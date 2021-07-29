@@ -16,6 +16,7 @@ if(NOT INIPARSER)
 	add_library(iniparser
 			lib/iniparser/src/dictionary.c
 			lib/iniparser/src/iniparser.c)
+	set_target_properties(iniparser PROPERTIES COMPILE_FLAGS "-fPIC")
 	list(APPEND ADDITIONAL_SHARED_DEFINITIONS "-DINIPARSER")
 else()
 	# certain distros like ubuntu put iniparser in a subdirectory "iniparser"
