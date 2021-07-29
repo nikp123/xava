@@ -58,25 +58,32 @@ EXP_FUNC int xavaMkdir(const char *dir) {
 	return 0;
 }
 
-EXP_FUNC unsigned long xavaSleep(unsigned long oldTime, int framerate) {
-	unsigned long newTime = 0;
-	if(framerate) {
+// returned in UNIX time except milliseconds
+EXP_FUNC unsigned long xavaGetTime(void) {
 	#ifdef WIN
-		SYSTEMTIME time;
 		GetSystemTime(&time);
 		newTime = time.wSecond*1000+time.wMilliseconds;
-		if(newTime-oldTime<1000/framerate&&newTime>oldTime)
-			Sleep(1000/framerate-(newTime-oldTime));
-		GetSystemTime(&time);
 		return time.wSecond*1000+time.wMilliseconds;
 	#else
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
-		newTime = tv.tv_sec*1000+tv.tv_usec/1000;
+		return tv.tv_sec*1000+tv.tv_usec/1000;
+	#endif
+}
+
+EXP_FUNC unsigned long xavaSleep(unsigned long oldTime, int framerate) {
+	unsigned long newTime = 0;
+	if(framerate) {
+	#ifdef WIN
+		newTime = xavaGetTime();
+		if(newTime-oldTime<1000/framerate&&newTime>oldTime)
+			Sleep(1000/framerate-(newTime-oldTime));
+		return xavaGetTime();
+	#else
+		newTime = xavaGetTime();
 		if(oldTime+1000/framerate>newTime)
 			usleep((1000/framerate+oldTime-newTime)*1000);
-		gettimeofday(&tv, NULL);
-		return tv.tv_sec*1000+tv.tv_usec/1000;
+		return xavaGetTime();
 	#endif
 	}
 	#ifdef WIN

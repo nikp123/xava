@@ -65,6 +65,7 @@ extern bool            isEventPendingXAVA    (XG_EVENT_STACK *stack, XG_EVENT ev
 extern           int xavaMkdir(const char *dir);
 extern          bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **actualPath);
 extern unsigned long xavaSleep(unsigned long oldTime, int framerate);
+extern unsigned long xavaGetTime(void);
 
 // file/memory abstractions
 extern RawData *xavaReadFile(const char *file);
