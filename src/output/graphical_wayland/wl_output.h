@@ -10,6 +10,8 @@ struct wlOutput {
 	struct wl_output      *output;
 	uint32_t              scale;
 	uint32_t              name;
+	uint32_t              width;
+	uint32_t              height;
 	char                  *displayName;
 	uint32_t              num;
 	struct zxdg_output_v1 *xdg_output;

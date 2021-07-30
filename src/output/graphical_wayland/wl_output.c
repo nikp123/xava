@@ -74,6 +74,9 @@ static void xdg_output_handle_logical_position(void *data,
 static void xdg_output_handle_logical_size(void *data,
 		struct zxdg_output_v1 *xdg_output, int32_t width, int32_t height) {
 	// Who cares
+	struct wlOutput *output = data;
+	output->width = width;
+	output->height = height;
 }
 
 static void xdg_output_handle_name(void *data,
