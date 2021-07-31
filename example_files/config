@@ -154,6 +154,10 @@
 # shadows via depth buffer trickery)
 ; post_shaderpack = default
 
+# Scale the resolution of the rendered visualizer by a floating-point factor
+# Works similarly to "render resolution scalers" in modern AAA game engines
+; resolution_scale = 1.0
+
 
 [input]
 

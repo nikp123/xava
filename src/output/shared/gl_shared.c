@@ -55,6 +55,7 @@ static GLuint POST_SHADOW_COLOR;
 static GLuint POST_SHADOW_OFFSET;
 static GLuint POST_TIME;
 
+static GLfloat resScale;
 
 // Better to be ugly and long then short and buggy
 void SGLShadersLoad(struct XAVA_HANDLE *xava) {
@@ -67,6 +68,8 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 
 	preShaderPack  = xavaConfigGetString(config, "gl", "pre_shaderpack", "default"); 
 	postShaderPack = xavaConfigGetString(config, "gl", "post_shaderpack", "default"); 
+
+	resScale       = xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f); 
 
 	char *file_path = malloc(MAX_PATH);
 	strcpy(file_path, "gl/shaders/pre/");
@@ -227,7 +230,7 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	// set texture properties
 	glGenTextures(1,               &FBO.final_texture);
 	glBindTexture(GL_TEXTURE_2D,   FBO.final_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, conf->w, conf->h,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, conf->w*resScale, conf->h*resScale,
 			0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -237,8 +240,8 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	// set texture properties
 	glGenTextures(1,      &FBO.depth_texture);
 	glBindTexture(GL_TEXTURE_2D, FBO.depth_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, conf->w, conf->h,
-			0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, conf->w*resScale,
+			conf->h*resScale, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -366,7 +369,7 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	// bind render target to texture
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
-	glViewport(0, 0, conf->w, conf->h);
+	glViewport(0, 0, conf->w*resScale, conf->h*resScale);
 
 	// switch to pre shaders
 	glUseProgram(pre.program);
