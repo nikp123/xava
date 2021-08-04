@@ -13,7 +13,7 @@ if(NOT INIPARSER)
 
 	# Pull submodule and install dependency
 	execute_process(COMMAND git submodule update --init)
-	add_library(iniparser
+	add_library(iniparser STATIC
 			lib/iniparser/src/dictionary.c
 			lib/iniparser/src/iniparser.c)
 	set_target_properties(iniparser PROPERTIES COMPILE_FLAGS "-fPIC")
