@@ -46,6 +46,7 @@ static GLuint PRE_PROJMATRIX;
 static GLuint PRE_GRAD_SECT_COUNT;
 static GLuint PRE_GRADIENTS;
 static GLuint PRE_TIME;
+static GLuint PRE_INTENSITY;
 
 static GLuint POST_POS;
 static GLuint POST_TEXCOORD;
@@ -54,6 +55,7 @@ static GLuint POST_DEPTH;
 static GLuint POST_SHADOW_COLOR;
 static GLuint POST_SHADOW_OFFSET;
 static GLuint POST_TIME;
+static GLuint POST_INTENSITY;
 
 static GLfloat resScale;
 
@@ -189,6 +191,7 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	PRE_RESOLUTION = glGetUniformLocation(pre.program, "u_resolution");
 	PRE_PROJMATRIX = glGetUniformLocation(pre.program, "projectionMatrix");
 	PRE_TIME       = glGetUniformLocation(pre.program, "u_time");
+	PRE_INTENSITY  = glGetUniformLocation(pre.program, "intensity");
 
 	POST_POS           = glGetAttribLocation(post.program, "a_position");
 	POST_TEXCOORD      = glGetAttribLocation(post.program, "a_texCoord");
@@ -197,6 +200,7 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	POST_SHADOW_COLOR  = glGetUniformLocation(post.program, "shadow_color");
 	POST_SHADOW_OFFSET = glGetUniformLocation(post.program, "shadow_offset");
 	POST_TIME          = glGetUniformLocation(post.program, "u_time");
+	POST_INTENSITY     = glGetUniformLocation(post.program, "intensity");
 
 	glUseProgram(pre.program);
 
@@ -353,6 +357,7 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	// restrict time variable to one hour because floating point precision issues
 	float currentTime = (float)fmodl((long double)xavaGetTime()/(long double)1000.0, 3600.0);
+	float intensity = 0.0;
 
 	/**
 	 * Here we start rendering to the texture
@@ -361,11 +366,23 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	// i am speed
 	register GLfloat *d = vertexData;
 	for(register int i=0; i<xava->bars; i++) {
+		// the not so, speed part
+		// intensity has a low-freq bias as they are more "physical"
+		float bar_percentage = (float)(xava->f[i]-1)/(float)conf->h;
+		if(bar_percentage > 0.0) {
+			intensity+=powf(bar_percentage, (float)2.0*(float)i/(float)xava->bars);
+		}
+
+		// the speed part
 		*(++d)  = xava->f[i];
 		*(d+=6) = xava->f[i];
 		*(d+=4) = xava->f[i];
 		d++;
 	}
+
+	// since im not bothering to do the math, this'll do
+	// - used to balance out intensity across various number of bars
+	intensity /= xava->bars;
 
 	// bind render target to texture
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
@@ -376,6 +393,9 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	// update time
 	glUniform1f(PRE_TIME, currentTime);
+
+	// update intensity
+	glUniform1f(PRE_INTENSITY, intensity);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -404,6 +424,9 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	// update time
 	glUniform1f(POST_TIME, currentTime);
+
+	// update intensity
+	glUniform1f(POST_INTENSITY, intensity);
 
 	// Clear the color buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
