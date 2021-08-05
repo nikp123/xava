@@ -47,7 +47,9 @@ endif()
 #target_link_directories(out_wayland_egl PRIVATE "${WAYLAND_LIBRARY_DIRS}")
 #set_target_properties(out_wayland_egl PROPERTIES PREFIX "")
 
+set(EFSW_INSTALL OFF)
 set(BUILD_SHARED_LIBS OFF)
+set(BUILD_PIC_EXECUTABLE ON)
 add_subdirectory(lib/efsw)
 
 # Build XAVA shared library

@@ -3,4 +3,4 @@
 	url = https://github.com/ndevilla/iniparser
 [submodule "lib/efsw"]
 	path = lib/efsw
-	url = https://github.com/SpartanJ/efsw
+	url = https://github.com/nikp123/efsw
