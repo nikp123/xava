@@ -6,13 +6,15 @@ set(ADDITIONAL_SHARED_LIBRARIES "")
 set(ADDITIONAL_SHARED_DEFINITIONS "")
 set(ADDITIONAL_SHARED_INCLUDE_DIRS "")
 
+# Pull git required submodules
+execute_process(COMMAND git submodule update --init)
+
 # Build (or include) shared dependency - iniparser
 find_library(INIPARSER iniparser HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 if(NOT INIPARSER)
 	message(STATUS "iniparser not found on system, building from source.")
 
 	# Pull submodule and install dependency
-	execute_process(COMMAND git submodule update --init)
 	add_library(iniparser STATIC
 			lib/iniparser/src/dictionary.c
 			lib/iniparser/src/iniparser.c)
