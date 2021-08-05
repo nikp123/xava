@@ -69,7 +69,7 @@ static struct XAVA_HANDLE xava;
 // XAVA magic variables, too many of them indeed
 static pthread_t p_thread;
 
-void handle_ionotify_call(XAVAIONOTIFY ionotify, XAVA_IONOTIFY_EVENT event) {
+void handle_ionotify_call(struct XAVA_HANDLE *xava, int id, XAVA_IONOTIFY_EVENT event) {
 	switch(event) {
 		case XAVA_IONOTIFY_CHANGED:
 		case XAVA_IONOTIFY_DELETED:
@@ -93,8 +93,8 @@ void cleanup(void) {
 	struct config_params *p     = &xava.conf;
 	struct audio_data    *audio = &xava.audio;
 
-	// we need to do this since the inode watcher is a seperate thread
-	xavaIONotifyKill(xava.default_config.ionotify);
+	xavaIONotifyEndWatch(xava.ionotify, xava.default_config.watch);
+	xavaIONotifyKill(xava.ionotify);
 
 	// telling audio thread to terminate 
 	audio->terminate = 1;
@@ -223,14 +223,19 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		struct config_params     *p     = &xava.conf;
 		struct audio_data        *audio = &xava.audio;
 
+		// initialize ioNotify engine
+		xava.ionotify = xavaIONotifySetup(&xava);
+
 		// load config
 		configPath = load_config(configPath, &xava);
 
 		// attach that config to the IONotify thing
-		struct xava_ionotify_setup thing;
-		thing.xava_ionotify_func = handle_ionotify_call;
+		struct xava_ionotify_watch_setup thing;
+		thing.xava_ionotify_func = &handle_ionotify_call;
 		thing.filename = configPath;
-		xava.default_config.ionotify = xavaIONotifySetup(&thing);
+		thing.ionotify = xava.ionotify;
+		thing.id = 1;
+		xava.default_config.watch = xavaIONotifyAddWatch(&thing);
 
 		// load symbols
 		xavaInput                    = get_symbol_address(p->inputModule, "xavaInput");

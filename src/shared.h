@@ -122,9 +122,11 @@ struct XAVA_HANDLE {
 
 	struct config {
 		// handle to the config file itself
-		XAVACONFIG config;
-		XAVAIONOTIFY ionotify;
+		XAVACONFIG        config;
+		XAVAIONOTIFYWATCH watch;
 	} default_config;
+
+	XAVAIONOTIFY ionotify;
 };
 
 #endif
