@@ -13,17 +13,6 @@
 # 1 up to refresh rate = refresh at the refresh rate of the monitor divided by the number given
 ; vsync = 1
 
-# 'autosens' will attempt to balance the sensitivity to keep the amplitude of the bars 
-# within a reasonable range
-; autosens = true
-
-# 'overshoot' allows bars to overshoot (in % of display height) without initiating autosens
-; overshoot = 0 
-
-# Manual sensitivity in %. Autosens must be turned off for this to take effect.
-# 200.0 means double height and so on. Accepts only non-negative values.
-; sensitivity = 100.0
-
 # The number of bars. 0 sets it to auto (put as many as you can).
 # Bars' width and space between bars in number of pixels on screen.
 ; bars = 0
@@ -40,7 +29,7 @@
 # Fullscreen toggle
 ; fullscreen = false
 
-# Enables or disables window borders 
+# Enables or disables window borders
 ; border = false
 
 # Window transparency toggle (your system must support transparent windows)
@@ -57,8 +46,8 @@
 
 # Additionally we can further adjust the position if needed (in pixels)
 # It moves the window the opposite direction of whats in alignment
-# FXP. if alignment is set to right and x_padding is 20, 
-# it will move the window left 20 pixels and so on for every direction 
+# FXP. if alignment is set to right and x_padding is 20,
+# it will move the window left 20 pixels and so on for every direction
 ; x_padding = 0
 ; y_padding = 0
 
@@ -89,7 +78,7 @@
 ; reload_on_display_configure = false
 
 # This option lets you choose a specific monitor that XAVA should occupy
-# The name of the monitor is exactly the same as that of in XRandr 
+# The name of the monitor is exactly the same as that of in XRandr
 # Examples being: HDMI1, VGA-1
 #
 # If no value has been specified, XAVA treats the whole display area as a single
@@ -110,7 +99,7 @@
 # HOWEVER: This only works for compositors supporting zwlr_layer_shell
 # version 1 or above. This mostly includes wlroots-based compositors.
 # GNOME and KDE won't cut it here, I believe.
-# 
+#
 # As for when this is disabled, XAVA spawns a XDG window, but a lot of
 # features are missing:
 #  - keyboard and mouse input
@@ -126,7 +115,7 @@
 ; background_layer = true
 
 # When background_layer is enabled, this options offers you to select
-# which monitor XAVA should occupy (examples: eDP-1, HDMI-A-1...) 
+# which monitor XAVA should occupy (examples: eDP-1, HDMI-A-1...)
 #
 # Specifying an invalid monitor would cause XAVA to fall back onto the
 # last monitor available
@@ -144,7 +133,7 @@
 # different "shaderpacks" which work just the same as they do on
 # Minecraft Optifine
 
-# The pre renderer is responsible for shading the visualizer BEFORE 
+# The pre renderer is responsible for shading the visualizer BEFORE
 # the bars are drawn, this allows the shader developer to adjust the
 # way that the bars are drawn on the screen
 ; pre_shaderpack = default
@@ -169,11 +158,11 @@
 #
 # For pulseaudio 'source' will be the source. Default: 'auto', which uses the monitor source of the default sink
 # (all pulseaudio sinks(outputs) have 'monitor' sources(inputs) associated with them).
-# 
+#
 # For alsa, wasapi and portaudio 'source' will be the capture device.
 # For fifo 'source' will be the path to fifo-file.
 #
-# In case of wasapi, specify 'loopback' to capture audio from the system or anything else 
+# In case of wasapi, specify 'loopback' to capture audio from the system or anything else
 # to capture from an input device, such as a microphone
 #
 # You can also specify 'list' as the source to portaudio to list all available audio devices
@@ -187,10 +176,10 @@
 ; source = hw:Loopback,1
 
 ; method = sndio
-; source = 
+; source =
 
 ; method = shmem
-; source = /squeezelite-00:00:00:00:00:00 
+; source = /squeezelite-00:00:00:00:00:00
 
 ; method = fifo
 ; source = /tmp/mpd.fifo
@@ -208,7 +197,7 @@
 # By default it's the window that is recommended for your platform/OS.
 # 'sdl' is for a graphical window using SDL2
 # 'x11' is for a X11 window
-# 'glx' is for a X11 window using OpenGL 
+# 'glx' is for a X11 window using OpenGL
 # 'win' is for a WIN32 window using OpenGL
 # 'wayland' is for a Wayland surface (ZWLR or XDG)
 ; method = x11
@@ -232,7 +221,7 @@
 # This adjusts the opacity of the bars (must have transparency and OpenGL in order for it to work)
 ; foreground_opacity = 1.0
 
-# And this does the same but for the background (previous rule applies here as well) 
+# And this does the same but for the background (previous rule applies here as well)
 ; background_opacity = 0.0
 
 # Gradient mode, only hex defined colors are supported, background must also be defined in hex
@@ -299,7 +288,7 @@
 # In bar height, bars that would have been lower that this (in pixels) will not be drawn.
 ; ignore = 0
 
-# Adjust the logarithmic scale of the frequency band (the lower the value, 
+# Adjust the logarithmic scale of the frequency band (the lower the value,
 # the less difference between bars in frequency)
 ; log = 1.55
 
@@ -312,6 +301,17 @@
 
 # Adjusts the FFT buffer size (calculated by 2^fft_size)
 ; fft_size = 14
+
+# 'autosens' will attempt to balance the sensitivity to keep the amplitude of the bars
+# within a reasonable range
+; autosens = true
+
+# 'overshoot' allows bars to overshoot (in % of display height) without initiating autosens
+; overshoot = 0
+
+# Manual sensitivity in %. Autosens must be turned off for this to take effect.
+# 200.0 means double height and so on. Accepts only non-negative values.
+; sensitivity = 100.0
 
 
 [eq]
