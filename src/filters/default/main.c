@@ -48,7 +48,7 @@ void separate_freq_bands(fftwf_complex *out, int bars, int channel, double sens,
 		if (channel == 1) fl[o] = temp;
 		else fr[o] = temp;
 	}
-} 
+}
 
 
 void monstercat_filter(int bars, int waves, double monstercat, int *data) {
@@ -89,11 +89,11 @@ EXP_FUNC int xavaFilterInit(struct XAVA_HANDLE *hand) {
 	struct config_params *p  = &hand->conf;
 
 	// fft: planning to rock
-	CALLOC_SELF(outl, audio->fftsize/2+1); 
+	CALLOC_SELF(outl, audio->fftsize/2+1);
 	pl = fftwf_plan_dft_r2c_1d(audio->fftsize, audio->audio_out_l, outl, FFTW_MEASURE);
 
 	if(p->stereo) {
-		CALLOC_SELF(outr, audio->fftsize/2+1); 
+		CALLOC_SELF(outr, audio->fftsize/2+1);
 		pr = fftwf_plan_dft_r2c_1d(audio->fftsize, audio->audio_out_r, outr, FFTW_MEASURE);
 	}
 
@@ -191,9 +191,9 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
 	for (n=0; n < calcbars; n++) {
 		fc[n] = pow(powf(n, (logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0),
 						 freqconst)+lowcf;
-		fre[n] = fc[n] / (audio->rate / 2.0); 
-		// Remember nyquist!, pr my calculations this should be rate/2 
-		// and  nyquist freq in M/2 but testing shows it is not... 
+		fre[n] = fc[n] / (audio->rate / 2.0);
+		// Remember nyquist!, pr my calculations this should be rate/2
+		// and  nyquist freq in M/2 but testing shows it is not...
 		// or maybe the nq freq is in M/4
 
 		//lfc stores the lower cut frequency foo each bar in the fft out buffer
@@ -205,7 +205,7 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
 			// I know it's not precise, but neither are integers
 			// You can see why in https://github.com/nikp123/xava/issues/29
 			// I did reverse the "next_bar_lcf-1" change
-			hcf[n-1] = lcf[n]; 
+			hcf[n-1] = lcf[n];
 		}
 	}
 	hcf[n-1] = highcf*audio->fftsize/audio->rate;
@@ -289,11 +289,11 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
 			f[i] = fmem[i] * integral + f[i];
 			fmem[i] = f[i];
 
-			int diff = p->h - f[i]; 
+			int diff = p->h - f[i];
 			if (diff < 0) diff = 0;
 			double div = 1.0 / (double)(diff + 1);
-			//f[o] = f[o] - pow(div, 10) * (height + 1); 
-			fmem[i] = fmem[i] * (1 - div / 20); 
+			//f[o] = f[o] - pow(div, 10) * (height + 1);
+			fmem[i] = fmem[i] * (1 - div / 20);
 		}
 	}
 
@@ -393,11 +393,11 @@ EXP_FUNC void xavaFilterHandleConfiguration(struct XAVA_HANDLE *hand) {
 	if (gravity < 0) {
 		xavaWarn("Gravity cannot be below 0");
 		gravity = 0;
-	} 
+	}
 
 	// validate: oddoneout
-	xavaBailCondition((p->stereo&&oddoneout), 
-			"'oddoneout' and stereo channels do not work together!"); 
+	xavaBailCondition((p->stereo&&oddoneout),
+			"'oddoneout' and stereo channels do not work together!");
 
 	// validate: integral
 	integral = integral / 100;

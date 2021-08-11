@@ -61,7 +61,7 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
 
 		// skip the first two functions as they are part of the logging system itself
 		for(int i=2; i<stack_lenght; i++) {
-			printf("at %s\n", stack_names[i]); 
+			printf("at %s\n", stack_names[i]);
 		}
 	#endif
 	}

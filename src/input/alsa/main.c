@@ -164,7 +164,7 @@ EXP_FUNC void* xavaInput(void* data) {
 		} else if(err < 0) {
 			xavaError("Read error: %s", snd_strerror(err));
 		} else if(err != (int)frames) {
-			xavaError("Short read. Read %d instead of %d frames!", err, (int)frames); 
+			xavaError("Short read. Read %d instead of %d frames!", err, (int)frames);
 		}
 
 		if (audio->terminate == 1) {

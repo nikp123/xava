@@ -198,7 +198,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	xavaXRoot = RootWindow(xavaXDisplay, xavaXScreenNumber);
 
 	// select appropriate screen
-	xavaXScreenResources = XRRGetScreenResources(xavaXDisplay, 
+	xavaXScreenResources = XRRGetScreenResources(xavaXDisplay,
 		DefaultRootWindow(xavaXDisplay));
 	char *screenname = NULL; // potential bugfix if X server has no displays
 
@@ -338,7 +338,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	/**
 	 * Set up window properties through Atoms,
-	 * 
+	 *
 	 * XSendEvent requests the following format:
 	 *  window  = the respective client window
 	 *  message_type = _NET_WM_STATE
@@ -472,8 +472,8 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 	//	prop = XInternAtom(xavaXDisplay, "_NET_WM_WINDOW_TYPE_DESKTOP", 0);
 	//	XChangeProperty(xavaXDisplay, xavaXWindow, xa, XA_ATOM, 32, PropModeReplace, (unsigned char *) &prop, 1);
 	//}
-	// The code above breaks stuff, please don't use it.	
-	
+	// The code above breaks stuff, please don't use it.
+
 
 	// tell the window manager to switch to a fullscreen state
 	xev.xclient.type=ClientMessage;
@@ -709,18 +709,18 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 
 			if(hand->f[i] > hand->fl[i]) {
 				if(p->gradients)
-					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics, 
+					XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics,
 						0, (int)p->h - hand->f[i], p->bw, (unsigned int)(hand->f[i]-hand->fl[i]),
 						(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->f[i]);
 				else {
 					XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
 					XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics,
-						(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->f[i], 
+						(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->f[i],
 						p->bw, (unsigned int)(hand->f[i]-hand->fl[i]));
 				}
 			} else if (hand->f[i] < hand->fl[i]) {
 				XClearArea(xavaXDisplay, xavaXWindow,
-					(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->fl[i], 
+					(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->fl[i],
 					p->bw, (unsigned int)(hand->fl[i]-hand->f[i]), 0);
 			}
 		}

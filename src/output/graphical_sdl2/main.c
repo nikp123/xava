@@ -167,7 +167,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *s) {
 	}
 	return XAVA_IGNORE;
 }
- 
+
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 	#ifdef GL
 		GLDraw(s);

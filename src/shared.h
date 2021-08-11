@@ -60,9 +60,9 @@ struct audio_data {
 // configuration parameters
 struct config_params {
 	// for internal use only
-	double sens; 
+	double sens;
 	int32_t fixedbars;
-	bool autobars, stereo, autosens; 
+	bool autobars, stereo, autosens;
 	XAVAMODULE *inputModule, *outputModule, *filterModule;
 	uint32_t fftsize;
 
@@ -81,11 +81,11 @@ struct config_params {
 	uint32_t gradients;								// 0 for none, subsequent values increase
 
 	// 3 - timing
-	int32_t framerate;								// limit xava to a specific framerate 
+	int32_t framerate;								// limit xava to a specific framerate
 													// (can be changed mid-run)
 	int32_t vsync;									// 0 = disabled, while enabled, XAVA
 													// will rely upon the timer function
-													// provided by your Vsync call 
+													// provided by your Vsync call
 													// (PLEASE DESIGN YOUR IMPLEMENTATION
 													// LIKE THIS)
 													// Positive values = divisors for your
@@ -103,14 +103,14 @@ struct config_params {
 	uint32_t inputsize;								// size of the input audio buffer
 													// must be a power of 2
 
-	// 6 - special flags 
+	// 6 - special flags
 	_Bool fullF, transF, borderF, bottomF, interactF, taskbarF;
 	// fullF = fullscreen toggle, transF = transparency toggle,
 	// borderF = window border toggle, interactF = interaction
 	// toggle, taskbarF = taskbar icon toggle
 };
 
-// XAVA handle 
+// XAVA handle
 struct XAVA_HANDLE {
 	// variables that XAVA outputs
 	uint32_t bars;		// number of output bars
