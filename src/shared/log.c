@@ -63,6 +63,36 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
 		}
 	#endif
 	}
+
+	#ifdef __WIN32__
+	{
+		bool dontbother = false;
+		char *messageTypeString = NULL;
+		UINT messageBoxParams = MB_OK;
+		switch(mes) {
+			case XAVA_LOG_ERROR:
+				messageTypeString = "Error";
+				messageBoxParams |= MB_ICONERROR;
+				break;
+			case XAVA_LOG_WARN:
+				messageTypeString = "Warning";
+				messageBoxParams |= MB_ICONWARNING;
+				break;
+			default:
+				// other cases are not worthy of an pop-up message
+				dontbother = true;
+				break;
+		}
+		if(!dontbother) {
+			char windowsMessage[4096];
+			snprintf(newFmt, 4095, "%s\nBy %s at %s:%d", fmt, func, file, line);
+			vsnprintf(windowsMessage, 4095, newFmt, list);
+
+			// TODO: Change icon
+			MessageBox(NULL, windowsMessage, messageTypeString, messageBoxParams);
+		}
+	}
+	#endif
 }
 
 
