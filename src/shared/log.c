@@ -19,7 +19,7 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
 		const char *func, const char *file, int line, va_list list) {
 
 	// please don't let this be a memory bug
-	char *newFmt = malloc((strlen(fmt)+100)*sizeof(char));
+	char newFmt[512];
 
 	FILE *output = stdout;
 
@@ -28,25 +28,23 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
 	// process message headers
 	switch(mes) {
 		case XAVA_LOG_ERROR:
-			sprintf(newFmt, "[ERROR] %s at %s:%d - %s\n", func, file, line, fmt);
+			snprintf(newFmt, 4095, "[ERROR] %s at %s:%d - %s\n", func, file, line, fmt);
 			output = stderr;
 			stack_trace = true;
 			break;
 		case XAVA_LOG_WARN:
-			sprintf(newFmt, "[WARN] %s at %s:%d - %s\n", func, file, line, fmt);
+			snprintf(newFmt, 4095, "[WARN] %s at %s:%d - %s\n", func, file, line, fmt);
 			stack_trace = true;
 			break;
 		case XAVA_LOG_NORM:
-			sprintf(newFmt, "[INFO] %s at %s:%d - %s\n", func, file, line, fmt);
+			snprintf(newFmt, 4095, "[INFO] %s at %s:%d - %s\n", func, file, line, fmt);
 			break;
 		case XAVA_LOG_SPAM:
-			sprintf(newFmt, "[SPAM] %s at %s:%d - %s\n", func, file, line, fmt);
+			snprintf(newFmt, 4095, "[SPAM] %s at %s:%d - %s\n", func, file, line, fmt);
 			break;
 	}
 
 	vfprintf(output, newFmt, list);
-
-	free(newFmt);
 
 	// add stack traces for better debugging
 	if(stack_trace) {
