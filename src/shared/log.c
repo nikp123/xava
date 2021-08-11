@@ -28,19 +28,19 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
 	// process message headers
 	switch(mes) {
 		case XAVA_LOG_ERROR:
-			snprintf(newFmt, 4095, "[ERROR] %s at %s:%d - %s\n", func, file, line, fmt);
+			snprintf(newFmt, 511, "[ERROR] %s at %s:%d - %s\n", func, file, line, fmt);
 			output = stderr;
 			stack_trace = true;
 			break;
 		case XAVA_LOG_WARN:
-			snprintf(newFmt, 4095, "[WARN] %s at %s:%d - %s\n", func, file, line, fmt);
+			snprintf(newFmt, 511, "[WARN] %s at %s:%d - %s\n", func, file, line, fmt);
 			stack_trace = true;
 			break;
 		case XAVA_LOG_NORM:
-			snprintf(newFmt, 4095, "[INFO] %s at %s:%d - %s\n", func, file, line, fmt);
+			snprintf(newFmt, 511, "[INFO] %s at %s:%d - %s\n", func, file, line, fmt);
 			break;
 		case XAVA_LOG_SPAM:
-			snprintf(newFmt, 4095, "[SPAM] %s at %s:%d - %s\n", func, file, line, fmt);
+			snprintf(newFmt, 511, "[SPAM] %s at %s:%d - %s\n", func, file, line, fmt);
 			break;
 	}
 
