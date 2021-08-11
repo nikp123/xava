@@ -14,9 +14,13 @@
 	#define MAX_PATH PATH_MAX
 #endif
 
+#ifdef __WIN32__
+    #include <windows.h>
+#endif
+
 #ifdef __APPLE__
 	#include <sys/syslimits.h>
-	#define MAX_PATH PATH_MAX 
+	#define MAX_PATH PATH_MAX
 #endif
 
 #if defined(__unix__)||defined(__APPLE__)
