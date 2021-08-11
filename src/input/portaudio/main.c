@@ -3,7 +3,6 @@
 #include <string.h>
 #include <portaudio.h>
 
-#include "main.h"
 #include "../../shared.h"
 
 #define SAMPLE_SILENCE 32768

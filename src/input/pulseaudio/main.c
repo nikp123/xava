@@ -8,7 +8,6 @@
 #include <pthread.h>
 
 #include "../../shared.h"
-#include "main.h"
 
 pa_mainloop *m_pulseaudio_mainloop;
 

@@ -13,10 +13,6 @@
 		 _a > _b ? _a : _b; })
 #endif
 
-// exported function, a macro used to determine which functions
-// are exposed as symbols within the final library/obj files
-#define EXP_FUNC __attribute__ ((visibility ("default")))
-
 // i wont even bother deciphering this mess
 static float *fc, *fre, *fpeak, *k, g;
 static int *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;

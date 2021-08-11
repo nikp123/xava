@@ -10,7 +10,6 @@
 #include "../graphical.h"
 #include "../../config.h"
 #include "../../shared.h"
-#include "main.h"
 
 SDL_Window *xavaSDLWindow;
 SDL_Surface *xavaSDLWindowSurface;

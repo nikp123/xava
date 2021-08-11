@@ -10,7 +10,6 @@
 #include <spa/debug/buffer.h>
 #include <spa/debug/mem.h>
 
-#include "main.h"
 #include "../../shared.h"
 
 #define M_PI_M2 ( M_PI + M_PI )

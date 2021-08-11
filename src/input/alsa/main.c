@@ -4,7 +4,6 @@
 #include <dirent.h>
 
 #include "../../shared.h"
-#include "main.h"
 
 // input: ALSA
 

@@ -3,8 +3,6 @@
 #include <string.h>
 #include <wchar.h>
 
-#include "main.h"
-
 #include "../graphical.h"
 #include "../../shared.h"
 

@@ -37,7 +37,6 @@
 	#warning "Package version not defined!"
 #endif
 
-#include "input/fifo/main.h"
 #include "config.h"
 #include "shared.h"
 

@@ -5,7 +5,6 @@
 #include <time.h>
 
 #include "../../shared.h"
-#include "main.h"
 
 int rc;
 

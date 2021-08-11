@@ -4,9 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define EXP_FUNC __attribute__ ((visibility ("default")))
-
-// Audio sensitivity and volume varies greatly between 
+// Audio sensitivity and volume varies greatly between
 // different audio, audio systems and operating systems
 // This value is used to properly calibrate the sensitivity
 // for a certain platform or setup in the Makefile
@@ -31,6 +29,12 @@
 #define MALLOC_SELF(x, y)  (x)=malloc(sizeof(*x)*(y))
 #define REALLOC_SELF(x, y) { void (*z)=realloc((x), sizeof(*x)*(y)); \
 	xavaBailCondition(!(z), "Failed to reallocate memory"); (x)=(z); }
+
+#ifdef __WIN32__
+	#define EXP_FUNC __declspec(dllexport) __attribute__ ((visibility ("default")))
+#else
+	#define EXP_FUNC __attribute__ ((visibility ("default")))
+#endif
 
 #include <stdint.h>
 #include <stdbool.h>

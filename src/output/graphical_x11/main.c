@@ -17,7 +17,6 @@
 #include "../graphical.h"
 #include "../../config.h"
 #include "../../shared.h"
-#include "main.h"
 
 #ifdef GL
 	#include "../shared/gl.h"

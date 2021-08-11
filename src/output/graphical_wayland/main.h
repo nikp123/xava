@@ -1,10 +1,6 @@
 #ifndef __WAYLAND_MAIN_H
 #define __WAYLAND_MAIN_H
 
-// exported function, a macro used to determine which functions
-// are exposed as symbols within the final library/obj files
-#define EXP_FUNC __attribute__ ((visibility ("default")))
-
 #ifdef EGL
 	#include <stdint.h>
 	#include <EGL/egl.h>
@@ -13,7 +9,7 @@
 
 #include <wayland-client.h>
 
-#include "../../shared.h" 
+#include "../../shared.h"
 
 struct waydata {
 	struct wl_surface    *surface;
