@@ -5,5 +5,4 @@
 #endif
 
 #define WGL_WGLEXT_PROTOTYPES
-#define WIN_ICON_PATH "xava.ico"
 
