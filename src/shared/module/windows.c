@@ -10,12 +10,23 @@
 typedef struct xavamodule {
 	char *name;
 	HMODULE moduleHandle;
+	DWORD error;
 } XAVAMODULE;
 
 char *LIBRARY_EXTENSION = ".dll";
 
 EXP_FUNC char *get_module_error(XAVAMODULE *module) {
-	return "";
+	char *message;
+	FormatMessage(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			module->error,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR) &message,
+			0, NULL);
+	return message;
 }
 
 EXP_FUNC bool is_module_valid(XAVAMODULE *module) {
@@ -32,7 +43,7 @@ EXP_FUNC void *get_symbol_address(XAVAMODULE *module, char *symbol) {
 		int error = GetLastError();
 		char *message;
 		FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
 			FORMAT_MESSAGE_FROM_SYSTEM |
 			FORMAT_MESSAGE_IGNORE_INSERTS,
 			NULL,
@@ -61,6 +72,7 @@ EXP_FUNC XAVAMODULE *load_module(char *name) {
 	XAVAMODULE *module = malloc(sizeof(XAVAMODULE));
 	module->name = new_name;
 	module->moduleHandle = LoadLibrary(new_name);
+	module->error        = GetLastError();
 
 	if(module->moduleHandle) // if loading is done, we are successful
 		return module;
@@ -87,6 +99,7 @@ EXP_FUNC XAVAMODULE *load_module(char *name) {
 
 	// try again
 	module->moduleHandle = LoadLibrary(new_name);
+	module->error        = GetLastError();
 
 	// cleanup
 	free(path);
