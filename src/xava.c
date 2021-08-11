@@ -17,7 +17,7 @@
 	#include <termios.h>
 #endif
 #include <math.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 
 #include <signal.h>
 #include <string.h>
@@ -96,7 +96,7 @@ void cleanup(void) {
 	xavaIONotifyEndWatch(xava.ionotify, xava.default_config.watch);
 	xavaIONotifyKill(xava.ionotify);
 
-	// telling audio thread to terminate 
+	// telling audio thread to terminate
 	audio->terminate = 1;
 
 	// waiting for all background threads and other stuff to terminate properly
@@ -288,7 +288,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		xavaBailCondition(xavaFilterInit(&xava),
 				"Failed to initialize filter! Bailing...");
 
-		xavaBailCondition(xavaInitOutput(&xava), 
+		xavaBailCondition(xavaInitOutput(&xava),
 				"Failed to initialize output! Bailing...");
 
 		while(!reloadConf) { //jumbing back to this loop means that you resized the screen
@@ -394,7 +394,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				// zero values causes divided by zero segfault
 				// and set max height
 				for (i = 0; i < xava.bars; i++) {
-					if(xava.f[i] < 1) 
+					if(xava.f[i] < 1)
 						xava.f[i] = 1;
 					else if(xava.f[i] > p->h)
 						xava.f[i] = p->h;
@@ -421,12 +421,12 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 				// checking if audio thread has exited unexpectedly
 				xavaBailCondition(audio->terminate,
-						"Audio thread has exited unexpectedly.\nReason: %s", 
+						"Audio thread has exited unexpectedly.\nReason: %s",
 						audio->error_message);
 			} // resize window
 		} // reloading config
 
-		// get rid of everything else  
+		// get rid of everything else
 		cleanup();
 
 		// since this is an infinite loop we need to break out of it
