@@ -46,6 +46,12 @@ if(MINGW)
 		set(CMAKE_SUPPORT_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 	endif()
 
+	execute_process(COMMAND windres
+		${CMAKE_CURRENT_SOURCE_DIR}/assets/windows/xava.rc
+		-o ${CMAKE_CURRENT_BINARY_DIR}/res.o)
+
+	set(ADDITIONAL_OBJS res.o)
+
 	# This is to prevent DLL hell, also helps a fuckton with packaging
 	set(CMAKE_SHARED_LINKER_FLAGS "-static")
 else()
@@ -115,6 +121,7 @@ include("src/shared/build.cmake")
 # Build executable
 add_executable(
 	xava
+	${ADDITIONAL_OBJS}
 	src/config.c
 	src/xava.c
 )

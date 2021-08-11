@@ -131,16 +131,7 @@ unsigned char register_window_win(HINSTANCE HIn) {
 	xavaWinClass.cbClsExtra=0;
 	xavaWinClass.cbWndExtra=0;
 	xavaWinClass.hInstance=HIn;
-	xavaWinClass.hIcon=LoadImage( // returns a HANDLE so we have to cast to HICON
-  NULL,             // hInstance must be NULL when loading from a file
-  WIN_ICON_PATH,    // the icon file name
-  IMAGE_ICON,       // specifies that the file is an icon
-  0,                // width of the image (we'll specify default later on)
-  0,                // height of the image
-  LR_LOADFROMFILE|  // we want to load a file (as opposed to a resource)
-  LR_DEFAULTSIZE|   // default metrics based on the type (IMAGE_ICON, 32x32)
-  LR_SHARED         // let the system release the handle when it's no longer used
-);
+	xavaWinClass.hIcon=NULL;
 	xavaWinClass.hIconSm=xavaWinClass.hIcon;
 	xavaWinClass.hCursor=LoadCursor(NULL,IDC_ARROW);
 	xavaWinClass.hbrBackground=(HBRUSH)CreateSolidBrush(0x00000000);
