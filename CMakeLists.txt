@@ -46,11 +46,10 @@ if(MINGW)
 		set(CMAKE_SUPPORT_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 	endif()
 
-	execute_process(COMMAND windres
-		${CMAKE_CURRENT_SOURCE_DIR}/assets/windows/xava.rc
-		-o ${CMAKE_CURRENT_BINARY_DIR}/res.o)
+	set(xava_EXECUTABLE_WINDOWS_ICO_PATH "${CMAKE_CURRENT_SOURCE_DIR}/assets/windows/xava.ico")
+	configure_file("assets/windows/xava.rc.template" "xava.rc" NEWLINE_STYLE CRLF)
 
-	set(ADDITIONAL_OBJS res.o)
+	set(ADDITIONAL_OBJS ${CMAKE_CURRENT_BINARY_DIR}/xava.rc)
 
 	# This is to prevent DLL hell, also helps a fuckton with packaging
 	set(CMAKE_SHARED_LINKER_FLAGS "-static")

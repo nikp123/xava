@@ -1,0 +1,53 @@
+#include <winres.h>
+
+// Little macro tricks this turn number defines into non-quoted strings
+#define STRINGIZED_HELPER( a ) #a
+#define STRINGIZED( a ) STRINGIZED_HELPER( a )
+
+#define DEMO_VER_STR               STRINGIZED(@xava_VERSION_MAJOR@) "." STRINGIZED(@xava_VERSION_MINOR@) "." STRINGIZED(@xava_VERSION_PATCH@) "." STRINGIZED(@xava_VERSION_TWEAK@) "\0"
+#define FILEVER                     @xava_VERSION_MAJOR@,@xava_VERSION_MINOR@,@xava_VERSION_PATCH@,@xava_VERSION_TWEAK@
+#define PRODUCTVER                  @xava_VERSION_MAJOR@,@xava_VERSION_MINOR@,@xava_VERSION_PATCH@,@xava_VERSION_TWEAK@
+#define VS_PACKAGE_FILEVER          @xava_VERSION_MAJOR@,@xava_VERSION_MINOR@,@xava_VERSION_PATCH@,@xava_VERSION_TWEAK@
+#define VS_PACKAGE_PRODUCTVER       @xava_VERSION_MAJOR@,@xava_VERSION_MINOR@,@xava_VERSION_PATCH@,@xava_VERSION_TWEAK@
+#define STRFILEVER                  DEMO_VER_STR
+#define STRPRODUCTVER               DEMO_VER_STR
+#define VS_PACKAGE_STRFILEVER       DEMO_VER_STR
+#define VS_PACKAGE_STRPRODUCTVER    DEMO_VER_STR
+#define STRCOMPANYNAME              L"Nikola Pavlica\0"
+#define STRCOPYRIGHT                L"(C) 2016-2021 Nikola Pavlica\0"
+#define STRFILEDESCRIPTION          L"Audio Visualizer\0"
+#define STRPRODUCTNAME              L"XAVA\0"
+#define VS_PACKAGE_STRPRODUCTNAME   L"XAVA\0"
+#define ORIGINAL_FILENAME           L"xava.exe\0"
+#define DEMO_BRANCH                 STRFILEVER
+
+id ICON "@xava_EXECUTABLE_WINDOWS_ICO_PATH@"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION FILEVER
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", STRCOMPANYNAME
+            VALUE "FileDescription", STRFILEDESCRIPTION
+            VALUE "FileVersion", DEMO_VER_STR
+            VALUE "LegalCopyright", STRCOPYRIGHT
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", ORIGINAL_FILENAME
+            VALUE "ProductName", STRPRODUCTNAME
+            VALUE "ProductVersion", DEMO_BRANCH
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
