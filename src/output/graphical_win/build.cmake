@@ -5,6 +5,9 @@ if(NOT (MSYS OR MINGW OR MSVC))
 	set(WINAPI OFF)
 endif()
 
+set(GLEW_USE_STATIC_LIBS ON)
+find_package(GLEW)
+
 # winapi
 if(WINAPI)
 	find_library(GDI_LIB gdi32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
@@ -20,8 +23,9 @@ if(WINAPI)
 						"src/output/shared/gl.c"
 						"src/output/shared/gl_shared.c"
 						"${GLOBAL_FUNCTION_SOURCES}")
-					target_link_libraries(out_win xava-shared "-lgdi32 -lwinmm -lopengl32 -ldwmapi -lglew32")
-					target_compile_definitions(out_win PUBLIC -DWIN -DGL)
+					add_definitions(-DGLEW_STATIC)
+					target_link_libraries(out_win xava-shared GLEW::glew_s "-lgdi32 -lwinmm -lopengl32 -ldwmapi")
+					target_compile_definitions(out_win PUBLIC -DWIN -DGL -DGLEW_STATIC)
 					set_target_properties(out_win PROPERTIES PREFIX "")
 				else()
 					message(WARNING "DWMAPI library not found, WinAPI app won't build")

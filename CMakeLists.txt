@@ -45,6 +45,9 @@ if(MINGW)
 	else()
 		set(CMAKE_SUPPORT_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 	endif()
+
+	# This is to prevent DLL hell, also helps a fuckton with packaging
+	set(CMAKE_SHARED_LINKER_FLAGS "-static")
 else()
 	# This hack is a of courtesy of: https://stackoverflow.com/a/40947954/3832385
 	string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
