@@ -98,7 +98,7 @@ EXP_FUNC XAVAMODULE *load_module(char *name) {
 	strcat(path, new_name);
 
 	// try again
-	module->moduleHandle = LoadLibrary(new_name);
+	module->moduleHandle = LoadLibrary(path);
 	module->error        = GetLastError();
 
 	// cleanup
