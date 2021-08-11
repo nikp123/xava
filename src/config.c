@@ -10,7 +10,7 @@
 #include "config.h"
 #include "shared.h"
 
-static const char *colorStrings[8] = {"black", "red", "green", "yellow", 
+static const char *colorStrings[8] = {"black", "red", "green", "yellow",
 										"blue", "magenta", "cyan", "white"};
 
 static char *inputMethod, *outputMethod, *filterMethod, *channels;
@@ -71,19 +71,19 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
 	// validate: input method
 	p->inputModule = load_input_module(inputMethod);
 	xavaBailCondition(!is_module_valid(p->inputModule),
-			"Input method '%s' could not load.\nReason", " %s",
+			"Input method '%s' could not load.\nReason: %s",
 			inputMethod, get_module_error(p->inputModule));
 
 	// validate: output method
 	p->outputModule = load_output_module(outputMethod);
 	xavaBailCondition(!is_module_valid(p->outputModule),
-			"Output method '%s' could not load.\nReason", " %s",
+			"Output method '%s' could not load.\nReason: %s",
 			outputMethod, get_module_error(p->outputModule));
 
 	// validate: filter method
 	p->filterModule = load_filter_module(filterMethod);
 	xavaBailCondition(!is_module_valid(p->filterModule),
-			"Filter method '%s' could not load.\nReason", " %s",
+			"Filter method '%s' could not load.\nReason: %s",
 			filterMethod, get_module_error(p->outputModule));
 
 	// validate: output channels
@@ -162,7 +162,7 @@ char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	// config: creating path to default config file
 	if (configPath == NULL) {
 		char *found;
-		bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, 
+		bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
 			#if defined(__WIN32__)||defined(__APPLE__)
 				"config.cfg",
 			#elif defined(__unix__)
