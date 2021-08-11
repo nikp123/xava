@@ -1,11 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef INIPARSER
-	#include "../../../lib/iniparser/src/iniparser.h"
-#else
-	#include <iniparser.h>
-#endif
+#include <iniparser.h>
 
 #include "../../shared.h"
 

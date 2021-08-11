@@ -9,31 +9,11 @@ set(ADDITIONAL_SHARED_INCLUDE_DIRS "")
 # Pull git required submodules
 execute_process(COMMAND git submodule update --init)
 
-# Build (or include) shared dependency - iniparser
-find_library(INIPARSER iniparser HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-if(NOT INIPARSER)
-	message(STATUS "iniparser not found on system, building from source.")
-
-	# Pull submodule and install dependency
-	add_library(iniparser STATIC
-			lib/iniparser/src/dictionary.c
-			lib/iniparser/src/iniparser.c)
-	set_target_properties(iniparser PROPERTIES COMPILE_FLAGS "-fPIC")
-	list(APPEND ADDITIONAL_SHARED_DEFINITIONS "-DINIPARSER")
-else()
-	# certain distros like ubuntu put iniparser in a subdirectory "iniparser"
-	# this is just a non-destructive way to accomidate that case
-
-	find_file(INIPARSER_INCLUDE_FILE iniparser/iniparser.h ${CMAKE_SYSTEM_INCLUDE_PATH})
-	if(NOT ${INIPARSER_INCLUDE_FILE} STREQUAL "INIPARSER_INCLUDE_FILE-NOTFOUND")
-		string(REGEX REPLACE "iniparser.h" "" INIPARSER_INCLUDE_DIR ${INIPARSER_INCLUDE_FILE})
-		list(APPEND ADDITIONAL_SHARED_INCLUDE_DIRS ${INIPARSER_INCLUDE_DIR})
-	endif()
-endif()
-
-if(DEFINE_LEGACYINIPARSER AND INIPARSER)
-	list(APPEND ADDITIONAL_SHARED_DEFINITIONS "-DLEGACYINIPARSER")
-endif()
+# Pull submodule and install dependency
+add_library(iniparser STATIC
+		lib/iniparser/src/dictionary.c
+		lib/iniparser/src/iniparser.c)
+set_target_properties(iniparser PROPERTIES COMPILE_FLAGS "-fPIC")
 
 # Runtime library load
 if(UNIX)
@@ -65,7 +45,7 @@ add_library(xava-shared SHARED
 set_target_properties(xava-shared PROPERTIES COMPILE_FLAGS "-fPIC")
 target_link_libraries(xava-shared PRIVATE ${ADDITIONAL_SHARED_LIBRARIES} iniparser efsw)
 target_compile_definitions(xava-shared PRIVATE ${ADDITIONAL_SHARED_DEFINITIONS})
-target_include_directories(xava-shared PRIVATE "${ADDITIONAL_SHARED_INCLUDE_DIRS}" lib/efsw/include)
+target_include_directories(xava-shared PRIVATE "${ADDITIONAL_SHARED_INCLUDE_DIRS}" lib/iniparser/src lib/efsw/include)
 
 install (TARGETS xava-shared DESTINATION lib)
 
