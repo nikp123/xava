@@ -7,6 +7,7 @@
 #include "render.h"
 #include "main.h"
 #include "wl_output.h"
+#include "egl.h"
 
 static struct zwlr_layer_surface_v1 *xavaWLRLayerSurface;
 struct zwlr_layer_shell_v1 *xavaWLRLayerShell;

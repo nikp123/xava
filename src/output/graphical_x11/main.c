@@ -204,7 +204,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	xavaSpam("Number of detected screens: %d", xavaXScreenResources->noutput);
 
-	int screenwidth, screenheight, screenx, screeny;
+	int screenwidth=0, screenheight=0, screenx=0, screeny=0;
 	for(int i = 0; i < xavaXScreenResources->noutput; i++) {
 		xavaXOutputInfo = XRRGetOutputInfo(xavaXDisplay, xavaXScreenResources,
 			xavaXScreenResources->outputs[i]);

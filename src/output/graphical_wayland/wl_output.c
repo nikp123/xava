@@ -43,7 +43,7 @@ void wl_output_cleanup(struct waydata *wd) {
 		wl_list_remove(&output->link);
 		free(output->displayName);
 		free(output);
-	} 
+	}
 }
 
 void wl_output_init(struct waydata *wd) {
@@ -52,6 +52,8 @@ void wl_output_init(struct waydata *wd) {
 
 struct wlOutput *wl_output_get_desired(struct waydata *wd) {
 	struct wlOutput *output, *tmp, *lastGood;
+
+	lastGood = NULL; // supress warnings by GCC
 
 	wl_list_for_each_safe(output, tmp, &wd->outputs, link) {
 		if(!strcmp(output->displayName, monitorName)) {
