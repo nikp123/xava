@@ -101,7 +101,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			return XAVA_RELOAD;
 		case WM_CLOSE:
 			// Perform cleanup tasks.
-			PostQuitMessage(0); 
+			PostQuitMessage(0);
 			quit=TRUE;
 			return XAVA_QUIT;
 		case WM_DESTROY:
@@ -177,7 +177,7 @@ unsigned char CreateHGLRC(HWND hWnd) {
 		PFD_MAIN_PLANE,                   // Main Drawing Layer
 		0,                                // Reserved
 		0, 0, 0                           // Layer Masks Ignored
-	};     
+	};
 
 	int PixelFormat = ChoosePixelFormat(xavaWinFrame, &pfd);
 	if (PixelFormat == 0) {
@@ -333,7 +333,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 
 	// WGL stuff
 	GLApply(hand);
-	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT"); 
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
 	wglSwapIntervalEXT(p->vsync);
 
 	return 0;
