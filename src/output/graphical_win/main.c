@@ -215,7 +215,6 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	// register window class
 	xavaBailCondition(!register_window_win(xavaWinModule), "RegisterClassEx failed");
-	//MessageBox(NULL, "RegisterClassEx - failed", "Error", MB_OK | MB_ICONERROR);
 
 	// get window size etc..
 	int screenWidth, screenHeight;
