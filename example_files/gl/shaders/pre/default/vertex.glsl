@@ -1,3 +1,7 @@
+#ifdef GL_ES
+	precision mediump float;
+#endif
+
 // input vertex
 attribute vec4 pos;
 

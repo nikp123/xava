@@ -1,3 +1,7 @@
+#ifdef GL_ES
+	precision mediump float;
+#endif
+
 // input vertex and texture coordinate
 attribute vec4 a_position;
 attribute vec2 a_texCoord;
