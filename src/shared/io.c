@@ -445,7 +445,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 EXP_FUNC RawData *xavaReadFile(const char *file) {
 	RawData *data = malloc(sizeof(RawData));
 
-	FILE *fp = fopen(file, "r");
+	FILE *fp = fopen(file, "rb");
 	if(fp == NULL) {
 		return NULL;
 	}
@@ -463,6 +463,10 @@ EXP_FUNC RawData *xavaReadFile(const char *file) {
 	fread(data->data, sizeof(char), data->size, fp);
 
 	((char*)data->data)[data->size] = 0x00;
+
+	#ifdef DEBUG
+		xavaSpam("File %s start of size %d", file, data->size);
+	#endif
 
 	// makes sure to include the NULL byte
 	data->size++;
