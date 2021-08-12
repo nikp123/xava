@@ -190,7 +190,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 					}
 
 					// filename is added in post
-					sprintf(configHome, "%s/.config/%s/", homeDir, PACKAGE); 
+					sprintf(configHome, "%s/.config/%s/", homeDir, PACKAGE);
 					(*actualPath) = configHome;
 				} else {
 					(*actualPath) = malloc((strlen(configHome)+strlen(PACKAGE)+strlen(filename)+3)*sizeof(char));
@@ -286,7 +286,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 		// caught a directory
 		if(filename[i] == '/' || filename[i] == '\\') { // Using UNIX-like directories inside codebase, FYI
 			for(int j=last_dir_offset; j<i; j++) {
-				(*actualPath)[path_size+j] = filename[j]; 
+				(*actualPath)[path_size+j] = filename[j];
 			}
 
 			(*actualPath)[path_size+i] = DIRBRK; // use whatever the platforms supports natively
