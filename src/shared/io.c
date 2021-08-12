@@ -329,9 +329,15 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 				// if that particular config file does not exist, try copying the default one
 				char *found;
 
+				#ifdef __WIN32__
+					#define EXAMPLE_FILE_EXT ""
+				#else
+					#define EXAMPLE_FILE_EXT ".example"
+				#endif
+
 				// use old filename, because it carries the sub-directories with it
-				char *defaultConfigFileName = malloc(strlen(filename)+1+strlen(".example"));
-				sprintf(defaultConfigFileName, "%s.example", filename);
+				char *defaultConfigFileName = malloc(strlen(filename)+1+strlen(EXAMPLE_FILE_EXT));
+				sprintf(defaultConfigFileName, "%s" EXAMPLE_FILE_EXT, filename);
 
 				if(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, defaultConfigFileName, &found) == false) {
 					xavaError("Could not find default config file! Bailing out...");

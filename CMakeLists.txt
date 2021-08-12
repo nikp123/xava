@@ -47,6 +47,9 @@ if(MINGW)
 		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -mwindows")
 
 		# Prepare NSI file for compilation
+		#file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/example_files" xava_EXAMPLE_FILES)
+		string(REPLACE "/" "\\" xava_EXAMPLE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/example_files")
+		string(REPLACE "/" "\\" xava_SOURCE_DIR    "${CMAKE_CURRENT_SOURCE_DIR}")
 		configure_file("assets/windows/xava.nsi.template" "xava.nsi" NEWLINE_STYLE CRLF)
 	else()
 		set(CMAKE_SUPPORT_WINDOWS_EXPORT_ALL_SYMBOLS 1)
@@ -155,3 +158,4 @@ if(UNIX AND NOT APPLE)
     install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
     install (FILES assets/linux/xava.svg DESTINATION share/icons/hicolor/scalable/apps)
 endif()
+

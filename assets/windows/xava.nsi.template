@@ -9,7 +9,7 @@ Name "X.A.V.A."
 VIProductVersion "@xava_VERSION@"
 VIFileVersion "@xava_VERSION@"
 VIAddVersionKey "FileVersion" "@xava_VERSION@"
-VIAddVersionKey "LegalCopyright" "(C) Nikola Pavlica."
+VIAddVersionKey "LegalCopyright" "(C) Nikola Pavlica"
 VIAddVersionKey "FileDescription" "Graphical audio visualizer"
 
 # installer filename
@@ -28,17 +28,23 @@ Section
 
     # include these files
     File xava.exe
-    File xava.ico
-    File README.md
-    File LICENSE.txt
-    File config.cfg
-    File *.dll
+    File out*.dll
+    File in*.dll
+    File filter*.dll
+    File libxava-shared.dll
+    File libwinpthread-1.dll
+    File /r @xava_EXAMPLE_FILES@\gl
+    File @xava_EXAMPLE_FILES@\config
+    File final-LICENSE.txt
 
     SetOutPath $APPDATA\xava\
- 
+
+    Rename "$INSTDIR\config" "$INSTDIR\config.cfg"
+    Rename "$INSTDIR\final-LICENSE.txt" "$INSTDIR\LICENSE.txt"
+
     # create the uninstaller
     WriteUninstaller "$INSTDIR\uninstall.exe"
- 
+
     # create a shortcut named "new shortcut" in the start menu programs directory
     # point the new shortcut at the program uninstaller
     CreateDirectory "$SMPROGRAMS\XAVA"
@@ -51,7 +57,7 @@ SectionEnd
 Section "uninstall"
     # first, remove the link from the start menu
     RMDir /r "$SMPROGRAMS\XAVA"
- 
+
     # second, delete the program
     RMDir /r "$INSTDIR"
 # uninstaller section end
@@ -65,7 +71,7 @@ SectionEnd
 !define MUI_FINISHPAGE_NOAUTOCLOSE
 !define MUI_INSTFILESPAGE_NOAUTOCLOSE
 
-!InsertMacro MUI_PAGE_LICENSE LICENSE.txt
+!InsertMacro MUI_PAGE_LICENSE final-LICENSE.txt
 
 !insertmacro MUI_PAGE_DIRECTORY
 
@@ -80,7 +86,7 @@ FunctionEnd
 !define MUI_FINISHPAGE_RUN "$INSTDIR\xava.exe"
   !define MUI_FINISHPAGE_RUN_NOTCHECKED
 !define MUI_FINISHPAGE_SHOWREADME
-  !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED 
+  !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
   !define MUI_FINISHPAGE_SHOWREADME_FUNCTION 'OpenREADME'
 !define MUI_FINISHPAGE_LINK 'Check out the project page'
   !define MUI_FINISHPAGE_LINK_LOCATION https://www.github.com/nikp123/xava
