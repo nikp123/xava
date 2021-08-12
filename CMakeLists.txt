@@ -1,6 +1,12 @@
 project(xava C CXX)
 cmake_minimum_required(VERSION 3.13)
 
+# Concatenate files in CMake
+function(cat IN_FILE OUT_FILE)
+	file(READ ${IN_FILE} CONTENTS)
+	file(APPEND ${OUT_FILE} "${CONTENTS}")
+endfunction()
+
 # REQUIRE GIT to be present
 if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/.git)
 	message(FATAL_ERROR "XAVA from 0.7.0 onwards requires to be built in a .git directory")
@@ -128,9 +134,18 @@ add_executable(
 # Link executable
 target_link_libraries(xava xava-shared m pthread)
 
+# Generate proper license file
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(RENAME "${CMAKE_CURRENT_BINARY_DIR}/LICENSE" "${CMAKE_CURRENT_BINARY_DIR}/final-LICENSE.txt")
+
+file(GLOB LICENSE_FILES "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_*.txt")
+foreach(LICENSE_FILE ${LICENSE_FILES})
+	cat(${LICENSE_FILE} "${CMAKE_CURRENT_BINARY_DIR}/final-LICENSE.txt")
+endforeach()
+
 # Install
 install (TARGETS xava DESTINATION bin)
-install (FILES LICENSE DESTINATION share/licenses/xava)
+install (FILES "${CMAKE_CURRENT_BINARY_DIR}/final-LICENSE.txt" DESTINATION share/licenses/xava)
 install (FILES example_files/config RENAME config.example DESTINATION share/xava)
 install (FILES example_files/gl/shaders/pre/default/vertex.glsl    RENAME vertex.glsl.example   DESTINATION share/xava/gl/shaders/pre/default)
 install (FILES example_files/gl/shaders/pre/default/fragment.glsl  RENAME fragment.glsl.example DESTINATION share/xava/gl/shaders/pre/default)

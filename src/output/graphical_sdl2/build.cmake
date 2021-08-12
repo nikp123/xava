@@ -34,6 +34,10 @@ if(SDL2)
 		else()
 			message(WARNING "GLEW library not found, \"sdl2_gl\" won't build")
 		endif()
+
+		# Add legal disclaimer
+		file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_sdl2.txt" 
+			"SDL2 license can be obtained at: https://www.libsdl.org/license.php\n")
 	else()
 		message(WARNING "SDL2 library not found")
 	endif()

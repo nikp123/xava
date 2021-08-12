@@ -13,6 +13,10 @@ if(NCURSES)
 		target_link_directories(out_ncurses PRIVATE "${NCURSES_LIBRARY_DIRS}")
 		set_target_properties(out_ncurses PROPERTIES PREFIX "")
 		install(TARGETS out_ncurses DESTINATION lib/xava)
+
+		# Add legal disclaimer
+		file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_ncurses.txt" 
+			"NCurses license can be obtained at: https://raw.githubusercontent.com/ELLIOTTCABLE/ncurses/master/license.txt\n")
 	else()
 		message(WARNING "NCurses library not found; NCurses won't build")
 	endif()

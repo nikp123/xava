@@ -12,6 +12,10 @@ if(PORTAUDIO)
 		target_link_directories(in_portaudio PRIVATE "${PORTAUDIO_LIBRARY_DIRS}")
 		set_target_properties(in_portaudio PROPERTIES PREFIX "")
 		install(TARGETS in_portaudio DESTINATION lib/xava)
+
+		# Add legal disclaimer
+		file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_portaudio.txt"
+			"PortAudio license can be obtained at: http://www.portaudio.com/license.html\n")
 	else()
 		message(WARNING "PortAudio library not found, PortAudio won't build")
 	endif()

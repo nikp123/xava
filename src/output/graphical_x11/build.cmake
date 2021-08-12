@@ -45,6 +45,10 @@ if(X11)
 			install(TARGETS out_x11_stars DESTINATION lib/xava)
 			target_compile_definitions(out_x11_stars PUBLIC -DSTARS)
 
+			# Add legal disclaimer
+			file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_x11.txt" 
+				"X11 license can be obtained at: https://raw.githubusercontent.com/mirror/libX11/master/COPYING\n")
+
 			# OpenGL/GLX
 			pkg_check_modules(GLX QUIET gl xrender glew)
 			if(GLX_FOUND)
@@ -62,6 +66,8 @@ if(X11)
 				target_compile_definitions(out_x11_gl PUBLIC -DGL)
 				set_target_properties(out_x11_gl PROPERTIES PREFIX "")
 				install(TARGETS out_x11_gl DESTINATION lib/xava)
+
+				# Maybe license?
 			else()
 				message(WARNING "GLEW, OpenGL and or Xrender library not found; \"x11_gl\" won't build")
 			endif()
@@ -83,6 +89,8 @@ if(X11)
 				target_compile_definitions(out_x11_egl PUBLIC -DEGL)
 				set_target_properties(out_x11_egl PROPERTIES PREFIX "")
 				install(TARGETS out_x11_egl DESTINATION lib/xava)
+
+				# Maybe license?
 			else()
 				message(WARNING "EGL and or GLESv2 library not found; \"x11_egl\" won't build")
 			endif()

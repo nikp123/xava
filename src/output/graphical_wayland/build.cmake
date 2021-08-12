@@ -79,6 +79,9 @@ if(WAYLAND)
 		set_target_properties(out_wayland_egl PROPERTIES PREFIX "")
 		install(TARGETS out_wayland_egl DESTINATION lib/xava)
 		target_compile_definitions(out_wayland_egl PUBLIC -DWAYLAND -DEGL)
+
+		# Wayland is such a fucking mess that I won't even bother adding license disclaimers
+		# Only if someone complains, then I might
 	else()
 		message(WARNING "Wayland libraries not found, Wayland won't build")
 	endif()

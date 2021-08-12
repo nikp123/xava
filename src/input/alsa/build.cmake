@@ -13,6 +13,10 @@ if(ALSA)
 		target_link_directories(in_alsa PRIVATE "${ALSA_LIBRARY_DIRS}")
 		set_target_properties(in_alsa PROPERTIES PREFIX "")
 		install(TARGETS in_alsa DESTINATION lib/xava)
+
+		# Add legal disclaimer
+		file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_alsa.txt"
+			"ALSA-lib license can be obtained at: https://raw.githubusercontent.com/alsa-project/alsa-lib/master/COPYING\n")
 	else()
 		message(WARNING "ALSA library not found, ALSA won't build")
 	endif()

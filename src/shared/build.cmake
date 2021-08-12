@@ -49,3 +49,9 @@ target_include_directories(xava-shared PRIVATE "${ADDITIONAL_SHARED_INCLUDE_DIRS
 
 install (TARGETS xava-shared DESTINATION lib)
 
+# Add legal disclaimers
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_iniparser.txt"
+	"INIparser license can be obtained at: https://raw.githubusercontent.com/ndevilla/iniparser/master/LICENSE\n")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_efsw.txt"
+	"EFSW license can be obtained at: https://raw.githubusercontent.com/SpartanJ/efsw/master/LICENSE\n")
+

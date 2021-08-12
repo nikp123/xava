@@ -20,6 +20,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+
+Original repository license:
+
 C.A.V.A. (https://github.com/karlstav/cava) license:
 
 Copyright (c) 2015 Karl Stavestrand <karl@stavestrand.no>
@@ -44,22 +47,4 @@ SOFTWARE.
 
 
 Third-Party licenses:
-
-INIPASER (https://github.com/ndevilla/iniparser/) license:
-	https://github.com/ndevilla/iniparser/blob/master/LICENSE
-
-PortAudio (http://www.portaudio.com/) license:
-	http://www.portaudio.com/license.html
-
-libSDL2 (https://www.libsdl.org/) license:
-	https://www.libsdl.org/license.php
-
-FFTW3 (http://fftw.org/) license:
-	http://fftw.org/doc/License-and-Copyright.html
-
-pthread (https://sourceware.org/pthreads-win32/) license:
-	https://sourceware.org/pthreads-win32/copying.html
-
-minGW (http://mingw.org/) license:
-	http://mingw.org/license
 

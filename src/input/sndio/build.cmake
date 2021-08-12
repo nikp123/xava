@@ -11,6 +11,10 @@ if(SNDIO)
 		target_link_libraries(in_sndio xava-shared "-lsndio")
 		set_target_properties(in_sndio PROPERTIES PREFIX "")
 		install(TARGETS in_sndio DESTINATION lib/xava)
+
+		# Add legal disclaimer
+		file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_sndio.txt"
+			"SNDIO license can be obtained at: https://en.wikipedia.org/wiki/ISC_license#License_terms on behalf of Alexandre Ratchov (C) 2013\n")
 	else()
 		message(WARNING "SNDIO library not found, SNDIO won't build")
 	endif()

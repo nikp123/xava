@@ -13,5 +13,9 @@ if(FILTER_DEFAULT)
 	target_link_libraries(filter_default xava-shared "${FFTW3_LIBRARIES}")
 	set_target_properties(filter_default PROPERTIES PREFIX "")
 	install(TARGETS filter_default DESTINATION lib/xava)
+
+	# Add legal disclaimer
+	file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_fftw.txt"
+		"FFTW License can be obtained at: http://fftw.org/doc/License-and-Copyright.html\n")
 endif()
 

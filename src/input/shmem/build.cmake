@@ -8,5 +8,7 @@ if(SHMEM)
 	target_link_libraries(in_shmem xava-shared "-lrt")
 	set_target_properties(in_shmem PROPERTIES PREFIX "")
 	install(TARGETS in_shmem DESTINATION lib/xava)
+
+	# Maybe license? pls no sue
 endif()
 

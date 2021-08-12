@@ -13,6 +13,10 @@ if(PIPEWIRE)
 		target_link_directories(in_pipewire PRIVATE "${PIPEWIRE_LIBRARY_DIRS}")
 		set_target_properties(in_pipewire PROPERTIES PREFIX "")
 		install(TARGETS in_pipewire DESTINATION lib/xava)
+
+		# Add legal disclaimer
+		file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_pipewire.txt"
+			"PipeWire license can be obtained at: https://raw.githubusercontent.com/PipeWire/pipewire/master/COPYING\n")
 	else()
 		message(WARNING "PipeWire library not found, PipeWire won't build")
 	endif()
