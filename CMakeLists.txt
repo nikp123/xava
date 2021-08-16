@@ -26,6 +26,11 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+# Allow for custom link prefixes (in order to optimize CMake builds for packagers)
+if(NOT XAVA_LINK_TO_INSTALL_DIR)
+	set(XAVA_LINK_TO_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
+endif()
+
 # Define XAVA version
 set(xava_VERSION_MAJOR 0)
 set(xava_VERSION_MINOR 7)
@@ -35,7 +40,7 @@ set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PAT
 
 # Definitions
 add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION}")
-add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
+add_definitions(-DPREFIX="${XAVA_LINK_TO_INSTALL_DIR}")
 
 # Windows-y things
 if(MINGW)
