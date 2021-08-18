@@ -60,9 +60,28 @@ static GLuint POST_INTENSITY;
 
 static GLfloat resScale;
 
+// this is hacked in, shut up
+static bool shouldRestart;
+
+static XAVAIONOTIFYWATCH preFragWatch, preVertWatch, postFragWatch, postVertWatch;
+
+static void ionotify_callback(struct XAVA_HANDLE *hand, int id, XAVA_IONOTIFY_EVENT event) {
+	switch(event) {
+		case XAVA_IONOTIFY_CHANGED:
+		case XAVA_IONOTIFY_DELETED:
+			shouldRestart = true;
+			break;
+		default:
+			// noop
+			break;
+	}
+}
+
 // Better to be ugly and long then short and buggy
 void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	XAVACONFIG config = xava->default_config.config;
+	XAVAIONOTIFYWATCHSETUP a;
+	MALLOC_SELF(a, 1);
 
 	char *preShaderPack, *postShaderPack;
 	char *preFragPath, *preVertPath;
@@ -82,6 +101,11 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
 			file_path, &preFragPath) == false,
 			"Failed to load pre-render fragment shader!");
+	a->filename = preFragPath;
+	a->id = 2;
+	a->ionotify = xava->ionotify;
+	a->xava_ionotify_func = ionotify_callback;
+	preFragWatch = xavaIONotifyAddWatch(a);
 
 	strcpy(file_path, "gl/shaders/pre/");
 	strcat(file_path, preShaderPack);
@@ -90,6 +114,11 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
 			file_path, &preVertPath) == false,
 			"Failed to load pre-render vertex shader!");
+	a->filename = preVertPath;
+	a->id = 3;
+	a->ionotify = xava->ionotify;
+	a->xava_ionotify_func = ionotify_callback;
+	preVertWatch = xavaIONotifyAddWatch(a);
 
 	strcpy(file_path, "gl/shaders/post/");
 	strcat(file_path, postShaderPack);
@@ -98,6 +127,11 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
 			file_path, &postFragPath) == false,
 			"Failed to load post-render fragment shader!");
+	a->filename = postFragPath;
+	a->id = 4;
+	a->ionotify = xava->ionotify;
+	a->xava_ionotify_func = ionotify_callback;
+	postFragWatch = xavaIONotifyAddWatch(a);
 
 	strcpy(file_path, "gl/shaders/post/");
 	strcat(file_path, postShaderPack);
@@ -106,8 +140,14 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
 			file_path, &postVertPath) == false,
 			"Failed to load post-render vertex shader!");
+	a->filename = postVertPath;
+	a->id = 5;
+	a->ionotify = xava->ionotify;
+	a->xava_ionotify_func = ionotify_callback;
+	postVertWatch = xavaIONotifyAddWatch(a);
 
 	free(file_path);
+	free(a);
 
 	preFrag = xavaReadFile(preFragPath);
 	free(preFragPath);
@@ -230,6 +270,8 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 		//gradientColor[i*4+3] = ARGB_A_32(grad_col) / 255.0;
 		gradientColor[i*4+3] = conf->foreground_opacity;
 	}
+
+	shouldRestart = false;
 }
 
 void SGLApply(struct XAVA_HANDLE *xava){
@@ -330,6 +372,14 @@ void SGLApply(struct XAVA_HANDLE *xava){
 
 	// "clear" the screen
 	SGLClear(xava);
+}
+
+XG_EVENT SGLEvent(struct XAVA_HANDLE *xava) {
+	if(shouldRestart) {
+		shouldRestart = false;
+		return XAVA_RELOAD;
+	}
+	return XAVA_IGNORE;
 }
 
 // The original intention of this was to be called when the screen buffer was "unsafe" or "dirty"
@@ -481,7 +531,14 @@ void SGLDestroyProgram(struct SGLprogram *program) {
 	glDeleteProgram(program->program);
 }
 
-void SGLCleanup(void) {
+void SGLCleanup(struct XAVA_HANDLE *xava) {
+	// WARN: May be leaky here
+	// cleanup watches
+	// xavaIONotifyEndWatch(xava->ionotify, preFragWatch);
+	// xavaIONotifyEndWatch(xava->ionotify, preVertWatch);
+	// xavaIONotifyEndWatch(xava->ionotify, postFragWatch);
+	// xavaIONotifyEndWatch(xava->ionotify, postVertWatch);
+
 	// restore framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

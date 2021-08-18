@@ -23,8 +23,9 @@ void       EGLShadersLoad(struct XAVA_HANDLE *xava);
 EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESContext);
 void       EGLInit(struct XAVA_HANDLE *xava);
 void       EGLApply(struct XAVA_HANDLE *xava);
+XG_EVENT   EGLEvent(struct XAVA_HANDLE *xava);
 void       EGLClear(struct XAVA_HANDLE *xava);
 void       EGLDraw(struct XAVA_HANDLE *xava);
-void       EGLCleanup(struct _escontext *ESContext);
+void       EGLCleanup(struct XAVA_HANDLE *xava, struct _escontext *ESContext);
 #endif
 

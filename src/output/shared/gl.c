@@ -23,6 +23,10 @@ void GLApply(struct XAVA_HANDLE *xava) {
 	SGLApply(xava);
 }
 
+XG_EVENT GLEvent(struct XAVA_HANDLE *xava) {
+	return SGLEvent(xava);
+}
+
 void GLClear(struct XAVA_HANDLE *xava) {
 	SGLClear(xava);
 }
@@ -31,7 +35,7 @@ void GLDraw(struct XAVA_HANDLE *xava) {
 	SGLDraw(xava);
 }
 
-void GLCleanup() {
-	SGLCleanup();
+void GLCleanup(struct XAVA_HANDLE *xava) {
+	SGLCleanup(xava);
 }
 

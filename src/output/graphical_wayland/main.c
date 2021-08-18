@@ -141,6 +141,10 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 		}
 	}
 
+	if(waylandEGLEvent(&wd) == XAVA_RELOAD) {
+		return XAVA_RELOAD;
+	}
+
 	return event;
 }
 

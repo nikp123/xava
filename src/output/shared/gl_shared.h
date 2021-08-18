@@ -20,12 +20,13 @@
 
 #include "../../shared.h"
 
-void SGLShadersLoad(struct XAVA_HANDLE *xava);
-void SGLInit(struct XAVA_HANDLE *xava);
-void SGLApply(struct XAVA_HANDLE *xava);
-void SGLClear(struct XAVA_HANDLE *xava);
-void SGLDraw(struct XAVA_HANDLE *xava);
-void SGLCleanup(void);
+void     SGLShadersLoad(struct XAVA_HANDLE *xava);
+void     SGLInit(struct XAVA_HANDLE *xava);
+void     SGLApply(struct XAVA_HANDLE *xava);
+XG_EVENT SGLEvent(struct XAVA_HANDLE *xava);
+void     SGLClear(struct XAVA_HANDLE *xava);
+void     SGLDraw(struct XAVA_HANDLE *xava);
+void     SGLCleanup(struct XAVA_HANDLE *xava);
 
 #endif
 

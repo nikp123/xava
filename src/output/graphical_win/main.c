@@ -355,6 +355,10 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 		// it's because non-keyboard/mouse messages DONT pass through return values
 		// which, guess what, completely breaks my previous design - thanks micro$oft, really appreciate it
 
+		if(GLEvent(hand) == XAVA_RELOAD) {
+			return XAVA_RELOAD;
+		}
+
 		if(quit) {
 			quit=FALSE;
 			return XAVA_QUIT;
@@ -378,7 +382,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 
 EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	// WGL
-	GLCleanup();
+	GLCleanup(hand);
 	wglMakeCurrent(NULL, NULL);
 	wglDeleteContext(xavaWinGLFrame);
 

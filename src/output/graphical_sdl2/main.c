@@ -19,7 +19,7 @@ SDL_GLContext xavaSDLGLContext;
 
 EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *s)
 {
-	GLCleanup();
+	GLCleanup(s);
 	SDL_GL_DeleteContext(xavaSDLGLContext);
 	SDL_FreeSurface(xavaSDLWindowSurface);
 	SDL_DestroyWindow(xavaSDLWindow);
@@ -137,6 +137,10 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *s) {
 				break;
 		}
 	}
+
+	if(GLEvent(s) == XAVA_RELOAD)
+		return XAVA_RELOAD;
+
 	return XAVA_IGNORE;
 }
 

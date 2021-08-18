@@ -51,6 +51,12 @@ void waylandEGLInit(struct waydata *wd) {
 	EGLInit(xava);
 }
 
+XG_EVENT waylandEGLEvent(struct waydata *wd) {
+	struct XAVA_HANDLE *xava = wd->hand;
+
+	return EGLEvent(xava);
+}
+
 void waylandEGLWindowResize(struct waydata *wd, int w, int h) {
 	wl_egl_window_resize(ESContext.native_window, w, h, 0, 0);
 	wl_surface_commit(wd->surface);
@@ -66,7 +72,7 @@ void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 }
 
 void waylandEGLDestroy(struct waydata *wd) {
-	EGLCleanup(&ESContext);
+	EGLCleanup(wd->hand, &ESContext);
 	wl_egl_window_destroy(ESContext.native_window);
 }
 

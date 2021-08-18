@@ -526,6 +526,18 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 			}
 		}
 	}
+
+	#ifdef EGL
+	if(EGLEvent(hand) == XAVA_RELOAD) {
+		action = XAVA_RELOAD;
+	}
+	#endif
+	#ifdef GL
+	if(GLEvent(hand) == XAVA_RELOAD) {
+		action = XAVA_RELOAD;
+	}
+	#endif
+
 	return action;
 }
 
@@ -552,11 +564,11 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	XSync(xavaXDisplay, 1);
 
 	#if defined(EGL)
-		EGLCleanup(&ESContext);
+		EGLCleanup(hand, &ESContext);
 	#elif defined(GL)
 		glXMakeCurrent(xavaXDisplay, 0, 0);
 		glXDestroyContext(xavaXDisplay, xavaGLXContext);
-		GLCleanup();
+		GLCleanup(hand);
 	#endif
 
 	if(gradientBox != 0) { XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0; };

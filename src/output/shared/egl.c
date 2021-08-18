@@ -96,6 +96,10 @@ void EGLApply(struct XAVA_HANDLE *xava) {
 	SGLApply(xava);
 }
 
+XG_EVENT EGLEvent(struct XAVA_HANDLE *xava) {
+	return SGLEvent(xava);
+}
+
 void EGLClear(struct XAVA_HANDLE *xava) {
 	SGLClear(xava);
 }
@@ -104,8 +108,8 @@ void EGLDraw(struct XAVA_HANDLE *xava) {
 	SGLDraw(xava);
 }
 
-void EGLCleanup(struct _escontext *ESContext) {
-	SGLCleanup();
+void EGLCleanup(struct XAVA_HANDLE *xava, struct _escontext *ESContext) {
+	SGLCleanup(xava);
 	eglDestroyContext(ESContext->display, ESContext->context);
 	eglDestroySurface(ESContext->display, ESContext->surface);
 	eglTerminate(ESContext->display);
