@@ -72,8 +72,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *s) {
 	GLApply(s);
 
 	// Window size patch, because xava wipes w and h for some reason.
-	p->w = xavaSDLWindowSurface->w;
-	p->h = xavaSDLWindowSurface->h;
+	calculate_inner_win_pos(s, xavaSDLWindowSurface->w, xavaSDLWindowSurface->h);
 	return 0;
 }
 
@@ -132,8 +131,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *s) {
 				if(xavaSDLEvent.window.event == SDL_WINDOWEVENT_CLOSE) return -1;
 				else if(xavaSDLEvent.window.event == SDL_WINDOWEVENT_RESIZED){
 					// if the user resized the window
-					p->w = xavaSDLEvent.window.data1;
-					p->h = xavaSDLEvent.window.data2;
+					calculate_inner_win_pos(s, xavaSDLEvent.window.data1, xavaSDLEvent.window.data2);
 					return XAVA_RESIZE;
 				}
 				break;

@@ -57,6 +57,9 @@
 # Create an taskbar icon
 ; taskbar_icon = true
 
+# Do or don't hold specified size when resizing
+; hold_size = false
+
 
 [x11]
 

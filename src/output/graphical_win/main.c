@@ -41,13 +41,17 @@ static _Bool resized=FALSE, quit=FALSE;
 // instead of doing this shit
 
 // Retarded shit, exhibit A:
-void *configParamsForWindowFuncBecauseWinAPIIsOutdated;
+void *xavaHandleForWindowFuncBecauseWinAPIIsOutdated;
 LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	// this shit is beyond retarded
-	struct config_params *p = configParamsForWindowFuncBecauseWinAPIIsOutdated;
-	if(p == NULL)
+	struct XAVA_HANDLE *xava = xavaHandleForWindowFuncBecauseWinAPIIsOutdated;
+
+	// god why
+	if(xava == NULL)
 		return DefWindowProc(hWnd,msg,wParam,lParam);
+
+	struct config_params *p = &xava->conf;
 
 	switch(msg) {
 		case WM_CREATE:
@@ -95,8 +99,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			}
 			break;
 		case WM_SIZE:
-			p->w=LOWORD(lParam);
-			p->h=HIWORD(lParam);
+			calculate_inner_win_pos(xava, LOWORD(lParam), HIWORD(lParam));
 			resized=TRUE;
 			return XAVA_RELOAD;
 		case WM_CLOSE:
@@ -302,7 +305,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 			// dont overwrite old size on accident if already fullscreen
 			if(!(oldX||oldH||oldX||oldY)) {
 				oldX = p->wx; oldY = p->wy;
-				oldW = p->w; oldH = p->h;
+				oldW = hand->w; oldH = hand->h;
 			}
 
 			// resizing to full screen
@@ -314,7 +317,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 		// check if the window has been already resized
 	} else if(oldW||oldH||oldX||oldY) {
 		p->wx = oldX; p->wy = oldY;
-		p->w = oldW; p->h = oldH;
+		calculate_inner_win_pos(hand, oldW, oldH);
 
 		// reset to default if restoring
 		oldX = 0; oldY = 0;
@@ -324,7 +327,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 		DWORD Style = WS_POPUP | WS_VISIBLE | (p->borderF?WS_CAPTION:0);
 		SetWindowLongPtr(xavaWinWindow, GWL_STYLE, Style);
 
-		SetWindowPos(xavaWinWindow, 0, p->wx, p->wy, p->w, p->h,
+		SetWindowPos(xavaWinWindow, 0, p->wx, p->wy, hand->w, hand->h,
 			SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 	}
 
@@ -339,10 +342,8 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 }
 
 EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
-	struct config_params *p = &hand->conf;
-
 	// don't even fucking ask
-	configParamsForWindowFuncBecauseWinAPIIsOutdated = p;
+	xavaHandleForWindowFuncBecauseWinAPIIsOutdated = hand;
 
 	while(PeekMessage(&xavaWinEvent, xavaWinWindow, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&xavaWinEvent);

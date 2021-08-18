@@ -385,11 +385,6 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
 
 	calculateColors(p);
-	// Gets the monitors resolution
-	if(p->fullF){
-		p->w = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
-		p->h = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
-	}
 
 	//Atom xa = XInternAtom(xavaXDisplay, "_NET_WM_WINDOW_TYPE", 0); May be used in the future
 	//Atom prop;
@@ -504,9 +499,10 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 			// This is needed to track the window size
 			XConfigureEvent trackedXavaXWindow;
 			trackedXavaXWindow = xavaXEvent.xconfigure;
-			if(p->w != (uint32_t)trackedXavaXWindow.width || p->h != (uint32_t)trackedXavaXWindow.height) {
-				p->w = (unsigned int)trackedXavaXWindow.width;
-				p->h = (unsigned int)trackedXavaXWindow.height;
+			if(hand->w != (uint32_t)trackedXavaXWindow.width || hand->h != (uint32_t)trackedXavaXWindow.height) {
+				calculate_inner_win_pos(hand,
+						trackedXavaXWindow.width,
+						trackedXavaXWindow.height);
 			}
 			action = XAVA_RESIZE;
 			break;

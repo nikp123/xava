@@ -21,7 +21,7 @@ static struct FBO {
 } FBO;
 
 static GLfloat *vertexData;
-static GLfloat projectionMatrix[16] = 
+static GLfloat projectionMatrix[16] =
 	{2.0, 0.0, 0.0, -1.0,
 	0.0, 2.0, 0.0, -1.0,
 	0.0, 0.0, -1.0, 0.0,
@@ -68,25 +68,25 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	char *postFragPath, *postVertPath;
 	RawData *preFrag, *preVert, *postFrag, *postVert;
 
-	preShaderPack  = xavaConfigGetString(config, "gl", "pre_shaderpack", "default"); 
-	postShaderPack = xavaConfigGetString(config, "gl", "post_shaderpack", "default"); 
+	preShaderPack  = xavaConfigGetString(config, "gl", "pre_shaderpack", "default");
+	postShaderPack = xavaConfigGetString(config, "gl", "post_shaderpack", "default");
 
-	resScale       = xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f); 
+	resScale       = xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f);
 
 	char *file_path = malloc(MAX_PATH);
 	strcpy(file_path, "gl/shaders/pre/");
 	strcat(file_path, preShaderPack);
 	strcat(file_path, "/fragment.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", preShaderPack) ? 
+	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", preShaderPack) ?
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
-			file_path, &preFragPath) == false, 
+			file_path, &preFragPath) == false,
 			"Failed to load pre-render fragment shader!");
 
 	strcpy(file_path, "gl/shaders/pre/");
 	strcat(file_path, preShaderPack);
 	strcat(file_path, "/vertex.glsl");
 	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", preShaderPack) ?
-			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG, 
+			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
 			file_path, &preVertPath) == false,
 			"Failed to load pre-render vertex shader!");
 
@@ -95,14 +95,14 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	strcat(file_path, "/fragment.glsl");
 	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", postShaderPack) ?
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
-			file_path, &postFragPath) == false, 
+			file_path, &postFragPath) == false,
 			"Failed to load post-render fragment shader!");
 
 	strcpy(file_path, "gl/shaders/post/");
 	strcat(file_path, postShaderPack);
 	strcat(file_path, "/vertex.glsl");
 	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", postShaderPack) ?
-			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG, 
+			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
 			file_path, &postVertPath) == false,
 			"Failed to load post-render vertex shader!");
 
@@ -160,7 +160,7 @@ void SGLCreateProgram(struct SGLprogram *program) {
 	GLint status;
 
 	program->program = glCreateProgram();
-	program->frag = SGLShaderBuild(program->fragText, GL_FRAGMENT_SHADER); 
+	program->frag = SGLShaderBuild(program->fragText, GL_FRAGMENT_SHADER);
 	program->vert = SGLShaderBuild(program->vertText, GL_VERTEX_SHADER);
 
 	glAttachShader(program->program, program->frag);
@@ -182,6 +182,10 @@ void SGLCreateProgram(struct SGLprogram *program) {
 
 void SGLInit(struct XAVA_HANDLE *xava) {
 	struct config_params *conf = &xava->conf;
+
+	// automatically assign this so it isn't invalid during framebuffer creation
+	xava->w = conf->w;
+	xava->h = conf->h+conf->shdw;
 
 	SGLCreateProgram(&pre);
 	SGLCreateProgram(&post);
@@ -234,7 +238,7 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	// set texture properties
 	glGenTextures(1,               &FBO.final_texture);
 	glBindTexture(GL_TEXTURE_2D,   FBO.final_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, conf->w*resScale, conf->h*resScale,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, xava->w*resScale, xava->h*resScale,
 			0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -244,8 +248,8 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	// set texture properties
 	glGenTextures(1,      &FBO.depth_texture);
 	glBindTexture(GL_TEXTURE_2D, FBO.depth_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, conf->w*resScale,
-			conf->h*resScale, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, xava->w*resScale,
+			xava->h*resScale, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -261,7 +265,7 @@ void SGLApply(struct XAVA_HANDLE *xava){
 
 	// check if it borked
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	xavaBailCondition(status != GL_FRAMEBUFFER_COMPLETE, 
+	xavaBailCondition(status != GL_FRAMEBUFFER_COMPLETE,
 			"Failed to create framebuffer(s)! Error code 0x%X\n",
 			status);
 
@@ -288,7 +292,7 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	}
 
 	// update screen resoltion
-	glUniform2f(PRE_RESOLUTION, conf->w, conf->h);
+	glUniform2f(PRE_RESOLUTION, xava->w, xava->h);
 
 	// update projection matrix
 	// trick: use projection matrix to optimize for shadows so our CPU doesn't have
@@ -297,10 +301,17 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	// horizontal scaling not done due to artifacting
 	//projectionMatrix[0] = 2.0/(conf->w+conf->shdw);
 	//projectionMatrix[3] = -((float)conf->w/(float)(conf->w+conf->shdw));
+	// vertical scaling
+	//projectionMatrix[5] = 2.0/(conf->h+conf->shdw);
+	//projectionMatrix[7] = -((float)xava->h/(float)(xava->h+conf->shdw));
 
-	projectionMatrix[0] = 2.0/conf->w;
-	projectionMatrix[5] = 2.0/(conf->h+conf->shdw);
-	projectionMatrix[7] = -((float)conf->h/(float)(conf->h+conf->shdw));
+	// do image scaling
+	projectionMatrix[0] = 2.0/xava->w;
+	projectionMatrix[5] = 2.0/xava->h;
+
+	// do image translation
+	projectionMatrix[3] = (float)xava->x/xava->w*2.0 - 1.0;
+	projectionMatrix[7] = 1.0 - (float)(xava->y+conf->h)/xava->h*2.0;
 
 	glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
@@ -326,7 +337,7 @@ void SGLApply(struct XAVA_HANDLE *xava){
 void SGLClear(struct XAVA_HANDLE *xava) {
 	struct config_params *conf = &xava->conf;
 
-	// if you want to fiddle with certain uniforms from a shader, YOU MUST SWITCH TO IT 
+	// if you want to fiddle with certain uniforms from a shader, YOU MUST SWITCH TO IT
 	// (https://www.khronos.org/opengl/wiki/GLSL_:_common_mistakes#glUniform_doesn.27t_work)
 	glUseProgram(pre.program);
 
@@ -348,8 +359,8 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 			ARGB_B_32(shdw_col), 1.0);
 
 	glUniform2f(POST_SHADOW_OFFSET,
-			((float)conf->shdw)/((float)conf->w)*-0.5,
-			((float)conf->shdw)/((float)conf->h)*0.5);
+			((float)conf->shdw)/((float)xava->w)*-0.5,
+			((float)conf->shdw)/((float)xava->h)*0.5);
 }
 
 void SGLDraw(struct XAVA_HANDLE *xava) {
@@ -386,7 +397,7 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	// bind render target to texture
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
-	glViewport(0, 0, conf->w*resScale, conf->h*resScale);
+	glViewport(0, 0, xava->w*resScale, xava->h*resScale);
 
 	// switch to pre shaders
 	glUseProgram(pre.program);
@@ -417,7 +428,7 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	// Change framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, conf->w, conf->h);
+	glViewport(0, 0, xava->w, xava->h);
 
 	// Switch to post shaders
 	glUseProgram(post.program);

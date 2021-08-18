@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "../../shared.h"
+#include "../graphical.h"
 
 #include "gen/wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "zwlr.h"
@@ -21,11 +22,11 @@ static void layer_surface_configure(void *data,
 		struct zwlr_layer_surface_v1 *surface,
 		uint32_t serial, uint32_t width, uint32_t height) {
 	struct waydata *wd = data;
-	struct config_params *conf = &wd->hand->conf;
+	struct XAVA_HANDLE *xava = wd->hand;
+	struct config_params *conf = &xava->conf;
 
 	if(width != 0 && height != 0) {
-		conf->w = width;
-		conf->h = height;
+		calculate_inner_win_pos(xava, width, height);
 
 		waylandEGLWindowResize(wd, width, height);
 
@@ -69,9 +70,9 @@ static struct zwlr_alignment_info handle_window_alignment(struct config_params *
 
 	// Top alingments
 	if(!strcmp("top", p->winA))
-		align.anchor = top; 
+		align.anchor = top;
 	else if(!strcmp("top_left", p->winA))
-		align.anchor = top|left; 
+		align.anchor = top|left;
 	else if(!strcmp("top_right", p->winA)) {
 		align.width_margin *= -1;
 		align.anchor = top|right;
@@ -81,7 +82,7 @@ static struct zwlr_alignment_info handle_window_alignment(struct config_params *
 	else if(!strcmp("left", p->winA))
 		align.anchor = left;
 	else if(!strcmp("center", p->winA)) { /** nop **/ }
-	else if(!strcmp("right", p->winA)) { 
+	else if(!strcmp("right", p->winA)) {
 		align.width_margin *= -1;
 		align.anchor = right;
 	}
@@ -91,7 +92,7 @@ static struct zwlr_alignment_info handle_window_alignment(struct config_params *
 		align.anchor = left|bottom;
 	else if(!strcmp("bottom", p->winA))
 		align.anchor = bottom;
-	else if(!strcmp("bottom_right", p->winA)) { 
+	else if(!strcmp("bottom_right", p->winA)) {
 		align.width_margin *= -1;
 		align.anchor = right|bottom;
 	}
@@ -124,9 +125,9 @@ void zwlr_init(struct waydata *wd) {
 
 	// adjust position and properties accordingly
 	zwlr_layer_surface_v1_set_size(xavaWLRLayerSurface, width, height);
-	zwlr_layer_surface_v1_set_anchor(xavaWLRLayerSurface, 
+	zwlr_layer_surface_v1_set_anchor(xavaWLRLayerSurface,
 			align.anchor);
-	zwlr_layer_surface_v1_set_margin(xavaWLRLayerSurface, 
+	zwlr_layer_surface_v1_set_margin(xavaWLRLayerSurface,
 			align.height_margin, -align.width_margin,
 			-align.height_margin, align.width_margin);
 	zwlr_layer_surface_v1_set_exclusive_zone(xavaWLRLayerSurface, -1);

@@ -1,6 +1,8 @@
 #include <unistd.h>
 #include <wayland-client-core.h>
 
+#include "../graphical.h"
+
 #include "gen/xdg-shell-client-protocol.h"
 
 #include "xdg.h"
@@ -31,8 +33,7 @@ static void xdg_toplevel_handle_configure(void *data,
 	if(w == 0 && h == 0) return;
 
 	if(p->w != w && p->h != h) {
-		p->w = w;
-		p->h = h;
+		calculate_inner_win_pos(hand, w, h);
 
 		waylandEGLWindowResize(wd, w, h);
 

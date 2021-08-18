@@ -94,7 +94,7 @@ struct config_params {
 
 	// 4 - geometry
 	uint32_t bw, bs;								// bar width and height
-	uint32_t w, h;									// display width and height
+	uint32_t w, h;									// display width and height (not to be mixed with window dimensions)
 	int wx, wy;										// window position on the desktop in
 													// x and y coordinates
 	char *winA;										// pointer to a string of alignment
@@ -104,7 +104,7 @@ struct config_params {
 													// must be a power of 2
 
 	// 6 - special flags
-	_Bool fullF, transF, borderF, bottomF, interactF, taskbarF;
+	_Bool fullF, transF, borderF, bottomF, interactF, taskbarF, holdSizeF;
 	// fullF = fullscreen toggle, transF = transparency toggle,
 	// borderF = window border toggle, interactF = interaction
 	// toggle, taskbarF = taskbar icon toggle
@@ -129,6 +129,10 @@ struct XAVA_HANDLE {
 		XAVACONFIG        config;
 		XAVAIONOTIFYWATCH watch;
 	} default_config;
+
+	// visualizer size INSIDE of the window
+	int x, y;          // display offset in the visualizer window
+	unsigned int w, h; // window dimensions
 
 	XAVAIONOTIFY ionotify;
 };

@@ -235,6 +235,7 @@ char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	p->bottomF = xavaConfigGetBool(hand->default_config.config, "window", "keep_below", 1);
 	p->interactF = xavaConfigGetBool(hand->default_config.config, "window", "interactable", 1);
 	p->taskbarF = xavaConfigGetBool(hand->default_config.config, "window", "taskbar_icon", 1);
+	p->holdSizeF = xavaConfigGetBool(hand->default_config.config, "window", "hold_size", false);
 
 	// config: shadow
 	p->shdw = xavaConfigGetInt(hand->default_config.config, "shadow", "size", 7);
