@@ -168,6 +168,8 @@ install (FILES example_files/gl/shaders/pre/default/vertex.glsl    RENAME vertex
 install (FILES example_files/gl/shaders/pre/default/fragment.glsl  RENAME fragment.glsl.example DESTINATION share/xava/gl/shaders/pre/default)
 install (FILES example_files/gl/shaders/post/default/vertex.glsl   RENAME vertex.glsl.example   DESTINATION share/xava/gl/shaders/post/default)
 install (FILES example_files/gl/shaders/post/default/fragment.glsl RENAME fragment.glsl.example DESTINATION share/xava/gl/shaders/post/default)
+install (FILES example_files/gl/shaders/post/kinetic/vertex.glsl   RENAME vertex.glsl.example   DESTINATION share/xava/gl/shaders/post/kinetic)
+install (FILES example_files/gl/shaders/post/kinetic/fragment.glsl RENAME fragment.glsl.example DESTINATION share/xava/gl/shaders/post/kinetic)
 if(UNIX AND NOT APPLE)
     install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
     install (FILES assets/linux/xava.svg DESTINATION share/icons/hicolor/scalable/apps)
