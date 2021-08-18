@@ -3,9 +3,9 @@
 
 #include "gen/xdg-shell-client-protocol.h"
 
+#include "render.h"
 #include "xdg.h"
 #include "main.h"
-#include "egl.h"
 
 static struct xdg_surface *xavaXDGSurface;
 static struct xdg_toplevel *xavaXDGToplevel;
@@ -31,10 +31,16 @@ static void xdg_toplevel_handle_configure(void *data,
 	if(w == 0 && h == 0) return;
 
 	if(p->w != w && p->h != h) {
+		while(wd->fbUnsafe)
+			usleep(10);
+
+		wd->fbUnsafe = true;
+
 		p->w = w;
 		p->h = h;
 
-		waylandEGLWindowResize(wd, w, h);
+		reallocSHM(wd);
+		wd->fbUnsafe = false;
 
 		pushXAVAEventStack(wd->events, XAVA_REDRAW);
 		pushXAVAEventStack(wd->events, XAVA_RESIZE);
@@ -57,6 +63,9 @@ static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surface,
 		uint32_t serial) {
 	// confirm that you exist to the compositor
 	xdg_surface_ack_configure(xdg_surface, serial);
+
+	struct waydata *wd = data;
+	update_frame(wd);
 }
 
 const struct xdg_surface_listener xdg_surface_listener = {

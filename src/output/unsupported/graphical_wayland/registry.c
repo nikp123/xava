@@ -15,7 +15,10 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 		uint32_t name, const char *interface, uint32_t version) {
 	struct waydata *wd = data;
 
-	if (strcmp(interface, wl_compositor_interface.name) == 0) {
+	if (strcmp(interface, wl_shm_interface.name) == 0) {
+		wd->shm = wl_registry_bind(
+			wl_registry, name, &wl_shm_interface, 1);
+	} else if (strcmp(interface, wl_compositor_interface.name) == 0) {
 		wd->compositor = wl_registry_bind(
 			wl_registry, name, &wl_compositor_interface, 4);
 	} else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {

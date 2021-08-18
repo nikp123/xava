@@ -1,26 +1,20 @@
 #include <time.h>
 
 #include <SDL.h>
-#include <SDL_opengl.h>
-#define GL_ALREADY_DEFINED
 
-#include "../shared/gl.h"
-
-#include "../graphical.h"
-#include "../../config.h"
-#include "../../shared.h"
+#include "../../graphical.h"
+#include "../../../config.h"
+#include "../../../shared.h"
 
 SDL_Window *xavaSDLWindow;
 SDL_Surface *xavaSDLWindowSurface;
 SDL_Event xavaSDLEvent;
 SDL_DisplayMode xavaSDLVInfo;
-
-SDL_GLContext xavaSDLGLContext;
+int *gradCol;
 
 EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *s)
 {
-	GLCleanup();
-	SDL_GL_DeleteContext(xavaSDLGLContext);
+	free(gradCol);
 	SDL_FreeSurface(xavaSDLWindowSurface);
 	SDL_DestroyWindow(xavaSDLWindow);
 	SDL_Quit();
@@ -39,7 +33,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *s)
 	calculate_win_pos(p, xavaSDLVInfo.w, xavaSDLVInfo.h);
 
 	// creating a window
-	Uint32 windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
+	Uint32 windowFlags = SDL_WINDOW_RESIZABLE;
 	if(p->fullF) windowFlags |= SDL_WINDOW_FULLSCREEN;
 	if(!p->borderF) windowFlags |= SDL_WINDOW_BORDERLESS;
 	if(p->vsync) windowFlags |= SDL_RENDERER_PRESENTVSYNC;
@@ -47,14 +41,18 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *s)
 	xavaBailCondition(!xavaSDLWindow, "SDL window cannot be created: %s", SDL_GetError());
 	//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "cannot create SDL window", NULL);
 
-	xavaSDLGLContext = SDL_GL_CreateContext(xavaSDLWindow);
-	GLInit(s);
+	if(p->gradients) {
+		gradCol = malloc(sizeof(int)*p->gradients);
+		for(unsigned int i=0; i<p->gradients; i++)
+			sscanf(p->gradient_colors[i], "#%x", &gradCol[i]);
+	}
 
 	return 0;
 }
 
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *s) {
-	GLClear(s);
+	struct config_params *p = &s->conf;
+	SDL_FillRect(xavaSDLWindowSurface, NULL, SDL_MapRGB(xavaSDLWindowSurface->format, p->bgcol/0x10000%0x100, p->bgcol/0x100%0x100, p->bgcol%0x100));
 }
 
 EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *s) {
@@ -68,8 +66,6 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *s) {
 	// If I had a job, here's what I would be fired for xD
 	SDL_Delay(100);
 	xavaOutputClear(s);
-
-	GLApply(s);
 
 	// Window size patch, because xava wipes w and h for some reason.
 	p->w = xavaSDLWindowSurface->w;
@@ -143,8 +139,38 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *s) {
 }
 
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
-	GLDraw(s);
-	SDL_GL_SwapWindow(xavaSDLWindow);
+	struct config_params *p = &s->conf;
+	int *f = s->f;
+	int *flastd = s->fl;
+	int rest = s->rest;
+	int bars = s->bars;
+
+	for(int i = 0; i < bars; i++) {
+		SDL_Rect current_bar;
+		if(f[i] > flastd[i]) {
+			if(!p->gradients) {
+				current_bar = (SDL_Rect) {rest + i*(p->bs+p->bw), p->h - f[i], p->bw, f[i] - flastd[i]};
+				SDL_FillRect(xavaSDLWindowSurface, &current_bar, SDL_MapRGB(xavaSDLWindowSurface->format, p->col/0x10000%0x100, p->col/0x100%0x100, p->col%0x100));
+			} else {
+				for(unsigned int I = (unsigned int)flastd[i]; I < (unsigned int)f[i]; I++) {
+					Uint32 color = 0x0;
+					double step = (double)(I%((unsigned int)p->h/(p->gradients-1)))/(double)((double)p->h/(p->gradients-1));
+
+					unsigned int gcPhase = (p->gradients-1)*I/(unsigned int)p->h;
+					color |= R_ARGB_32(UNSIGNED_TRANS(ARGB_R_32(gradCol[gcPhase]), ARGB_R_32(gradCol[gcPhase+1]), step));
+					color |= G_ARGB_32(UNSIGNED_TRANS(ARGB_G_32(gradCol[gcPhase]), ARGB_G_32(gradCol[gcPhase+1]), step));
+					color |= B_ARGB_32(UNSIGNED_TRANS(ARGB_B_32(gradCol[gcPhase]), ARGB_B_32(gradCol[gcPhase+1]), step));
+
+					current_bar = (SDL_Rect) {rest + i*(p->bs+p->bw), p->h - (int)I, p->bw, 1};
+					SDL_FillRect(xavaSDLWindowSurface, &current_bar, SDL_MapRGB(xavaSDLWindowSurface->format, color/0x10000%0x100, color/0x100%0x100, color%0x100));
+				}
+			}
+		} else if(f[i] < flastd[i]) {
+			current_bar = (SDL_Rect) {rest + i*(p->bs+p->bw), p->h - flastd[i], p->bw, flastd[i] - f[i]};
+			SDL_FillRect(xavaSDLWindowSurface, &current_bar, SDL_MapRGB(xavaSDLWindowSurface->format, p->bgcol/0x10000%0x100, p->bgcol/0x100%0x100, p->bgcol%0x100));
+		}
+	}
+	SDL_UpdateWindowSurface(xavaSDLWindow);
 	return;
 }
 
@@ -154,7 +180,5 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s) {
 
 	// VSync doesnt work on SDL2 :(
 	p->vsync = 0;
-
-	GLShadersLoad(s);
 }
 

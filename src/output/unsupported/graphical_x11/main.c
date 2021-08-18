@@ -14,23 +14,33 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "../graphical.h"
-#include "../../config.h"
-#include "../../shared.h"
+#include "../../graphical.h"
+#include "../../../config.h"
+#include "../../../shared.h"
 
-#ifdef GL
-	#include "../shared/gl.h"
-	#include <X11/extensions/Xrender.h>
-	#include <GL/glx.h>
-#endif
-#ifdef EGL
-	#include "../shared/egl.h"
+#ifdef STARS
+	#include <math.h>
+
+	typedef struct star {
+		float x;	// because movements are so small ints may not capture them properly
+		float y;
+		float angle;
+		unsigned char size;
+	} star;
+
+	static star *stars;
+	static float speed;
+	static float kineticScore;
+
+	static int starsCount;
+	static double starsSens, starsVelocity;
 #endif
 
 // random magic values go here
 #define SCREEN_CONNECTED 0
 
 static Pixmap gradientBox = 0;
+static XColor xbgcol, xcol, *xgrad;
 
 static XEvent xavaXEvent;
 static Colormap xavaXColormap;
@@ -53,37 +63,10 @@ static XRRScreenResources *xavaXScreenResources;
 static XRROutputInfo      *xavaXOutputInfo;
 static XRRCrtcInfo        *xavaXCrtcInfo;
 
-static char *monitorName;
+static char  *monitorName;
+static bool rootWindowEnabled;
 static bool overrideRedirectEnabled;
 static bool reloadOnDisplayConfigure;
-
-#ifdef GL
-	static int VisData[] = {
-		GLX_RENDER_TYPE, GLX_RGBA_BIT,
-		GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
-		GLX_DOUBLEBUFFER, True,
-		GLX_RED_SIZE, 8,
-		GLX_GREEN_SIZE, 8,
-		GLX_BLUE_SIZE, 8,
-		GLX_ALPHA_SIZE, 8,
-		GLX_DEPTH_SIZE, 16,
-		None
-	};
-
-	GLXContext xavaGLXContext;
-	GLXFBConfig* xavaFBConfig;
-
-	static XRenderPictFormat *pict_format;
-
-	static GLXFBConfig *fbconfigs, fbconfig;
-	static int numfbconfigs;
-
-	void glXSwapIntervalEXT (Display *dpy, GLXDrawable drawable, int interval);
-#endif
-
-#ifdef EGL
-	static struct _escontext ESContext;
-#endif
 
 // mwmHints helps us comunicate with the window manager
 struct mwmHints {
@@ -112,48 +95,26 @@ enum {
 #define _NET_WM_STATE_ADD 1
 #define _NET_WM_STATE_TOGGLE 2
 
-#ifdef GL
-int XGLInit(struct config_params *p) {
-	// we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
-	xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
-	glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
-	if(p->transF) {
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-	return 0;
-}
-#endif
-
 // Pull from the terminal colors, and afterwards, do the usual
-void snatchColor(char *name, char *colorStr, unsigned int *colorNum, char *databaseName,
-		XrmDatabase *xavaXResDB) {
+void snatchColor(char *name, char *colorStr, int colorNum, XColor *colorObj,
+		char *databaseName, XrmDatabase *xavaXResDB) {
 	XrmValue value;
 	char *type;
-	char strings_are_a_pain_in_c[32];
-
-	sprintf(strings_are_a_pain_in_c, "XAVA.%s", name);
-
-	if(strcmp(colorStr, "default"))
-		return; // default not selected
-
-	if(!databaseName)
-		return; // invalid database specified
-
-	if(XrmGetResource(*xavaXResDB, strings_are_a_pain_in_c,
-				strings_are_a_pain_in_c, &type, &value))
-		goto get_color; // XrmGetResource succeeded
-
-	sprintf(strings_are_a_pain_in_c, "*.%s", name);
-
-	if(!XrmGetResource(*xavaXResDB, name, NULL, &type, &value))
-		return; // XrmGetResource failed
-
-	get_color:
-	sscanf(value.addr, "#%06X", colorNum);
+	if(!strcmp(colorStr, "default")) {
+		if(databaseName) {
+			if(XrmGetResource(*xavaXResDB, name, NULL, &type, &value))
+				XParseColor(xavaXDisplay, xavaXColormap, value.addr, colorObj);
+		} else {
+			char tempColorStr[8];
+			sprintf(tempColorStr, "#%06x", colorNum);
+			XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, colorObj);
+		}
+	} else {
+		char tempColorStr[8];
+		sprintf(tempColorStr, "#%06x", colorNum);
+		XParseColor(xavaXDisplay, xavaXColormap, tempColorStr, colorObj);
+	}
+	XAllocColor(xavaXDisplay, xavaXColormap, colorObj);
 }
 
 void calculateColors(struct config_params *p) {
@@ -163,15 +124,12 @@ void calculateColors(struct config_params *p) {
 	if(databaseName) {
 		xavaXResDB = XrmGetStringDatabase(databaseName);
 	}
-	snatchColor("color5", p->color, &p->col, databaseName, &xavaXResDB);
-	snatchColor("color4", p->bcolor, &p->bgcol, databaseName, &xavaXResDB);
+	snatchColor("color5", p->color, p->col, &xcol, databaseName, &xavaXResDB);
+	snatchColor("color4", p->bcolor, p->bgcol, &xbgcol, databaseName, &xavaXResDB);
 }
 
 EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
-
-	// NVIDIA CPU cap utilization in Vsync fix
-	setenv("__GL_YIELD", "USLEEP", 0);
 
 	// workarounds go above if they're required to run before anything else
 
@@ -236,31 +194,13 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	}
 
 	// 32 bit color means alpha channel support
-	#ifdef GL
-	if(p->transF) {
-		fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
-		fbconfig = 0;
-		for(int i = 0; i<numfbconfigs; i++) {
-			XVisualInfo *visInfo = glXGetVisualFromFBConfig(xavaXDisplay, fbconfigs[i]);
-			if(!visInfo) continue;
-			else xavaVInfo = *visInfo;
-
-			pict_format = XRenderFindVisualFormat(xavaXDisplay, xavaVInfo.visual);
-			if(!pict_format) continue;
-
-			fbconfig = fbconfigs[i];
-
-			if(pict_format->direct.alphaMask > 0) break;
-		}
-	} else
-	#endif
-		XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p->transF ? 32 : 24, TrueColor, &xavaVInfo);
+	XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p->transF ? 32 : 24, TrueColor, &xavaVInfo);
 
 	xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
 	xavaXColormap = xavaAttr.colormap;
 	calculateColors(p);
-	xavaAttr.background_pixel = 0;
-	xavaAttr.border_pixel = 0;
+	xavaAttr.background_pixel = p->transF ? 0 : xbgcol.pixel;
+	xavaAttr.border_pixel = xcol.pixel;
 
 	xavaAttr.backing_store = Always;
 	// make it so that the window CANNOT be reordered by the WM
@@ -268,8 +208,14 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	int xavaWindowFlags = CWOverrideRedirect | CWBackingStore |  CWEventMask | CWColormap | CWBorderPixel | CWBackPixel;
 
-	xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p->wx, p->wy, (unsigned int)p->w,
+	if(rootWindowEnabled) xavaXWindow = xavaXRoot;
+	#ifdef STARS
+	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, screenx, screeny, screenwidth,
+			screenheight, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
+	#else
+	else xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p->wx, p->wy, (unsigned int)p->w,
 		(unsigned int)p->h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
+	#endif
 	XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
 	// The "X" button is handled by the window manager and not Xorg, so we set up a Atom
@@ -284,20 +230,18 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
 	XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask | VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
 
-	#ifdef GL
-		xavaBailCondition(XGLInit(p), "Failed to load GLX extensions");
-		GLInit(hand);
-	#endif
-
-	#ifdef EGL
-		ESContext.native_window = xavaXWindow;
-		ESContext.native_display = xavaXDisplay;
-		EGLCreateContext(hand, &ESContext);
-		EGLInit(hand);
-	#endif
-
 	XMapWindow(xavaXDisplay, xavaXWindow);
 	xavaXGraphics = XCreateGC(xavaXDisplay, xavaXWindow, 0, 0);
+
+	if(p->gradients) {
+		xgrad = malloc((p->gradients+1)*sizeof(XColor));
+		XParseColor(xavaXDisplay, xavaXColormap, p->gradient_colors[0], &xgrad[p->gradients]);
+		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p->gradients]);
+		for(unsigned int i=0; i<p->gradients; i++) {
+			XParseColor(xavaXDisplay, xavaXColormap, p->gradient_colors[i], &xgrad[i]);
+			XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[i]);
+		}
+	}
 
 	// Set up atoms
 	wmState = XInternAtom(xavaXDisplay, "_NET_WM_STATE", 0);
@@ -348,7 +292,12 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	XWindowAttributes xwa;
 	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &xwa);
 	if(strcmp(p->winA, "none"))
+	#ifdef STARS
+		//XMoveWindow(xavaXDisplay, xavaXWindow, screenx, screeny);
+		XMoveWindow(xavaXDisplay, xavaXWindow, 0, 0);
+	#else
 		XMoveWindow(xavaXDisplay, xavaXWindow, p->wx, p->wy);
+	#endif
 
 	// query for the RR extension in X11
 	int error;
@@ -370,15 +319,46 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 		}
 	}
 
+	#ifdef STARS
+		// star count doesn't change in runtime, so allocation is only done during init
+		stars = calloc(starsCount, sizeof(star));
+	#endif
+
+	return 0;
+}
+
+int render_gradient_x(struct config_params *p) {
+	if(gradientBox != 0) XFreePixmap(xavaXDisplay, gradientBox);
+
+	gradientBox = XCreatePixmap(xavaXDisplay, xavaXWindow, (unsigned int)p->bw, (unsigned int)p->h, 32);
+	// TODO: Error checks
+
+	for(unsigned int I = 0; I < (unsigned int)p->h; I++) {
+		// don't touch +1.0/w_h at the end fixes some math problems
+		double step = (double)(I%((unsigned int)p->h/(p->gradients-1)))/(double)((unsigned int)p->h/(p->gradients-1));
+
+		// to future devs: this isnt ARGB. this is something internal that cannot be changed by simple means
+
+		unsigned int gcPhase = (p->gradients-1)*I/(unsigned int)p->h;
+		xgrad[p->gradients].red   = UNSIGNED_TRANS(xgrad[gcPhase].red, xgrad[gcPhase+1].red, step);
+		xgrad[p->gradients].green = UNSIGNED_TRANS(xgrad[gcPhase].green, xgrad[gcPhase+1].green, step);
+		xgrad[p->gradients].blue  = UNSIGNED_TRANS(xgrad[gcPhase].blue, xgrad[gcPhase+1].blue, step);
+		xgrad[p->gradients].flags = DoRed | DoGreen | DoBlue;
+		XAllocColor(xavaXDisplay, xavaXColormap, &xgrad[p->gradients]);
+
+		XSetForeground(xavaXDisplay, xavaXGraphics, xgrad[p->gradients].pixel);
+		XFillRectangle(xavaXDisplay, gradientBox, xavaXGraphics, 0, p->h - (int)I, (unsigned int)p->w, 1);
+	}
 	return 0;
 }
 
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
-	#if defined(EGL)
-		EGLClear(hand);
-	#elif defined(GL)
-		GLClear(hand);
-	#endif
+	struct config_params *p = &hand->conf;
+
+	XSetBackground(xavaXDisplay, xavaXGraphics, xbgcol.pixel);
+	XClearWindow(xavaXDisplay, xavaXWindow);
+
+	if(p->gradients) render_gradient_x(p);
 }
 
 EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
@@ -424,14 +404,24 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 		XFixesDestroyRegion(xavaXDisplay, region);
 	}
 
-	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &windowAttribs);
+	#ifdef STARS
+		// when display is resize, all information is considered unsafe
+		// which is why initial star positions are calcuated here
 
-	#if defined(EGL)
-		EGLApply(hand);
-	#elif defined(GL)
-		GLApply(hand);
+		int displayWidth  = DisplayWidth(xavaXDisplay, xavaXScreenNumber);
+		int displayHeight = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
+		for(int i=0; i<starsCount; i++) {
+			stars[i].x = (float)(rand()%displayWidth);
+			stars[i].y = (float)(rand()%displayHeight);
+
+			// it is absolutely critical that this angle be in range(-pi/2, +pi/2)
+			// going outside of this will cause numerous bugs
+			stars[i].angle = powf((float)(rand()%1200-600)/(float)1000.0, 3.0);
+			stars[i].size = (unsigned char)(5-sqrt(rand()%26))+1;
+		}
 	#endif
 
+	XGetWindowAttributes(xavaXDisplay, xavaXWindow, &windowAttribs);
 	return 0;
 }
 
@@ -484,6 +474,12 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 						// upper 8-bits and that rand is 16-bit
 						p->bgcol &= 0xff00000;
 						p->bgcol |= ((rand()<<16)|rand())&0x00ffffff;
+
+						xbgcol.red   = (unsigned short)rand();
+						xbgcol.green = (unsigned short)rand();
+						xbgcol.blue  = (unsigned short)rand();
+						xbgcol.flags = DoRed | DoGreen | DoBlue;
+						XAllocColor(xavaXDisplay, xavaXColormap, &xbgcol);
 						return XAVA_REDRAW;
 					case XK_c:
 						if(p->gradients) break;
@@ -491,14 +487,20 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 						// upper 8-bits and that rand is 16-bit
 						p->col &= 0xff00000;
 						p->col |= ((rand()<<16)|rand())&0x00ffffff;
-						return XAVA_REDRAW;
+
+					xcol.red   = (unsigned short)rand();
+					xcol.green = (unsigned short)rand();
+					xcol.blue  = (unsigned short)rand();
+					xcol.flags = DoRed | DoGreen | DoBlue;
+					XAllocColor(xavaXDisplay, xavaXColormap, &xcol);
+					return XAVA_REDRAW;
 			}
 			break;
 		}
 		case ConfigureNotify:
 		{
 			// the window should not be resized when it IS the monitor
-			if(overrideRedirectEnabled)
+			if(rootWindowEnabled||overrideRedirectEnabled)
 				break;
 
 			// This is needed to track the window size
@@ -520,29 +522,105 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 				action = XAVA_RESIZE;
 			break;
 		case ClientMessage:
-			if((Atom)xavaXEvent.xclient.data.l[0] == wm_delete_window)
-				return XAVA_QUIT;
-			break;
-		default:
-			if(xavaXEvent.type == xavaRREventBase + RRScreenChangeNotify) {
-				xavaLog("Display change detected - Restarting...\n");
-				return XAVA_RELOAD;
-			}
+				if((Atom)xavaXEvent.xclient.data.l[0] == wm_delete_window)
+					return XAVA_QUIT;
+				break;
+			default:
+				if(xavaXEvent.type == xavaRREventBase + RRScreenChangeNotify) {
+					xavaLog("Display change detected - Restarting...\n");
+					return XAVA_RELOAD;
+				}
 		}
 	}
 	return action;
 }
 
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
-	#if defined(EGL)
-		EGLDraw(hand);
-		eglSwapBuffers(ESContext.display, ESContext.surface);
-	#elif defined(GL)
-		GLDraw(hand);
-		glXSwapBuffers(xavaXDisplay, xavaXWindow);
-		glXWaitGL();
+	struct config_params *p = &hand->conf;
+
+	// im lazy, but i just wanna make it work
+	uint32_t xoffset = hand->rest, yoffset = p->h;
+
+	#ifndef STARS
+	if(rootWindowEnabled)
+	#endif
+	{
+		xoffset+=(unsigned int)p->wx;
+		yoffset+=(unsigned int)p->wy;
+	}
+
+	#ifdef STARS
+		// since it's impossible to do delta draws with stars, we'll
+		// just redraw the framebuffer each time (even if that costs CPU time)
+		float displayWidth  = (float)DisplayWidth(xavaXDisplay, xavaXScreenNumber);
+		float displayHeight = (float)DisplayHeight(xavaXDisplay, xavaXScreenNumber);
+		//XClearWindow(xavaXDisplay, xavaXWindow);
+
+		// FIXME: Bugged screen coordinates on multimonitor (THIS FIX IS A MUST)
+		//printf("%d %d\n", windowAttribs.width, windowAttribs.height);
+		XClearArea(xavaXDisplay, xavaXWindow, 0, 0, (unsigned int)windowAttribs.width,
+				(unsigned int)windowAttribs.height, 0);
+
+		for(int i=0; i<starsCount; i++) {
+			stars[i].x += cosf(stars[i].angle)*stars[i].size*speed;
+			stars[i].y += sinf(stars[i].angle)*stars[i].size*speed;
+
+			if(stars[i].x > displayWidth) {
+				stars[i].x = 0;
+				stars[i].y = fmodf((float)rand(), displayHeight);
+			}
+
+			if(stars[i].y > displayHeight || stars[i].y < -stars[i].size) {
+				stars[i].y = fmodf((float)rand(), displayWidth);
+				stars[i].y = stars[i].angle > (float)0.0 ? (float)1.0 : displayHeight-(float)1.0;
+			}
+
+			XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
+			XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics, (int)stars[i].x,
+					(int)stars[i].y, stars[i].size, stars[i].size);
+		}
+
+		// size the framebuffer is reset on each frame
+		// last bars should always be 0
+		memset(hand->fl, 0x00, sizeof(int)*hand->bars);
+
+		kineticScore=0.0;
 	#endif
 
+	// draw bars on the X11 window
+	for(int i = 0; i < (int)hand->bars; i++) {
+		// this fixes a rendering bug
+		if(hand->f[i] > (int)p->h) hand->f[i] = (int)p->h;
+
+		#ifdef STARS
+			// kinetic score has a low-freq bias as they are more "physical"
+			float bar_percentage = (float)(hand->f[i]-1)/(float)p->h;
+			if(bar_percentage > 0.0) {
+				kineticScore+=powf(bar_percentage, (float)2.0*(float)i/(float)hand->bars);
+			}
+		#endif
+
+		if(hand->f[i] > hand->fl[i]) {
+			if(p->gradients)
+				XCopyArea(xavaXDisplay, gradientBox, xavaXWindow, xavaXGraphics,
+					0, (int)p->h - hand->f[i], p->bw, (unsigned int)(hand->f[i]-hand->fl[i]),
+					(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->f[i]);
+			else {
+				XSetForeground(xavaXDisplay, xavaXGraphics, xcol.pixel);
+				XFillRectangle(xavaXDisplay, xavaXWindow, xavaXGraphics,
+					(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->f[i],
+					p->bw, (unsigned int)(hand->f[i]-hand->fl[i]));
+			}
+		} else if (hand->f[i] < hand->fl[i]) {
+			XClearArea(xavaXDisplay, xavaXWindow,
+				(int)xoffset + i*(int)(p->bs+p->bw), (int)yoffset - hand->fl[i],
+				p->bw, (unsigned int)(hand->fl[i]-hand->f[i]), 0);
+		}
+	}
+
+	#ifdef STARS
+		speed = powf(kineticScore/(float)hand->bars, (float)1.0/(float)starsSens)*(float)starsVelocity;
+	#endif
 	return;
 }
 
@@ -555,33 +633,40 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	// make sure that all events are dead by this point
 	XSync(xavaXDisplay, 1);
 
-	#if defined(EGL)
-		EGLCleanup(&ESContext);
-	#elif defined(GL)
-		glXMakeCurrent(xavaXDisplay, 0, 0);
-		glXDestroyContext(xavaXDisplay, xavaGLXContext);
-		GLCleanup();
-	#endif
-
 	if(gradientBox != 0) { XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0; };
+
+	#ifdef STARS
+		free(stars);
+	#endif
 
 	XFreeGC(xavaXDisplay, xavaXGraphics);
 	XDestroyWindow(xavaXDisplay, xavaXWindow);
 	XFreeColormap(xavaXDisplay, xavaXColormap);
 	XCloseDisplay(xavaXDisplay);
+	free(xgrad);
 	free(monitorName);
 	return;
 }
 
 EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 	XAVACONFIG config = hand->default_config.config;
 
 	reloadOnDisplayConfigure = xavaConfigGetBool
 		(config, "x11", "reload_on_display_configure", 0);
+	rootWindowEnabled = xavaConfigGetBool
+		(config, "x11", "root_window", 0);
 	overrideRedirectEnabled = xavaConfigGetBool
 		(config, "x11", "override_redirect", 0);
 	monitorName = strdup(xavaConfigGetString
 		(config, "x11", "monitor_name", "none"));
+
+	// who knew that messing with some random properties breaks things
+	xavaWarnCondition(rootWindowEnabled&&overrideRedirectEnabled,
+			"'root_window' and 'override_redirect' don't work together!");
+
+	xavaBailCondition(rootWindowEnabled&&p->gradients,
+			"'root_window' and gradients don't work together!");
 
 	// Xquartz doesnt support ARGB windows
 	// Therefore transparency is impossible on macOS
@@ -589,10 +674,18 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 		p->transF = 0;
 	#endif
 
-	#if defined(EGL)
-		EGLShadersLoad(hand);
-	#elif defined(GL)
-		GLShadersLoad(hand);
+	// VSync doesnt work without OpenGL :(
+	p->vsync = 0;
+
+	#ifdef STARS
+		starsCount = xavaConfigGetInt(config,   "stars", "count", 100);
+		xavaBailCondition(starsCount < 1, "Stars do not work if their number is below 1");
+
+		starsSens = xavaConfigGetDouble(config, "stars", "sensitivity", 1.2);
+		xavaBailCondition(starsSens<=0.0, "Stars sensitivity needs to be above 0.0");
+
+		starsVelocity = 2.0*xavaConfigGetDouble(config, "stars", "velocity", 1.0);
+		xavaBailCondition(starsVelocity<=0.0, "Stars velocity needs to be above 0.0");
 	#endif
 }
 

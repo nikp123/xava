@@ -1,12 +1,12 @@
 #include <string.h>
 
-#include "../../shared.h"
+#include "../../../shared.h"
 
 #include "gen/wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "zwlr.h"
+#include "render.h"
 #include "main.h"
 #include "wl_output.h"
-#include "egl.h"
 
 static struct zwlr_layer_surface_v1 *xavaWLRLayerSurface;
 struct zwlr_layer_shell_v1 *xavaWLRLayerShell;
@@ -27,7 +27,8 @@ static void layer_surface_configure(void *data,
 		conf->w = width;
 		conf->h = height;
 
-		waylandEGLWindowResize(wd, width, height);
+		reallocSHM(wd);
+		wd->fbUnsafe = false;
 
 		pushXAVAEventStack(wd->events, XAVA_REDRAW);
 		pushXAVAEventStack(wd->events, XAVA_RESIZE);
@@ -140,4 +141,3 @@ void zwlr_cleanup(struct waydata *wd) {
 	zwlr_layer_surface_v1_destroy(xavaWLRLayerSurface);
 	zwlr_layer_shell_v1_destroy(xavaWLRLayerShell);
 }
-

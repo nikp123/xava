@@ -4,7 +4,7 @@
 #include <wayland-client.h>
 #include <stdint.h>
 
-#include "../../shared.h"
+#include "../../../shared.h"
 
 #include "main.h"
 

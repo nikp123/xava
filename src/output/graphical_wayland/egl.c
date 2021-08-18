@@ -14,7 +14,6 @@
 
 #include "egl.h"
 #include "main.h"
-#include "render.h"
 
 struct _escontext ESContext;
 
@@ -63,7 +62,7 @@ void waylandEGLApply(struct XAVA_HANDLE *xava) {
 
 void waylandEGLDraw(struct XAVA_HANDLE *xava) {
 	EGLDraw(xava);
-	eglSwapBuffers(ESContext.display, ESContext.surface); 
+	eglSwapBuffers(ESContext.display, ESContext.surface);
 }
 
 void waylandEGLDestroy(struct waydata *wd) {

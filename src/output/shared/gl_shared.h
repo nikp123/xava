@@ -9,7 +9,9 @@
 
 
 #if defined(GL)
-	#include <GL/glew.h>
+	#ifndef GL_ALREADY_DEFINED
+		#include <GL/glew.h>
+	#endif
 #elif defined(EGL)
 	#include <EGL/eglplatform.h>
 	#include <GLES2/gl2.h>

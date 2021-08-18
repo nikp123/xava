@@ -122,6 +122,15 @@ foreach(dir ${outputs})
 	include(${dir})
 endforeach()
 
+# Build unsupported output modules
+if(BUILD_LEGACY_OUTPUTS)
+	file(GLOB legacy_outputs "src/output/unsupported/*/build.cmake" )
+	foreach(dir ${legacy_outputs})
+		get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
+		include(${dir})
+	endforeach()
+endif()
+
 # Build input modules
 file(GLOB inputs "src/input/*/build.cmake" )
 foreach(dir ${inputs})

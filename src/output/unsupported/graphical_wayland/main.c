@@ -6,15 +6,15 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-#include "../graphical.h"
-#include "../../shared.h"
+#include "../../graphical.h"
+#include "../../../shared.h"
 
 #include "main.h"
+#include "render.h"
 #include "wl_output.h"
 #include "registry.h"
 #include "zwlr.h"
 #include "xdg.h"
-#include "egl.h"
 
 /* Globals */
 struct waydata wd;
@@ -30,6 +30,8 @@ static void wl_surface_frame_done(void *data, struct wl_callback *cb,
 
 	wl_callback_destroy(cb);
 
+	update_frame(wd);
+
 	// request update
 	cb = wl_surface_frame(wd->surface);
 
@@ -43,7 +45,7 @@ const struct wl_callback_listener wl_surface_frame_listener = {
 };
 
 EXP_FUNC void xavaOutputCleanup(void *v) {
-	waylandEGLDestroy(&wd);
+	closeSHM(&wd);
 
 	if(backgroundLayer) {
 		zwlr_cleanup(&wd);
@@ -72,6 +74,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	// TODO: Check failure states
 	wl_registry_add_listener(xavaWLRegistry, &xava_wl_registry_listener, &wd);
 	wl_display_roundtrip(wd.display);
+	xavaBailCondition(!wd.shm,        "Your compositor doesn't support wl_shm, failing...");
 	xavaBailCondition(!wd.compositor, "Your compositor doesn't support wl_compositor, failing...");
 	xavaBailCondition(!xavaXDGWMBase, "Your compositor doesn't support xdg_wm_base, failing...");
 
@@ -100,15 +103,35 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 	// process all of this, FINALLY
 	wl_surface_commit(wd.surface);
 
-	waylandEGLInit(&wd);
+	wd.shmfd = syscall(SYS_memfd_create, "buffer", 0);
+
+	wd.maxSize = 0;
+	wd.fbUnsafe = false;
+
+	reallocSHM(&wd);
+
+	// when using non-EGL wayland, the framerate is controlled by the wl_callbacks
+	struct wl_callback *cb = wl_surface_frame(wd.surface);
+	wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
+
 	return EXIT_SUCCESS;
 }
 
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
-	// noop
+	// GPUs are wasteful ;(
+	struct config_params *p = &hand->conf;
+
+	if(wd.fbUnsafe) return;
+
+	wd.fbUnsafe = true;
+	for(register int i=0; i<p->w*p->h; i++)
+		wd.fb[i] = bgcol;
+	wd.fbUnsafe = false;
 }
 
 EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
+
 	// TODO: Fullscreen support
 	//if(p->fullF) xdg_toplevel_set_fullscreen(xavaWLSurface, NULL);
 	//else        xdg_toplevel_unset_fullscreen(xavaWLSurface);
@@ -116,10 +139,11 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 	// process new size
 	wl_display_roundtrip(wd.display);
 
+	// handle colors
+	fgcol = wayland_color_blend(p->col, p->foreground_opacity*255);
+	bgcol = wayland_color_blend(p->bgcol, p->background_opacity*255);
+
 	xavaOutputClear(hand);
-
-	waylandEGLApply(hand);
-
 	return EXIT_SUCCESS;
 }
 
@@ -146,8 +170,42 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 
 // super optimized, because cpus are shit at graphics
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
-	waylandEGLDraw(hand);
+	struct config_params     *p    = &hand->conf;
+	if(wd.fbUnsafe) return;
 
+	wd.fbUnsafe = true;
+	for(int i = 0; i < hand->bars; i++) {
+		// get the properly aligned starting pointer
+		register uint32_t *fbDataPtr = &wd.fb[hand->rest+i*(p->bs+p->bw)];
+		register int bw = p->bw;
+
+		// beginning and end of bars, depends on the order
+		register int a = p->h - hand->f[i];
+		register int b = p->h - hand->fl[i];
+		register uint32_t brush = fgcol;
+		if(hand->f[i] < hand->fl[i]) {
+			brush = bgcol;
+			a^=b; b^=a; a^=b;
+		}
+
+		// Update damage only where necessary
+		wl_surface_damage_buffer(wd.surface, hand->rest+i*(p->bs+p->bw),
+				a, p->bw, b-a);
+
+		// advance the pointer by undrawn pixels amount
+		fbDataPtr+=a*p->w;
+
+		// loop through the rows of pixels
+		for(register int j = a; j < b; j++) {
+			for(register int k = 0; k < bw; k++) {
+				*fbDataPtr++ = brush;
+			}
+			fbDataPtr += (p->w-p->bw);
+		}
+	}
+	wd.fbUnsafe = false;
+
+	wl_display_roundtrip(wd.display);
 	wl_display_dispatch_pending(wd.display);
 }
 
@@ -159,8 +217,6 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 		(config, "wayland", "background_layer", 1);
 	monitorName = strdup(xavaConfigGetString
 		(config, "wayland", "monitor_name", "ignore"));
-
-	waylandEGLShadersLoad(hand);
 
 	// Vsync is implied, although system timers must be used
 	p->vsync = 0;
