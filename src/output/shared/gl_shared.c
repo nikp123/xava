@@ -48,6 +48,7 @@ static GLuint PRE_GRADIENTS;
 static GLuint PRE_TIME;
 static GLuint PRE_INTENSITY;
 
+static GLuint POST_BGCOL;
 static GLuint POST_POS;
 static GLuint POST_TEXCOORD;
 static GLuint POST_TEXTURE;
@@ -205,6 +206,7 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	POST_SHADOW_OFFSET = glGetUniformLocation(post.program, "shadow_offset");
 	POST_TIME          = glGetUniformLocation(post.program, "u_time");
 	POST_INTENSITY     = glGetUniformLocation(post.program, "intensity");
+	POST_BGCOL         = glGetUniformLocation(post.program, "bgcolor");
 
 	glUseProgram(pre.program);
 
@@ -346,17 +348,18 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 	glUniform4f(PRE_FGCOL, ARGB_R_32(fgcol)/255.0, ARGB_G_32(fgcol)/255.0,
 			ARGB_B_32(fgcol)/255.0, conf->foreground_opacity);
 
+	glUseProgram(post.program);
+
 	// set background clear color
 	uint32_t bgcol = conf->bgcol;
 	float bgcolF = conf->background_opacity/255.0;
-	glClearColor(ARGB_R_32(bgcol)*bgcolF, ARGB_G_32(bgcol)*bgcolF,
+	glUniform4f(POST_BGCOL, ARGB_R_32(bgcol)*bgcolF, ARGB_G_32(bgcol)*bgcolF,
 			ARGB_B_32(bgcol)*bgcolF, conf->background_opacity);
-
-	glUseProgram(post.program);
 
 	uint32_t shdw_col = conf->shdw_col;
 	glUniform4f(POST_SHADOW_COLOR, ARGB_R_32(shdw_col), ARGB_G_32(shdw_col),
 			ARGB_B_32(shdw_col), 1.0);
+
 
 	glUniform2f(POST_SHADOW_OFFSET,
 			((float)conf->shdw)/((float)xava->w)*-0.5,
@@ -408,7 +411,8 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	// update intensity
 	glUniform1f(PRE_INTENSITY, intensity);
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	// GL_COLOR_BUFFER_BIT | <- let the shaders handle this one
+	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	// pointers get reset after each glUseProgram(), that's why this is done
 	glVertexAttribPointer(PRE_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
