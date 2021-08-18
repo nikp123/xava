@@ -64,32 +64,32 @@ void calculate_inner_win_pos(struct XAVA_HANDLE *xava,
 		return;
 
 	if(!strcmp(conf->winA, "top")) {
-		xava->x = (xava->w-conf->w)/2;
-		xava->y = 0;
+		xava->x = (xava->w-conf->w)/2 + conf->wx;
+		xava->y = 0 + conf->wy;
 	} else if(!strcmp(conf->winA, "bottom")) {
-		xava->x = (xava->w-conf->w)/2;
-		xava->y = xava->h-conf->h-conf->shdw;
+		xava->x = (xava->w-conf->w)/2 + conf->wx;
+		xava->y = xava->h-conf->h-conf->shdw - conf->wy;
 	} else if(!strcmp(conf->winA, "top_left")) {
-		xava->x = 0;
-		xava->y = 0;
+		xava->x = 0 + conf->wx;
+		xava->y = 0 + conf->wy;
 	} else if(!strcmp(conf->winA, "top_right")) {
-		xava->x = xava->w-conf->w;
-		xava->y = 0;
+		xava->x = xava->w-conf->w - conf->wx;
+		xava->y = 0 + conf->wy;
 	} else if(!strcmp(conf->winA, "left")) {
-		xava->x = 0;
-		xava->y = (xava->h-conf->h-conf->shdw)/2;
+		xava->x = 0 + conf->wx;
+		xava->y = (xava->h-conf->h-conf->shdw)/2 + conf->wy;
 	} else if(!strcmp(conf->winA, "right")) {
-		xava->x = xava->w-conf->w;
-		xava->y = (xava->h-conf->h-conf->shdw)/2;
+		xava->x = xava->w-conf->w - conf->wx;
+		xava->y = (xava->h-conf->h-conf->shdw)/2 + conf->wy;
 	} else if(!strcmp(conf->winA, "bottom_left")) {
-		xava->x = 0;
-		xava->y = xava->h-conf->h-conf->shdw;
+		xava->x = 0 + conf->wx;
+		xava->y = xava->h-conf->h-conf->shdw - conf->wy;
 	} else if(!strcmp(conf->winA, "bottom_right")) {
-		xava->x = xava->w-conf->w;
-		xava->y = xava->h-conf->h-conf->shdw;
+		xava->x = xava->w-conf->w - conf->wx;
+		xava->y = xava->h-conf->h-conf->shdw - conf->wy;
 	} else if(!strcmp(conf->winA, "center")) {
-		xava->x = (xava->w-conf->w)/2;
-		xava->y = (xava->h-conf->h-conf->shdw)/2;
+		xava->x = (xava->w-conf->w)/2 + conf->wx;
+		xava->y = (xava->h-conf->h-conf->shdw)/2 + conf->wy;
 	}
 
 	xavaLog("Resized window to (w: %d, h: %d, x: %d, y: %d)",
