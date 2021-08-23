@@ -36,6 +36,8 @@ static void layer_surface_configure(void *data,
 
 	// Respond to compositor
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
+
+	update_frame(wd);
 }
 
 static void layer_surface_closed(void *data,
