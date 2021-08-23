@@ -23,7 +23,6 @@ static void layer_surface_configure(void *data,
 		uint32_t serial, uint32_t width, uint32_t height) {
 	struct waydata *wd = data;
 	struct XAVA_HANDLE *xava = wd->hand;
-	struct config_params *conf = &xava->conf;
 
 	if(width != 0 && height != 0) {
 		calculate_inner_win_pos(xava, width, height);
