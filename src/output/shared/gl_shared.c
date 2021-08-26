@@ -9,8 +9,10 @@
 
 // this is so that loading shaders is managable
 struct SGLprogram {
-	char *fragText, *vertText;
-	GLuint vert, frag;
+	struct shader {
+		char *path, *text;
+		GLuint handle;
+	} frag, vert;
 	GLuint program;
 } pre, post;
 
@@ -84,90 +86,93 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	MALLOC_SELF(a, 1);
 
 	char *preShaderPack, *postShaderPack;
-	char *preFragPath, *preVertPath;
-	char *postFragPath, *postVertPath;
-	RawData *preFrag, *preVert, *postFrag, *postVert;
 
 	preShaderPack  = xavaConfigGetString(config, "gl", "pre_shaderpack", "default");
 	postShaderPack = xavaConfigGetString(config, "gl", "post_shaderpack", "default");
 
 	resScale       = xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f);
 
+	RawData *file;
+	char *returned_path;
 	char *file_path = malloc(MAX_PATH);
 	strcpy(file_path, "gl/shaders/pre/");
 	strcat(file_path, preShaderPack);
 	strcat(file_path, "/fragment.glsl");
 	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", preShaderPack) ?
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
-			file_path, &preFragPath) == false,
+			file_path, &returned_path) == false,
 			"Failed to load pre-render fragment shader!");
-	a->filename = preFragPath;
+	pre.frag.path = strdup(returned_path);
+	a->filename = pre.frag.path;
 	a->id = 2;
 	a->ionotify = xava->ionotify;
 	a->xava_ionotify_func = ionotify_callback;
 	preFragWatch = xavaIONotifyAddWatch(a);
+	free(returned_path);
 
 	strcpy(file_path, "gl/shaders/pre/");
 	strcat(file_path, preShaderPack);
 	strcat(file_path, "/vertex.glsl");
 	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", preShaderPack) ?
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
-			file_path, &preVertPath) == false,
+			file_path, &returned_path) == false,
 			"Failed to load pre-render vertex shader!");
-	a->filename = preVertPath;
+	pre.vert.path = strdup(returned_path);
+	a->filename = pre.vert.path;
 	a->id = 3;
 	a->ionotify = xava->ionotify;
 	a->xava_ionotify_func = ionotify_callback;
 	preVertWatch = xavaIONotifyAddWatch(a);
+	free(returned_path);
 
 	strcpy(file_path, "gl/shaders/post/");
 	strcat(file_path, postShaderPack);
 	strcat(file_path, "/fragment.glsl");
 	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", postShaderPack) ?
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
-			file_path, &postFragPath) == false,
+			file_path, &returned_path) == false,
 			"Failed to load post-render fragment shader!");
-	a->filename = postFragPath;
+	post.frag.path = strdup(returned_path);
+	a->filename = post.frag.path;
 	a->id = 4;
 	a->ionotify = xava->ionotify;
 	a->xava_ionotify_func = ionotify_callback;
 	postFragWatch = xavaIONotifyAddWatch(a);
+	free(returned_path);
 
 	strcpy(file_path, "gl/shaders/post/");
 	strcat(file_path, postShaderPack);
 	strcat(file_path, "/vertex.glsl");
 	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", postShaderPack) ?
 			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
-			file_path, &postVertPath) == false,
+			file_path, &returned_path) == false,
 			"Failed to load post-render vertex shader!");
-	a->filename = postVertPath;
+	post.vert.path = strdup(returned_path);
+	a->filename = post.vert.path;
 	a->id = 5;
 	a->ionotify = xava->ionotify;
 	a->xava_ionotify_func = ionotify_callback;
 	postVertWatch = xavaIONotifyAddWatch(a);
+	free(returned_path);
+
+	file = xavaReadFile(pre.frag.path);
+	pre.frag.text = xavaDuplicateMemory(file->data, file->size);
+	xavaCloseFile(file);
+
+	file = xavaReadFile(pre.vert.path);
+	pre.vert.text = xavaDuplicateMemory(file->data, file->size);
+	xavaCloseFile(file);
+
+	file = xavaReadFile(post.frag.path);
+	post.frag.text = xavaDuplicateMemory(file->data, file->size);
+	xavaCloseFile(file);
+
+	file = xavaReadFile(post.vert.path);
+	post.vert.text = xavaDuplicateMemory(file->data, file->size);
+	xavaCloseFile(file);
 
 	free(file_path);
 	free(a);
-
-	preFrag = xavaReadFile(preFragPath);
-	free(preFragPath);
-	pre.fragText = xavaDuplicateMemory(preFrag->data, preFrag->size);
-	xavaCloseFile(preFrag);
-
-	preVert = xavaReadFile(preVertPath);
-	free(preVertPath);
-	pre.vertText = xavaDuplicateMemory(preVert->data, preVert->size);
-	xavaCloseFile(preVert);
-
-	postFrag = xavaReadFile(postFragPath);
-	free(postFragPath);
-	post.fragText = xavaDuplicateMemory(postFrag->data, postFrag->size);
-	xavaCloseFile(postFrag);
-
-	postVert = xavaReadFile(postVertPath);
-	free(postVertPath);
-	post.vertText = xavaDuplicateMemory(postVert->data, postVert->size);
-	xavaCloseFile(postVert);
 }
 
 
@@ -201,11 +206,11 @@ void SGLCreateProgram(struct SGLprogram *program) {
 	GLint status;
 
 	program->program = glCreateProgram();
-	program->frag = SGLShaderBuild(program->fragText, GL_FRAGMENT_SHADER);
-	program->vert = SGLShaderBuild(program->vertText, GL_VERTEX_SHADER);
+	program->frag.handle = SGLShaderBuild(program->frag.text, GL_FRAGMENT_SHADER);
+	program->vert.handle = SGLShaderBuild(program->vert.text, GL_VERTEX_SHADER);
 
-	glAttachShader(program->program, program->frag);
-	glAttachShader(program->program, program->vert);
+	glAttachShader(program->program, program->frag.handle);
+	glAttachShader(program->program, program->vert.handle);
 	glLinkProgram(program->program);
 
 	glGetProgramiv(program->program, GL_LINK_STATUS, &status);
@@ -215,10 +220,6 @@ void SGLCreateProgram(struct SGLprogram *program) {
 		glGetProgramInfoLog(program->program, 1000, &len, log);
 		xavaBail("Error: linking:\n%*s\n", len, log);
 	}
-
-	// this might move
-	free(program->fragText);
-	free(program->vertText);
 }
 
 void SGLInit(struct XAVA_HANDLE *xava) {
@@ -526,8 +527,12 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 }
 
 void SGLDestroyProgram(struct SGLprogram *program) {
-	glDeleteShader(program->frag);
-	glDeleteShader(program->vert);
+	glDeleteShader(program->frag.handle);
+	free(program->frag.path);
+	free(program->frag.text);
+	glDeleteShader(program->vert.handle);
+	free(program->vert.path);
+	free(program->vert.text);
 	glDeleteProgram(program->program);
 }
 
