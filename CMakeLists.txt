@@ -152,6 +152,7 @@ add_executable(
 target_link_libraries(xava xava-shared m pthread)
 
 # Generate proper license file
+file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/final-LICENSE.txt")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(RENAME "${CMAKE_CURRENT_BINARY_DIR}/LICENSE" "${CMAKE_CURRENT_BINARY_DIR}/final-LICENSE.txt")
 
