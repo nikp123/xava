@@ -1,8 +1,6 @@
 X.A.V.A.
 ====================
 
-[![Build Status](https://travis-ci.org/nikp123/xava.svg?branch=master)](https://travis-ci.org/nikp123/xava)
-
 **X**11 **A**udio **V**isualizer for **A**LSA
 
 also supports audio input from WASAPI (Windows), PortAudio, Pulseaudio, SHMEM, FIFO (MPD) and sndio.
@@ -402,7 +400,7 @@ You'll need to change this for the configuration changes to be effective.
 To change the amplitude of certain frequencies, XAVA features an equalizer
 in the ``eq`` section of the config file to do so.
 
-The equalizer works by setting an amplitude value to a incremental 
+The equalizer works by setting an amplitude value to a incremental
 which refers to the part of the frequency spectrum.
 
 **Examples on how the equalizer works:**
@@ -417,7 +415,7 @@ which refers to the part of the frequency spectrum.
 ![3_138](https://cloud.githubusercontent.com/assets/6376571/8670183/a54a851e-29e8-11e5-9eff-346bf6ed91e0.png)
 
 In this example the frequency spectrum is divided in 5 parts. 
-You may be able to see that the 1st, 3rd and 5th parts have been totally disabled and 
+You may be able to see that the 1st, 3rd and 5th parts have been totally disabled and
 you can see the result of it on the screenshot above.
 
     [eq]
@@ -435,7 +433,7 @@ have been amplified while 5 is being lowered.
 ### Output modes
 
 XAVA supports outputing as `x11`, `glx`, `wayland`, `sdl2` and `win`. You can change the output
-mode in the ``[general]`` section of the config file, provided that the 
+mode in the ``[general]`` section of the config file, provided that the
 feature was actaully built in.
 
 ### Basic window options
@@ -469,7 +467,7 @@ In addition to window aligment you can adjust the window position further with:
 
 ### Advanced window options
 
-The following features enable options that come with recent OSes 
+The following features enable options that come with recent OSes
 and may introduce problems on older software/hardware (fxp. Windows XP),
  but in return they may look really nice if you configure them properly.
 
@@ -490,8 +488,8 @@ Set window properties:
 
 	set_win_props = 1
 
-This changes the X11 window type so that the compositor doesn't 
-apply shadows and blur onto the window. However, this is not 
+This changes the X11 window type so that the compositor doesn't
+apply shadows and blur onto the window. However, this is not
 guaranteed to work, plus additional breakage may occur. 
 
 Make the window not react on mouse input (it just lets the click
@@ -560,7 +558,7 @@ But if you want to have gradients on the bars instead of
 
 ### Shadow
 
-XAVA can render shadows around the bars so to make the 
+XAVA can render shadows around the bars so to make the
 visualizer look like it's floating on your desktop.
 In the ``shadow`` section you'll find these two options:
 
@@ -569,21 +567,21 @@ In the ``shadow`` section you'll find these two options:
 
 You need to enable OpenGL for the shadows to work.
 
-NOTE: These are still buggy as Windows rasterizes polygons 
+NOTE: These are still buggy as Windows rasterizes polygons
 differently to other OS-es.
 
 ### Accent colors
 
 This is enabled by default.
 
-Setting foreground or background color to `default` will 
+Setting foreground or background color to `default` will
 make XAVA attempt to color itself after the OS theme.
 But on X11 it will try to read your terminal colorscheme.
 
 ### Autostart
 
 On Windows create a shortcut of the ``xava.exe`` 
-(which is in the install directory) and copy it to 
+(which is in the install directory) and copy it to
 ``C:\Users\you\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\``
 
 On Linux/BSD (or any X11 compatible OS) just copy the
@@ -593,7 +591,7 @@ Unless you're on a tiling WM, in which case why are you
 
 ### Additional options
 
-XAVA still has plenty to offer, just look up all of 
+XAVA still has plenty to offer, just look up all of
 the options in the config file.
 
 Contribution
