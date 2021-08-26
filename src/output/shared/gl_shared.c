@@ -176,40 +176,65 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 }
 
 
-GLint SGLShaderBuild(const char *source, const char *path, GLenum shader_type) {
-	GLint shader;
+GLint SGLShaderBuild(struct shader *shader, GLenum shader_type) {
 	GLint status;
 
-	shader = glCreateShader(shader_type);
-	xavaBailCondition(shader == 0, "Failed to build shader");
+	shader->handle = glCreateShader(shader_type);
+	xavaReturnErrorCondition(shader->handle == 0, 0, "Failed to build shader");
 
-	glShaderSource(shader, 1, (const char **) &source, NULL);
-	glCompileShader(shader);
+	glShaderSource(shader->handle, 1, (const char **) &shader->text, NULL);
+	glCompileShader(shader->handle);
 
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	glGetShaderiv(shader->handle, GL_COMPILE_STATUS, &status);
 	if (!status) {
-		char log[1000];
+		char log[1000] = {0};
 		GLsizei len;
-		glGetShaderInfoLog(shader, 1000, &len, log);
-		xavaBail("Error: Compiling shader failed %*s\n"
-				"Offending file path: %s",
-				len, log, path);
+		glGetShaderInfoLog(shader->handle, 1000, &len, log);
+
+		bool unknown_type = false;
+		int file, line, char_num;
+		size_t matched_elements = sscanf(log, "%d:%d(%d)",
+				&file, &line, &char_num);
+		if(matched_elements < 3) {
+			size_t matched_elements = sscanf(log, "%d(%d)",
+					&line, &char_num);
+			if(matched_elements < 2)
+				unknown_type = true;
+		}
+
+		if(unknown_type) {
+			xavaError("Error: Compiling '%s' failed\n%*s",
+					shader->path, len, log);
+		} else {
+			char *source_line;
+			char *string_ptr = shader->text;
+			for(int i=0; i < line-1; i++) {
+				string_ptr = strchr(string_ptr, '\n');
+				string_ptr++;
+			}
+			source_line = strdup(string_ptr);
+			*strchr(source_line, '\n') = '\0';
+
+			xavaError("Error: Compiling '%s' failed\n%.*sCode:\n% 4d: %.*s",
+					shader->path, len, log, line, 256, source_line);
+
+			free(source_line);
+		}
+
+		return status;
 	}
 
-	xavaSpam("Compiling %s shader successful\n"
-			"File path: %s",
-			shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment",
-			path);
+	xavaSpam("Compiling '%s' successful", shader->path);
 
-	return shader;
+	return status;
 }
 
 void SGLCreateProgram(struct SGLprogram *program) {
 	GLint status;
 
 	program->program = glCreateProgram();
-	program->frag.handle = SGLShaderBuild(program->frag.text, program->frag.path, GL_FRAGMENT_SHADER);
-	program->vert.handle = SGLShaderBuild(program->vert.text, program->vert.path, GL_VERTEX_SHADER);
+	SGLShaderBuild(&program->frag, GL_FRAGMENT_SHADER);
+	SGLShaderBuild(&program->vert, GL_VERTEX_SHADER);
 
 	glAttachShader(program->program, program->frag.handle);
 	glAttachShader(program->program, program->vert.handle);
