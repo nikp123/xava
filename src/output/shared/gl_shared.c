@@ -176,7 +176,7 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 }
 
 
-GLint SGLShaderBuild(const char *source, GLenum shader_type) {
+GLint SGLShaderBuild(const char *source, const char *path, GLenum shader_type) {
 	GLint shader;
 	GLint status;
 
@@ -191,13 +191,15 @@ GLint SGLShaderBuild(const char *source, GLenum shader_type) {
 		char log[1000];
 		GLsizei len;
 		glGetShaderInfoLog(shader, 1000, &len, log);
-		xavaBail("Error: compiling %s: %*s\n",
-				shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment",
-				len, log);
+		xavaBail("Error: Compiling shader failed %*s\n"
+				"Offending file path: %s",
+				len, log, path);
 	}
 
-	xavaSpam("Compiling %s shader successful",
-			shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment");
+	xavaSpam("Compiling %s shader successful\n"
+			"File path: %s",
+			shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment",
+			path);
 
 	return shader;
 }
@@ -206,8 +208,8 @@ void SGLCreateProgram(struct SGLprogram *program) {
 	GLint status;
 
 	program->program = glCreateProgram();
-	program->frag.handle = SGLShaderBuild(program->frag.text, GL_FRAGMENT_SHADER);
-	program->vert.handle = SGLShaderBuild(program->vert.text, GL_VERTEX_SHADER);
+	program->frag.handle = SGLShaderBuild(program->frag.text, program->frag.path, GL_FRAGMENT_SHADER);
+	program->vert.handle = SGLShaderBuild(program->vert.text, program->vert.path, GL_VERTEX_SHADER);
 
 	glAttachShader(program->program, program->frag.handle);
 	glAttachShader(program->program, program->vert.handle);
