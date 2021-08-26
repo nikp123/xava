@@ -159,9 +159,9 @@ There should be an installer in the Releases page of this repository.
  
 Alternatively, you can download the latest "unstable" release from:
 
-[Here for 32-bit x86 Windows](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-installer-i686.exe)
+[Here for 32-bit x86 Windows](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-installer-i686.exe.zip)
 
-[Here for 64-bit x86 Windows](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-installer-x86_64.exe)
+[Here for 64-bit x86 Windows](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-installer-x86_64.exe.zip)
 
 The configuration file is located in ``%appdata%\xava\config.cfg``
 
