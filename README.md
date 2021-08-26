@@ -1,6 +1,8 @@
 X.A.V.A.
 ====================
 
+[![Build](https://github.com/nikp123/xava/actions/workflows/build.yaml/badge.svg)](https://github.com/nikp123/xava/actions/workflows/build.yaml)
+
 **X**11 **A**udio **V**isualizer for **A**LSA
 
 also supports audio input from WASAPI (Windows), PortAudio, Pulseaudio, SHMEM, FIFO (MPD) and sndio.
@@ -154,6 +156,12 @@ XAVA is available in the Void repos:
 There should be an installer in the Releases page of this repository.
  Just download, install and run it. Non-release builds are unstable,
  so expect breakage.
+ 
+Alternatively, you can download the latest "unstable" release from:
+
+[Here for 32-bit x86 Windows](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-installer-i686.exe)
+
+[Here for 64-bit x86 Windows](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-installer-x86_64.exe)
 
 The configuration file is located in ``%appdata%\xava\config.cfg``
 
