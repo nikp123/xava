@@ -81,7 +81,7 @@ jobs:
     - name: Uploading artifact
       uses: actions/upload-artifact@v2
       with:
-        name: Latest Windows ${{ matrix.arch }} build
+        name: xava-unstable-installer-${{matrix.arch}}.exe
         path: release/xava-win-installer-${{matrix.arch}}.exe
 
   build-cmake:
