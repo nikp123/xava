@@ -1,0 +1,131 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - sys: mingw32
+            arch: i686
+            icon: '⬛'
+            cmake-args: -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr
+            build-args: '--parallel'
+            env:
+              CFLAGS: -Wdeclaration-after-statement -Werror
+              CXXFLAGS: -Werror
+          - sys: mingw64
+            arch: x86_64
+            icon: '🟦'
+            cmake-args: -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr
+            build-args: --parallel
+            env:
+              CFLAGS: -Wdeclaration-after-statement -Werror
+              CXXFLAGS: -Werror
+
+    name: 🚧${{ matrix.icon }} ${{ matrix.sys }} (${{ matrix.arch }})
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: '${{ matrix.icon }} Prepare MSYS2'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{matrix.sys}}
+        update: true
+        install: >-
+          git
+          make
+          mingw-w64-${{matrix.arch}}-gcc
+          mingw-w64-${{matrix.arch}}-cmake
+          mingw-w64-${{matrix.arch}}-fftw
+          mingw-w64-${{matrix.arch}}-glew
+          mingw-w64-${{matrix.arch}}-nsis
+
+    - name: Build in debug mode
+      env: ${{ matrix.env }}
+      shell: msys2 {0}
+      run: |
+        mkdir debug
+        cd debug
+        ${{ matrix.cmake-path }}cmake --version
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Debug -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake --build . --config Debug ${{ matrix.build-args }}
+
+    - name: Build in release mode
+      env: ${{ matrix.env }}
+      shell: msys2 {0}
+      run: |
+        mkdir release
+        cd release
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake --build . --config Release ${{ matrix.build-args }}
+
+    - name: Building Windows installer
+      env: ${{ matrix.env }}
+      shell: msys2 {0}
+      run: |
+        cd release
+        cp /${{ matrix.sys }}/bin/libwinpthread-1.dll .
+        makensis xava.nsi
+        mv xava-win-installer.exe xava-win-installer-${{matrix.arch}}.exe
+
+    - name: Uploading artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: Latest Windows ${{ matrix.arch }} build
+        path: release/xava-win-installer-${{matrix.arch}}.exe
+
+  build-cmake:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        include:
+        - os: ubuntu-latest
+          sys: ubuntu
+          arch: x86_64
+          icon: '🟦'
+          cmake-args: -G "Unix Makefiles" -DBUILD_LEGACY_OUTPUTS:BOOL=ON -DCMAKE_INSTALL_PREFIX=/usr
+          build-args: --parallel
+          env:
+            CFLAGS: -Wdeclaration-after-statement -Werror
+            CXXFLAGS: -Werror
+
+    name: 🚧${{ matrix.icon }} ${{ matrix.sys }} (${{ matrix.arch }})
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Prepare Linux
+      if: contains(matrix.os, 'ubuntu')
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install pkg-config cmake libfftw3-dev portaudio19-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libglew-dev libportaudio2 wayland-protocols libpipewire-0.2-dev -y
+
+    - name: Build in debug mode
+      env: ${{ matrix.env }}
+      run: |
+        mkdir debug
+        cd debug
+        ${{ matrix.cmake-path }}cmake --version
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Debug -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake --build . --config Debug ${{ matrix.build-args }}
+
+    - name: Build in release mode
+      env: ${{ matrix.env }}
+      run: |
+        mkdir release
+        cd release
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake --build . --config Release ${{ matrix.build-args }}
+
