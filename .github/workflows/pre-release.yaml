@@ -53,7 +53,9 @@ jobs:
 
       - name: Read version file
         id: vars
-        run: echo ::set-output name=version::$(cat version.txt/version.txt)
+        run: |
+          cat version.txt/version.txt
+          echo "::set-output name=version::$(cat version.txt/version.txt)"
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
