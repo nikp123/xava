@@ -322,7 +322,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 		case XAVA_FILE_TYPE_CONFIG:
 		{
 			// don't be surprised if you find a lot of bugs here, beware!
-			FILE *fp = fopen((*actualPath), "r"), *fn;
+			FILE *fp = fopen((*actualPath), "rb"), *fn;
 			if (!fp) {
 				xavaWarn("File '%s' does not exist! Trying to make a new one...", (*actualPath));
 
@@ -348,8 +348,8 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 				free(defaultConfigFileName);
 
 				// try to save the default file
-				fp = fopen((*actualPath), "w");
-				fn = fopen(found, "r"); // don't bother checking, it'll succeed anyway
+				fp = fopen((*actualPath), "wb");
+				fn = fopen(found, "rb"); // don't bother checking, it'll succeed anyway
 
 				xavaMkdir((*actualPath));
 
@@ -405,7 +405,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 		{
 			FILE *fp;
 			if(writeCheck) {
-				fp = fopen((*actualPath), "a");
+				fp = fopen((*actualPath), "ab");
 				if(fp == NULL) {
 					xavaError("Could not open '%s' for writing!", (*actualPath));
 					switch(type) {
@@ -419,7 +419,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 					return false;
 				}
 			} else {
-				fp = fopen((*actualPath), "r");
+				fp = fopen((*actualPath), "rb");
 				if(fp == NULL) {
 					xavaError("Could not open '%s' for reading!", (*actualPath));
 					switch(type) {
