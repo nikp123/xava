@@ -52,15 +52,15 @@ jobs:
           for i in "i686" "x86_64"; do mv xava-unstable-installer-$i.exe/xava-win-installer-$i.exe xava-win-installer-$i.exe; done
 
       - name: Read version file
-        id: vars
         run: |
           cat version.txt/version.txt
-          echo "::set-output name=version::$(cat version.txt/version.txt)"
+          VER=$(cat version.txt/version.txt)
+          echo "VERSION=$VER" >> $GITHUB_ENV
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GH_ACCESS_TOKEN }}"
-          automatic_release_tag: ${ steps.vars.outputs.version }
+          automatic_release_tag: ${{ env.VERSION }}
           prerelease: true
           title: "Development Build"
           files: |
