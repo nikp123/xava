@@ -12,6 +12,11 @@ if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/.git)
 	message(FATAL_ERROR "XAVA from 0.7.0 onwards requires to be built in a .git directory")
 endif()
 
+# Correct CMAKE_INSTALL_PREFIX so that distros don't break
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Default installation path" FORCE)
+endif()
+
 # Fix pkg-config for cross-builds (such as MinGW on ArchLinux)
 if(CMAKE_FIND_ROOT_PATH)
 	set(CMAKE_SYSROOT "${CMAKE_FIND_ROOT_PATH}")
