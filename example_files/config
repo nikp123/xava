@@ -7,10 +7,12 @@
 ; framerate = 60
 
 # Keep the application in sync with the monitor to prevent tearing
-# It's generally recommended to keep it on, as different framerates may lead to unstable frametimes
+# It's generally recommended to keep it on, as different framerates may lead to
+# unstable frametimes and a weird looking visualizer
 # -1 = adaptive Vsync (G-Sync. FreeSync, etc.)
 # 0 = off
-# 1 up to refresh rate = refresh at the refresh rate of the monitor divided by the number given
+# 1 up to screen refresh rate = visualizer runs at refresh rate divided by this
+# number
 ; vsync = 1
 
 # The number of bars. 0 sets it to auto (put as many as you can).
@@ -22,7 +24,7 @@
 
 [window]
 
-# Window width and height
+# Window width and height (in pixels)
 ; width = 1180
 ; height = 300
 
@@ -39,13 +41,14 @@
 ; keep_below = true
 
 # This option aligns the window with a certain part of the screen
+# Or if 'hold_size' is enabled, it also aligns the viewport using this rule
 # The following positions are supported:
 # top_left, top, top_right, left, center, right, bottom_left,
 # bottom, bottom_right and none if you don't want manual positioning
 ; alignment = 'none'
 
 # Additionally we can further adjust the position if needed (in pixels)
-# It moves the window the opposite direction of whats in alignment
+# It moves the window (or viewport) the opposite direction of whats in alignment
 # FXP. if alignment is set to right and x_padding is 20,
 # it will move the window left 20 pixels and so on for every direction
 ; x_padding = 0
@@ -57,13 +60,18 @@
 # Create an taskbar icon
 ; taskbar_icon = true
 
-# Do or don't hold specified size when resizing
+# Do or don't hold on to an viewport size specified by width and height
+#
+# In Layman's terms: The visualizer holds the same size as you're resizing the
+# window
+#
+# NOTE: Works only on "supported" modes, aka non-software modes
 ; hold_size = false
 
 
 [x11]
 
-# Hacks and options related to X11 and GLX output modes
+# Hacks and options related to X11 output modes
 
 # Draw directly on the root window (or wallpaper) itself
 # You need to stop any form of compositing for this to even work properly
@@ -127,7 +135,7 @@
 
 [gl]
 
-# Hacks and options related to the '*_gl' and '*_egl' output modes
+# Hacks and options related to the hardware-accelerated or "supported" modes
 
 # XAVA's OpenGL and EGL renderers are split into two rendering pipelines:
 # the "pre" and "post" rendering, that's why there are two shaders
@@ -154,21 +162,29 @@
 [input]
 
 # Audio capturing method. Possible methods are the ones listed below.
-# If one doesn't work, it might not be supported by your system or it just wasn't compiled with it.
+# If one doesn't work, it might not be supported by your system or it just
+# wasn't compiled with it.
 #
-# All input methods uses the same config variable 'source'
-# to define where it should get the audio.
+# All input methods uses the same config variable 'source' to define where it
+# should get the audio.
 #
-# For pulseaudio 'source' will be the source. Default: 'auto', which uses the monitor source of the default sink
-# (all pulseaudio sinks(outputs) have 'monitor' sources(inputs) associated with them).
+# For pulseaudio 'source' will be the source. Default: 'auto', which uses the
+# monitor source of the default sink (all pulseaudio sinks(outputs) have
+# 'monitor' sources(inputs) associated with them).
 #
 # For alsa, wasapi and portaudio 'source' will be the capture device.
+#
 # For fifo 'source' will be the path to fifo-file.
 #
-# In case of wasapi, specify 'loopback' to capture audio from the system or anything else
-# to capture from an input device, such as a microphone
+# For wasapi 'source', specify 'loopback' to capture audio from the system or
+# anything else to capture from an input device, such as a microphone.
 #
-# You can also specify 'list' as the source to portaudio to list all available audio devices
+# For pipewire, the 'source' parameter is ignored and instead the visualizer is
+# supposed to be configured using an external tool, such as 'pavucontrol' (works
+# on PipeWire too, trust me).
+#
+# You can also specify 'list' as the source to portaudio to list all available
+# audio devices
 ; method = pulseaudio
 ; source = auto
 
@@ -190,47 +206,55 @@
 ; method = wasapi
 ; source = loopback
 
+; method = pipewire
+; source = default
+
 # Adjusts the input buffer size (in samples, calculated by 2^input_size)
 ; size = 12
 
 
 [output]
 
-# Output method. Can be any of the following (if supported):
-# By default it's the window that is recommended for your platform/OS.
-# 'sdl' is for a graphical window using SDL2
-# 'x11' is for a X11 window
-# 'glx' is for a X11 window using OpenGL
-# 'win' is for a WIN32 window using OpenGL
-# 'wayland' is for a Wayland surface (ZWLR or XDG)
+# Output method. Can be any of the following (if enabled):
+# Renderers are split into two categories 'supported' (aka. supports OpenGL and
+# all features) and 'un-supported' (aka. custom software renderer some or many
+# features)
+#
+# Supported renderers are: 'sdl2', 'x11', 'win', 'wayland', 'x11_egl'
+# "Un-supported" renderers (*_sw denotes software rendering) are: 'sdl2_sw',
+# 'wayland_sw', 'x11_sw', 'x11_sw_stars', 'ncurses'
 ; method = x11
 
 # Visual channels. Can be 'stereo' or 'mono'.
 # 'stereo' mirrors both channels with low frequencies in center.
-# 'mono' averages both channels and outputs left to right lowest to highest frequencies.
+# 'mono' averages both channels and outputs left to right lowest to highest
+# frequencies.
 ; channels = mono
 
 
 [color]
 
-# Colors can be one of seven predefined: black, blue, cyan, green, magenta, red, white, yellow.
-# Or defined by hex code '#xxxxxx' (hex code must be within '').
-# It can also be 'default' at which point under X11 it reads the color off of Xrdb
-# Under Windows it uses your system accent color
-# And on SDL2 it's just black and cyan (default colorscheme)
+# Colors can be one of seven predefined: black, blue, cyan, green, magenta, red,
+# white, yellow. Or defined by hex code '#xxxxxx' (hex code must be within '').
+#
+# Platform specifics:
+#  - It can also be 'default' at which point under X11 it reads the color off of
+#  Xrdb
+#  - Under Windows 'default' uses your system accent color
+#  - And on any other 'default' is just black and cyan (the default colorscheme)
 ; background = default
 ; foreground = default
 
-# This adjusts the opacity of the bars (must have transparency and OpenGL in order for it to work)
+# This adjusts the opacity of the bars (must have transparency for it to work)
 ; foreground_opacity = 1.0
 
-# And this does the same but for the background (previous rule applies here as well)
+# And this does the same but for the background (under the same condition as above)
 ; background_opacity = 0.0
 
-# Gradient mode, only hex defined colors are supported, background must also be defined in hex
-# or remain commented out.
-# To enable gradients, just change gradient_count to the number of colors you have specified
-# (0 = disabled)
+# Gradient mode, only hex defined colors are supported, background must also be
+# defined in hex or remain commented out.
+# To enable gradients, just change gradient_count to the number of colors you
+# have specified (0 = disabled)
 ; gradient_count = 0
 ; gradient_color_1 = '#0099ff'
 ; gradient_color_2 = '#ff3399'
@@ -238,7 +262,7 @@
 
 [shadow]
 
-# Fake shadow effect (works with transparency only)
+# Fake shadow effect (woks with supported modes only)
 # To disable shadows, set size to 0
 ; size = 7
 
@@ -249,7 +273,7 @@
 [stars]
 
 # For stars to work, you need a speical output mode that supports it
-# One such mode is "x11_stars"
+# One such mode is "x11_sw_stars"
 
 # Controls the number of stars on screen
 ; count = 100
