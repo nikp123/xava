@@ -29,10 +29,12 @@ void main() {
 
 	// test if infinite
 	if(depth.r == 1.0) {
+		vec4 bg = mix(vec4(0.0, 0.0, 0.0, 0.0), bgcolor, 1.0-intensity);
+
 		float depth = 1.0 - blur5(s_depth, shadow_offset+v_texCoord, vec2(2.0, 2.0), shadow_offset).r;
 		depth *= 1.6; // strenghten shadows
-		vec4 color = mix(bgcolor, shadow_color, depth);
-		gl_FragColor = mix(color, vec4(0.0, 0.0, 0.0, 1.0), intensity);
+
+		gl_FragColor = mix(bg, shadow_color, depth);
 	} else {
 		gl_FragColor = texture2D(s_texture, v_texCoord);
 	}
