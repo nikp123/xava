@@ -7,29 +7,37 @@ X.A.V.A.
 
 also supports audio input from WASAPI (Windows), PortAudio, Pulseaudio, SHMEM, FIFO (MPD) and sndio.
 
+[![Demo video](https://i.imgur.com/9fvqV2N.png)](http://www.youtube.com/watch?v=OkYrHAqu3fc)
+
 a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://github.com/karlstav/cava) by [Nikola Pavlica](mailto:pavlica.nikola@gmail.com)
 
 - [What it is](#what-it-is)
-- [Build requirements](#build-requirements)
 - [Getting started](#getting-started)
-  - [Installing manually](#installing-manually)
-  - [Uninstalling](#uninstalling)
-  - [Arch](#arch)
   - [Windows](#windows)
   - [macOS](#macos)
-- [Capturing audio](#capturing-audio)
-  - [From WASAPI (Windows)](#from-wasapi-windows-only-super-easy)
-  - [From Pulseaudio monitor source](#from-pulseaudio-monitor-source-easy-as-well-unsupported-on-macos-and-windows)
-  - [From PortAudio](#from-portaudio)
-  - [From ALSA-loopback device (Tricky)](#from-alsa-loopback-device-tricky-unsupported-on-macos-and-windows)
-  - [From mpd's fifo output](#from-mpds-fifo-output)
-  - [sndio](#sndio)
-  - [squeezelite](#squeezelite)
-- [Latency notes](#latency-notes)
+  - [Linux](#linux)
+    - [Arch](#arch)
+    - [Void](#void)
+  - [Installing manually](#installing-manually)
+    - [Build requirements](#build-requirements)
+    - [Compilation](#compilation)
+    - [Uninstalling](#uninstalling)
 - [Usage](#usage)
   - [Controls](#controls)
+- [Troubleshooting](#troubleshooting)
+  - [Latency notes](#latency-notes)
+  - [The visualizer isn't opening](#the-visualizer-isn-t-opening)
+  - [The visualizer does nothing](#the-visualizer-does-nothing)
 - [Configuration](#configuration)
   - [Equalizer](#equalizer)
+  - [Capturing audio](#capturing-audio)
+    - [From WASAPI (Windows)](#from-wasapi-windows-only-super-easy)
+    - [From Pulseaudio monitor source](#from-pulseaudio-monitor-source-easy-as-well-unsupported-on-macos-and-windows)
+    - [From PortAudio](#from-portaudio)
+    - [From ALSA-loopback device (Tricky)](#from-alsa-loopback-device-tricky-unsupported-on-macos-and-windows)
+    - [From mpd's fifo output](#from-mpds-fifo-output)
+    - [sndio](#sndio)
+    - [squeezelite](#squeezelite)
   - [Output modes](#output-modes)
   - [Basic window options](#basic-window-options)
   - [Window position](#window-position)
@@ -44,112 +52,19 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Additional options](#additional-options)
 - [Contribution](#contribution)
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 
 What it is
 ----------
 
 X.A.V.A. is a bar spectrum audio visualizer in a graphical window
- (X11, Wayland (wlroots), WINAPI, SDL2).
+ (X11, Wayland (wlroots and xdg shell), Windows, SDL2).
 
 This program is not intended for scientific use. It's written
  to look responsive and aesthetic when used to visualize music. 
 
 
-Build requirements
-------------------
-* [FFTW](http://www.fftw.org/)
-* [Xlib/X11 dev files](http://x.org/)
-* [SDL2 dev files](https://libsdl.org/)
-* [ALSA dev files](http://alsa-project.org/)
-* [Pulseaudio dev files](http://freedesktop.org/software/pulseaudio/doxygen/)
-* [Portaudio dev files](http://www.portaudio.com/)
-
-Only FFTW is actually required for XAVA to compile.
-
-All the requirements can be installed easily in all major distros:
-
-Debian/Raspbian:
-
-    apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake git wayland-protocols
-
-On Ubuntu 20.04+:
-
-    apt-get install libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio2 cmake git wayland-protocols
-
-Meanwhile on previous Ubuntu releases swap ``libportaudio2`` with ``libportaudio-dev``
-
-ArchLinux:
-
-    pacman -S base-devel fftw alsa-lib iniparser pulseaudio libx11 sdl2 portaudio cmake git wayland-protocols
-
-openSUSE:
-
-    zypper install alsa-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake git wayland-protocols
-
-Fedora:
-
-    dnf install alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake git wayland-protocols
-
-MSYS2 (Windows):
-
-    pacman -S mingw-w64-i686-gcc mingw-w64-i686-fftw mingw-w64-i686-SDL2 mingw-w64-i686-portaudio cmake git pkg-config
-
-Brew (macOS):
-
-    brew install portaudio fftw cmake gcc git pkg-config sdl2
-
-Iniparser is also required, but if it is not already installed,
- it will clone the [repository](https://github.com/ndevilla/iniparser).
-
-For compilation you will also need `g++` or `clang++`, `make`,
- `cmake` and `git`.
-
-
 Getting started
 ---------------
-
-    export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/lib" (macOS only)
-    mkdir build (if it doesn't already exist)
-    cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Release ( or Debug if you're that type ;) )
-    make -j$(nproc) (or whatever number)
-
-### Installing manually
-
-Windows users, just download the installer from the Releases page
- on this repository.
-
-Install `xava` to default `/usr/local`:
-
-    sudo make install
-
-Or you can change `PREFIX`, for example:
-
-    cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/usr
-
-If you're building from source, please don't delete the build files
- as you won't be able to uninstall xava if you do (CMake limitation).
-
-NOTE: For MSYS2, you MUST also add ``-G"Unix Makefiles"``
-
-### Uninstalling
-
-    cd $where_is_xava_located/build
-    xargs rm < install_manifest.txt
-
-### Arch
-
-XAVA is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
-
-    pacaur -S xava-git
-
-### VoidLinux
-
-XAVA is available in the Void repos:
-
-    xbps-install xava
 
 ### Windows
 
@@ -188,30 +103,256 @@ source = "Background Music"
 And now, within "Background Music" change the audio source of
  XAVA to the speaker output that you want recorded.
 
-You are free to use either ``x11`` or ``sdl2`` as the output methods.
+You are free to use either ``ncurses``, ``x11_sw`` or ``sdl2_sw`` as the output
+methods.
+
+### Linux
+
+#### Arch
+
+XAVA is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
+
+    pacaur -S xava-git
+
+#### Void
+
+XAVA is available in the Void repos:
+
+    xbps-install xava
+
+
+### Installing manually
+
+#### Build requirements
+
+Only FFTW is actually required for XAVA to compile. However, other features may
+or may not depend on other dependencies. As such, they have to be installed in
+order for those same features to be enabled.
+
+The following represents installing dependencies for all possible features on
+major Linux distributions or package managers:
+
+Debian/Raspbian:
+
+    apt-get install make libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake git wayland-protocols
+
+On Ubuntu 20.04+:
+
+    apt-get install make libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio2 cmake git wayland-protocols
+
+Meanwhile on previous Ubuntu releases swap ``libportaudio2`` with ``libportaudio-dev``
+
+ArchLinux:
+
+    pacman -S make base-devel fftw alsa-lib pulseaudio libx11 sdl2 portaudio cmake git wayland-protocols
+
+openSUSE:
+
+    zypper install make alsa-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake git wayland-protocols
+
+Fedora:
+
+    dnf install make alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake git wayland-protocols
+
+MSYS2 (Windows):
+
+    pacman -S make mingw-w64-i686-gcc mingw-w64-i686-fftw mingw-w64-i686-SDL2 mingw-w64-i686-portaudio cmake git pkg-config
+
+Brew (macOS):
+
+    brew install make portaudio fftw cmake gcc git pkg-config sdl2
+
+For compilation you can (interchangably) use either clang or GCC.
+
+
+#### Compliation
+
+    mkdir build (if it doesn't already exist)
+    cd build
+    cmake .. -DCMAKE_BUILD_TYPE=Release ( or Debug if you're that type ;) )
+    make -j$(nproc) (or whatever number)
+
+Windows users, just download the installer from the Releases page
+ on this repository.
+
+Install `xava` to default `/usr`:
+
+    sudo make install
+
+Or you can change `$PREFIX`, for example:
+```
+    cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/usr -G"Unix Makefiles"
+```
+NOTE: Changing ``$PREFIX`` will probably break the system linker, **use with
+ caution**.
+
+If you're building from source and installing via ``make install``, please do
+**not** delete the build files as you won't be able to uninstall xava if you do
+(CMake limitation).
+
+#### Uninstalling
+
+    cd $where_is_xava_located/build
+    xargs rm < install_manifest.txt
 
 All installers/distro specific installation sources might be out of date.
 
 
-Capturing audio
+Usage
+-----
+
+After you've installed it, to use this visualizer you'll have to be playing
+something on your system (be it a movie, voice chat or song, doesn't matter) and
+launch it. If everything succeeded, you'll see an audio visualization of whatever
+audio is going through your system. If not, please refer to ``Capturing audio``
+section of this README.
+
+In order to launch the application (in most cases), you'll be able to start it
+via a start menu entry or a desktop shortcut. If not, you can still choose to
+start it as a command-line executable:
+
+	Usage : xava [options]
+	Visualize audio input in terminal. 
+
+	Options:
+		-p	path to config file
+		-v	print version
+
+Exit by pressing Q, ESC or by closing the window ;)
+
+### Controls
+
+| Key | Description |
+| --- | ----------- |
+| <kbd>up</kbd> / <kbd>down</kbd>| increase/decrease sensitivity |
+| <kbd>left</kbd> / <kbd>right</kbd>| increase/decrease bar width |
+| <kbd>a</kbd> / <kbd>s</kbd> | increase/decrease bar spacing |
+| <kbd>f</kbd> | toggle fullscreen |
+| <kbd>c</kbd> / <kbd>b</kbd>| change forground/background color |
+| <kbd>r</kbd> | restart visualizer |
+| <kbd>q</kbd> or <kbd>ESC</kbd>| quit the program |
+
+
+Troubleshooting
 ---------------
 
-### From WASAPI (Windows only, super easy)
+### Latency notes
+
+If you see latency issues, ie. visualizer not reacting on time,
+ try turning off demanding graphical effects and/or shrinking the window,
+ or just lower the ``fft_size`` and ``size`` (within ``[input]``), as
+ increasing capture time creates a delay.
+
+If your audio device has a huge buffer, you might experience that xava
+ is actually ahead than the audio you hear. This reduces the experience
+ of the visualization. To fix this, try decreasing the buffer settings
+ in your audio playing software. Or in case of MPD, just quickly pause
+ and resume playback (yes, this is a bug with MPD's pulse implementation).
+
+### The visualizer isn't opening
+
+There's something seriously wrong with the visualizers configuration, please
+check that the configuration is okay first and then file a bug if it's still not
+working.
+
+### The visualizer does nothing
+
+The audio configuration might be incorrect, please refer to the ``Capturing audio``
+section of this README.
+
+
+Configuration
+-------------
+
+
+<b>
+Important note:
+
+Starting from 0.7.0.0, the configuration layout has been SIGNIFICANTLY CHANGED.
+Please check ``examples_files/config`` before filing a bug. This has been done
+to ease further development.
+</b>
+
+If you're running Windows and you used the installer, you'll find a
+``Configure XAVA`` shortcut in your Start Menu. Use it to open the XAVA
+configuration.
+
+By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, 
+`$HOME/.config/xava/config` or on Windows `%APPDATA%\xava\config`
+
+The configurations are seperated into different categories such as ``[general]``
+or ``[window]`` which are used to configure how certain parts of the visualizer
+should function. For example: ``[filter]`` refers to options that control the
+behavior of the audio **filtering**/conversion to bars system, whilst ``[output]``
+controls how the output result should be drawn.
+
+By default the configurations are commented by a semi-colon ``;`` in front of
+the option. You'll need to remove this semi-colon for the configuration changes
+to be effective. 
+
+### Equalizer
+
+To change the amplitude of certain frequency ranges, XAVA features an equalizer
+in the ``[eq]`` section of the config file to do so.
+
+The equalizer works by setting an amplitude value to a incremental
+which refers to the part of the frequency spectrum.
+
+**Examples on how the equalizer works:**
+
+    [eq]
+    1=0
+    2=1
+    3=0
+    4=1
+    5=0
+
+![3_138](https://cloud.githubusercontent.com/assets/6376571/8670183/a54a851e-29e8-11e5-9eff-346bf6ed91e0.png)
+
+In this example the frequency spectrum is divided in 5 parts. 
+You may be able to see that the 1st, 3rd and 5th parts have been totally disabled and
+you can see the result of it on the screenshot above.
+
+    [eq]
+    1=2
+    2=2
+    3=1
+    4=1
+    5=0.5
+
+![3_139](https://cloud.githubusercontent.com/assets/6376571/8670181/9db0ef50-29e8-11e5-81bc-3e2bb9892da0.png)
+
+And in this example you can see that the lower parts (1 and 2) 
+have been amplified while 5 is being lowered.
+
+
+### Capturing audio
+
+The idea is that on most systems this should "just work" out of the box, if not,
+keep reading.
+
+The ``[input]`` section of the config file controls how audio should behave.
+
+The ``method`` option describes which system should be used to capture the audio
+samples for the visualizer to process and ``source`` tells that "capture method"
+where to capture that audio information from. FXP. your microphone or seperate
+audio input source.
+
+#### From WASAPI (Windows only, super easy)
 
 If you are on Windows, just use this.
  Don't even bother dealing with other options. 
 
-It's enabled by default if it detects compilation for Windows
- and if it's disabled go and set ``method = wasapi`` in the ``[input]``
- section of the config file.
+It's enabled by default if it detects compilation for Windows and if it's
+ disabled go and set ``method`` to ``wasapi`` in the ``[input]``section of the
+ config file.
 
 If you want to record loopback audio (that is "what you hear")
  (default) set ``source = loopback`` in the ``[input]`` section
  of the config file. Otherwise you can set anything else for
  it to record from the default microphone.
 
-
-### From Pulseaudio monitor source (Easy as well, unsupported on macOS and Windows)
+#### From Pulseaudio monitor source (Easy as well, unsupported on macOS and Windows)
 
 First make sure you have installed pulseaudio dev files and
  that xava has been built with pulseaudio support (it should
@@ -224,17 +365,16 @@ If nothing happens you might have to use a different source
  than the default. The default might also be your microphone.
  Look at the config file for help. 
 
-
-### From portaudio
+#### From portaudio
 
 First make sure you have portaudio dev files and that xava was
  built with portaudio support. Since portaudio combines the
  functionality of all audio systems, it should be the most compatible.
 However, it is NOT "out of the box" because it requires some configuring.
 
-1. To enable just set ``method = portaudio`` in the ``[input]`` section of
- your config. Afterwards change the portaudio input device, by setting
- ``source = list`` temporarily and by running xava again.
+1. To enable just set ``method`` to  ``portaudio`` in the ``[input]`` section of
+ your config. Afterwards change the portaudio input device, by setting ``source``
+ to ``list`` temporarily and by running xava again.
 
 * It should list all of the available audio devices on your system
  (even that aren't input devices, watch out for that).
@@ -242,10 +382,9 @@ However, it is NOT "out of the box" because it requires some configuring.
 2. Once you find the device you want to record from,
  take it's number and set ``soruce`` to equal that number.
 
+#### From ALSA-loopback device (Tricky, unsupported on macOS and Windows)
 
-### From ALSA-loopback device (Tricky, unsupported on macOS and Windows)
-
-Set ``method = alsa`` in ``[output]`` section the config file.
+Set ``method`` to ``alsa`` in ``[output]`` section the config file.
 
 ALSA can be difficult because there is no native way to grab audio
  from an output. If you want to capture audio straight fom the output
@@ -285,8 +424,7 @@ If you are having problems with the alsa method on Rasberry PI,
 dtoverlay=i2s-mmap
 ```
 
-
-### From mpd's fifo output
+#### From mpd's fifo output
 
 Add these lines in mpd:
 
@@ -310,8 +448,7 @@ I had some trouble with sync (the visualizer was ahead of the sound).
             buffer_time     "50000"   # (50ms); default is 500000 microseconds (0.5s)
     }
 
-
-### sndio
+#### sndio
 
 sndio is the audio framework used on OpenBSD, but it's also available on
  FreeBSD and Linux. So far this is only tested on FreeBSD.
@@ -326,8 +463,7 @@ $ sndiod -dd -s default -m mon -s monitor
 $ AUDIODEVICE=snd/0.monitor xava
 ```
 
-
-### squeezelite
+#### squeezelite
 
 [squeezelite](https://en.wikipedia.org/wiki/Squeezelite) is one of several
  software clients available for the Logitech Media Server. Squeezelite can
@@ -343,100 +479,6 @@ where `AA:BB:CC:DD:EE:FF` is squeezelite's MAC address (check the LMS
 Note: squeezelite must be started with the `-v` flag to enable visualizer support.
 
 
-
-Latency notes
--------------
-
-If you see latency issues, ie. visualizer not reacting on time,
- try turning off demanding graphical effects and/or shrinking the window,
- or just lower the ``fft_size`` and ``size`` (within ``[input]``), as
- increasing capture time creates a delay.
-
-If your audio device has a huge buffer, you might experience that xava
- is actually ahead than the audio you hear. This reduces the experience
- of the visualization. To fix this, try decreasing the buffer settings
- in your audio playing software. Or in case of MPD, just quickly pause
- and resume playback (yes, this is a bug with MPD's pulse implementation).
-
-Usage
------
-
-	Usage : xava [options]
-	Visualize audio input in terminal. 
-
-	Options:
-		-p	path to config file
-		-v	print version
-
-Exit by pressing Q, ESC or by closing the window ;)
-
-### Controls
-
-| Key | Description |
-| --- | ----------- |
-| <kbd>up</kbd> / <kbd>down</kbd>| increase/decrease sensitivity |
-| <kbd>left</kbd> / <kbd>right</kbd>| increase/decrease bar width |
-| <kbd>a</kbd> / <kbd>s</kbd> | increase/decrease bar spacing |
-| <kbd>f</kbd> | toggle fullscreen (not supported on Windows) |
-| <kbd>c</kbd> / <kbd>b</kbd>| change forground/background color |
-| <kbd>r</kbd> | Reload configuration |
-| <kbd>q</kbd> or <kbd>ESC</kbd>| Quit X.A.V.A. |
-
-Configuration
--------------
-
-Important note:
-
-    Starting from 0.7.0.0, the configuration layout has been SIGNIFICANTLY CHANGED. Please check
-    ``examples_files/config`` before filing a bug. This has been done to ease further development.
-
-If you're running Windows and you used the installer, you'll find a ``Configure XAVA`` shortcut
-in your Start Menu.
-
-By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, 
-`$HOME/.config/xava/config` or on Windows `%APPDATA%\xava\config`
-
-
-The configurations are seperated into different categories such as ``[general]`` or ``[window]`` 
-which correspond with their own options.
-
-By default the configurations are commented by a semi-colon ``;`` in front of the option. 
-You'll need to change this for the configuration changes to be effective. 
-
-### Equalizer
-
-To change the amplitude of certain frequencies, XAVA features an equalizer
-in the ``eq`` section of the config file to do so.
-
-The equalizer works by setting an amplitude value to a incremental
-which refers to the part of the frequency spectrum.
-
-**Examples on how the equalizer works:**
-
-    [eq]
-    1=0
-    2=1
-    3=0
-    4=1
-    5=0
-
-![3_138](https://cloud.githubusercontent.com/assets/6376571/8670183/a54a851e-29e8-11e5-9eff-346bf6ed91e0.png)
-
-In this example the frequency spectrum is divided in 5 parts. 
-You may be able to see that the 1st, 3rd and 5th parts have been totally disabled and
-you can see the result of it on the screenshot above.
-
-    [eq]
-    1=2
-    2=2
-    3=1
-    4=1
-    5=0.5
-
-![3_139](https://cloud.githubusercontent.com/assets/6376571/8670181/9db0ef50-29e8-11e5-81bc-3e2bb9892da0.png)
-
-And in this example you can see that the lower parts (1 and 2) 
-have been amplified while 5 is being lowered.
 
 ### Output modes
 
@@ -608,12 +650,11 @@ Contribution
 Please read CONTRIBUTING.md before opening a pull request.
 
 Thanks to:
+* [karlstav](https://github.com/karlstav)
 * [CelestialWalrus](https://github.com/CelestialWalrus)
 * [anko](https://github.com/anko)
 * [livibetter](https://github.com/livibetter)
+* [dpayne](https://github.com/dpayne)
 
 for major contributions in the early development of this project.
-
-Also thanks to [dpayne](https://github.com/dpayne/) for figuring
- out how to find the pulseaudio default sink name.
 
