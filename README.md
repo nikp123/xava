@@ -26,7 +26,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Controls](#controls)
 - [Troubleshooting](#troubleshooting)
   - [Latency notes](#latency-notes)
-  - [The visualizer isn't opening](#the-visualizer-isn-t-opening)
+  - [The visualizer isn't opening](#the-visualizer-isnt-opening)
   - [The visualizer does nothing](#the-visualizer-does-nothing)
 - [Configuration](#configuration)
   - [Equalizer](#equalizer)
@@ -68,9 +68,9 @@ Getting started
 
 ### Windows
 
-There should be an installer in the Releases page of this repository.
- Just download, install and run it. Non-release builds are unstable,
- so expect breakage.
+There should be an installer in the Releases page of this repository. Just
+ download, install and run it. Non-release builds are unstable, so expect
+ breakage.
  
 Alternatively, you can download the latest "unstable" release from:
 
@@ -82,14 +82,13 @@ The configuration file is located in ``%appdata%\xava\config.cfg``
 
 Technical info/notes:
 
-Please use minGW for compilation. I haven't tested MSVC, however
- the code has a bit of GNU specific features so it may not work.
+Please use minGW for compilation. I haven't tested MSVC, however the code has a
+bit of GNU specific features so it may not work.
 
 ### macOS
 
-You have to compile this yourself, get the dependencies installed
- via brew (look above) and compile it using the method described
- above.
+You have to compile this yourself, get the dependencies installed via brew (look
+ below) and compile it using the method described above.
 
 Once you've done that, install [Background Music](https://github.com/kyleneideck/BackgroundMusic)
  and get it running on your Mac machine. Then, install the latest
@@ -264,7 +263,6 @@ section of this README.
 Configuration
 -------------
 
-
 <b>
 Important note:
 
@@ -282,13 +280,16 @@ By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`,
 
 The configurations are seperated into different categories such as ``[general]``
 or ``[window]`` which are used to configure how certain parts of the visualizer
-should function. For example: ``[filter]`` refers to options that control the
-behavior of the audio **filtering**/conversion to bars system, whilst ``[output]``
-controls how the output result should be drawn.
+should function. 
+
+For example: ``[filter]`` refers to options that control the behavior of the
+audio **filtering**/conversion to bars system, whilst ``[output]`` controls how
+the output result should be drawn.
 
 By default the configurations are commented by a semi-colon ``;`` in front of
 the option. You'll need to remove this semi-colon for the configuration changes
 to be effective. 
+
 
 ### Equalizer
 
@@ -643,6 +644,7 @@ Unless you're on a tiling WM, in which case why are you
 
 XAVA still has plenty to offer, just look up all of
 the options in the config file.
+
 
 Contribution
 ------------
