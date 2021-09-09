@@ -348,10 +348,11 @@ have been amplified while 5 is being lowered.
 The idea is that on most systems this should "just work" out of the box. If not,
 keep reading.
 
-The ``[input]`` section of the config file controls how audio should behave.
+The ``[input]`` section of the config file controls where and how XAVA captures
+it's "audio input".
 
 The ``method`` option describes which system should be used to capture the audio
-samples for the visualizer to process and ``source`` tells that "capture method"
+samples for the visualizer to process and ``source`` tells that "capture source"
 where to capture that audio information from. FXP. your microphone or seperate
 audio input source.
 
