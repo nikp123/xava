@@ -54,7 +54,6 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Colors and gradients](#colors-and-gradients)
   - [Shadow](#shadow)
   - [Accent colors](#accent-colors)
-  - [Autostart](#autostart)
   - [Additional options](#additional-options)
 - [Contribution](#contribution)
 
