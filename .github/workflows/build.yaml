@@ -3,7 +3,8 @@ name: Build
 on:
   push:
     branches:
-      - '!release'
+      - '!master'
+      - '*'
   pull_request:
   workflow_dispatch:
 
