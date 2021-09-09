@@ -28,6 +28,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Latency notes](#latency-notes)
   - [The visualizer isn't opening](#the-visualizer-isnt-opening)
   - [The visualizer does nothing](#the-visualizer-does-nothing)
+  - [How do I start the visualizer on system startup](#how-do-i-start-the-visualizer-on-system-startup)
 - [Configuration](#configuration)
   - [Equalizer](#equalizer)
   - [Capturing audio](#capturing-audio)
@@ -42,7 +43,12 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Basic window options](#basic-window-options)
   - [Window position](#window-position)
   - [Advanced window options](#advanced-window-options)
+    - [Transparency](#transparency)
+    - [Advanced window behaviour](#advanced-window-behaviour)
+    - [Fullscreening the visualizer without changing the viewport](#fullscreening-the-visualizer-without-changing-the-viewport)
   - [OpenGL](#opengl)
+    - [Shaderpacks](#shaderpacks)
+    - [Resolution scaling](#resolution-scaling)
   - [Vsync](#vsync)
   - [Bars](#bars)
   - [Colors and gradients](#colors-and-gradients)
@@ -259,6 +265,17 @@ working.
 The audio configuration might be incorrect, please refer to the ``Capturing audio``
 section of this README.
 
+### How do I start the visualizer on system startup
+
+On Windows create a shortcut of the ``xava.exe`` 
+(which is in the install directory) and copy it to
+``C:\Users\you\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\``
+
+On Linux/BSD (or any X11 compatible OS) just copy the
+ ``assets/linux/xava.desktop`` file to ``~/.config/autostart/``. 
+Unless you're on a tiling WM, in which case why are you
+ even reading this.
+
 
 Configuration
 -------------
@@ -329,7 +346,7 @@ have been amplified while 5 is being lowered.
 
 ### Capturing audio
 
-The idea is that on most systems this should "just work" out of the box, if not,
+The idea is that on most systems this should "just work" out of the box. If not,
 keep reading.
 
 The ``[input]`` section of the config file controls how audio should behave.
@@ -480,16 +497,30 @@ where `AA:BB:CC:DD:EE:FF` is squeezelite's MAC address (check the LMS
 Note: squeezelite must be started with the `-v` flag to enable visualizer support.
 
 
-
 ### Output modes
 
-XAVA supports outputing as `x11`, `glx`, `wayland`, `sdl2` and `win`. You can change the output
-mode in the ``[general]`` section of the config file, provided that the
-feature was actaully built in.
+Since 0.7.0.0, there has been a lot of changes to the output system. Namely, by
+default all "supported" modes use OpenGL (or EGL) by default. This means, that
+for the visualizer to run properly your system must provide these (if you have
+a graphics card, you're most likely fine). In case your system does NOT have GL
+support, you can still use "unsupported" modes that don't have the full "feature
+set". This is enabled by adding an additional ``-DBUILD_LEGACY_OUTPUTS:BOOL=ON``.
+
+By default, the "supported" modes are: ``x11``, ``x11_egl`` (the difference being
+that the ``x11`` is just plain desktop OpenGL), ``sdl2`` (uses desktop OpenGL),
+``wayland`` (which uses EGL) and finally ``win`` which uses OpenGL on Windows.
+
+And the "unsupported" ones are: ``x11_sw``, ``x11_sw_stars``, ``sdl2_sw``,
+``wayland_sw``, ``ncurses``. However, beware that some feature might not work as
+intended or at all with these modes, **hence the name**.
+
+In order to change this mode you'll have to open the visualizer configuration and
+within the ``[output]`` section, change the ``method`` to one which you desire.
+
 
 ### Basic window options
 
-You can find these in the ``window`` section of the configuration file:
+You can find these in the ``[window]`` section of the configuration file:
 
 Window size:
 
@@ -498,11 +529,12 @@ Window size:
 
 Toggle fullscreen:
 
-	fullscreen = *1 or 0*
+	fullscreen = *true or false*
 
 Toggle window border:
 
-	border = *1 or 0*
+	border = *true or false*
+
 
 ### Window position
 
@@ -512,9 +544,10 @@ Move the window on startup to a specific part of the screen:
 
 In addition to window aligment you can adjust the window position further with:
 
-	x_padding = (specify value)
+	x_padding = *specify offset in pixels*
 
-	y_padding = (specify value)
+	y_padding = *specify offset in pixels*
+
 
 ### Advanced window options
 
@@ -522,22 +555,26 @@ The following features enable options that come with recent OSes
 and may introduce problems on older software/hardware (fxp. Windows XP),
  but in return they may look really nice if you configure them properly.
 
+#### Transparency
+
 You can enable transparent windows:
      
-	transparency = 1
+	transparency = *true or false*
 
 And with transparency comes the ability to change the opacity of the background and the bars:
 
 	foreground_opacity = *range from 0.0 to 1.0*
 	background_opacity = *range from 0.0 to 1.0*
 
+#### Advanced window behaviour
+
 Force the window to be behind any window (may not work):
     
-	keep_below = 1
+	keep_below = *true or false*
 
-Set window properties:
+Set window properties (useful for scripts relying on window class information):
 
-	set_win_props = 1
+	set_win_props = *true or false*
 
 This changes the X11 window type so that the compositor doesn't
 apply shadows and blur onto the window. However, this is not
@@ -551,61 +588,101 @@ Make the window not react on mouse input (it just lets the click
 Pro-tip: You can still gain control of the window by clicking
  it's taskbar icon or by alt-tabbing into it.
 
+#### Fullscreening the visualizer without changing the viewport
+
+In case you want to make the visualizer window fullscreen, but not the visualizer
+with it, you can do so by enabling the ``hold_size`` option in the ``[window]``
+section of the configuration and enabling ``fullscreen``. Then use the same
+options from [window position](#window-position) to change how the visualizer is
+places within the window.
+
+
 ### OpenGL
 
-Migration notice:
+The ``opengl = true/false`` is **deprecated** as of 0.7.0.0.
 
-OpenGL is now a seperate output method due to complications caused within the codebase.
+If you're running a "supported" mode, you're already using OpenGL. No need to
+worry.
 
-OpenGL is enabled by default on Windows. Meanwhile on X11, the ``[output]`` mode should
-be changed to ``glx``.
+#### Shaderpacks
 
-The ``opengl = true/false`` is deprecated as of 0.7.0.0.
+Shader packs have been introduced since ``0.7.0.0`` and allow for the user to
+customize the visualizer to their liking (provided they know how to write GLSL
+shaders). This funcionality works similarly to how it's implemented in Minecraft
+Optifine hence the name.
+
+In the ``[gl]`` section of the config file, you'll find that there are two
+"shaderpack" options: ``pre_shaderpack`` and ``post_shaderpack``. As the name
+suggests, the ``pre`` shaderpack is run before the visualizer is rendered and
+the ``post`` shaderpack is additional effects that are applied **after** the
+visualizer has been rendered. This customizability allows for the visualizer to
+be significantly modified to look unique. By default, you can look which
+"shaderpacks" are include by going in the ``example_files/gl/shaders`` then
+``pre`` or ``post`` and seeing which folders are in those directories.
+
+If you think you can write shaders on your own, you can write your own by
+creating a folder at ``config directory/gl/shaders/(pre or post)/your_shader_name``
+and looking at the shaders in the ``example_files`` folder for reference.
+
+#### Resolution scaling
+
+In case that some of the shaders create aliasing effects [as seen here](https://www.definition.net/define/anti-aliasing)
+you can additionally enable resolution scaling to render more pixels on screen
+then that of which are visible. The option is accessible at ``resolution_scale``
+in the ``[gl]`` section of the config file and also **only works on "supported"
+modes**.
+
 
 ### VSync
 
 VSync is enabled by default on XAVA.
 
-You can change it's behaviour or outright just disable it.
+You can change it's behaviour or just outright disable it.
 
-To do that open the configuration file and in the ``general``
- section you'll find:
+To do that open the configuration file and in the ``general`` section you will
+find:
 
 	vsync = 1 (1 means its enabled)
 	vsync = -1 (enable variable refresh rate)
 	vsync = 0 (disable Vsync)
 	vsync = 2 (custom framerate, the number is a divisor of the refresh rate of your display)
 
+
 ### Bars
 
 In XAVA you can customize the look of the visualizer.
 
-In the ``general`` section you'll find two options that let
- you change the size of the bars and the space between them:
+In the ``[general]`` section you'll find two options that let  you change the
+size of the bars and the space between them:
 
 	bar_width = *width in pixels*
 	bar_spacing = *width in pixels*
 
-To limit the number of bars displayed on the window, set the
- following in the ``general`` category:
+To limit the number of bars displayed on the window, set the following in the
+``[general]`` category:
 
 	bars = *insert number here*
+
 
 ### Colors and gradients
 
 In the ``color`` section of the config file you can find:
 
-	background = *predefined colors in listed in the config file or a hex number in quotes*
+	background = *by name or by hex value*
 	foreground = *same as above*
 
-But if you want to have gradients on the bars instead of
- static colors, you can enable them by changing:
+Additionally, you can specify ``default`` if you want to use your system accent
+or Xresources color instead. Supported in ``win`` and ``x11`` output modes only.
+
+But if you want to have gradients on the bars instead of static colors, you can
+enable them by changing:
 
 	gradient_count = *number of colors higher than 1*
 	
 	gradient_color_1 = *same rule as colors*
-	gradient_color_2 = *same as above*
+	gradient_color_2 = *same rule as colors*
 	...
+
 
 ### Shadow
 
@@ -616,34 +693,15 @@ In the ``shadow`` section you'll find these two options:
 	size = *in pixels*
 	color = *hex color string in the following format '#aarrggbb'*
 
-You need to enable OpenGL for the shadows to work.
+You need to be running the "supported" mode and a shader that supports shadows
+for this to work (by default, the shaders do support shadows).
 
-NOTE: These are still buggy as Windows rasterizes polygons
-differently to other OS-es.
-
-### Accent colors
-
-This is enabled by default.
-
-Setting foreground or background color to `default` will
-make XAVA attempt to color itself after the OS theme.
-But on X11 it will try to read your terminal colorscheme.
-
-### Autostart
-
-On Windows create a shortcut of the ``xava.exe`` 
-(which is in the install directory) and copy it to
-``C:\Users\you\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\``
-
-On Linux/BSD (or any X11 compatible OS) just copy the
- ``assets/linux/xava.desktop`` file to ``~/.config/autostart/``. 
-Unless you're on a tiling WM, in which case why are you
- even reading this.
 
 ### Additional options
 
-XAVA still has plenty to offer, just look up all of
-the options in the config file.
+XAVA still has plenty to offer, just look up all of the options in the config
+file. The config file also serves as documentation, so that you won't get stuck
+in configuration.
 
 
 Contribution
