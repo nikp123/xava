@@ -324,7 +324,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 			// don't be surprised if you find a lot of bugs here, beware!
 			FILE *fp = fopen((*actualPath), "rb"), *fn;
 			if (!fp) {
-				xavaWarn("File '%s' does not exist! Trying to make a new one...", (*actualPath));
+				xavaLog("File '%s' does not exist! Trying to make a new one...", (*actualPath));
 
 				// if that particular config file does not exist, try copying the default one
 				char *found;
@@ -340,7 +340,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 				sprintf(defaultConfigFileName, "%s" EXAMPLE_FILE_EXT, filename);
 
 				if(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, defaultConfigFileName, &found) == false) {
-					xavaError("Could not find default config file! Bailing out...");
+					xavaError("Could not find the file within the XAVA installation! Bailing out...");
 					free((*actualPath));
 					return false;
 				}

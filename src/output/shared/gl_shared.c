@@ -98,8 +98,7 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	strcpy(file_path, "gl/shaders/pre/");
 	strcat(file_path, preShaderPack);
 	strcat(file_path, "/fragment.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", preShaderPack) ?
-			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
+	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
 			file_path, &returned_path) == false,
 			"Failed to load pre-render fragment shader!");
 	pre.frag.path = strdup(returned_path);
@@ -113,8 +112,7 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	strcpy(file_path, "gl/shaders/pre/");
 	strcat(file_path, preShaderPack);
 	strcat(file_path, "/vertex.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", preShaderPack) ?
-			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
+	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
 			file_path, &returned_path) == false,
 			"Failed to load pre-render vertex shader!");
 	pre.vert.path = strdup(returned_path);
@@ -128,8 +126,7 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	strcpy(file_path, "gl/shaders/post/");
 	strcat(file_path, postShaderPack);
 	strcat(file_path, "/fragment.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", postShaderPack) ?
-			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
+	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
 			file_path, &returned_path) == false,
 			"Failed to load post-render fragment shader!");
 	post.frag.path = strdup(returned_path);
@@ -143,8 +140,7 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	strcpy(file_path, "gl/shaders/post/");
 	strcat(file_path, postShaderPack);
 	strcat(file_path, "/vertex.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(strcmp("default", postShaderPack) ?
-			XAVA_FILE_TYPE_CUSTOM_CONFIG : XAVA_FILE_TYPE_CONFIG,
+	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
 			file_path, &returned_path) == false,
 			"Failed to load post-render vertex shader!");
 	post.vert.path = strdup(returned_path);

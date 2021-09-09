@@ -36,6 +36,7 @@ Section
     File /r @xava_EXAMPLE_FILES@\gl
     File @xava_EXAMPLE_FILES@\config
     File final-LICENSE.txt
+    File README.txt
 
     SetOutPath $APPDATA\xava\
 
@@ -79,7 +80,7 @@ SectionEnd
 
 # Markdown files dont work for some reason, so we have to do it like this
 Function OpenREADME
-    Exec 'notepad.exe "$INSTDIR\README.md"'
+    Exec 'notepad.exe "$INSTDIR\README.txt"'
 FunctionEnd
 
 ; Finish page
