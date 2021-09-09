@@ -208,7 +208,7 @@ Usage
 After you've installed it, to use this visualizer you'll have to be playing
 something on your system (be it a movie, voice chat or song, doesn't matter) and
 launch it. If everything succeeded, you'll see an audio visualization of whatever
-audio is going through your system. If not, please refer to ``Capturing audio``
+audio is going through your system. If not, please refer to [Capturing audio](#capturing-audio)
 section of this README.
 
 In order to launch the application (in most cases), you'll be able to start it
