@@ -261,7 +261,7 @@ working.
 
 ### The visualizer does nothing
 
-The audio configuration might be incorrect, please refer to the ``Capturing audio``
+The audio configuration might be incorrect, please refer to the [Capturing audio](#capturing-audio)
 section of this README.
 
 ### How do I start the visualizer on system startup
