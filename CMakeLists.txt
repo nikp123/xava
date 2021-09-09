@@ -156,6 +156,11 @@ add_executable(
 # Link executable
 target_link_libraries(xava xava-shared m pthread)
 
+# Generate README file
+if(MSYS OR MSVC OR MINGW)
+	configure_file("assets/windows/readme.txt" "README.txt" NEWLINE_STYLE CRLF)
+endif()
+
 # Generate proper license file
 file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/final-LICENSE.txt")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
