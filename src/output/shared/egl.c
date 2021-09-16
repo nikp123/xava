@@ -43,6 +43,8 @@ EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESConte
 		return EGL_FALSE;
 	}
 
+	xavaSpam("Initialized OpenGL API version: %d.%d", majorVersion, minorVersion);
+
 	eglBindAPI(EGL_OPENGL_ES_API);
 
 	// Get configs
