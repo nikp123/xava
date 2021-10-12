@@ -146,7 +146,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 
 	struct audio_data *audio = &s->audio;
 
-	SDL_SetRenderDrawColor(xavaSDLWindowRenderer, ARGB_R_32(p->bgcol), 
+	SDL_SetRenderDrawColor(xavaSDLWindowRenderer, ARGB_R_32(p->bgcol),
 			ARGB_G_32(p->bgcol), ARGB_B_32(p->bgcol), SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(xavaSDLWindowRenderer);
 
@@ -163,7 +163,6 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 		offsetx = 0;
 	}
 
-	int max_distance = hypot(p->w, p->h);
 	for(int i = 1; i < audio->inputsize; i++) {
 		int x1, y1, x2, y2;
 		x1 = offsetx+(uint32_t)size*(audio->audio_out_l[i-1]*2+32768)/65536;
@@ -173,7 +172,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 
 		float distance = hypot(abs(x1-x2), abs(y1-y2));;
 		distance += 1.0;
-		SDL_SetRenderDrawColor(xavaSDLWindowRenderer, ARGB_R_32(p->col), 
+		SDL_SetRenderDrawColor(xavaSDLWindowRenderer, ARGB_R_32(p->col),
 				ARGB_G_32(p->col), ARGB_B_32(p->col), MIN(255, 1024/distance));
 		//xavaLog("(%d,%d) -> (%d,%d)", x1, y1, x2, y2);
 		SDL_RenderDrawLine(xavaSDLWindowRenderer, x1, y1, x2, y2);
@@ -185,15 +184,14 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 
 EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s) {
 	struct config_params *p = &s->conf;
-	struct audio_data *audio = &s->audio;
-	//struct XAVA_CONFIG config = s->default_config.config;
 
 	// VSync doesnt work on SDL2 :(
 	p->vsync = 0;
 
+	// because we don't want neither FFT or mono in osciloscope mode
 	p->skipFilterF = true;
 	p->stereo = true;
-	p->inputsize = 44100 / p->framerate;
 
-	//xavaBailCondition(audio->channels != 2, "YOU MUST HAVE STEREO ENABLED!!!!");
+	// feel free to change this if you'd like
+	p->inputsize = 44100 / p->framerate;
 }
