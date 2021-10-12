@@ -55,6 +55,7 @@ jobs:
           mingw-w64-${{matrix.arch}}-fftw
           mingw-w64-${{matrix.arch}}-glew
           mingw-w64-${{matrix.arch}}-nsis
+          mingw-w64-${{matrix.arch}}-SDL2
 
     - name: Build in debug mode
       env: ${{ matrix.env }}
