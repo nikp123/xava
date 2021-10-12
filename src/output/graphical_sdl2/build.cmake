@@ -1,13 +1,16 @@
 # Project default
 option(SDL2 "SDL2" ON)
 
+# I'm sorry for this terrible hack, you can blame Windows
+set(ENABLE_STUPID_WGL_SDL2_BUG ON)
+
 if((NOT IM_SURE_THAT_I_WANT_SDL2_ON_WINDOWS) AND (MSYS OR MINGW OR MSVC))
 	message(WARNING "SDL2 + OpenGL doesn't build on Windows because it's static linking is retarded. Please specify `-DIM_SURE_THAT_I_WANT_SDL2_ON_WINDOWS:BOOL=ON`")
-	set(SDL2 OFF)
+	set(ENABLE_STUPID_WGL_SDL2_BUG OFF)
 endif()
 
 # SDL2
-if(SDL2)
+if(SDL2 AND ENABLE_STUPID_WGL_SDL2_BUG)
 	pkg_check_modules(SDL2 QUIET sdl2 glew)
 	if(SDL2_FOUND)
 		add_library(out_sdl2 SHARED
