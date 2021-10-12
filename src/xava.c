@@ -105,7 +105,8 @@ void cleanup(void) {
 	pthread_join(p_thread, NULL);
 
 	xavaOutputCleanup(&xava);
-	xavaFilterCleanup(&xava);
+	if(!p->skipFilterF)
+		xavaFilterCleanup(&xava);
 
 	// destroy modules
 	destroy_module(p->inputModule);
@@ -248,11 +249,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		xavaOutputCleanup             = get_symbol_address(p->outputModule, "xavaOutputCleanup");
 		xavaOutputHandleConfiguration = get_symbol_address(p->outputModule, "xavaOutputHandleConfiguration");
 
-		xavaFilterInit                = get_symbol_address(p->filterModule, "xavaFilterInit");
-		xavaFilterApply               = get_symbol_address(p->filterModule, "xavaFilterApply");
-		xavaFilterLoop                = get_symbol_address(p->filterModule, "xavaFilterLoop");
-		xavaFilterCleanup             = get_symbol_address(p->filterModule, "xavaFilterCleanup");
-		xavaFilterHandleConfiguration = get_symbol_address(p->filterModule, "xavaFilterHandleConfiguration");
+		if(!p->skipFilterF) {
+			xavaFilterInit                = get_symbol_address(p->filterModule, "xavaFilterInit");
+			xavaFilterApply               = get_symbol_address(p->filterModule, "xavaFilterApply");
+			xavaFilterLoop                = get_symbol_address(p->filterModule, "xavaFilterLoop");
+			xavaFilterCleanup             = get_symbol_address(p->filterModule, "xavaFilterCleanup");
+			xavaFilterHandleConfiguration = get_symbol_address(p->filterModule, "xavaFilterHandleConfiguration");
+		}
 
 		// load input config
 		xavaInputHandleConfiguration(&xava);
@@ -261,7 +264,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		xavaOutputHandleConfiguration(&xava);
 
 		// load filter config
-		xavaFilterHandleConfiguration(&xava);
+		if(!p->skipFilterF)
+			xavaFilterHandleConfiguration(&xava);
 
 		audio->inputsize = p->inputsize;
 		audio->fftsize   = p->fftsize;
@@ -284,8 +288,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		bool reloadConf = false;
 
-		xavaBailCondition(xavaFilterInit(&xava),
-				"Failed to initialize filter! Bailing...");
+		if(!p->skipFilterF)
+			xavaBailCondition(xavaFilterInit(&xava),
+					"Failed to initialize filter! Bailing...");
 
 		xavaBailCondition(xavaInitOutput(&xava),
 				"Failed to initialize output! Bailing...");
@@ -310,7 +315,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				if (xava.bars%2) xava.bars--;
 			}
 
-			xavaFilterApply(&xava);
+			if(!p->skipFilterF)
+				xavaFilterApply(&xava);
 
 			xavaOutputApply(&xava);
 
@@ -388,21 +394,27 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 
 				// Calculate the result through filters
-				xavaFilterLoop(&xava);
+				if(!p->skipFilterF) {
+					xavaFilterLoop(&xava);
 
-				// zero values causes divided by zero segfault
-				// and set max height
-				for (i = 0; i < xava.bars; i++) {
-					if(xava.f[i] < 1)
-						xava.f[i] = 1;
-					else if(xava.f[i] > p->h)
-						xava.f[i] = p->h;
+					// zero values causes divided by zero segfault
+					// and set max height
+					for (i = 0; i < xava.bars; i++) {
+						if(xava.f[i] < 1)
+							xava.f[i] = 1;
+						else if(xava.f[i] > p->h)
+							xava.f[i] = p->h;
+					}
 				}
 
 				// output: draw processed input
 				if(redrawWindow) {
 					xavaOutputClear(&xava);
-					memset(xava.fl, 0x00, sizeof(int)*xava.bars);
+
+					// audio output is unallocated without the filter
+					if(!p->skipFilterF)
+						memset(xava.fl, 0x00, sizeof(int)*xava.bars);
+
 					redrawWindow = FALSE;
 				}
 				xavaOutputDraw(&xava);
@@ -411,7 +423,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					oldTime = xavaSleep(oldTime, p->framerate);
 
 				// save previous bar values
-				memcpy(xava.fl, xava.f, sizeof(int)*xava.bars);
+				if(!p->skipFilterF)
+					memcpy(xava.fl, xava.f, sizeof(int)*xava.bars);
 
 				if(kys) {
 					resizeWindow=1;
