@@ -182,8 +182,8 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 	return;
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s) {
-	struct config_params *p = &s->conf;
+EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
+	struct config_params *p = &hand->conf;
 
 	// VSync doesnt work on SDL2 :(
 	p->vsync = 0;
@@ -194,4 +194,15 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s) {
 
 	// feel free to change this if you'd like
 	p->inputsize = 44100 / p->framerate;
+
+	// change some default settings for this mode specifically
+	p->w         = xavaConfigGetInt(hand->default_config.config, "window", "width", 800);
+	p->h         = xavaConfigGetInt(hand->default_config.config, "window", "height", 600);
+	p->fullF     = xavaConfigGetBool(hand->default_config.config, "window", "fullscreen", 0);
+	p->transF    = xavaConfigGetBool(hand->default_config.config, "window", "transparency", 0);
+	p->borderF   = xavaConfigGetBool(hand->default_config.config, "window", "border", 1);
+	p->bottomF   = xavaConfigGetBool(hand->default_config.config, "window", "keep_below", 0);
+	p->interactF = xavaConfigGetBool(hand->default_config.config, "window", "interactable", 1);
+	p->taskbarF  = xavaConfigGetBool(hand->default_config.config, "window", "taskbar_icon", 1);
+	p->holdSizeF = xavaConfigGetBool(hand->default_config.config, "window", "hold_size", false);
 }
