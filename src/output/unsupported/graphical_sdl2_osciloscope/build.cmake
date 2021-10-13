@@ -8,18 +8,17 @@ if(SDL2)
 		# Deal with fucking windows
 		if(MSVC OR MINGW OR MSYS)
 			set(CMAKE_EXE_LINKER_FLAGS "-static")
-			set(SDL2_LIBRARIES_EXTRA "-lmingw32 -lSDL2main -lSDL2 -mwindows\
-				 -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm\
-				 -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid\
-				 -static-libgcc -lsetupapi -lSetupAPI")
+			set(SDL2_LIBRARIES "${SDL2_LIBRARIES} -lmingw32 \
+				-lSDL2main -lSDL2 -mwindows -lm -ldinput8 -ldxguid -ldxerr8 \
+				-luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 \
+				-lversion -luuid -static-libgcc -lsetupapi -lSetupAPI")
 		endif()
 
 		add_library(out_sdl2_osciloscope SHARED
 			"${XAVA_MODULE_DIR}/main.c"
 			"src/output/graphical.c"
 			"${GLOBAL_FUNCTION_SOURCES}")
-		target_link_libraries(out_sdl2_osciloscope xava-shared "${SDL2_LIBRARIES} \
-				${SDL2_LIBRARIES_EXTRA}")
+		target_link_libraries(out_sdl2_osciloscope xava-shared "${SDL2_LIBRARIES}")
 		target_include_directories(out_sdl2_osciloscope PRIVATE "${SDL2_INCLUDE_DIRS}")
 		target_link_directories(out_sdl2_osciloscope PRIVATE "${SDL2_LIBRARY_DIRS}")
 		set_target_properties(out_sdl2_osciloscope PROPERTIES PREFIX "")

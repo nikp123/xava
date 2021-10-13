@@ -7,15 +7,14 @@ if(PORTAUDIO)
 		# Deal with fucking windows
 		if(MSVC OR MINGW OR MSYS)
 			set(CMAKE_EXE_LINKER_FLAGS "-static")
-			set(PORTAUDIO_LIBRARIES_EXTRA "-lmingw32 -mwindows -static-libgcc\
-					-lwinmm -lsetupapi")
+			set(PORTAUDIO_LIBRARIES "${PORTAUDIO_LIBRARIES} -lmingw32 -mwindows \
+					-static-libgcc -lwinmm -lsetupapi")
 		endif()
 
 		add_definitions(-DPORTAUDIO)
 		add_library(in_portaudio SHARED "${XAVA_MODULE_DIR}/main.c"
 										"${GLOBAL_FUNCTION_SOURCES}")
-		target_link_libraries(in_portaudio xava-shared "${PORTAUDIO_LIBRARIES}
-											${PORTAUDIO_LIBRARIES_EXTRA}")
+		target_link_libraries(in_portaudio xava-shared "${PORTAUDIO_LIBRARIES}")
 		target_include_directories(in_portaudio PRIVATE "${PORTAUDIO_INCLUDE_DIRS}")
 		target_link_directories(in_portaudio PRIVATE "${PORTAUDIO_LIBRARY_DIRS}")
 		set_target_properties(in_portaudio PROPERTIES PREFIX "")
