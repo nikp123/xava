@@ -165,10 +165,10 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 
 	for(int i = 1; i < audio->inputsize; i++) {
 		int x1, y1, x2, y2;
-		x1 = offsetx+(uint32_t)size*(audio->audio_out_l[i-1]*2+32768)/65536;
-		y1 = offsety+(uint32_t)size*(-audio->audio_out_r[i-1]*2+32768)/65536;
-		x2 = offsetx+(uint32_t)size*(audio->audio_out_l[i]*2+32768)/65536;
-		y2 = offsety+(uint32_t)size*(-audio->audio_out_r[i]*2+32768)/65536;
+		x1 = offsetx+(uint32_t)size*(audio->audio_out_l[i-1]+32768)/65536;
+		y1 = offsety+(uint32_t)size*(-audio->audio_out_r[i-1]+32768)/65536;
+		x2 = offsetx+(uint32_t)size*(audio->audio_out_l[i]+32768)/65536;
+		y2 = offsety+(uint32_t)size*(-audio->audio_out_r[i]+32768)/65536;
 
 		float distance = hypot(abs(x1-x2), abs(y1-y2));;
 		distance += 1.0;
