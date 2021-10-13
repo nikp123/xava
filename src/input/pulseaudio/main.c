@@ -56,7 +56,7 @@ void pulseaudio_context_state_callback(pa_context *pulseaudio_context,
 		case PA_CONTEXT_TERMINATED:
 			xavaSpam("TERMINATED");
 			pa_mainloop_quit(m_pulseaudio_mainloop, 0);
-			break;  
+			break;
 	}
 }
 
@@ -114,24 +114,23 @@ EXP_FUNC void* xavaInput(void* data)
 		.fragsize = 0
 	};
 
-	// the following code reduces the time needed for a buffer update, 
+	// the following code reduces the time needed for a buffer update,
 	// so you can have a high audio input size whilst the buffer update
 	// still being recent enough
 	// tl;dr: reduces delay, don't touch
-	pb.fragsize = audio->inputsize>1024? 1024 : audio->inputsize;
+	pb.fragsize = audio->inputsize > 1024 ? 1024 : audio->inputsize;
 
 	pa_simple *s = NULL;
 	int error;
 
-	if (!(s = pa_simple_new(NULL, "xava", PA_STREAM_RECORD, audio->source, "audio for xava", &ss, NULL, &pb, &error))) {
-		//fprintf(stderr, __FILE__": Could not open pulseaudio source: %s, %s. To find a list of your pulseaudio sources run 'pacmd list-sources'\n",audio->source, pa_strerror(error));
-		sprintf(audio->error_message, __FILE__": Could not open pulseaudio source: %s, %s. To find a list of your pulseaudio sources run 'pacmd list-sources'\n",audio->source, pa_strerror(error));
+	if (!(s = pa_simple_new(NULL, "XAVA", PA_STREAM_RECORD, audio->source, "XAVA audio input", &ss, NULL, &pb, &error))) {
+		sprintf(audio->error_message, __FILE__": Could not open pulseaudio source: %s, %s. To find a list of your pulseaudio sources run 'pacmd list-sources'\n", audio->source, pa_strerror(error));
 		audio->terminate = 1;
 		pthread_exit(NULL);
 	}
 
 	n = 0;
-               
+
 	while (1) {
 		/* Record some data ... */
 		if (pa_simple_read(s, buf, sizeof(buf), &error) < 0) {
@@ -143,7 +142,7 @@ EXP_FUNC void* xavaInput(void* data)
 		}
 
 		//sorting out channels
-		for (i = 0; i < audio->inputsize; i += 2) {	
+		for (i = 0; i < audio->inputsize; i += 2) {
 			if (audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
 
 			//stereo storing channels in buffer
@@ -153,7 +152,7 @@ EXP_FUNC void* xavaInput(void* data)
 			}
 
 			n++;
-			if (n == audio->inputsize-1) n = 0;
+			if (n == audio->inputsize) n = 0;
 		}
 		if (audio->terminate == 1) {
 			pa_simple_free(s);
