@@ -12,12 +12,6 @@
 
 #include "../../shared.h"
 
-#define M_PI_M2 ( M_PI + M_PI )
-
-#define DEFAULT_RATE            44100
-#define DEFAULT_CHANNELS        2
-#define DEFAULT_VOLUME          0.7
-
 static int n = 0;
 
 struct pwdata {
@@ -25,6 +19,14 @@ struct pwdata {
 	struct pw_stream *stream;
 	struct audio_data *audio;
 	double accumulator;
+
+	// C-based cringe
+	struct audio_str {
+		char rate[32];
+		char channels[32];
+	} audio_str;
+
+	bool target;
 };
 
 static void on_process(void *userdata)
@@ -103,15 +105,38 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 	xavaSpam("Linked with libpipewire %s",
 			pw_get_library_version());
 
+	// if different from default, the target is set
+	pwdata.target = strcmp(pwdata.audio->source, "default");
+
+	// blame C
+	sprintf(pwdata.audio_str.rate, "%d", pwdata.audio->rate);
+	sprintf(pwdata.audio_str.channels, "%d", pwdata.audio->channels);
+
+	struct pw_properties *props = pw_properties_new(
+				PW_KEY_STREAM_CAPTURE_SINK,
+				PW_KEY_STREAM_MONITOR,
+				PW_KEY_MEDIA_TYPE, "Audio",
+				PW_KEY_MEDIA_CATEGORY, "Capture",
+				PW_KEY_MEDIA_ROLE, "Screen",
+				PW_KEY_MEDIA_CLASS, "Stream/Input/Audio",
+				PW_KEY_MEDIA_ICON_NAME, PACKAGE,
+				PW_KEY_APP_NAME, PACKAGE,
+				PW_KEY_APP_ID, "com.github.nikp123." PACKAGE,
+				PW_KEY_AUDIO_RATE, pwdata.audio_str.rate,
+				PW_KEY_AUDIO_CHANNELS, pwdata.audio_str.channels,
+				NULL);
+
+	// append target if non-default
+	if(pwdata.target) {
+		pw_properties_set(props, PW_KEY_NODE_TARGET, pwdata.audio->source);
+		//pw_properties_set(props, PW_KEY_NODE_AUTOCONNECT, "false");
+	}
+
 	pwdata.loop = pw_main_loop_new(NULL);
 	pwdata.stream = pw_stream_new_simple(
 			pw_main_loop_get_loop(pwdata.loop),
-			PACKAGE,
-			pw_properties_new(
-				PW_KEY_MEDIA_TYPE, "Audio",
-				PW_KEY_MEDIA_CATEGORY, "Monitor",
-				PW_KEY_MEDIA_ROLE, "DSP",
-				NULL),
+			"audio-capture",
+			props,
 			&stream_events,
 			&pwdata);
 
@@ -119,7 +144,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 			&SPA_AUDIO_INFO_RAW_INIT(
 				.format = SPA_AUDIO_FORMAT_S16,
 				.channels = pwdata.audio->channels,
-				.rate = DEFAULT_RATE ));
+				.rate = pwdata.audio->rate ));
 
 	pw_stream_connect(pwdata.stream, PW_DIRECTION_INPUT, PW_ID_ANY,
 			PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS |
@@ -136,9 +161,8 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 EXP_FUNC void xavaInputHandleConfiguration(struct XAVA_HANDLE *xava) {
 	struct audio_data *audio = &xava->audio;
 	XAVACONFIG config = xava->default_config.config;
-	audio->rate = 44100;
 
-	// the current implementation is dumb, so this'll just get ignored
-	audio->source = (char*)xavaConfigGetString(config, "input", "source", "Loopback");
+	// default to ignore or change to keep 'em searching
+	audio->source = (char*)xavaConfigGetString(config, "input", "source", "default");
 }
 

@@ -46,15 +46,16 @@
 
 // Shared audio data sturct
 struct audio_data {
-	float			*audio_out_r;
-	float			*audio_out_l;
-	int				format;
-	unsigned int	rate;
-	char			*source;				// alsa device, fifo path or pulse source
-	int				channels;
-	bool			terminate;				// shared variable used to terminate audio thread
-	char			error_message[1024];
-	int				inputsize, fftsize;		// inputsize and fftsize
+	float		*audio_out_r;
+	float		*audio_out_l;
+	int			format;
+	uint32_t	rate;
+	char		*source;				// alsa device, fifo path or pulse source
+	int			channels;
+	bool		terminate;				// shared variable used to terminate audio thread
+	char		error_message[1024];
+	int			inputsize, fftsize;		// inputsize and fftsize
+	uint32_t	latency;				// try to keep (this) latency in samples
 };
 
 // configuration parameters
@@ -102,6 +103,8 @@ struct config_params {
 	// 5 - audio
 	uint32_t inputsize;								// size of the input audio buffer
 													// must be a power of 2
+	uint32_t samplerate;							// the rate at which the audio is sampled
+	uint32_t samplelatency;							// input will try to keep to copy chunks of this size
 
 	// 6 - special flags
 	bool fullF, transF, borderF, bottomF, interactF, taskbarF, holdSizeF;

@@ -44,7 +44,7 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 	if(inputBuffer == NULL) {
 		for(i=0; i<framesToCalc; i++) {
 			if(audio->channels == 1) audio->audio_out_l[n] = SAMPLE_SILENCE;
-			if(audio->channels == 2) {
+			else if(audio->channels == 2) {
 				audio->audio_out_l[n] = SAMPLE_SILENCE;
 				audio->audio_out_r[n] = SAMPLE_SILENCE;
 			}
@@ -52,11 +52,8 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 		}
 	} else {
 		for(i=0; i<framesToCalc; i++) {
-			if(audio->channels == 1) {
-				audio->audio_out_l[n] = (rptr[0] + rptr[1]) / 2;
-				rptr += 2;
-			}
-			if(audio->channels == 2) {
+			if(audio->channels == 1) audio->audio_out_l[n] = *rptr++;
+			else if(audio->channels == 2) {
 				audio->audio_out_l[n] = *rptr++;
 				audio->audio_out_r[n] = *rptr++;
 			}
@@ -124,15 +121,15 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 	inputParameters.device = deviceNum;
 
 	// set parameters
-	size_t audioLenght = audio->inputsize > 1024 ? 1024 : audio->inputsize;
+	size_t audioLenght = audio->latency;
 	data.maxFrameIndex = audioLenght;
-	data.recordedSamples = (SAMPLE *)malloc(2*audioLenght*sizeof(SAMPLE));
+	data.recordedSamples = (SAMPLE *)malloc(audioLenght*sizeof(SAMPLE)*audio->channels);
 
 	xavaBailCondition(!data.recordedSamples,
 			"Memory allocation error!");
-	memset(data.recordedSamples, 0x00, 2*audioLenght);
+	memset(data.recordedSamples, 0x00, audio->channels*audioLenght);
 
-	inputParameters.channelCount = 2;
+	inputParameters.channelCount = audio->channels;
 	inputParameters.sampleFormat = PA_SAMPLE_TYPE;
 	inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
 	inputParameters.hostApiSpecificStreamInfo = NULL;
@@ -144,7 +141,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 	xavaBailCondition(err!=paNoError, "Failure in opening stream (0x%x)", err);
 
 	// main loop
-	while(1){
+	while(1) {
 		// start recording
 		data.frameIndex = 0;
 		err = Pa_StartStream(stream);
@@ -174,7 +171,6 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 EXP_FUNC void xavaInputHandleConfiguration(struct XAVA_HANDLE *xava) {
 	struct audio_data *audio = &xava->audio;
 	XAVACONFIG config = xava->default_config.config;
-	audio->rate = 44100;
 	audio->source = (char*)xavaConfigGetString(config, "input", "source", "auto");
 }
 

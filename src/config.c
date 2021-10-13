@@ -93,7 +93,13 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
 	xavaBailCondition(stereo == -1, "Output channels '%s' is not supported,"
 			" supported channels are", " 'mono' and 'stereo'", channels);
 
-	p->stereo = stereo ? 1 : 0; // makes the C compilers happy ", "D
+	// validate: input
+	p->stereo = stereo ? 1 : 0; // makes the C compilers happy
+	xavaBailCondition(!p->samplerate, "samplerate CANNOT BE 0!");
+	xavaBailCondition(p->samplelatency > p->inputsize, "Sample latency cannot be larger than the audio buffer itself!");
+	xavaWarnCondition(p->samplelatency*p->framerate > p->samplerate, "Sample latency might be too large, expect audio lags!");
+	xavaWarnCondition(p->samplelatency < 32, "Sample latency might be too low, high CPU usage is MOST LIKELY!");
+	xavaBailCondition(p->samplelatency == 0, "Sample latency CANNOT BE 0!");
 
 	// validate: bars
 	p->autobars = 1;
@@ -186,6 +192,8 @@ char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	// config: input
 	inputMethod = (char *)xavaConfigGetString(hand->default_config.config, "input", "method", XAVA_DEFAULT_INPUT);
 	p->inputsize = (int)exp2((float)xavaConfigGetInt(hand->default_config.config, "input", "size", 12));
+	p->samplerate = xavaConfigGetInt(hand->default_config.config, "input", "rate", 44100);
+	p->samplelatency = xavaConfigGetInt(hand->default_config.config, "input", "latency", 128);
 
 	// config: output
 	outputMethod = (char *)xavaConfigGetString(hand->default_config.config, "output", "method", XAVA_DEFAULT_OUTPUT);

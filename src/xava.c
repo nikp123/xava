@@ -257,25 +257,32 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 			xavaFilterHandleConfiguration = get_symbol_address(p->filterModule, "xavaFilterHandleConfiguration");
 		}
 
-		// load input config
-		xavaInputHandleConfiguration(&xava);
+		// we're loading this first because I want output modes to adjust audio
+		// "renderer/filter" properties
 
 		// load output config
 		xavaOutputHandleConfiguration(&xava);
+
+		// set up audio properties BEFORE the input is initialized
+		audio->inputsize = p->inputsize;
+		audio->fftsize   = p->fftsize;
+		audio->format    = -1;
+		audio->terminate = 0;
+		audio->channels  = 1 + p->stereo;
+		audio->rate      = p->samplerate;
+		audio->latency   = p->samplelatency;
+
+		// load input config
+		xavaInputHandleConfiguration(&xava);
 
 		// load filter config
 		if(!p->skipFilterF)
 			xavaFilterHandleConfiguration(&xava);
 
-		audio->inputsize = p->inputsize;
-		audio->fftsize   = p->fftsize;
+		// setup audio garbo
 		MALLOC_SELF(audio->audio_out_l, p->fftsize+1);
 		if(p->stereo)
 			MALLOC_SELF(audio->audio_out_r, p->fftsize+1);
-		audio->format = -1;
-		audio->terminate = 0;
-		audio->channels = 1+p->stereo;
-
 		if(p->stereo) {
 			for (i = 0; i < audio->fftsize; i++) {
 				audio->audio_out_l[i] = 0;

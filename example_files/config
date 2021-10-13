@@ -212,6 +212,13 @@
 # Adjusts the input buffer size (in samples, calculated by 2^input_size)
 ; size = 12
 
+# Adjust the sample rate of the input audio (if possible)
+; rate = 44100
+
+# Adjust the capture packets of an input (if possible, in samples)
+# A lower value means less latency, although it comes with a high CPU cost
+; latency = 128
+
 
 [output]
 

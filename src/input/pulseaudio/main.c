@@ -114,16 +114,12 @@ EXP_FUNC void* xavaInput(void* data)
 		.fragsize = 0
 	};
 
-	// the following code reduces the time needed for a buffer update,
-	// so you can have a high audio input size whilst the buffer update
-	// still being recent enough
-	// tl;dr: reduces delay, don't touch
-	pb.fragsize = audio->inputsize > 1024 ? 1024 : audio->inputsize;
+	pb.fragsize = audio->latency;
 
 	pa_simple *s = NULL;
 	int error;
 
-	if (!(s = pa_simple_new(NULL, "XAVA", PA_STREAM_RECORD, audio->source, "XAVA audio input", &ss, NULL, &pb, &error))) {
+	if (!(s = pa_simple_new(NULL, PACKAGE, PA_STREAM_RECORD, audio->source, PACKAGE" audio input", &ss, NULL, &pb, &error))) {
 		sprintf(audio->error_message, __FILE__": Could not open pulseaudio source: %s, %s. To find a list of your pulseaudio sources run 'pacmd list-sources'\n", audio->source, pa_strerror(error));
 		audio->terminate = 1;
 		pthread_exit(NULL);
@@ -167,7 +163,6 @@ EXP_FUNC void* xavaInput(void* data)
 EXP_FUNC void xavaInputHandleConfiguration(struct XAVA_HANDLE *xava) {
 	struct audio_data *audio = &xava->audio;
 	XAVACONFIG config = xava->default_config.config;
-	audio->rate = 44100;
 	audio->source = (char*)xavaConfigGetString(config, "input", "source", "auto");
 }
 
