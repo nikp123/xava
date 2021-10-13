@@ -21,14 +21,18 @@ EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESConte
 	EGLint fbAttribs[] =
 	{
 		EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-		EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+		EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
 		EGL_RED_SIZE,        8,
 		EGL_GREEN_SIZE,      8,
 		EGL_BLUE_SIZE,       8,
 		EGL_ALPHA_SIZE,      conf->transF ? 8 : 0,
 		EGL_NONE
 	};
-	EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE, EGL_NONE };
+	EGLint contextAttribs[] = { EGL_CONTEXT_MAJOR_VERSION, 2,
+		EGL_CONTEXT_MINOR_VERSION, 1,
+		EGL_CONTEXT_OPENGL_PROFILE_MASK,
+		EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+		EGL_NONE };
 	EGLDisplay display = eglGetDisplay(ESContext->native_display);
 	if ( display == EGL_NO_DISPLAY )
 	{
@@ -43,9 +47,9 @@ EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESConte
 		return EGL_FALSE;
 	}
 
-	xavaSpam("Initialized OpenGL API version: %d.%d", majorVersion, minorVersion);
+	xavaSpam("Initialized EGL API version: %d.%d", majorVersion, minorVersion);
 
-	eglBindAPI(EGL_OPENGL_ES_API);
+	eglBindAPI(EGL_OPENGL_API);
 
 	// Get configs
 	if ( (eglGetConfigs(display, NULL, 0, &numConfigs) != EGL_TRUE) || (numConfigs == 0))
