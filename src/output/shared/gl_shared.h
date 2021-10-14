@@ -7,15 +7,13 @@
 	#warning "This WILL break your build. Fix it!"
 #endif
 
-
-#if defined(GL)
-	#ifndef GL_ALREADY_DEFINED
-		#include <GL/glew.h>
-	#endif
-#elif defined(EGL)
+#if defined(EGL)
 	#include <EGL/eglplatform.h>
-	#include <GLES2/gl2.h>
 	#include <EGL/egl.h>
+#endif
+
+#ifndef GL_ALREADY_DEFINED
+	#include <GL/glew.h>
 #endif
 
 #include "../../shared.h"

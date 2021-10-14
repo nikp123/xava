@@ -43,7 +43,7 @@ if(X11)
 					"${EGL_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
 				target_include_directories(out_x11_egl PRIVATE 
 					"${EGL_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
-				target_link_libraries(out_x11_egl xava-shared 
+				target_link_libraries(out_x11_egl xava-shared GLEW 
 					"${EGL_LIBRARIES}" "${X11_LIBRARIES}")
 				target_compile_definitions(out_x11_egl PUBLIC -DEGL)
 				set_target_properties(out_x11_egl PROPERTIES PREFIX "")

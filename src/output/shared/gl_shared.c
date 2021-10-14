@@ -12,7 +12,8 @@ struct SGLprogram {
 	struct shader {
 		char *path, *text;
 		GLuint handle;
-	} frag, vert;
+		XAVAIONOTIFYWATCH watch;
+	} frag, vert, geo;
 	GLuint program;
 } pre, post;
 
@@ -41,7 +42,7 @@ static GLfloat postVertices[] = {
 
 static GLfloat *gradientColor;
 
-static GLuint PRE_POS;
+static GLuint PRE_BARS;
 static GLuint PRE_FGCOL;
 static GLuint PRE_RESOLUTION;
 static GLuint PRE_PROJMATRIX;
@@ -64,8 +65,6 @@ static GLfloat resScale;
 
 // this is hacked in, shut up
 static bool shouldRestart;
-
-static XAVAIONOTIFYWATCH preFragWatch, preVertWatch, postFragWatch, postVertWatch;
 
 static void ionotify_callback(struct XAVA_HANDLE *hand, int id, XAVA_IONOTIFY_EVENT event) {
 	switch(event) {
@@ -106,7 +105,7 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	a->id = 2;
 	a->ionotify = xava->ionotify;
 	a->xava_ionotify_func = ionotify_callback;
-	preFragWatch = xavaIONotifyAddWatch(a);
+	pre.frag.watch = xavaIONotifyAddWatch(a);
 	free(returned_path);
 
 	strcpy(file_path, "gl/shaders/pre/");
@@ -120,7 +119,21 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	a->id = 3;
 	a->ionotify = xava->ionotify;
 	a->xava_ionotify_func = ionotify_callback;
-	preVertWatch = xavaIONotifyAddWatch(a);
+	pre.vert.watch = xavaIONotifyAddWatch(a);
+	free(returned_path);
+
+	strcpy(file_path, "gl/shaders/pre/");
+	strcat(file_path, preShaderPack);
+	strcat(file_path, "/geometry.glsl");
+	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
+			file_path, &returned_path) == false,
+			"Failed to load pre-render geometry shader!");
+	pre.geo.path = strdup(returned_path);
+	a->filename = pre.geo.path;
+	a->id = 6;
+	a->ionotify = xava->ionotify;
+	a->xava_ionotify_func = ionotify_callback;
+	pre.geo.watch = xavaIONotifyAddWatch(a);
 	free(returned_path);
 
 	strcpy(file_path, "gl/shaders/post/");
@@ -134,7 +147,7 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	a->id = 4;
 	a->ionotify = xava->ionotify;
 	a->xava_ionotify_func = ionotify_callback;
-	postFragWatch = xavaIONotifyAddWatch(a);
+	post.frag.watch = xavaIONotifyAddWatch(a);
 	free(returned_path);
 
 	strcpy(file_path, "gl/shaders/post/");
@@ -148,8 +161,11 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	a->id = 5;
 	a->ionotify = xava->ionotify;
 	a->xava_ionotify_func = ionotify_callback;
-	postVertWatch = xavaIONotifyAddWatch(a);
+	post.vert.watch = xavaIONotifyAddWatch(a);
 	free(returned_path);
+
+	// check (optionally for shader here)
+	post.geo.path = NULL;
 
 	file = xavaReadFile(pre.frag.path);
 	pre.frag.text = xavaDuplicateMemory(file->data, file->size);
@@ -159,6 +175,10 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	pre.vert.text = xavaDuplicateMemory(file->data, file->size);
 	xavaCloseFile(file);
 
+	file = xavaReadFile(pre.geo.path);
+	pre.geo.text = xavaDuplicateMemory(file->data, file->size);
+	xavaCloseFile(file);
+
 	file = xavaReadFile(post.frag.path);
 	post.frag.text = xavaDuplicateMemory(file->data, file->size);
 	xavaCloseFile(file);
@@ -166,6 +186,11 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	file = xavaReadFile(post.vert.path);
 	post.vert.text = xavaDuplicateMemory(file->data, file->size);
 	xavaCloseFile(file);
+
+	// optional stage
+	//file = xavaReadFile(post.geo.path);
+	//post.geo.text = xavaDuplicateMemory(file->data, file->size);
+	//xavaCloseFile(file);
 
 	free(file_path);
 	free(a);
@@ -229,12 +254,21 @@ void SGLCreateProgram(struct SGLprogram *program) {
 	GLint status;
 
 	program->program = glCreateProgram();
-	SGLShaderBuild(&program->frag, GL_FRAGMENT_SHADER);
 	SGLShaderBuild(&program->vert, GL_VERTEX_SHADER);
+	if(program->geo.path) // optional stage, we check if it's included in the shader pack
+		SGLShaderBuild(&program->geo, GL_GEOMETRY_SHADER);
+	SGLShaderBuild(&program->frag, GL_FRAGMENT_SHADER);
 
-	glAttachShader(program->program, program->frag.handle);
 	glAttachShader(program->program, program->vert.handle);
+	if(program->geo.path) // optional stage, we check if it's included in the shader pack
+		glAttachShader(program->program, program->geo.handle);
+	glAttachShader(program->program, program->frag.handle);
 	glLinkProgram(program->program);
+
+	glDeleteShader(program->frag.handle);
+	if(program->geo.path) // optional stage, we check if it's included in the shader pack
+		glDeleteShader(program->geo.handle);
+	glDeleteShader(program->vert.handle);
 
 	glGetProgramiv(program->program, GL_LINK_STATUS, &status);
 	if (!status) {
@@ -255,7 +289,7 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	SGLCreateProgram(&pre);
 	SGLCreateProgram(&post);
 
-	PRE_POS        = glGetAttribLocation(pre.program,  "pos");
+	PRE_BARS        = glGetAttribLocation(pre.program, "pos");
 	PRE_FGCOL      = glGetUniformLocation(pre.program, "color");
 	PRE_RESOLUTION = glGetUniformLocation(pre.program, "u_resolution");
 	PRE_PROJMATRIX = glGetUniformLocation(pre.program, "projectionMatrix");
@@ -340,24 +374,8 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	glUseProgram(pre.program);
 
 	// reallocate and attach verticies data
-	vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*12);
-	glVertexAttribPointer(PRE_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
-
-	// since most of this information remains untouched, let's precalculate
-	for(int i=0; i<xava->bars; i++) {
-		vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);
-		vertexData[i*12+1]  = 1.0f;
-		vertexData[i*12+2]  = vertexData[i*12];
-		vertexData[i*12+3]  = 0.0f;
-		vertexData[i*12+4]  = vertexData[i*12]+conf->bw;
-		vertexData[i*12+5]  = 0.0f;
-		vertexData[i*12+6]  = vertexData[i*12+4];
-		vertexData[i*12+7]  = 1.0f;
-		vertexData[i*12+8]  = vertexData[i*12+4];
-		vertexData[i*12+9]  = 0.0f;
-		vertexData[i*12+10] = vertexData[i*12];
-		vertexData[i*12+11] = 1.0f;
-	}
+	vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*2);
+	glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
 	// update screen resoltion
 	glUniform2f(PRE_RESOLUTION, xava->w, xava->h);
@@ -452,20 +470,9 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	 **/
 
 	// i am speed
-	register GLfloat *d = vertexData;
 	for(register int i=0; i<xava->bars; i++) {
-		// the not so, speed part
-		// intensity has a low-freq bias as they are more "physical"
-		float bar_percentage = (float)(xava->f[i]-1)/(float)conf->h;
-		if(bar_percentage > 0.0) {
-			intensity+=powf(bar_percentage, (float)2.0*(float)i/(float)xava->bars);
-		}
-
-		// the speed part
-		*(++d)  = xava->f[i];
-		*(d+=6) = xava->f[i];
-		*(d+=4) = xava->f[i];
-		d++;
+		vertexData[i<<1] = (float) xava->f[i] / xava->h * 2.0 - 1.0;
+		vertexData[(i<<1)+1] = i;
 	}
 
 	// since im not bothering to do the math, this'll do
@@ -473,9 +480,11 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	intensity /= xava->bars;
 
 	// bind render target to texture
-	glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
+	//glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, xava->w*resScale, xava->h*resScale);
 
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	// switch to pre shaders
 	glUseProgram(pre.program);
 
@@ -489,14 +498,14 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	// pointers get reset after each glUseProgram(), that's why this is done
-	glVertexAttribPointer(PRE_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+	glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
-	glEnableVertexAttribArray(PRE_POS);
+	glEnableVertexAttribArray(PRE_BARS);
 
 	// You use the number of verticies, but not the actual polygon count
-	glDrawArrays(GL_TRIANGLES, 0, xava->bars*6);
+	glDrawArrays(GL_POINTS, 0, xava->bars);
 
-	glDisableVertexAttribArray(PRE_POS);
+	glDisableVertexAttribArray(PRE_BARS);
 
 	/**
 	 * Once the texture has been conpleted, we now activate a seperate pipeline
@@ -505,55 +514,52 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	 * */
 
 	// Change framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, xava->w, xava->h);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glViewport(0, 0, xava->w, xava->h);
 
-	// Switch to post shaders
-	glUseProgram(post.program);
+	//// Switch to post shaders
+	//glUseProgram(post.program);
 
-	// update time
-	glUniform1f(POST_TIME, currentTime);
+	//// update time
+	//glUniform1f(POST_TIME, currentTime);
 
-	// update intensity
-	glUniform1f(POST_INTENSITY, intensity);
+	//// update intensity
+	//glUniform1f(POST_INTENSITY, intensity);
 
-	// Clear the color buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	//// Clear the color buffer
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	// set attribute array pointers for the texture unit and vertex unit
-	glVertexAttribPointer(POST_POS, 2, GL_FLOAT,
-		GL_FALSE, 4 * sizeof(GLfloat), postVertices);
-	glVertexAttribPointer(POST_TEXCOORD, 2, GL_FLOAT,
-		GL_FALSE, 4 * sizeof(GLfloat), &postVertices[2]);
+	//glVertexAttribPointer(POST_POS, 2, GL_FLOAT,
+	//	GL_FALSE, 4 * sizeof(GLfloat), postVertices);
+	//glVertexAttribPointer(POST_TEXCOORD, 2, GL_FLOAT,
+	//	GL_FALSE, 4 * sizeof(GLfloat), &postVertices[2]);
 
-	// enable the use of the following attribute elements
-	glEnableVertexAttribArray(POST_POS);
-	glEnableVertexAttribArray(POST_TEXCOORD);
+	//// enable the use of the following attribute elements
+	//glEnableVertexAttribArray(POST_POS);
+	//glEnableVertexAttribArray(POST_TEXCOORD);
 
-	// Bind the textures
-	// Render texture
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, FBO.final_texture);
-	glUniform1i(POST_TEXTURE, 0);
+	//// Bind the textures
+	//// Render texture
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, FBO.final_texture);
+	//glUniform1i(POST_TEXTURE, 0);
 
-	// Depth texture
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, FBO.depth_texture);
-	glUniform1i(POST_DEPTH, 1);
+	//// Depth texture
+	//glActiveTexture(GL_TEXTURE1);
+	//glBindTexture(GL_TEXTURE_2D, FBO.depth_texture);
+	//glUniform1i(POST_DEPTH, 1);
 
-	// draw frame
-	GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+	//// draw frame
+	//GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
-	glDisableVertexAttribArray(POST_POS);
-	glDisableVertexAttribArray(POST_POS);
+	//glDisableVertexAttribArray(POST_POS);
 }
 
 void SGLDestroyProgram(struct SGLprogram *program) {
-	glDeleteShader(program->frag.handle);
 	free(program->frag.path);
 	free(program->frag.text);
-	glDeleteShader(program->vert.handle);
 	free(program->vert.path);
 	free(program->vert.text);
 	glDeleteProgram(program->program);
