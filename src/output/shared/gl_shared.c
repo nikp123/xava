@@ -15,7 +15,7 @@ struct SGLprogram {
 		XAVAIONOTIFYWATCH watch;
 	} frag, vert, geo;
 	GLuint program;
-} shader;
+} pre, post;
 
 // shader buffers
 static GLfloat *vertexData;
@@ -57,79 +57,101 @@ static void ionotify_callback(struct XAVA_HANDLE *hand, int id, XAVA_IONOTIFY_EV
 	}
 }
 
-// Better to be ugly and long then short and buggy
-void SGLShadersLoad(struct XAVA_HANDLE *xava) {
-	XAVACONFIG config = xava->default_config.config;
+enum sgl_shader_type {
+	SGL_PRE,
+	SGL_POST
+};
+
+enum sgl_shader_stage {
+	SGL_VERT,
+	SGL_GEO,
+	SGL_FRAG
+};
+
+void internal_SGLLoadShader(struct SGLprogram *program,
+		enum sgl_shader_type type,
+		enum sgl_shader_stage stage,
+		const char *name,
+		struct XAVA_HANDLE *xava) {
+	RawData *file;
+	char *returned_path;
+	char file_path[MAX_PATH];
 	XAVAIONOTIFYWATCHSETUP a;
 	MALLOC_SELF(a, 1);
 
-	char *shaderPack;
+	switch(type) {
+		case SGL_PRE:
+			strcpy(file_path, "gl/shaders/pre/");
+			break;
+		case SGL_POST:
+			strcpy(file_path, "gl/shaders/pre/");
+			break;
+		default:
+			xavaBail("A really BIG oopsie happened here!");
+			break;
+	}
 
-	shaderPack  = xavaConfigGetString(config, "gl", "pre_shaderpack", "default");
+	strcat(file_path, name);
 
-	resScale       = xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f);
+	struct shader* shader;
+	switch(stage) {
+		case SGL_VERT:
+			strcat(file_path, "/vertex.glsl");
+			xavaLogCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
+					file_path, &returned_path) == false,
+					"Failed to load '%s'!", file_path);
+			shader = &program->vert;
+			break;
+		case SGL_GEO:
+			strcat(file_path, "/geometry.glsl");
+			xavaLogCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
+					file_path, &returned_path) == false,
+					"Failed to load '%s'!", file_path);
+			shader = &program->geo;
+			break;
+		case SGL_FRAG:
+			strcat(file_path, "/fragment.glsl");
+			xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
+					file_path, &returned_path) == false,
+					"Failed to load '%s'!", file_path);
+			shader = &program->frag;
+			break;
+	}
 
-	RawData *file;
-	char *returned_path;
-	char *file_path = malloc(MAX_PATH);
-	strcpy(file_path, "gl/shaders/pre/");
-	strcat(file_path, shaderPack);
-	strcat(file_path, "/fragment.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-			file_path, &returned_path) == false,
-			"Failed to load pre-render fragment shader!");
-	shader.frag.path = strdup(returned_path);
-	a->filename = shader.frag.path;
-	a->id = 2;
-	a->ionotify = xava->ionotify;
-	a->xava_ionotify_func = ionotify_callback;
-	shader.frag.watch = xavaIONotifyAddWatch(a);
-	free(returned_path);
-
-	strcpy(file_path, "gl/shaders/pre/");
-	strcat(file_path, shaderPack);
-	strcat(file_path, "/vertex.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-			file_path, &returned_path) == false,
-			"Failed to load pre-render vertex shader!");
-	shader.vert.path = strdup(returned_path);
-	a->filename = shader.vert.path;
-	a->id = 3;
-	a->ionotify = xava->ionotify;
-	a->xava_ionotify_func = ionotify_callback;
-	shader.vert.watch = xavaIONotifyAddWatch(a);
-	free(returned_path);
-
-	strcpy(file_path, "gl/shaders/pre/");
-	strcat(file_path, shaderPack);
-	strcat(file_path, "/geometry.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-			file_path, &returned_path) == false,
-			"Failed to load pre-render geometry shader!");
-	shader.geo.path = strdup(returned_path);
-	a->filename = shader.geo.path;
-	a->id = 6;
-	a->ionotify = xava->ionotify;
-	a->xava_ionotify_func = ionotify_callback;
-	shader.geo.watch = xavaIONotifyAddWatch(a);
-	free(returned_path);
-
-	file = xavaReadFile(shader.frag.path);
-	shader.frag.text = xavaDuplicateMemory(file->data, file->size);
+	// load file
+	shader->path = strdup(returned_path);
+	file = xavaReadFile(shader->path);
+	shader->text = xavaDuplicateMemory(file->data, file->size);
 	xavaCloseFile(file);
 
-	file = xavaReadFile(shader.vert.path);
-	shader.vert.text = xavaDuplicateMemory(file->data, file->size);
-	xavaCloseFile(file);
+	// add watcher
+	a->filename = shader->path;
+	a->id = rand(); // WARN: Crash-prone cringe, please fix!
+	a->ionotify = xava->ionotify;
+	a->xava_ionotify_func = ionotify_callback;
+	shader->watch = xavaIONotifyAddWatch(a);
 
-	file = xavaReadFile(shader.geo.path);
-	shader.geo.text = xavaDuplicateMemory(file->data, file->size);
-	xavaCloseFile(file);
-
-	free(file_path);
-	free(a);
+	// clean escape
+	free(returned_path);
 }
 
+void SGLShadersLoad(struct XAVA_HANDLE *xava) {
+	XAVACONFIG config = xava->default_config.config;
+
+	char *prePack, *postPack;
+
+	prePack  = xavaConfigGetString(config, "gl", "pre_shaderpack", "default");
+	postPack = xavaConfigGetString(config, "gl", "post_shaderpack", "default");
+
+	resScale    = xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f);
+
+	internal_SGLLoadShader(&pre, SGL_PRE, SGL_VERT, prePack, xava);
+	internal_SGLLoadShader(&pre, SGL_PRE, SGL_GEO,  prePack, xava);
+	internal_SGLLoadShader(&pre, SGL_PRE, SGL_FRAG, prePack, xava);
+	internal_SGLLoadShader(&post, SGL_POST, SGL_VERT, postPack, xava);
+	internal_SGLLoadShader(&post, SGL_POST, SGL_GEO,  postPack, xava);
+	internal_SGLLoadShader(&post, SGL_POST, SGL_FRAG, postPack, xava);
+}
 
 GLint SGLShaderBuild(struct shader *shader, GLenum shader_type) {
 	GLint status;
@@ -193,18 +215,18 @@ void SGLCreateProgram(struct SGLprogram *program) {
 
 	program->program = glCreateProgram();
 	SGLShaderBuild(&program->vert, GL_VERTEX_SHADER);
-	if(program->geo.path) // optional stage, we check if it's included in the shader pack
+	if(program->geo.text) // optional stage, we check if it's included in the shader pack
 		SGLShaderBuild(&program->geo, GL_GEOMETRY_SHADER);
 	SGLShaderBuild(&program->frag, GL_FRAGMENT_SHADER);
 
 	glAttachShader(program->program, program->vert.handle);
-	if(program->geo.path) // optional stage, we check if it's included in the shader pack
+	if(program->geo.text) // optional stage, we check if it's included in the shader pack
 		glAttachShader(program->program, program->geo.handle);
 	glAttachShader(program->program, program->frag.handle);
 	glLinkProgram(program->program);
 
 	glDeleteShader(program->frag.handle);
-	if(program->geo.path) // optional stage, we check if it's included in the shader pack
+	if(program->geo.text) // optional stage, we check if it's included in the shader pack
 		glDeleteShader(program->geo.handle);
 	glDeleteShader(program->vert.handle);
 
@@ -224,25 +246,25 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	xava->w = conf->w;
 	xava->h = conf->h+conf->shdw;
 
-	SGLCreateProgram(&shader);
+	SGLCreateProgram(&pre);
 
-	// color 
-	SHADER_FGCOL      = glGetUniformLocation(shader.program, "foreground_color");
-	SHADER_BGCOL      = glGetUniformLocation(shader.program, "background_color");
+	// color
+	SHADER_FGCOL      = glGetUniformLocation(pre.program, "foreground_color");
+	SHADER_BGCOL      = glGetUniformLocation(pre.program, "background_color");
 
 	// sys info provider
-	SHADER_TIME       = glGetUniformLocation(shader.program, "time");
-	SHADER_INTENSITY  = glGetUniformLocation(shader.program, "intensity");
+	SHADER_TIME       = glGetUniformLocation(pre.program, "time");
+	SHADER_INTENSITY  = glGetUniformLocation(pre.program, "intensity");
 
 	// geometry
-	SHADER_BARS          = glGetAttribLocation( shader.program, "fft_bars");
-	SHADER_RESOLUTION    = glGetUniformLocation(shader.program, "resolution");
-	SHADER_REST          = glGetUniformLocation(shader.program, "rest");
-	SHADER_BAR_WIDTH     = glGetUniformLocation(shader.program, "bar_width");
-	SHADER_BAR_SPACING   = glGetUniformLocation(shader.program, "bar_spacing");
-	SHADER_BAR_COUNT     = glGetUniformLocation(shader.program, "bar_count");
+	SHADER_BARS          = glGetAttribLocation( pre.program, "fft_bars");
+	SHADER_RESOLUTION    = glGetUniformLocation(pre.program, "resolution");
+	SHADER_REST          = glGetUniformLocation(pre.program, "rest");
+	SHADER_BAR_WIDTH     = glGetUniformLocation(pre.program, "bar_width");
+	SHADER_BAR_SPACING   = glGetUniformLocation(pre.program, "bar_spacing");
+	SHADER_BAR_COUNT     = glGetUniformLocation(pre.program, "bar_count");
 
-	glUseProgram(shader.program);
+	glUseProgram(pre.program);
 
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -272,7 +294,7 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 void SGLApply(struct XAVA_HANDLE *xava){
 	struct config_params *conf = &xava->conf;
 
-	glUseProgram(shader.program);
+	glUseProgram(pre.program);
 
 	// reallocate and attach verticies data
 	vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*2);
@@ -287,8 +309,8 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	glUniform1f(SHADER_BAR_SPACING, (float)2.0f*xava->conf.bs / xava->conf.w);
 	glUniform1f(SHADER_BAR_COUNT, xava->bars);
 
-	SHADER_GRAD_SECT_COUNT = glGetUniformLocation(shader.program, "gradient_sections");
-	SHADER_GRADIENTS  = glGetUniformLocation(shader.program, "gradient_color");
+	SHADER_GRAD_SECT_COUNT = glGetUniformLocation(pre.program, "gradient_sections");
+	SHADER_GRADIENTS  = glGetUniformLocation(pre.program, "gradient_color");
 
 	glUniform1f(SHADER_GRAD_SECT_COUNT, conf->gradients ? conf->gradients-1 : 0);
 	glUniform4fv(SHADER_GRADIENTS, conf->gradients, gradientColor);
@@ -314,7 +336,7 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 
 	// if you want to fiddle with certain uniforms from a shader, YOU MUST SWITCH TO IT
 	// (https://www.khronos.org/opengl/wiki/GLSL_:_common_mistakes#glUniform_doesn.27t_work)
-	glUseProgram(shader.program);
+	glUseProgram(pre.program);
 
 	// set and attach foreground color
 	uint32_t fgcol = conf->col;
@@ -365,7 +387,7 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	glViewport(0, 0, xava->w*resScale, xava->h*resScale);
 
 	// switch to pre shaders
-	glUseProgram(shader.program);
+	glUseProgram(pre.program);
 
 	// update time
 	glUniform1f(SHADER_TIME, currentTime);
@@ -398,7 +420,8 @@ void SGLCleanup(struct XAVA_HANDLE *xava) {
 	// xavaIONotifyEndWatch(xava->ionotify, preVertWatch);
 
 	// delete both pipelines
-	SGLDestroyProgram(&shader);
+	SGLDestroyProgram(&pre);
+	SGLDestroyProgram(&post);
 
 	free(gradientColor);
 	free(vertexData);
