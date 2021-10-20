@@ -17,27 +17,70 @@ struct SGLprogram {
 	GLuint program;
 } pre, post;
 
+static struct FBO {
+	GLuint framebuffer;
+	GLuint final_texture;
+	GLuint depth_texture;
+} FBO;
+
 // shader buffers
 static GLfloat *vertexData;
 static GLfloat *gradientColor;
 
+// used to adjust the view
+static GLfloat projectionMatrix[16] =
+	{2.0, 0.0,  0.0, -1.0,
+	 0.0,  2.0,  0.0, -1.0,
+	 0.0,  0.0, -1.0, -1.0,
+	 0.0,  0.0,  0.0,  1.0};
+
+// postVertices
+static GLfloat postVertices[] = {
+	-1.0f, -1.0f,  // Position 0
+	 0.0f,  0.0f,  // TexCoord 0
+	 1.0f, -1.0f,  // Position 1
+	 1.0f,  0.0f,  // TexCoord 1
+	 1.0f,  1.0f,  // Position 2
+	 1.0f,  1.0f,  // TexCoord 2
+	-1.0f,  1.0f,  // Position 3
+	 0.0f,  1.0f}; // TexCoord 3
+
 // geometry information
-static GLuint SHADER_REST;
-static GLuint SHADER_BAR_WIDTH;
-static GLuint SHADER_BAR_SPACING;
-static GLuint SHADER_BAR_COUNT;
-static GLuint SHADER_BARS;
-static GLuint SHADER_RESOLUTION;
+static GLuint PRE_REST;
+static GLuint PRE_BAR_WIDTH;
+static GLuint PRE_BAR_SPACING;
+static GLuint PRE_BAR_COUNT;
+static GLuint PRE_BARS;
+static GLuint PRE_RESOLUTION;
+static GLuint PRE_PROJMATRIX;
 
 // color information
-static GLuint SHADER_FGCOL;
-static GLuint SHADER_BGCOL;
+static GLuint PRE_FGCOL;
+static GLuint PRE_BGCOL;
 
 // system information providers
-static GLuint SHADER_GRAD_SECT_COUNT;
-static GLuint SHADER_GRADIENTS;
-static GLuint SHADER_TIME;
-static GLuint SHADER_INTENSITY;
+static GLuint PRE_GRAD_SECT_COUNT;
+static GLuint PRE_GRADIENTS;
+static GLuint PRE_TIME;
+static GLuint PRE_INTENSITY;
+
+// post shader variables
+
+// geometry info
+static GLuint POST_POS;
+static GLuint POST_TEXCOORD;
+
+// textures
+static GLuint POST_TEXTURE;
+static GLuint POST_DEPTH;
+
+// system info
+static GLuint POST_TIME;
+static GLuint POST_INTENSITY;
+
+// color information
+static GLuint POST_FGCOL;
+static GLuint POST_BGCOL;
 
 // special
 static GLfloat resScale;
@@ -84,7 +127,7 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 			strcpy(file_path, "gl/shaders/pre/");
 			break;
 		case SGL_POST:
-			strcpy(file_path, "gl/shaders/pre/");
+			strcpy(file_path, "gl/shaders/post/");
 			break;
 		default:
 			xavaBail("A really BIG oopsie happened here!");
@@ -104,9 +147,13 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 			break;
 		case SGL_GEO:
 			strcat(file_path, "/geometry.glsl");
-			xavaLogCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-					file_path, &returned_path) == false,
-					"Failed to load '%s'!", file_path);
+			bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
+												file_path,
+												&returned_path);
+			if(!success) {
+				xavaLog("Failed to load '%s'!", file_path);
+				returned_path = NULL;
+			}
 			shader = &program->geo;
 			break;
 		case SGL_FRAG:
@@ -119,17 +166,19 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 	}
 
 	// load file
-	shader->path = strdup(returned_path);
-	file = xavaReadFile(shader->path);
-	shader->text = xavaDuplicateMemory(file->data, file->size);
-	xavaCloseFile(file);
+	if(returned_path) {
+		shader->path = strdup(returned_path);
+		file = xavaReadFile(shader->path);
+		shader->text = xavaDuplicateMemory(file->data, file->size);
+		xavaCloseFile(file);
 
-	// add watcher
-	a->filename = shader->path;
-	a->id = rand(); // WARN: Crash-prone cringe, please fix!
-	a->ionotify = xava->ionotify;
-	a->xava_ionotify_func = ionotify_callback;
-	shader->watch = xavaIONotifyAddWatch(a);
+		// add watcher
+		a->filename = shader->path;
+		a->id = rand(); // WARN: Crash-prone cringe, please fix!
+		a->ionotify = xava->ionotify;
+		a->xava_ionotify_func = ionotify_callback;
+		shader->watch = xavaIONotifyAddWatch(a);
+	}
 
 	// clean escape
 	free(returned_path);
@@ -214,10 +263,10 @@ void SGLCreateProgram(struct SGLprogram *program) {
 	GLint status;
 
 	program->program = glCreateProgram();
-	SGLShaderBuild(&program->vert, GL_VERTEX_SHADER);
+	SGLShaderBuild(&program->vert,    GL_VERTEX_SHADER);
 	if(program->geo.text) // optional stage, we check if it's included in the shader pack
 		SGLShaderBuild(&program->geo, GL_GEOMETRY_SHADER);
-	SGLShaderBuild(&program->frag, GL_FRAGMENT_SHADER);
+	SGLShaderBuild(&program->frag,    GL_FRAGMENT_SHADER);
 
 	glAttachShader(program->program, program->vert.handle);
 	if(program->geo.text) // optional stage, we check if it's included in the shader pack
@@ -247,28 +296,40 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	xava->h = conf->h+conf->shdw;
 
 	SGLCreateProgram(&pre);
+	SGLCreateProgram(&post);
 
 	// color
-	SHADER_FGCOL      = glGetUniformLocation(pre.program, "foreground_color");
-	SHADER_BGCOL      = glGetUniformLocation(pre.program, "background_color");
+	PRE_FGCOL      = glGetUniformLocation(pre.program, "foreground_color");
+	PRE_BGCOL      = glGetUniformLocation(pre.program, "background_color");
+
+	PRE_GRAD_SECT_COUNT = glGetUniformLocation(pre.program, "gradient_sections");
+	PRE_GRADIENTS       = glGetUniformLocation(pre.program, "gradient_color");
 
 	// sys info provider
-	SHADER_TIME       = glGetUniformLocation(pre.program, "time");
-	SHADER_INTENSITY  = glGetUniformLocation(pre.program, "intensity");
+	PRE_TIME       = glGetUniformLocation(pre.program, "time");
+	PRE_INTENSITY  = glGetUniformLocation(pre.program, "intensity");
 
 	// geometry
-	SHADER_BARS          = glGetAttribLocation( pre.program, "fft_bars");
-	SHADER_RESOLUTION    = glGetUniformLocation(pre.program, "resolution");
-	SHADER_REST          = glGetUniformLocation(pre.program, "rest");
-	SHADER_BAR_WIDTH     = glGetUniformLocation(pre.program, "bar_width");
-	SHADER_BAR_SPACING   = glGetUniformLocation(pre.program, "bar_spacing");
-	SHADER_BAR_COUNT     = glGetUniformLocation(pre.program, "bar_count");
+	PRE_BARS          = glGetAttribLocation( pre.program, "fft_bars");
+	PRE_RESOLUTION    = glGetUniformLocation(pre.program, "resolution");
+	PRE_REST          = glGetUniformLocation(pre.program, "rest");
+	PRE_BAR_WIDTH     = glGetUniformLocation(pre.program, "bar_width");
+	PRE_BAR_SPACING   = glGetUniformLocation(pre.program, "bar_spacing");
+	PRE_BAR_COUNT     = glGetUniformLocation(pre.program, "bar_count");
+	PRE_PROJMATRIX    = glGetUniformLocation(pre.program, "projection_matrix");
+
+	POST_POS       = glGetAttribLocation(post.program,  "v_texCoord");
+	POST_TEXCOORD  = glGetAttribLocation(post.program,  "m_texCoord");
+	POST_TEXTURE   = glGetUniformLocation(post.program, "color_texture");
+	POST_DEPTH     = glGetUniformLocation(post.program, "depth_texture");
+	POST_TIME      = glGetUniformLocation(post.program, "time");
+	POST_INTENSITY = glGetUniformLocation(post.program, "intensity");
+
+	POST_FGCOL     = glGetUniformLocation(post.program, "foreground_color");
+	POST_BGCOL     = glGetUniformLocation(post.program, "background_color");
 
 	glUseProgram(pre.program);
 
-	//glEnable(GL_BLEND);
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 
 	// we just need working pointers so that realloc() works
@@ -294,26 +355,69 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 void SGLApply(struct XAVA_HANDLE *xava){
 	struct config_params *conf = &xava->conf;
 
+	glUseProgram(post.program);
+
+	// set texture properties
+	glGenTextures(1,               &FBO.final_texture);
+	glBindTexture(GL_TEXTURE_2D,   FBO.final_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, xava->w*resScale, xava->h*resScale,
+			0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	// set texture properties
+	glGenTextures(1,      &FBO.depth_texture);
+	glBindTexture(GL_TEXTURE_2D, FBO.depth_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, xava->w*resScale,
+			xava->h*resScale, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	// set framebuffer properties
+	glGenFramebuffers(1,  &FBO.framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, FBO.final_texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+			GL_TEXTURE_2D, FBO.depth_texture, 0);
+
+	// check if it borked
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	xavaBailCondition(status != GL_FRAMEBUFFER_COMPLETE,
+			"Failed to create framebuffer(s)! Error code 0x%X\n",
+			status);
+
 	glUseProgram(pre.program);
 
 	// reallocate and attach verticies data
 	vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*2);
-	glVertexAttribPointer(SHADER_BARS, 3, GL_FLOAT, GL_FALSE, 0, vertexData);
+	glVertexAttribPointer(PRE_BARS, 3, GL_FLOAT, GL_FALSE, 0, vertexData);
+
+	// do image scaling
+	projectionMatrix[0] = 2.0/xava->w;
+	projectionMatrix[5] = 2.0/xava->h;
+
+	// do image translation
+	//projectionMatrix[3] = (float)xava->x/xava->w*2.0 - 1.0;
+	//projectionMatrix[7] = 1.0 - (float)(xava->y+conf->h)/xava->h*2.0;
+
+	glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
 	// update screen resoltion
-	glUniform2f(SHADER_RESOLUTION, xava->w, xava->h);
+	glUniform2f(PRE_RESOLUTION, xava->w, xava->h);
 
 	// update spacing info
-	glUniform1f(SHADER_REST, (float)2.0f*xava->rest    / xava->conf.w);
-	glUniform1f(SHADER_BAR_WIDTH, (float)2.0f*xava->conf.bw / xava->conf.w);
-	glUniform1f(SHADER_BAR_SPACING, (float)2.0f*xava->conf.bs / xava->conf.w);
-	glUniform1f(SHADER_BAR_COUNT, xava->bars);
+	glUniform1f(PRE_REST,        (float)xava->rest);
+	glUniform1f(PRE_BAR_WIDTH,   (float)xava->conf.bw);
+	glUniform1f(PRE_BAR_SPACING, (float)xava->conf.bs);
+	glUniform1f(PRE_BAR_COUNT,   (float)xava->bars);
 
-	SHADER_GRAD_SECT_COUNT = glGetUniformLocation(pre.program, "gradient_sections");
-	SHADER_GRADIENTS  = glGetUniformLocation(pre.program, "gradient_color");
-
-	glUniform1f(SHADER_GRAD_SECT_COUNT, conf->gradients ? conf->gradients-1 : 0);
-	glUniform4fv(SHADER_GRADIENTS, conf->gradients, gradientColor);
+	glUniform1f(PRE_GRAD_SECT_COUNT, conf->gradients ? conf->gradients-1 : 0);
+	glUniform4fv(PRE_GRADIENTS, conf->gradients, gradientColor);
 
 	// "clear" the screen
 	SGLClear(xava);
@@ -339,15 +443,23 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 	glUseProgram(pre.program);
 
 	// set and attach foreground color
-	uint32_t fgcol = conf->col;
-	glUniform4f(SHADER_FGCOL, ARGB_R_32(fgcol)/255.0, ARGB_G_32(fgcol)/255.0,
-			ARGB_B_32(fgcol)/255.0, conf->foreground_opacity);
+	float fgcol[4] = {
+		ARGB_R_32(conf->col),
+		ARGB_G_32(conf->col),
+		ARGB_B_32(conf->col),
+		conf->foreground_opacity
+	};
+	glUniform4f(PRE_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
 
 	// set background clear color
-	uint32_t bgcol = conf->bgcol;
-	float bgcolF = conf->background_opacity/255.0;
-	glUniform4f(SHADER_BGCOL, ARGB_R_32(bgcol)*bgcolF, ARGB_G_32(bgcol)*bgcolF,
-			ARGB_B_32(bgcol)*bgcolF, conf->background_opacity);
+	float bgcol[4] = {
+		ARGB_R_32(conf->bgcol),
+		ARGB_G_32(conf->bgcol),
+		ARGB_B_32(conf->bgcol),
+		conf->background_opacity
+	};
+
+	glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 
 	//uint32_t shdw_col = conf->shdw_col;
 	//glUniform4f(POST_SHADOW_COLOR, ARGB_R_32(shdw_col), ARGB_G_32(shdw_col),
@@ -357,6 +469,14 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 	//glUniform2f(POST_SHADOW_OFFSET,
 	//		((float)conf->shdw)/((float)xava->w)*-0.5,
 	//		((float)conf->shdw)/((float)xava->h)*0.5);
+
+	glUseProgram(post.program);
+
+	// set and attach foreground color
+	glUniform4f(POST_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
+
+	// set background clear color
+	glUniform4f(POST_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 }
 
 void SGLDraw(struct XAVA_HANDLE *xava) {
@@ -374,7 +494,7 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	for(register int i=0; i<xava->bars; i++) {
 		float value = (float) xava->f[i] / xava->h;
 		vertexData[i<<1] = i;
-		vertexData[(i<<1)+1] = value;
+		vertexData[(i<<1)+1] = xava->f[i];
 		intensity += value;
 	}
 
@@ -383,30 +503,80 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	intensity /= xava->bars;
 
 	// bind render target to texture
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO.framebuffer);
 	glViewport(0, 0, xava->w*resScale, xava->h*resScale);
 
 	// switch to pre shaders
 	glUseProgram(pre.program);
 
 	// update time
-	glUniform1f(SHADER_TIME, currentTime);
+	glUniform1f(PRE_TIME, currentTime);
 
 	// update intensity
-	glUniform1f(SHADER_INTENSITY, intensity);
+	glUniform1f(PRE_INTENSITY, intensity);
 
-	// GL_COLOR_BUFFER_BIT | <- let the shaders handle this one
-	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	// clear the screen
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	// pointers get reset after each glUseProgram(), that's why this is done
-	glVertexAttribPointer(SHADER_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+	glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
-	glEnableVertexAttribArray(SHADER_BARS);
+	glEnableVertexAttribArray(PRE_BARS);
 
 	// You use the number of verticies, but not the actual polygon count
 	glDrawArrays(GL_POINTS, 0, xava->bars);
 
-	glDisableVertexAttribArray(SHADER_BARS);
+	glDisableVertexAttribArray(PRE_BARS);
+
+	/**
+	 * Once the texture has been conpleted, we now activate a seperate pipeline
+	 * which just displays that texture to the actual framebuffer for easier
+	 * shader writing
+	 * */
+
+	// Change framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, xava->w, xava->h);
+
+	// Switch to post shaders
+	glUseProgram(post.program);
+
+	// update time
+	glUniform1f(POST_TIME, currentTime);
+
+	// update intensity
+	glUniform1f(POST_INTENSITY, intensity);
+
+	// Clear the color buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	// set attribute array pointers for the texture unit and vertex unit
+	glVertexAttribPointer(POST_POS, 2, GL_FLOAT,
+		GL_FALSE, 4 * sizeof(GLfloat), postVertices);
+	glVertexAttribPointer(POST_TEXCOORD, 2, GL_FLOAT,
+		GL_FALSE, 4 * sizeof(GLfloat), &postVertices[2]);
+
+	// enable the use of the following attribute elements
+	glEnableVertexAttribArray(POST_POS);
+	glEnableVertexAttribArray(POST_TEXCOORD);
+
+	// Bind the textures
+	// Render texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, FBO.final_texture);
+	glUniform1i(POST_TEXTURE, 0);
+
+	// Depth texture
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, FBO.depth_texture);
+	glUniform1i(POST_DEPTH, 1);
+
+	// draw frame
+	GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+
+	glDisableVertexAttribArray(POST_POS);
+	glDisableVertexAttribArray(POST_TEXCOORD);
 }
 
 void SGLDestroyProgram(struct SGLprogram *program) {

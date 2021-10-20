@@ -1,13 +1,9 @@
 #version 420 core
 
-#ifdef GL_ES
-	precision mediump float;
-#endif
-
-// color passed from the host 
+// color passed from the host
 uniform vec4 foreground_color;
 
-// color passed from the host 
+// color passed from the host
 uniform vec4 background_color;
 
 // number of secionts that the gradient is divided to
@@ -19,26 +15,18 @@ uniform vec4 gradient_color[8];
 // screen width and height
 uniform vec2 resolution;
 
+uniform float intensity;
+
 layout(location=0) out vec4 FragColor;
 
-vec4 correctForAlphaBlend(vec4 color) {
-	return vec4(color.rgb*color.a, color.a);
-}
-
 void main() {
-	if(gl_FragCoord.z < 0.05) {
-		if(gradient_sections > 0.0) {
-			float across = (gl_FragCoord.y/resolution.y)*gradient_sections;
-			int section = int(floor(across));
-			float off = mod(across, 1.0);
-			FragColor = mix(gradient_color[section], gradient_color[section+1], off);
-		} else {
-			FragColor = foreground_color;
-		}
+	if(gradient_sections > 0.0) {
+		float across = (gl_FragCoord.y/resolution.y)*gradient_sections;
+		int section = int(floor(across));
+		float off = mod(across, 1.0);
+		FragColor = mix(gradient_color[section], gradient_color[section+1], off);
 	} else {
-		FragColor = background_color;
+		FragColor = foreground_color;
 	}
-
-	FragColor = correctForAlphaBlend(FragColor);
 }
 
