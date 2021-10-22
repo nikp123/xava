@@ -69,6 +69,7 @@ static GLuint PRE_INTENSITY;
 // geometry info
 static GLuint POST_POS;
 static GLuint POST_TEXCOORD;
+static GLuint POST_RESOLUTION;
 
 // textures
 static GLuint POST_TEXTURE;
@@ -318,12 +319,13 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	PRE_BAR_COUNT     = glGetUniformLocation(pre.program, "bar_count");
 	PRE_PROJMATRIX    = glGetUniformLocation(pre.program, "projection_matrix");
 
-	POST_POS       = glGetAttribLocation(post.program,  "v_texCoord");
-	POST_TEXCOORD  = glGetAttribLocation(post.program,  "m_texCoord");
-	POST_TEXTURE   = glGetUniformLocation(post.program, "color_texture");
-	POST_DEPTH     = glGetUniformLocation(post.program, "depth_texture");
-	POST_TIME      = glGetUniformLocation(post.program, "time");
-	POST_INTENSITY = glGetUniformLocation(post.program, "intensity");
+	POST_POS        = glGetAttribLocation(post.program,  "v_texCoord");
+	POST_TEXCOORD   = glGetAttribLocation(post.program,  "m_texCoord");
+	POST_TEXTURE    = glGetUniformLocation(post.program, "color_texture");
+	POST_DEPTH      = glGetUniformLocation(post.program, "depth_texture");
+	POST_TIME       = glGetUniformLocation(post.program, "time");
+	POST_INTENSITY  = glGetUniformLocation(post.program, "intensity");
+	POST_RESOLUTION = glGetUniformLocation(post.program,  "resolution");
 
 	POST_FGCOL     = glGetUniformLocation(post.program, "foreground_color");
 	POST_BGCOL     = glGetUniformLocation(post.program, "background_color");
@@ -356,6 +358,9 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	struct config_params *conf = &xava->conf;
 
 	glUseProgram(post.program);
+
+	// update screen resoltion
+	glUniform2f(POST_RESOLUTION, xava->w, xava->h);
 
 	// set texture properties
 	glGenTextures(1,               &FBO.final_texture);
