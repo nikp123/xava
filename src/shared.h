@@ -70,15 +70,13 @@ struct config_params {
 	// input/output related options
 
 	// 1 - colors
-	char*  color, *bcolor, *shadow_color;			// pointer to color string
+	char*  color, *bcolor;			// pointer to color string
 	char** gradient_colors;							// array of pointers to color string
-	uint32_t col, bgcol, shdw_col;					// ARGB 32-bit value
+	uint32_t col, bgcol;							// ARGB 32-bit value
 	double foreground_opacity, background_opacity;	// range 0.0-1.0
 
-	// 2 - shadows/gradients
-	// shdw = shadow, col = foreground color, bgcol = background color
-	uint32_t shdw;									// 0 for no shadows while subsequent
-													// values describe the size in pixels
+	// 2 - gradients
+	// col = foreground color, bgcol = background color
 	uint32_t gradients;								// 0 for none, subsequent values increase
 
 	// 3 - timing

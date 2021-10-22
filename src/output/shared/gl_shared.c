@@ -293,7 +293,7 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 
 	// automatically assign this so it isn't invalid during framebuffer creation
 	xava->w = conf->w;
-	xava->h = conf->h+conf->shdw;
+	xava->h = conf->h;
 
 	SGLCreateProgram(&pre);
 	SGLCreateProgram(&post);
@@ -460,15 +460,6 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 	};
 
 	glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
-
-	//uint32_t shdw_col = conf->shdw_col;
-	//glUniform4f(POST_SHADOW_COLOR, ARGB_R_32(shdw_col), ARGB_G_32(shdw_col),
-	//		ARGB_B_32(shdw_col), 1.0);
-
-
-	//glUniform2f(POST_SHADOW_OFFSET,
-	//		((float)conf->shdw)/((float)xava->w)*-0.5,
-	//		((float)conf->shdw)/((float)xava->h)*0.5);
 
 	glUseProgram(post.program);
 

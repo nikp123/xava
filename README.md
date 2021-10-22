@@ -52,7 +52,6 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Vsync](#vsync)
   - [Bars](#bars)
   - [Colors and gradients](#colors-and-gradients)
-  - [Shadow](#shadow)
   - [Accent colors](#accent-colors)
   - [Additional options](#additional-options)
 - [Contribution](#contribution)
@@ -682,19 +681,6 @@ enable them by changing:
 	gradient_color_1 = *same rule as colors*
 	gradient_color_2 = *same rule as colors*
 	...
-
-
-### Shadow
-
-XAVA can render shadows around the bars so to make the
-visualizer look like it's floating on your desktop.
-In the ``shadow`` section you'll find these two options:
-
-	size = *in pixels*
-	color = *hex color string in the following format '#aarrggbb'*
-
-You need to be running the "supported" mode and a shader that supports shadows
-for this to work (by default, the shaders do support shadows).
 
 
 ### Additional options

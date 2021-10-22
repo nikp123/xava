@@ -267,16 +267,6 @@
 ; gradient_color_2 = '#ff3399'
 
 
-[shadow]
-
-# Fake shadow effect (woks with supported modes only)
-# To disable shadows, set size to 0
-; size = 7
-
-# Color format is #aarrggbb
-; color = "#ff000000"
-
-
 [stars]
 
 # For stars to work, you need a speical output mode that supports it

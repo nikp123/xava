@@ -156,10 +156,6 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
 	}
 	xavaBailCondition(!foundAlignment, "Alignment '%s' is invalid!\n",
 			p->winA);
-
-	// validate: shadow
-	xavaBailCondition(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1,
-			"Shadow color should be a HTML color in the form '#xxxxxx'");
 }
 
 char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
@@ -244,10 +240,6 @@ char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	p->interactF = xavaConfigGetBool(hand->default_config.config, "window", "interactable", 1);
 	p->taskbarF = xavaConfigGetBool(hand->default_config.config, "window", "taskbar_icon", 1);
 	p->holdSizeF = xavaConfigGetBool(hand->default_config.config, "window", "hold_size", false);
-
-	// config: shadow
-	p->shdw = xavaConfigGetInt(hand->default_config.config, "shadow", "size", 7);
-	p->shadow_color = (char *)xavaConfigGetString(hand->default_config.config, "shadow", "color", "#ff000000");
 
 	// config: filter
 	filterMethod = (char *)xavaConfigGetString(hand->default_config.config, "filter", "name", XAVA_DEFAULT_FILTER);
