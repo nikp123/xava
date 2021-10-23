@@ -1,4 +1,4 @@
-#include "../../lib/x-watcher/x-watcher.h"
+#include <x-watcher.h>
 
 #include "ionotify.h"
 #include "../shared.h"

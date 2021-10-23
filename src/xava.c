@@ -68,7 +68,8 @@ static struct XAVA_HANDLE xava;
 // XAVA magic variables, too many of them indeed
 static pthread_t p_thread;
 
-void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, char *filename, int id, struct XAVA_HANDLE *xava) {
+void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
+		int id, struct XAVA_HANDLE *xava) {
 	switch(event) {
 		case XAVA_IONOTIFY_CHANGED:
 		case XAVA_IONOTIFY_DELETED:
