@@ -168,7 +168,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 			}
 			break;
 		case XAVA_FILE_TYPE_CONFIG:
-		case XAVA_FILE_TYPE_CUSTOM_CONFIG:
+		case XAVA_FILE_TYPE_OPTIONAL_CONFIG:
 		{
 			#if defined(__unix__) // FOSS-y/Linux-y implementation
 				char *configHome = getenv("XDG_CONFIG_HOME");
@@ -305,7 +305,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 	switch(type) {
 		case XAVA_FILE_TYPE_PACKAGE:
 		case XAVA_FILE_TYPE_CONFIG:
-		case XAVA_FILE_TYPE_CUSTOM_CONFIG:
+		case XAVA_FILE_TYPE_OPTIONAL_CONFIG:
 		case XAVA_FILE_TYPE_CACHE:
 			strcat((*actualPath), new_filename);
 			break;
@@ -319,6 +319,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 	}
 
 	switch(type) {
+		case XAVA_FILE_TYPE_OPTIONAL_CONFIG:
 		case XAVA_FILE_TYPE_CONFIG:
 		{
 			// don't be surprised if you find a lot of bugs here, beware!
@@ -340,7 +341,8 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 				sprintf(defaultConfigFileName, "%s" EXAMPLE_FILE_EXT, filename);
 
 				if(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, defaultConfigFileName, &found) == false) {
-					xavaError("Could not find the file within the XAVA installation! Bailing out...");
+					if(type == XAVA_FILE_TYPE_CONFIG) // error only if it's necesary
+						xavaError("Could not find the file within the XAVA installation! Bailing out...");
 					free((*actualPath));
 					return false;
 				}
@@ -407,7 +409,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 			if(writeCheck) {
 				fp = fopen((*actualPath), "ab");
 				if(fp == NULL) {
-					xavaError("Could not open '%s' for writing!", (*actualPath));
+					xavaLog("Could not open '%s' for writing!", (*actualPath));
 					switch(type) {
 						case XAVA_FILE_TYPE_PACKAGE:
 						case XAVA_FILE_TYPE_CACHE:
@@ -421,7 +423,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 			} else {
 				fp = fopen((*actualPath), "rb");
 				if(fp == NULL) {
-					xavaError("Could not open '%s' for reading!", (*actualPath));
+					xavaLog("Could not open '%s' for reading!", (*actualPath));
 					switch(type) {
 						case XAVA_FILE_TYPE_PACKAGE:
 						case XAVA_FILE_TYPE_CACHE:

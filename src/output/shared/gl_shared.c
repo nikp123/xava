@@ -149,7 +149,7 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 			break;
 		case SGL_GEO:
 			strcat(file_path, "/geometry.glsl");
-			bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
+			bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_OPTIONAL_CONFIG,
 												file_path,
 												&returned_path);
 			if(!success) {
