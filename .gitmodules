@@ -1,6 +1,6 @@
 [submodule "lib/iniparser"]
 	path = lib/iniparser
 	url = https://github.com/ndevilla/iniparser
-[submodule "lib/efsw"]
-	path = lib/efsw
-	url = https://github.com/SpartanJ/efsw
+[submodule "lib/x-watcher"]
+	path = lib/x-watcher
+	url = https://github.com/nikp123/x-watcher

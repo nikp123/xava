@@ -12,7 +12,6 @@ struct SGLprogram {
 	struct shader {
 		char *path, *text;
 		GLuint handle;
-		XAVAIONOTIFYWATCH watch;
 	} frag, vert, geo;
 	GLuint program;
 } pre, post;
@@ -89,10 +88,12 @@ static GLfloat resScale;
 // this is hacked in, shut up
 static bool shouldRestart;
 
-static void ionotify_callback(struct XAVA_HANDLE *hand, int id, XAVA_IONOTIFY_EVENT event) {
+static void ionotify_callback(XAVA_IONOTIFY_EVENT event,
+								const char *filename,
+								int id,
+								struct XAVA_HANDLE* xava) {
 	switch(event) {
 		case XAVA_IONOTIFY_CHANGED:
-		case XAVA_IONOTIFY_DELETED:
 			shouldRestart = true;
 			break;
 		default:
@@ -174,11 +175,12 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 		xavaCloseFile(file);
 
 		// add watcher
-		a->filename = shader->path;
-		a->id = rand(); // WARN: Crash-prone cringe, please fix!
-		a->ionotify = xava->ionotify;
+		a->filename           = shader->path;
+		a->id                 = 1; // dont really care tbh
+		a->xava               = xava;
+		a->ionotify           = xava->ionotify;
 		a->xava_ionotify_func = ionotify_callback;
-		shader->watch = xavaIONotifyAddWatch(a);
+		xavaIONotifyAddWatch(a);
 	}
 
 	// clean escape
@@ -476,8 +478,6 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 }
 
 void SGLDraw(struct XAVA_HANDLE *xava) {
-	struct config_params *conf = &xava->conf;
-
 	// restrict time variable to one hour because floating point precision issues
 	float currentTime = (float)fmodl((long double)xavaGetTime()/(long double)1000.0, 3600.0);
 	float intensity = 0.0;
@@ -580,11 +580,6 @@ void SGLDestroyProgram(struct SGLprogram *program) {
 }
 
 void SGLCleanup(struct XAVA_HANDLE *xava) {
-	// WARN: May be leaky here
-	// cleanup watches
-	// xavaIONotifyEndWatch(xava->ionotify, preFragWatch);
-	// xavaIONotifyEndWatch(xava->ionotify, preVertWatch);
-
 	// delete both pipelines
 	SGLDestroyProgram(&pre);
 	SGLDestroyProgram(&post);

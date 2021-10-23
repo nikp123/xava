@@ -74,10 +74,12 @@ if(MINGW)
 	set(CMAKE_SHARED_LINKER_FLAGS "-static")
 else()
 	# This hack is a of courtesy of: https://stackoverflow.com/a/40947954/3832385
-	string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
-	add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
-	set(BUILD_DEBUG_FLAGS "-rdynamic")
-	set(CMAKE_SHARED_LINKER_FLAGS "-rdynamic")
+	if(GNU)
+		string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
+		add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
+		set(BUILD_DEBUG_FLAGS "-rdynamic")
+		set(CMAKE_SHARED_LINKER_FLAGS "-rdynamic")
+	endif()
 endif()
 
 

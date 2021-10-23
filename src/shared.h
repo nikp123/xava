@@ -130,7 +130,6 @@ struct XAVA_HANDLE {
 	struct config {
 		// handle to the config file itself
 		XAVACONFIG        config;
-		XAVAIONOTIFYWATCH watch;
 	} default_config;
 
 	// visualizer size INSIDE of the window

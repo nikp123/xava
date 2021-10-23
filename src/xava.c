@@ -68,7 +68,7 @@ static struct XAVA_HANDLE xava;
 // XAVA magic variables, too many of them indeed
 static pthread_t p_thread;
 
-void handle_ionotify_call(struct XAVA_HANDLE *xava, int id, XAVA_IONOTIFY_EVENT event) {
+void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, char *filename, int id, struct XAVA_HANDLE *xava) {
 	switch(event) {
 		case XAVA_IONOTIFY_CHANGED:
 		case XAVA_IONOTIFY_DELETED:
@@ -92,7 +92,6 @@ void cleanup(void) {
 	struct config_params *p     = &xava.conf;
 	struct audio_data    *audio = &xava.audio;
 
-	xavaIONotifyEndWatch(xava.ionotify, xava.default_config.watch);
 	xavaIONotifyKill(xava.ionotify);
 
 	// telling audio thread to terminate
@@ -224,7 +223,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		struct audio_data        *audio = &xava.audio;
 
 		// initialize ioNotify engine
-		xava.ionotify = xavaIONotifySetup(&xava);
+		xava.ionotify = xavaIONotifySetup();
 
 		// load config
 		configPath = load_config(configPath, &xava);
@@ -235,7 +234,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		thing.filename = configPath;
 		thing.ionotify = xava.ionotify;
 		thing.id = 1;
-		xava.default_config.watch = xavaIONotifyAddWatch(&thing);
+		thing.xava = &xava;
+		xavaIONotifyAddWatch(&thing);
 
 		// load symbols
 		xavaInput                    = get_symbol_address(p->inputModule, "xavaInput");
@@ -301,6 +301,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		xavaBailCondition(xavaInitOutput(&xava),
 				"Failed to initialize output! Bailing...");
+
+		xavaIONotifyStart(xava.ionotify);
 
 		while(!reloadConf) { //jumbing back to this loop means that you resized the screen
 			// handle for user setting too many bars
