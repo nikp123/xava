@@ -193,7 +193,7 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 	p->stereo = true;
 
 	// feel free to change this if you'd like
-	p->inputsize = 44100 / p->framerate;
+	p->inputsize = p->samplerate / p->framerate;
 
 	// change some default settings for this mode specifically
 	p->w         = xavaConfigGetInt(hand->default_config.config, "window", "width", 800);
