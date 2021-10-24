@@ -436,12 +436,6 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 
 	shouldRestart = false;
 
-	if(gl_options.enable_blending) {
-		glEnable(GL_BLEND);
-		glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-		glBlendFuncSeparate(GL_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE, GL_ZERO);
-	}
-
 	glEnable(GL_LINE_SMOOTH);
 	glLineWidth(gl_options.line_width);
 }
@@ -600,6 +594,14 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 		}
 	}
 
+	// enable blending temporary so that the colors get properly calculated on
+	// the shader end of the pre stage
+	if(gl_options.enable_blending) {
+		glEnable(GL_BLEND);
+		glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE, GL_ZERO);
+	}
+
 	// since im not bothering to do the math, this'll do
 	// - used to balance out intensity across various number of bars
 	intensity /= xava->bars;
@@ -644,6 +646,10 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	 * which just displays that texture to the actual framebuffer for easier
 	 * shader writing
 	 * */
+
+	// disable blending on the post stage as it produces
+	// invalid colors on the window manager end
+	glDisable(GL_BLEND);
 
 	// Change framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
