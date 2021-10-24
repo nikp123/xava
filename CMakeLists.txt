@@ -205,6 +205,15 @@ foreach(files ${filters})
 	install(FILES "example_files/${target_path}/fragment.glsl" RENAME fragment.glsl.example DESTINATION "share/xava/${target_path}")
 endforeach()
 
+# Install shader configs
+file(GLOB filters "example_files/gl/shaders/*/*/config.ini" )
+foreach(files ${filters})
+	get_filename_component(path ${files} REALPATH DIRECTORY)
+	string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
+	string(REPLACE "config.ini" "" target_path ${target_path})
+	install(FILES "example_files/${target_path}/config.ini" RENAME config.ini.example DESTINATION "share/xava/${target_path}")
+endforeach()
+
 if(UNIX AND NOT APPLE)
     install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
     install (FILES assets/linux/xava.svg DESTINATION share/icons/hicolor/scalable/apps)

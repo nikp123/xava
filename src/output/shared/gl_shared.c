@@ -13,7 +13,8 @@ struct SGLprogram {
 		char *path, *text;
 		GLuint handle;
 	} frag, vert, geo;
-	GLuint program;
+	GLuint     program;
+	XAVACONFIG config;
 } pre, post;
 
 static struct FBO {
@@ -50,6 +51,7 @@ static GLuint PRE_BAR_WIDTH;
 static GLuint PRE_BAR_SPACING;
 static GLuint PRE_BAR_COUNT;
 static GLuint PRE_BARS;
+static GLuint PRE_AUDIO;
 static GLuint PRE_RESOLUTION;
 static GLuint PRE_PROJMATRIX;
 
@@ -110,8 +112,17 @@ enum sgl_shader_type {
 enum sgl_shader_stage {
 	SGL_VERT,
 	SGL_GEO,
-	SGL_FRAG
+	SGL_FRAG,
+	SGL_CONFIG
 };
+
+// renderer hacks and options
+struct gl_renderer_options {
+	bool use_fft;
+	bool demand_stereo;
+	bool enable_blending;
+	GLuint line_width;
+} gl_options;
 
 void internal_SGLLoadShader(struct SGLprogram *program,
 		enum sgl_shader_type type,
@@ -140,14 +151,15 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 
 	struct shader* shader;
 	switch(stage) {
-		case SGL_VERT:
+		case SGL_VERT: {
 			strcat(file_path, "/vertex.glsl");
 			xavaLogCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
 					file_path, &returned_path) == false,
 					"Failed to load '%s'!", file_path);
 			shader = &program->vert;
 			break;
-		case SGL_GEO:
+		}
+		case SGL_GEO: {
 			strcat(file_path, "/geometry.glsl");
 			bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_OPTIONAL_CONFIG,
 												file_path,
@@ -158,17 +170,57 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 			}
 			shader = &program->geo;
 			break;
-		case SGL_FRAG:
+		}
+		case SGL_FRAG: {
 			strcat(file_path, "/fragment.glsl");
 			xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
 					file_path, &returned_path) == false,
 					"Failed to load '%s'!", file_path);
 			shader = &program->frag;
 			break;
+		}
+		case SGL_CONFIG: { // load shader config file
+			strcat(file_path, "/config.ini");
+			bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_OPTIONAL_CONFIG,
+												file_path,
+												&returned_path);
+			if(!success) {
+				xavaLog("Failed to load '%s'!", file_path);
+				returned_path = NULL;
+			}
+			break;
+		}
+	}
+
+	// abort if no file and mark as invalid
+	if(returned_path == NULL) {
+		switch(stage) {
+			case SGL_FRAG:
+			case SGL_VERT:
+			case SGL_GEO:
+				shader->text = NULL;
+				shader->path = NULL;
+				shader->handle = 0;
+				break;
+			case SGL_CONFIG:
+				program->config = NULL;
+				break;
+		}
+		return;
 	}
 
 	// load file
-	if(returned_path) {
+	if(stage == SGL_CONFIG) {
+		program->config = xavaConfigOpen(returned_path);
+
+		// add watcher
+		a->filename           = returned_path;
+		a->id                 = 1; // dont really care tbh
+		a->xava               = xava;
+		a->ionotify           = xava->ionotify;
+		a->xava_ionotify_func = ionotify_callback;
+		xavaIONotifyAddWatch(a);
+	} else {
 		shader->path = strdup(returned_path);
 		file = xavaReadFile(shader->path);
 		shader->text = xavaDuplicateMemory(file->data, file->size);
@@ -189,6 +241,7 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 
 void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	XAVACONFIG config = xava->default_config.config;
+	struct config_params *p = &xava->conf;
 
 	char *prePack, *postPack;
 
@@ -200,9 +253,34 @@ void SGLShadersLoad(struct XAVA_HANDLE *xava) {
 	internal_SGLLoadShader(&pre, SGL_PRE, SGL_VERT, prePack, xava);
 	internal_SGLLoadShader(&pre, SGL_PRE, SGL_GEO,  prePack, xava);
 	internal_SGLLoadShader(&pre, SGL_PRE, SGL_FRAG, prePack, xava);
+	internal_SGLLoadShader(&pre, SGL_PRE, SGL_CONFIG, prePack, xava);
 	internal_SGLLoadShader(&post, SGL_POST, SGL_VERT, postPack, xava);
 	internal_SGLLoadShader(&post, SGL_POST, SGL_GEO,  postPack, xava);
 	internal_SGLLoadShader(&post, SGL_POST, SGL_FRAG, postPack, xava);
+
+	// read options from the "pre" shader
+	if(pre.config != NULL) {
+		gl_options.use_fft         = xavaConfigGetBool(
+				pre.config, "display", "use_fft", true);
+		gl_options.demand_stereo   = xavaConfigGetBool(
+				pre.config, "display", "demand_stereo", false);
+		gl_options.enable_blending = xavaConfigGetBool(
+				pre.config, "display", "enable_blending", false);
+		gl_options.line_width      = xavaConfigGetInt(
+				pre.config, "display", "line_width", false);
+		xavaConfigClose(pre.config);
+	} else {
+		gl_options.use_fft         = true;
+		gl_options.demand_stereo   = false;
+		gl_options.enable_blending = false;
+		gl_options.line_width      = 1;
+	}
+
+	// parse options from the "pre" shader
+	p->skipFilterF = !gl_options.use_fft;
+	if(!gl_options.use_fft)
+		p->inputsize = p->samplerate / p->framerate;
+	p->stereo |= gl_options.demand_stereo;
 }
 
 GLint SGLShaderBuild(struct shader *shader, GLenum shader_type) {
@@ -314,6 +392,7 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 
 	// geometry
 	PRE_BARS          = glGetAttribLocation( pre.program, "fft_bars");
+	PRE_AUDIO         = glGetAttribLocation( pre.program, "audio_data");
 	PRE_RESOLUTION    = glGetUniformLocation(pre.program, "resolution");
 	PRE_REST          = glGetUniformLocation(pre.program, "rest");
 	PRE_BAR_WIDTH     = glGetUniformLocation(pre.program, "bar_width");
@@ -354,6 +433,15 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	}
 
 	shouldRestart = false;
+
+	if(gl_options.enable_blending) {
+		glEnable(GL_BLEND);
+		glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE, GL_ZERO);
+	}
+
+	glEnable(GL_LINE_SMOOTH);
+	glLineWidth(gl_options.line_width);
 }
 
 void SGLApply(struct XAVA_HANDLE *xava){
@@ -400,9 +488,14 @@ void SGLApply(struct XAVA_HANDLE *xava){
 
 	glUseProgram(pre.program);
 
-	// reallocate and attach verticies data
-	vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*2);
-	glVertexAttribPointer(PRE_BARS, 3, GL_FLOAT, GL_FALSE, 0, vertexData);
+	if(gl_options.use_fft) {
+		// reallocate and attach verticies data
+		vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*2);
+		glVertexAttribPointer(PRE_BARS, 3, GL_FLOAT, GL_FALSE, 0, vertexData);
+	} else {
+		vertexData = realloc(vertexData, sizeof(GLfloat)*conf->inputsize*2);
+		glVertexAttribPointer(PRE_AUDIO, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+	}
 
 	// do image scaling
 	projectionMatrix[0] = 2.0/xava->w;
@@ -478,6 +571,9 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 }
 
 void SGLDraw(struct XAVA_HANDLE *xava) {
+	struct config_params *conf = &xava->conf;
+	struct audio_data    *audio = &xava->audio;
+
 	// restrict time variable to one hour because floating point precision issues
 	float currentTime = (float)fmodl((long double)xavaGetTime()/(long double)1000.0, 3600.0);
 	float intensity = 0.0;
@@ -486,12 +582,19 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	 * Here we start rendering to the texture
 	 **/
 
-	// i am speed
-	for(register int i=0; i<xava->bars; i++) {
-		float value = (float) xava->f[i] / xava->h;
-		vertexData[i<<1] = i;
-		vertexData[(i<<1)+1] = xava->f[i];
-		intensity += value;
+	if(gl_options.use_fft) {
+		// i am speed
+		for(register int i=0; i<xava->bars; i++) {
+			float value = (float) xava->f[i] / xava->h;
+			vertexData[i<<1] = i;
+			vertexData[(i<<1)+1] = xava->f[i];
+			intensity += value;
+		}
+	} else {
+		for(register int i=0; i<conf->inputsize; i++) {
+			vertexData[i<<1] = audio->audio_out_l[i];
+			vertexData[(i<<1)+1] = conf->stereo ? audio->audio_out_r[i] : i;
+		}
 	}
 
 	// since im not bothering to do the math, this'll do
@@ -514,15 +617,24 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	// clear the screen
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	// pointers get reset after each glUseProgram(), that's why this is done
-	glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+	GLuint vertexBuffer = 0;
+	if(gl_options.use_fft)
+		vertexBuffer = PRE_BARS;
+	else
+		vertexBuffer = PRE_AUDIO;
 
-	glEnableVertexAttribArray(PRE_BARS);
+	// pointers get reset after each glUseProgram(), that's why this is done
+	glVertexAttribPointer(vertexBuffer, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+
+	glEnableVertexAttribArray(vertexBuffer);
 
 	// You use the number of verticies, but not the actual polygon count
-	glDrawArrays(GL_POINTS, 0, xava->bars);
+	if(gl_options.use_fft)
+		glDrawArrays(GL_POINTS, 0, xava->bars);
+	else
+		glDrawArrays(GL_LINES, 0, conf->inputsize);
 
-	glDisableVertexAttribArray(PRE_BARS);
+	glDisableVertexAttribArray(vertexBuffer);
 
 	/**
 	 * Once the texture has been conpleted, we now activate a seperate pipeline
