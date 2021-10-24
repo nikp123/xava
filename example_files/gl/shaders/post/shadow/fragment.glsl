@@ -34,12 +34,12 @@ void main() {
 	shadow_offset = vec2(-5.0, 5.0) / resolution;
 
 	// test if infinite
+	FragColor = background_color;
 	if(depth.r == 1.0) {
 		float color =  1.0 - blur5(depth_texture, shadow_offset+texCoord, vec2(2.0, 2.0), shadow_offset).r;
-		FragColor   =  mix(background_color, shadow_color, color);
-	} else {
-		FragColor = texture(color_texture, texCoord);
+		FragColor   =  mix(FragColor, shadow_color, color);
 	}
+	FragColor += texture(color_texture, texCoord);
 
 	FragColor = correctForAlphaBlend(FragColor);
 }

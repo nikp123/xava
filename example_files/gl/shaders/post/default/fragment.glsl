@@ -17,10 +17,9 @@ void main() {
 	vec4 depth = texture(depth_texture, texCoord);
 
 	// test if infinite
-	if(depth.r == 1.0) {
-		FragColor = background_color;
-	} else {
-		FragColor = texture(color_texture, texCoord);
+	FragColor = background_color;
+	if(depth.r != 1.0) {
+		FragColor += texture(color_texture, texCoord);
 	}
 
 	FragColor = correctForAlphaBlend(FragColor);
