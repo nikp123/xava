@@ -52,6 +52,7 @@ static GLuint PRE_BAR_SPACING;
 static GLuint PRE_BAR_COUNT;
 static GLuint PRE_BARS;
 static GLuint PRE_AUDIO;
+static GLuint PRE_AUDIO_RATE;
 static GLuint PRE_RESOLUTION;
 static GLuint PRE_PROJMATRIX;
 
@@ -393,6 +394,7 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	// geometry
 	PRE_BARS          = glGetAttribLocation( pre.program, "fft_bars");
 	PRE_AUDIO         = glGetAttribLocation( pre.program, "audio_data");
+	PRE_AUDIO_RATE    = glGetUniformLocation(pre.program, "audio_rate");
 	PRE_RESOLUTION    = glGetUniformLocation(pre.program, "resolution");
 	PRE_REST          = glGetUniformLocation(pre.program, "rest");
 	PRE_BAR_WIDTH     = glGetUniformLocation(pre.program, "bar_width");
@@ -515,6 +517,7 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	glUniform1f(PRE_BAR_WIDTH,   (float)xava->conf.bw);
 	glUniform1f(PRE_BAR_SPACING, (float)xava->conf.bs);
 	glUniform1f(PRE_BAR_COUNT,   (float)xava->bars);
+	glUniform1f(PRE_AUDIO_RATE,  (float)conf->inputsize);
 
 	glUniform1f(PRE_GRAD_SECT_COUNT, conf->gradients ? conf->gradients-1 : 0);
 	glUniform4fv(PRE_GRADIENTS, conf->gradients, gradientColor);
@@ -632,7 +635,7 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	if(gl_options.use_fft)
 		glDrawArrays(GL_POINTS, 0, xava->bars);
 	else
-		glDrawArrays(GL_LINES, 0, conf->inputsize);
+		glDrawArrays(GL_LINE_STRIP, 0, conf->inputsize);
 
 	glDisableVertexAttribArray(vertexBuffer);
 

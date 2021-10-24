@@ -3,14 +3,17 @@
 layout (lines) in;
 layout (line_strip, max_vertices = 2) out;
 
-out float lenght; 
+out float lenght;
 
 void main() {
-	gl_Position = vec4(gl_in[0].gl_Position.xy/32768.0, -1.0, 1.0);
+	vec4 pos1 = vec4(gl_in[0].gl_Position.xy/32768.0, -1.0, 1.0);
+	vec4 pos2 = vec4(gl_in[1].gl_Position.xy/32768.0, -1.0, 1.0);
+
+	lenght = distance(pos1.xy, pos2.xy);
+	gl_Position = pos1;
 	EmitVertex();
-	lenght = distance(gl_in[0].gl_Position.xy, gl_in[1].gl_Position.xy);
-	gl_Position = vec4(gl_in[1].gl_Position.xy/32768.0, -1.0, 1.0);
+	lenght = distance(pos1.xy, pos2.xy);
+	gl_Position = pos2;
 	EmitVertex();
-	lenght = distance(gl_in[0].gl_Position.xy, gl_in[1].gl_Position.xy);
 	EndPrimitive();
 }

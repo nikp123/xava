@@ -30,8 +30,5 @@ void main() {
 	} else {
 		FragColor = foreground_color;
 	}
-
-	float aaa = lenght*4.0;
-	FragColor = vec4(FragColor.rgb, 1.0-aaa);
 }
 
