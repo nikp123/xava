@@ -28,6 +28,12 @@ vec4 correctForAlphaBlend(vec4 color) {
 	return vec4(color.rgb*color.a, color.a);
 }
 
+vec4 append_color_properly(vec4 source, vec4 target) {
+	target.rgb += source.rgb*source.a;
+	target.a    = max(source.a, target.a);
+	return target;
+}
+
 void main() {
 	vec4 depth = texture(depth_texture, texCoord);
 
@@ -39,7 +45,9 @@ void main() {
 		float color =  1.0 - blur5(depth_texture, shadow_offset+texCoord, vec2(2.0, 2.0), shadow_offset).r;
 		FragColor   =  mix(FragColor, shadow_color, color);
 	}
-	FragColor += texture(color_texture, texCoord);
+
+	FragColor = append_color_properly(texture(color_texture, texCoord), 
+	                                  FragColor);
 
 	FragColor = correctForAlphaBlend(FragColor);
 }
