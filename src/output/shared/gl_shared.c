@@ -220,7 +220,8 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 		a->xava               = xava;
 		a->ionotify           = xava->ionotify;
 		a->xava_ionotify_func = ionotify_callback;
-		xavaIONotifyAddWatch(a);
+		xavaBailCondition(!xavaIONotifyAddWatch(a),
+			"xavaIONotifyAddWatch failed!");
 	} else {
 		shader->path = strdup(returned_path);
 		file = xavaReadFile(shader->path);
@@ -233,7 +234,8 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 		a->xava               = xava;
 		a->ionotify           = xava->ionotify;
 		a->xava_ionotify_func = ionotify_callback;
-		xavaIONotifyAddWatch(a);
+		xavaBailCondition(!xavaIONotifyAddWatch(a),
+			"xavaIONotifyAddWatch failed!");
 	}
 
 	// clean escape
