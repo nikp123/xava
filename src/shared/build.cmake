@@ -25,33 +25,25 @@ else()
 	message(FATAL_ERROR "Your OS/Platform does NOT support modules!")
 endif()
 
-#target_link_libraries(out_wayland_egl xava-shared "${WAYLAND_LIBRARIES}" EGL GLESv2 wayland-egl)
-#target_link_directories(out_wayland_egl PRIVATE "${WAYLAND_LIBRARY_DIRS}")
-#set_target_properties(out_wayland_egl PROPERTIES PREFIX "")
-
-set(EFSW_INSTALL OFF)
-set(BUILD_SHARED_LIBS OFF)
-add_subdirectory(lib/efsw)
-
 # Build XAVA shared library
 add_library(xava-shared SHARED
 	src/shared/log.c
 	src/shared/config/config.c
 	src/shared/module/abstractions.c
-	src/shared/ionotify.cpp
+	src/shared/ionotify.c
 	src/shared/io.c
 	${ADDITIONAL_SHARED_SOURCES}
 )
 set_target_properties(xava-shared PROPERTIES COMPILE_FLAGS "-fPIC")
-target_link_libraries(xava-shared PRIVATE ${ADDITIONAL_SHARED_LIBRARIES} iniparser efsw)
+target_link_libraries(xava-shared PRIVATE ${ADDITIONAL_SHARED_LIBRARIES} iniparser pthread)
 target_compile_definitions(xava-shared PRIVATE ${ADDITIONAL_SHARED_DEFINITIONS})
-target_include_directories(xava-shared PRIVATE "${ADDITIONAL_SHARED_INCLUDE_DIRS}" lib/iniparser/src lib/efsw/include)
+target_include_directories(xava-shared PRIVATE "${ADDITIONAL_SHARED_INCLUDE_DIRS}" lib/iniparser/src lib/x-watcher)
 
 install (TARGETS xava-shared DESTINATION lib)
 
 # Add legal disclaimers
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_iniparser.txt"
 	"INIparser license can be obtained at: https://raw.githubusercontent.com/ndevilla/iniparser/master/LICENSE\n")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_efsw.txt"
-	"EFSW license can be obtained at: https://raw.githubusercontent.com/SpartanJ/efsw/master/LICENSE\n")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_xwatcher.txt"
+	"xWatcher license can be obtained at: https://raw.githubusercontent.com/nikp123/x-watcher/master/README.md\n")
 

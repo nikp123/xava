@@ -1,8 +1,9 @@
 #ifndef __XAVA_SHARED_IONOTIFY_H
 #define __XAVA_SHARED_IONOTIFY_H
 
-typedef struct xava_ionotify*             XAVAIONOTIFY;
-typedef void*                             XAVAIONOTIFYWATCH;
+#include <stdbool.h>
+
+typedef void*                             XAVAIONOTIFY;
 typedef struct xava_ionotify_watch_setup* XAVAIONOTIFYWATCHSETUP;
 
 // make the compilers shuttings up
@@ -18,15 +19,19 @@ typedef enum xava_ionotify_event {
 } XAVA_IONOTIFY_EVENT;
 
 struct xava_ionotify_watch_setup {
-	XAVAIONOTIFY      ionotify;
-	int               id;
-	char              *filename;
-	void              (*xava_ionotify_func)(struct XAVA_HANDLE*, int id, XAVA_IONOTIFY_EVENT);
+	XAVAIONOTIFY       ionotify;
+	int                id;
+	char               *filename;
+	struct XAVA_HANDLE *xava;
+	void               (*xava_ionotify_func)(XAVA_IONOTIFY_EVENT,
+											const char *filename, 
+											int id,
+											struct XAVA_HANDLE*);
 };
 
-extern XAVAIONOTIFY      xavaIONotifySetup(struct XAVA_HANDLE *xava);
-extern XAVAIONOTIFYWATCH xavaIONotifyAddWatch(XAVAIONOTIFYWATCHSETUP setup);
-extern void              xavaIONotifyEndWatch(XAVAIONOTIFY handle, XAVAIONOTIFYWATCH watch);
+extern XAVAIONOTIFY      xavaIONotifySetup(void);
+extern bool              xavaIONotifyAddWatch(XAVAIONOTIFYWATCHSETUP setup);
+extern bool              xavaIONotifyStart(const XAVAIONOTIFY ionotify);
 extern void              xavaIONotifyKill(const XAVAIONOTIFY ionotify);
 #endif
 

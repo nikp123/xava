@@ -7,13 +7,14 @@
 #include "../../shared.h"
 #include "../graphical.h"
 
-// this is so that loading shaders is managable
+// we don't really need this struct, but it's nice to have (for extensibility)
 struct SGLprogram {
 	struct shader {
 		char *path, *text;
 		GLuint handle;
-	} frag, vert;
-	GLuint program;
+	} frag, vert, geo;
+	GLuint     program;
+	XAVACONFIG config;
 } pre, post;
 
 static struct FBO {
@@ -22,13 +23,18 @@ static struct FBO {
 	GLuint depth_texture;
 } FBO;
 
+// shader buffers
 static GLfloat *vertexData;
-static GLfloat projectionMatrix[16] =
-	{2.0, 0.0, 0.0, -1.0,
-	0.0, 2.0, 0.0, -1.0,
-	0.0, 0.0, -1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0};
+static GLfloat *gradientColor;
 
+// used to adjust the view
+static GLfloat projectionMatrix[16] =
+	{2.0, 0.0,  0.0, -1.0,
+	 0.0,  2.0,  0.0, -1.0,
+	 0.0,  0.0, -1.0, -1.0,
+	 0.0,  0.0,  0.0,  1.0};
+
+// postVertices
 static GLfloat postVertices[] = {
 	-1.0f, -1.0f,  // Position 0
 	 0.0f,  0.0f,  // TexCoord 0
@@ -39,38 +45,58 @@ static GLfloat postVertices[] = {
 	-1.0f,  1.0f,  // Position 3
 	 0.0f,  1.0f}; // TexCoord 3
 
-static GLfloat *gradientColor;
-
-static GLuint PRE_POS;
-static GLuint PRE_FGCOL;
+// geometry information
+static GLuint PRE_REST;
+static GLuint PRE_BAR_WIDTH;
+static GLuint PRE_BAR_SPACING;
+static GLuint PRE_BAR_COUNT;
+static GLuint PRE_BARS;
+static GLuint PRE_AUDIO;
+static GLuint PRE_AUDIO_RATE;
 static GLuint PRE_RESOLUTION;
 static GLuint PRE_PROJMATRIX;
+
+// color information
+static GLuint PRE_FGCOL;
+static GLuint PRE_BGCOL;
+
+// system information providers
 static GLuint PRE_GRAD_SECT_COUNT;
 static GLuint PRE_GRADIENTS;
 static GLuint PRE_TIME;
 static GLuint PRE_INTENSITY;
 
-static GLuint POST_BGCOL;
+// post shader variables
+
+// geometry info
 static GLuint POST_POS;
 static GLuint POST_TEXCOORD;
+static GLuint POST_RESOLUTION;
+
+// textures
 static GLuint POST_TEXTURE;
 static GLuint POST_DEPTH;
-static GLuint POST_SHADOW_COLOR;
-static GLuint POST_SHADOW_OFFSET;
+
+// system info
 static GLuint POST_TIME;
 static GLuint POST_INTENSITY;
 
+// color information
+static GLuint POST_FGCOL;
+static GLuint POST_BGCOL;
+
+// special
 static GLfloat resScale;
 
 // this is hacked in, shut up
 static bool shouldRestart;
 
-static XAVAIONOTIFYWATCH preFragWatch, preVertWatch, postFragWatch, postVertWatch;
-
-static void ionotify_callback(struct XAVA_HANDLE *hand, int id, XAVA_IONOTIFY_EVENT event) {
+static void ionotify_callback(XAVA_IONOTIFY_EVENT event,
+								const char *filename,
+								int id,
+								struct XAVA_HANDLE* xava) {
 	switch(event) {
 		case XAVA_IONOTIFY_CHANGED:
-		case XAVA_IONOTIFY_DELETED:
 			shouldRestart = true;
 			break;
 		default:
@@ -79,98 +105,186 @@ static void ionotify_callback(struct XAVA_HANDLE *hand, int id, XAVA_IONOTIFY_EV
 	}
 }
 
-// Better to be ugly and long then short and buggy
-void SGLShadersLoad(struct XAVA_HANDLE *xava) {
-	XAVACONFIG config = xava->default_config.config;
+enum sgl_shader_type {
+	SGL_PRE,
+	SGL_POST
+};
+
+enum sgl_shader_stage {
+	SGL_VERT,
+	SGL_GEO,
+	SGL_FRAG,
+	SGL_CONFIG
+};
+
+// renderer hacks and options
+struct gl_renderer_options {
+	bool use_fft;
+	bool demand_stereo;
+	bool enable_blending;
+	GLuint line_width;
+} gl_options;
+
+void internal_SGLLoadShader(struct SGLprogram *program,
+		enum sgl_shader_type type,
+		enum sgl_shader_stage stage,
+		const char *name,
+		struct XAVA_HANDLE *xava) {
+	RawData *file;
+	char *returned_path;
+	char file_path[MAX_PATH];
 	XAVAIONOTIFYWATCHSETUP a;
 	MALLOC_SELF(a, 1);
 
-	char *preShaderPack, *postShaderPack;
+	switch(type) {
+		case SGL_PRE:
+			strcpy(file_path, "gl/shaders/pre/");
+			break;
+		case SGL_POST:
+			strcpy(file_path, "gl/shaders/post/");
+			break;
+		default:
+			xavaBail("A really BIG oopsie happened here!");
+			break;
+	}
 
-	preShaderPack  = xavaConfigGetString(config, "gl", "pre_shaderpack", "default");
-	postShaderPack = xavaConfigGetString(config, "gl", "post_shaderpack", "default");
+	strcat(file_path, name);
 
-	resScale       = xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f);
+	struct shader* shader;
+	switch(stage) {
+		case SGL_VERT: {
+			strcat(file_path, "/vertex.glsl");
+			xavaLogCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
+					file_path, &returned_path) == false,
+					"Failed to load '%s'!", file_path);
+			shader = &program->vert;
+			break;
+		}
+		case SGL_GEO: {
+			strcat(file_path, "/geometry.glsl");
+			bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_OPTIONAL_CONFIG,
+												file_path,
+												&returned_path);
+			if(!success) {
+				xavaLog("Failed to load '%s'!", file_path);
+				returned_path = NULL;
+			}
+			shader = &program->geo;
+			break;
+		}
+		case SGL_FRAG: {
+			strcat(file_path, "/fragment.glsl");
+			xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
+					file_path, &returned_path) == false,
+					"Failed to load '%s'!", file_path);
+			shader = &program->frag;
+			break;
+		}
+		case SGL_CONFIG: { // load shader config file
+			strcat(file_path, "/config.ini");
+			bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_OPTIONAL_CONFIG,
+												file_path,
+												&returned_path);
+			if(!success) {
+				xavaLog("Failed to load '%s'!", file_path);
+				returned_path = NULL;
+			}
+			break;
+		}
+	}
 
-	RawData *file;
-	char *returned_path;
-	char *file_path = malloc(MAX_PATH);
-	strcpy(file_path, "gl/shaders/pre/");
-	strcat(file_path, preShaderPack);
-	strcat(file_path, "/fragment.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-			file_path, &returned_path) == false,
-			"Failed to load pre-render fragment shader!");
-	pre.frag.path = strdup(returned_path);
-	a->filename = pre.frag.path;
-	a->id = 2;
-	a->ionotify = xava->ionotify;
-	a->xava_ionotify_func = ionotify_callback;
-	preFragWatch = xavaIONotifyAddWatch(a);
+	// abort if no file and mark as invalid
+	if(returned_path == NULL) {
+		switch(stage) {
+			case SGL_FRAG:
+			case SGL_VERT:
+			case SGL_GEO:
+				shader->text = NULL;
+				shader->path = NULL;
+				shader->handle = 0;
+				break;
+			case SGL_CONFIG:
+				program->config = NULL;
+				break;
+		}
+		return;
+	}
+
+	// load file
+	if(stage == SGL_CONFIG) {
+		program->config = xavaConfigOpen(returned_path);
+
+		// add watcher
+		a->filename           = returned_path;
+		a->id                 = 1; // dont really care tbh
+		a->xava               = xava;
+		a->ionotify           = xava->ionotify;
+		a->xava_ionotify_func = ionotify_callback;
+		xavaBailCondition(!xavaIONotifyAddWatch(a),
+			"xavaIONotifyAddWatch failed!");
+	} else {
+		shader->path = strdup(returned_path);
+		file = xavaReadFile(shader->path);
+		shader->text = xavaDuplicateMemory(file->data, file->size);
+		xavaCloseFile(file);
+
+		// add watcher
+		a->filename           = shader->path;
+		a->id                 = 1; // dont really care tbh
+		a->xava               = xava;
+		a->ionotify           = xava->ionotify;
+		a->xava_ionotify_func = ionotify_callback;
+		xavaBailCondition(!xavaIONotifyAddWatch(a),
+			"xavaIONotifyAddWatch failed!");
+	}
+
+	// clean escape
 	free(returned_path);
-
-	strcpy(file_path, "gl/shaders/pre/");
-	strcat(file_path, preShaderPack);
-	strcat(file_path, "/vertex.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-			file_path, &returned_path) == false,
-			"Failed to load pre-render vertex shader!");
-	pre.vert.path = strdup(returned_path);
-	a->filename = pre.vert.path;
-	a->id = 3;
-	a->ionotify = xava->ionotify;
-	a->xava_ionotify_func = ionotify_callback;
-	preVertWatch = xavaIONotifyAddWatch(a);
-	free(returned_path);
-
-	strcpy(file_path, "gl/shaders/post/");
-	strcat(file_path, postShaderPack);
-	strcat(file_path, "/fragment.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-			file_path, &returned_path) == false,
-			"Failed to load post-render fragment shader!");
-	post.frag.path = strdup(returned_path);
-	a->filename = post.frag.path;
-	a->id = 4;
-	a->ionotify = xava->ionotify;
-	a->xava_ionotify_func = ionotify_callback;
-	postFragWatch = xavaIONotifyAddWatch(a);
-	free(returned_path);
-
-	strcpy(file_path, "gl/shaders/post/");
-	strcat(file_path, postShaderPack);
-	strcat(file_path, "/vertex.glsl");
-	xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
-			file_path, &returned_path) == false,
-			"Failed to load post-render vertex shader!");
-	post.vert.path = strdup(returned_path);
-	a->filename = post.vert.path;
-	a->id = 5;
-	a->ionotify = xava->ionotify;
-	a->xava_ionotify_func = ionotify_callback;
-	postVertWatch = xavaIONotifyAddWatch(a);
-	free(returned_path);
-
-	file = xavaReadFile(pre.frag.path);
-	pre.frag.text = xavaDuplicateMemory(file->data, file->size);
-	xavaCloseFile(file);
-
-	file = xavaReadFile(pre.vert.path);
-	pre.vert.text = xavaDuplicateMemory(file->data, file->size);
-	xavaCloseFile(file);
-
-	file = xavaReadFile(post.frag.path);
-	post.frag.text = xavaDuplicateMemory(file->data, file->size);
-	xavaCloseFile(file);
-
-	file = xavaReadFile(post.vert.path);
-	post.vert.text = xavaDuplicateMemory(file->data, file->size);
-	xavaCloseFile(file);
-
-	free(file_path);
-	free(a);
 }
 
+void SGLShadersLoad(struct XAVA_HANDLE *xava) {
+	XAVACONFIG config = xava->default_config.config;
+	struct config_params *p = &xava->conf;
+
+	char *prePack, *postPack;
+
+	prePack  = xavaConfigGetString(config, "gl", "pre_shaderpack", "default");
+	postPack = xavaConfigGetString(config, "gl", "post_shaderpack", "default");
+
+	resScale    = xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f);
+
+	internal_SGLLoadShader(&pre, SGL_PRE, SGL_VERT, prePack, xava);
+	internal_SGLLoadShader(&pre, SGL_PRE, SGL_GEO,  prePack, xava);
+	internal_SGLLoadShader(&pre, SGL_PRE, SGL_FRAG, prePack, xava);
+	internal_SGLLoadShader(&pre, SGL_PRE, SGL_CONFIG, prePack, xava);
+	internal_SGLLoadShader(&post, SGL_POST, SGL_VERT, postPack, xava);
+	internal_SGLLoadShader(&post, SGL_POST, SGL_GEO,  postPack, xava);
+	internal_SGLLoadShader(&post, SGL_POST, SGL_FRAG, postPack, xava);
+
+	// read options from the "pre" shader
+	if(pre.config != NULL) {
+		gl_options.use_fft         = xavaConfigGetBool(
+				pre.config, "display", "use_fft", true);
+		gl_options.demand_stereo   = xavaConfigGetBool(
+				pre.config, "display", "demand_stereo", false);
+		gl_options.enable_blending = xavaConfigGetBool(
+				pre.config, "display", "enable_blending", false);
+		gl_options.line_width      = xavaConfigGetInt(
+				pre.config, "display", "line_width", false);
+		xavaConfigClose(pre.config);
+	} else {
+		gl_options.use_fft         = true;
+		gl_options.demand_stereo   = false;
+		gl_options.enable_blending = false;
+		gl_options.line_width      = 1;
+	}
+
+	// parse options from the "pre" shader
+	p->skipFilterF = !gl_options.use_fft;
+	if(!gl_options.use_fft)
+		p->inputsize = p->samplerate / p->framerate;
+	p->stereo |= gl_options.demand_stereo;
+}
 
 GLint SGLShaderBuild(struct shader *shader, GLenum shader_type) {
 	GLint status;
@@ -222,6 +336,10 @@ GLint SGLShaderBuild(struct shader *shader, GLenum shader_type) {
 
 	xavaSpam("Compiling '%s' successful", shader->path);
 
+	// free text and path info
+	free(shader->path);
+	free(shader->text);
+
 	return status;
 }
 
@@ -229,12 +347,21 @@ void SGLCreateProgram(struct SGLprogram *program) {
 	GLint status;
 
 	program->program = glCreateProgram();
-	SGLShaderBuild(&program->frag, GL_FRAGMENT_SHADER);
-	SGLShaderBuild(&program->vert, GL_VERTEX_SHADER);
+	SGLShaderBuild(&program->vert,    GL_VERTEX_SHADER);
+	if(program->geo.text) // optional stage, we check if it's included in the shader pack
+		SGLShaderBuild(&program->geo, GL_GEOMETRY_SHADER);
+	SGLShaderBuild(&program->frag,    GL_FRAGMENT_SHADER);
 
-	glAttachShader(program->program, program->frag.handle);
 	glAttachShader(program->program, program->vert.handle);
+	if(program->geo.text) // optional stage, we check if it's included in the shader pack
+		glAttachShader(program->program, program->geo.handle);
+	glAttachShader(program->program, program->frag.handle);
 	glLinkProgram(program->program);
+
+	glDeleteShader(program->frag.handle);
+	if(program->geo.text) // optional stage, we check if it's included in the shader pack
+		glDeleteShader(program->geo.handle);
+	glDeleteShader(program->vert.handle);
 
 	glGetProgramiv(program->program, GL_LINK_STATUS, &status);
 	if (!status) {
@@ -250,33 +377,47 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 
 	// automatically assign this so it isn't invalid during framebuffer creation
 	xava->w = conf->w;
-	xava->h = conf->h+conf->shdw;
+	xava->h = conf->h;
 
 	SGLCreateProgram(&pre);
 	SGLCreateProgram(&post);
 
-	PRE_POS        = glGetAttribLocation(pre.program,  "pos");
-	PRE_FGCOL      = glGetUniformLocation(pre.program, "color");
-	PRE_RESOLUTION = glGetUniformLocation(pre.program, "u_resolution");
-	PRE_PROJMATRIX = glGetUniformLocation(pre.program, "projectionMatrix");
-	PRE_TIME       = glGetUniformLocation(pre.program, "u_time");
+	// color
+	PRE_FGCOL      = glGetUniformLocation(pre.program, "foreground_color");
+	PRE_BGCOL      = glGetUniformLocation(pre.program, "background_color");
+
+	PRE_GRAD_SECT_COUNT = glGetUniformLocation(pre.program, "gradient_sections");
+	PRE_GRADIENTS       = glGetUniformLocation(pre.program, "gradient_color");
+
+	// sys info provider
+	PRE_TIME       = glGetUniformLocation(pre.program, "time");
 	PRE_INTENSITY  = glGetUniformLocation(pre.program, "intensity");
 
-	POST_POS           = glGetAttribLocation(post.program, "a_position");
-	POST_TEXCOORD      = glGetAttribLocation(post.program, "a_texCoord");
-	POST_TEXTURE       = glGetUniformLocation(post.program, "s_texture");
-	POST_DEPTH         = glGetUniformLocation(post.program, "s_depth");
-	POST_SHADOW_COLOR  = glGetUniformLocation(post.program, "shadow_color");
-	POST_SHADOW_OFFSET = glGetUniformLocation(post.program, "shadow_offset");
-	POST_TIME          = glGetUniformLocation(post.program, "u_time");
-	POST_INTENSITY     = glGetUniformLocation(post.program, "intensity");
-	POST_BGCOL         = glGetUniformLocation(post.program, "bgcolor");
+	// geometry
+	PRE_BARS          = glGetAttribLocation( pre.program, "fft_bars");
+	PRE_AUDIO         = glGetAttribLocation( pre.program, "audio_data");
+	PRE_AUDIO_RATE    = glGetUniformLocation(pre.program, "audio_rate");
+	PRE_RESOLUTION    = glGetUniformLocation(pre.program, "resolution");
+	PRE_REST          = glGetUniformLocation(pre.program, "rest");
+	PRE_BAR_WIDTH     = glGetUniformLocation(pre.program, "bar_width");
+	PRE_BAR_SPACING   = glGetUniformLocation(pre.program, "bar_spacing");
+	PRE_BAR_COUNT     = glGetUniformLocation(pre.program, "bar_count");
+	PRE_PROJMATRIX    = glGetUniformLocation(pre.program, "projection_matrix");
+
+	POST_POS        = glGetAttribLocation(post.program,  "v_texCoord");
+	POST_TEXCOORD   = glGetAttribLocation(post.program,  "m_texCoord");
+	POST_TEXTURE    = glGetUniformLocation(post.program, "color_texture");
+	POST_DEPTH      = glGetUniformLocation(post.program, "depth_texture");
+	POST_TIME       = glGetUniformLocation(post.program, "time");
+	POST_INTENSITY  = glGetUniformLocation(post.program, "intensity");
+	POST_RESOLUTION = glGetUniformLocation(post.program,  "resolution");
+
+	POST_FGCOL     = glGetUniformLocation(post.program, "foreground_color");
+	POST_BGCOL     = glGetUniformLocation(post.program, "background_color");
 
 	glUseProgram(pre.program);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+	glEnable(GL_DEPTH_TEST);
 
 	// we just need working pointers so that realloc() works
 	vertexData = malloc(1);
@@ -296,12 +437,18 @@ void SGLInit(struct XAVA_HANDLE *xava) {
 	}
 
 	shouldRestart = false;
+
+	glEnable(GL_LINE_SMOOTH);
+	glLineWidth(gl_options.line_width);
 }
 
 void SGLApply(struct XAVA_HANDLE *xava){
 	struct config_params *conf = &xava->conf;
 
 	glUseProgram(post.program);
+
+	// update screen resoltion
+	glUniform2f(POST_RESOLUTION, xava->w, xava->h);
 
 	// set texture properties
 	glGenTextures(1,               &FBO.final_texture);
@@ -339,57 +486,34 @@ void SGLApply(struct XAVA_HANDLE *xava){
 
 	glUseProgram(pre.program);
 
-	// reallocate and attach verticies data
-	vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*12);
-	glVertexAttribPointer(PRE_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
-
-	// since most of this information remains untouched, let's precalculate
-	for(int i=0; i<xava->bars; i++) {
-		vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);
-		vertexData[i*12+1]  = 1.0f;
-		vertexData[i*12+2]  = vertexData[i*12];
-		vertexData[i*12+3]  = 0.0f;
-		vertexData[i*12+4]  = vertexData[i*12]+conf->bw;
-		vertexData[i*12+5]  = 0.0f;
-		vertexData[i*12+6]  = vertexData[i*12+4];
-		vertexData[i*12+7]  = 1.0f;
-		vertexData[i*12+8]  = vertexData[i*12+4];
-		vertexData[i*12+9]  = 0.0f;
-		vertexData[i*12+10] = vertexData[i*12];
-		vertexData[i*12+11] = 1.0f;
+	if(gl_options.use_fft) {
+		// reallocate and attach verticies data
+		vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*2);
+		glVertexAttribPointer(PRE_BARS, 3, GL_FLOAT, GL_FALSE, 0, vertexData);
+	} else {
+		vertexData = realloc(vertexData, sizeof(GLfloat)*conf->inputsize*2);
+		glVertexAttribPointer(PRE_AUDIO, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 	}
-
-	// update screen resoltion
-	glUniform2f(PRE_RESOLUTION, xava->w, xava->h);
-
-	// update projection matrix
-	// trick: use projection matrix to optimize for shadows so our CPU doesn't have
-	// to work as hard -> math found here: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glOrtho.xml
-
-	// horizontal scaling not done due to artifacting
-	//projectionMatrix[0] = 2.0/(conf->w+conf->shdw);
-	//projectionMatrix[3] = -((float)conf->w/(float)(conf->w+conf->shdw));
-	// vertical scaling
-	//projectionMatrix[5] = 2.0/(conf->h+conf->shdw);
-	//projectionMatrix[7] = -((float)xava->h/(float)(xava->h+conf->shdw));
 
 	// do image scaling
 	projectionMatrix[0] = 2.0/xava->w;
 	projectionMatrix[5] = 2.0/xava->h;
 
 	// do image translation
-	projectionMatrix[3] = (float)xava->x/xava->w*2.0 - 1.0;
-	projectionMatrix[7] = 1.0 - (float)(xava->y+conf->h)/xava->h*2.0;
+	//projectionMatrix[3] = (float)xava->x/xava->w*2.0 - 1.0;
+	//projectionMatrix[7] = 1.0 - (float)(xava->y+conf->h)/xava->h*2.0;
 
 	glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
-	// enable superior color blending (change my mind)
-	glEnable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// update screen resoltion
+	glUniform2f(PRE_RESOLUTION, xava->w, xava->h);
 
-	PRE_GRAD_SECT_COUNT = glGetUniformLocation(pre.program, "gradient_sections");
-	PRE_GRADIENTS  = glGetUniformLocation(pre.program, "gradient_color");
+	// update spacing info
+	glUniform1f(PRE_REST,        (float)xava->rest);
+	glUniform1f(PRE_BAR_WIDTH,   (float)xava->conf.bw);
+	glUniform1f(PRE_BAR_SPACING, (float)xava->conf.bs);
+	glUniform1f(PRE_BAR_COUNT,   (float)xava->bars);
+	glUniform1f(PRE_AUDIO_RATE,  (float)conf->inputsize);
 
 	glUniform1f(PRE_GRAD_SECT_COUNT, conf->gradients ? conf->gradients-1 : 0);
 	glUniform4fv(PRE_GRADIENTS, conf->gradients, gradientColor);
@@ -418,30 +542,36 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 	glUseProgram(pre.program);
 
 	// set and attach foreground color
-	uint32_t fgcol = conf->col;
-	glUniform4f(PRE_FGCOL, ARGB_R_32(fgcol)/255.0, ARGB_G_32(fgcol)/255.0,
-			ARGB_B_32(fgcol)/255.0, conf->foreground_opacity);
+	float fgcol[4] = {
+		ARGB_R_32(conf->col),
+		ARGB_G_32(conf->col),
+		ARGB_B_32(conf->col),
+		conf->foreground_opacity
+	};
+	glUniform4f(PRE_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
+
+	// set background clear color
+	float bgcol[4] = {
+		ARGB_R_32(conf->bgcol),
+		ARGB_G_32(conf->bgcol),
+		ARGB_B_32(conf->bgcol),
+		conf->background_opacity
+	};
+
+	glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 
 	glUseProgram(post.program);
 
+	// set and attach foreground color
+	glUniform4f(POST_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
+
 	// set background clear color
-	uint32_t bgcol = conf->bgcol;
-	float bgcolF = conf->background_opacity/255.0;
-	glUniform4f(POST_BGCOL, ARGB_R_32(bgcol)*bgcolF, ARGB_G_32(bgcol)*bgcolF,
-			ARGB_B_32(bgcol)*bgcolF, conf->background_opacity);
-
-	uint32_t shdw_col = conf->shdw_col;
-	glUniform4f(POST_SHADOW_COLOR, ARGB_R_32(shdw_col), ARGB_G_32(shdw_col),
-			ARGB_B_32(shdw_col), 1.0);
-
-
-	glUniform2f(POST_SHADOW_OFFSET,
-			((float)conf->shdw)/((float)xava->w)*-0.5,
-			((float)conf->shdw)/((float)xava->h)*0.5);
+	glUniform4f(POST_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 }
 
 void SGLDraw(struct XAVA_HANDLE *xava) {
 	struct config_params *conf = &xava->conf;
+	struct audio_data    *audio = &xava->audio;
 
 	// restrict time variable to one hour because floating point precision issues
 	float currentTime = (float)fmodl((long double)xavaGetTime()/(long double)1000.0, 3600.0);
@@ -451,21 +581,27 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	 * Here we start rendering to the texture
 	 **/
 
-	// i am speed
-	register GLfloat *d = vertexData;
-	for(register int i=0; i<xava->bars; i++) {
-		// the not so, speed part
-		// intensity has a low-freq bias as they are more "physical"
-		float bar_percentage = (float)(xava->f[i]-1)/(float)conf->h;
-		if(bar_percentage > 0.0) {
-			intensity+=powf(bar_percentage, (float)2.0*(float)i/(float)xava->bars);
+	if(gl_options.use_fft) {
+		// i am speed
+		for(register int i=0; i<xava->bars; i++) {
+			float value = (float) xava->f[i] / xava->h;
+			vertexData[i<<1] = i;
+			vertexData[(i<<1)+1] = xava->f[i];
+			intensity += value;
 		}
+	} else {
+		for(register int i=0; i<conf->inputsize; i++) {
+			vertexData[i<<1] = audio->audio_out_l[i];
+			vertexData[(i<<1)+1] = conf->stereo ? audio->audio_out_r[i] : i;
+		}
+	}
 
-		// the speed part
-		*(++d)  = xava->f[i];
-		*(d+=6) = xava->f[i];
-		*(d+=4) = xava->f[i];
-		d++;
+	// enable blending temporary so that the colors get properly calculated on
+	// the shader end of the pre stage
+	if(gl_options.enable_blending) {
+		glEnable(GL_BLEND);
+		glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE, GL_ZERO);
 	}
 
 	// since im not bothering to do the math, this'll do
@@ -485,24 +621,37 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	// update intensity
 	glUniform1f(PRE_INTENSITY, intensity);
 
-	// GL_COLOR_BUFFER_BIT | <- let the shaders handle this one
-	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	// clear the screen
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	GLuint vertexBuffer = 0;
+	if(gl_options.use_fft)
+		vertexBuffer = PRE_BARS;
+	else
+		vertexBuffer = PRE_AUDIO;
 
 	// pointers get reset after each glUseProgram(), that's why this is done
-	glVertexAttribPointer(PRE_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+	glVertexAttribPointer(vertexBuffer, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
-	glEnableVertexAttribArray(PRE_POS);
+	glEnableVertexAttribArray(vertexBuffer);
 
 	// You use the number of verticies, but not the actual polygon count
-	glDrawArrays(GL_TRIANGLES, 0, xava->bars*6);
+	if(gl_options.use_fft)
+		glDrawArrays(GL_POINTS, 0, xava->bars);
+	else
+		glDrawArrays(GL_LINE_STRIP, 0, conf->inputsize);
 
-	glDisableVertexAttribArray(PRE_POS);
+	glDisableVertexAttribArray(vertexBuffer);
 
 	/**
 	 * Once the texture has been conpleted, we now activate a seperate pipeline
 	 * which just displays that texture to the actual framebuffer for easier
 	 * shader writing
 	 * */
+
+	// disable blending on the post stage as it produces
+	// invalid colors on the window manager end
+	glDisable(GL_BLEND);
 
 	// Change framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -546,41 +695,14 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
 	glDisableVertexAttribArray(POST_POS);
-	glDisableVertexAttribArray(POST_POS);
+	glDisableVertexAttribArray(POST_TEXCOORD);
 }
 
 void SGLDestroyProgram(struct SGLprogram *program) {
-	glDeleteShader(program->frag.handle);
-	free(program->frag.path);
-	free(program->frag.text);
-	glDeleteShader(program->vert.handle);
-	free(program->vert.path);
-	free(program->vert.text);
 	glDeleteProgram(program->program);
 }
 
 void SGLCleanup(struct XAVA_HANDLE *xava) {
-	// WARN: May be leaky here
-	// cleanup watches
-	// xavaIONotifyEndWatch(xava->ionotify, preFragWatch);
-	// xavaIONotifyEndWatch(xava->ionotify, preVertWatch);
-	// xavaIONotifyEndWatch(xava->ionotify, postFragWatch);
-	// xavaIONotifyEndWatch(xava->ionotify, postVertWatch);
-
-	// restore framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	// unbind textures
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// cleanup FBO left-overs
-	glDeleteFramebuffers(1, &FBO.framebuffer);
-	glDeleteTextures(1, &FBO.depth_texture);
-	glDeleteTextures(1, &FBO.final_texture);
-
 	// delete both pipelines
 	SGLDestroyProgram(&pre);
 	SGLDestroyProgram(&post);

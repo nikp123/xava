@@ -46,15 +46,16 @@
 
 // Shared audio data sturct
 struct audio_data {
-	float			*audio_out_r;
-	float			*audio_out_l;
-	int				format;
-	unsigned int	rate;
-	char			*source;				// alsa device, fifo path or pulse source
-	int				channels;
-	bool			terminate;				// shared variable used to terminate audio thread
-	char			error_message[1024];
-	int				inputsize, fftsize;		// inputsize and fftsize
+	float		*audio_out_r;
+	float		*audio_out_l;
+	int			format;
+	uint32_t	rate;
+	char		*source;				// alsa device, fifo path or pulse source
+	int			channels;
+	bool		terminate;				// shared variable used to terminate audio thread
+	char		error_message[1024];
+	int			inputsize, fftsize;		// inputsize and fftsize
+	uint32_t	latency;				// try to keep (this) latency in samples
 };
 
 // configuration parameters
@@ -69,15 +70,13 @@ struct config_params {
 	// input/output related options
 
 	// 1 - colors
-	char*  color, *bcolor, *shadow_color;			// pointer to color string
+	char*  color, *bcolor;			// pointer to color string
 	char** gradient_colors;							// array of pointers to color string
-	uint32_t col, bgcol, shdw_col;					// ARGB 32-bit value
+	uint32_t col, bgcol;							// ARGB 32-bit value
 	double foreground_opacity, background_opacity;	// range 0.0-1.0
 
-	// 2 - shadows/gradients
-	// shdw = shadow, col = foreground color, bgcol = background color
-	uint32_t shdw;									// 0 for no shadows while subsequent
-													// values describe the size in pixels
+	// 2 - gradients
+	// col = foreground color, bgcol = background color
 	uint32_t gradients;								// 0 for none, subsequent values increase
 
 	// 3 - timing
@@ -102,12 +101,16 @@ struct config_params {
 	// 5 - audio
 	uint32_t inputsize;								// size of the input audio buffer
 													// must be a power of 2
+	uint32_t samplerate;							// the rate at which the audio is sampled
+	uint32_t samplelatency;							// input will try to keep to copy chunks of this size
 
 	// 6 - special flags
-	_Bool fullF, transF, borderF, bottomF, interactF, taskbarF, holdSizeF;
+	bool fullF, transF, borderF, bottomF, interactF, taskbarF, holdSizeF;
+	bool skipFilterF;
 	// fullF = fullscreen toggle, transF = transparency toggle,
 	// borderF = window border toggle, interactF = interaction
 	// toggle, taskbarF = taskbar icon toggle
+	// skipFilterF = literally just skips the filter stage
 };
 
 // XAVA handle
@@ -127,7 +130,6 @@ struct XAVA_HANDLE {
 	struct config {
 		// handle to the config file itself
 		XAVACONFIG        config;
-		XAVAIONOTIFYWATCH watch;
 	} default_config;
 
 	// visualizer size INSIDE of the window

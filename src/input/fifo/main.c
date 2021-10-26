@@ -87,7 +87,9 @@ EXP_FUNC void* xavaInput(void* data)
 EXP_FUNC void xavaInputHandleConfiguration(struct XAVA_HANDLE *xava) {
 	struct audio_data *audio = &xava->audio;
 	XAVACONFIG config = xava->default_config.config;
-	audio->rate = 44100;
+	xavaWarnCondition(audio->rate != 44100, 
+			"Changing the audio rate won't do much as that depends on your MPD "
+			"settings. Go check those instead!");
 	audio->source = (char*)xavaConfigGetString(config, "input", "source", "/tmp/mpd.fifo");
 }
 

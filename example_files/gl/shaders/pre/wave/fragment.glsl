@@ -17,6 +17,8 @@ uniform vec2 resolution;
 
 uniform float intensity;
 
+in float lenght;
+
 layout(location=0) out vec4 FragColor;
 
 void main() {

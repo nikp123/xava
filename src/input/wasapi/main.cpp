@@ -30,8 +30,8 @@ HRESULT sinkSetFormat(WAVEFORMATEX * pWF) {
 	// For the time being, just return OK.
 	pWF->wFormatTag = WAVE_FORMAT_PCM;
 	pWF->nChannels = audio->channels;
-	pWF->nSamplesPerSec = 44100;
-	pWF->nAvgBytesPerSec = 88200*audio->channels;
+	pWF->nSamplesPerSec = audio->rate;
+	pWF->nAvgBytesPerSec = 2*audio->rate*audio->channels;
 	pWF->nBlockAlign = 2*audio->channels;
 	pWF->wBitsPerSample = 16;
 	return ( S_OK ) ;
@@ -44,7 +44,7 @@ HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
 		case 1:
 			for(UINT32 i=0; i<NumFrames; i++) {
 				audio->audio_out_l[n] = *pBuffer++;
-				audio->audio_out_l[n] += *pBuffer++;
+				//audio->audio_out_l[n] += *pBuffer++;
 				audio->audio_out_l[n] *= 16383.5f;
 				n++;
 				if(n == audio->inputsize) n = 0;
@@ -142,7 +142,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 	hr = pAudioClient->GetDevicePeriod(&hnsDefaultDevicePeriod, NULL);
 	xavaBailCondition(hr, "Error getting device period");
 
-	LONG lTimeBetweenFires = (LONG)hnsDefaultDevicePeriod / 2 / (10 * 1000); // convert to milliseconds
+	LONG lTimeBetweenFires = 1000*audio->latency/audio->rate; // convert to milliseconds
 
 	// Each loop fills about half of the shared buffer.
 	while (!audio->terminate) {
@@ -192,7 +192,6 @@ EXP_FUNC void xavaInputHandleConfiguration(struct XAVA_HANDLE *xava) {
 	struct audio_data *audio = &xava->audio;
 	XAVACONFIG config = xava->default_config.config;
 
-	audio->rate = 44100;
 	audio->source = xavaConfigGetString(config, "input", "source", "loopback");
 }
 

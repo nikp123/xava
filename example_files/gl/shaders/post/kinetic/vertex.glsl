@@ -1,11 +1,13 @@
+#version 420 core
+
 // input vertex and texture coordinate
-attribute vec4 a_position;
-attribute vec2 a_texCoord;
+in vec4 v_texCoord; // vertex
+in vec2 m_texCoord; // mapping
 
 // output texture map coordinate
-varying vec2 v_texCoord;
+out vec2 texCoord;
 
 void main() {
-	gl_Position = a_position;
-	v_texCoord = a_texCoord;
+	gl_Position = v_texCoord;
+	texCoord    = m_texCoord;
 } 

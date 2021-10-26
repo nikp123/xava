@@ -32,7 +32,7 @@
 // XAVA file handlers
 typedef enum XAVA_FILE_TYPE {
 	XAVA_FILE_TYPE_CONFIG,           // where configuration files are stored
-	XAVA_FILE_TYPE_CUSTOM_CONFIG,    // where modified configuration files are stored
+	XAVA_FILE_TYPE_OPTIONAL_CONFIG,  // where optional configuration files are stored
 	XAVA_FILE_TYPE_CACHE,            // where cached files are stored (shader cache)
 	XAVA_FILE_TYPE_PACKAGE,          // where files that are part of the packages are stored (assets or binaries)
 	XAVA_FILE_TYPE_NONE,             // this is an error

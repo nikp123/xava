@@ -68,7 +68,8 @@ static struct XAVA_HANDLE xava;
 // XAVA magic variables, too many of them indeed
 static pthread_t p_thread;
 
-void handle_ionotify_call(struct XAVA_HANDLE *xava, int id, XAVA_IONOTIFY_EVENT event) {
+void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
+		int id, struct XAVA_HANDLE *xava) {
 	switch(event) {
 		case XAVA_IONOTIFY_CHANGED:
 		case XAVA_IONOTIFY_DELETED:
@@ -92,7 +93,6 @@ void cleanup(void) {
 	struct config_params *p     = &xava.conf;
 	struct audio_data    *audio = &xava.audio;
 
-	xavaIONotifyEndWatch(xava.ionotify, xava.default_config.watch);
 	xavaIONotifyKill(xava.ionotify);
 
 	// telling audio thread to terminate
@@ -105,7 +105,8 @@ void cleanup(void) {
 	pthread_join(p_thread, NULL);
 
 	xavaOutputCleanup(&xava);
-	xavaFilterCleanup(&xava);
+	if(!p->skipFilterF)
+		xavaFilterCleanup(&xava);
 
 	// destroy modules
 	destroy_module(p->inputModule);
@@ -223,7 +224,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		struct audio_data        *audio = &xava.audio;
 
 		// initialize ioNotify engine
-		xava.ionotify = xavaIONotifySetup(&xava);
+		xava.ionotify = xavaIONotifySetup();
 
 		// load config
 		configPath = load_config(configPath, &xava);
@@ -234,7 +235,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		thing.filename = configPath;
 		thing.ionotify = xava.ionotify;
 		thing.id = 1;
-		xava.default_config.watch = xavaIONotifyAddWatch(&thing);
+		thing.xava = &xava;
+		xavaIONotifyAddWatch(&thing);
 
 		// load symbols
 		xavaInput                    = get_symbol_address(p->inputModule, "xavaInput");
@@ -248,30 +250,40 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		xavaOutputCleanup             = get_symbol_address(p->outputModule, "xavaOutputCleanup");
 		xavaOutputHandleConfiguration = get_symbol_address(p->outputModule, "xavaOutputHandleConfiguration");
 
-		xavaFilterInit                = get_symbol_address(p->filterModule, "xavaFilterInit");
-		xavaFilterApply               = get_symbol_address(p->filterModule, "xavaFilterApply");
-		xavaFilterLoop                = get_symbol_address(p->filterModule, "xavaFilterLoop");
-		xavaFilterCleanup             = get_symbol_address(p->filterModule, "xavaFilterCleanup");
-		xavaFilterHandleConfiguration = get_symbol_address(p->filterModule, "xavaFilterHandleConfiguration");
+		if(!p->skipFilterF) {
+			xavaFilterInit                = get_symbol_address(p->filterModule, "xavaFilterInit");
+			xavaFilterApply               = get_symbol_address(p->filterModule, "xavaFilterApply");
+			xavaFilterLoop                = get_symbol_address(p->filterModule, "xavaFilterLoop");
+			xavaFilterCleanup             = get_symbol_address(p->filterModule, "xavaFilterCleanup");
+			xavaFilterHandleConfiguration = get_symbol_address(p->filterModule, "xavaFilterHandleConfiguration");
+		}
 
-		// load input config
-		xavaInputHandleConfiguration(&xava);
+		// we're loading this first because I want output modes to adjust audio
+		// "renderer/filter" properties
 
 		// load output config
 		xavaOutputHandleConfiguration(&xava);
 
-		// load filter config
-		xavaFilterHandleConfiguration(&xava);
-
+		// set up audio properties BEFORE the input is initialized
 		audio->inputsize = p->inputsize;
 		audio->fftsize   = p->fftsize;
+		audio->format    = -1;
+		audio->terminate = 0;
+		audio->channels  = 1 + p->stereo;
+		audio->rate      = p->samplerate;
+		audio->latency   = p->samplelatency;
+
+		// load input config
+		xavaInputHandleConfiguration(&xava);
+
+		// load filter config
+		if(!p->skipFilterF)
+			xavaFilterHandleConfiguration(&xava);
+
+		// setup audio garbo
 		MALLOC_SELF(audio->audio_out_l, p->fftsize+1);
 		if(p->stereo)
 			MALLOC_SELF(audio->audio_out_r, p->fftsize+1);
-		audio->format = -1;
-		audio->terminate = 0;
-		audio->channels = 1+p->stereo;
-
 		if(p->stereo) {
 			for (i = 0; i < audio->fftsize; i++) {
 				audio->audio_out_l[i] = 0;
@@ -284,11 +296,14 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
 		bool reloadConf = false;
 
-		xavaBailCondition(xavaFilterInit(&xava),
-				"Failed to initialize filter! Bailing...");
+		if(!p->skipFilterF)
+			xavaBailCondition(xavaFilterInit(&xava),
+					"Failed to initialize filter! Bailing...");
 
 		xavaBailCondition(xavaInitOutput(&xava),
 				"Failed to initialize output! Bailing...");
+
+		xavaIONotifyStart(xava.ionotify);
 
 		while(!reloadConf) { //jumbing back to this loop means that you resized the screen
 			// handle for user setting too many bars
@@ -310,7 +325,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				if (xava.bars%2) xava.bars--;
 			}
 
-			xavaFilterApply(&xava);
+			if(!p->skipFilterF)
+				xavaFilterApply(&xava);
 
 			xavaOutputApply(&xava);
 
@@ -388,21 +404,27 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 				}
 
 				// Calculate the result through filters
-				xavaFilterLoop(&xava);
+				if(!p->skipFilterF) {
+					xavaFilterLoop(&xava);
 
-				// zero values causes divided by zero segfault
-				// and set max height
-				for (i = 0; i < xava.bars; i++) {
-					if(xava.f[i] < 1)
-						xava.f[i] = 1;
-					else if(xava.f[i] > p->h)
-						xava.f[i] = p->h;
+					// zero values causes divided by zero segfault
+					// and set max height
+					for (i = 0; i < xava.bars; i++) {
+						if(xava.f[i] < 1)
+							xava.f[i] = 1;
+						else if(xava.f[i] > p->h)
+							xava.f[i] = p->h;
+					}
 				}
 
 				// output: draw processed input
 				if(redrawWindow) {
 					xavaOutputClear(&xava);
-					memset(xava.fl, 0x00, sizeof(int)*xava.bars);
+
+					// audio output is unallocated without the filter
+					if(!p->skipFilterF)
+						memset(xava.fl, 0x00, sizeof(int)*xava.bars);
+
 					redrawWindow = FALSE;
 				}
 				xavaOutputDraw(&xava);
@@ -411,7 +433,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 					oldTime = xavaSleep(oldTime, p->framerate);
 
 				// save previous bar values
-				memcpy(xava.fl, xava.f, sizeof(int)*xava.bars);
+				if(!p->skipFilterF)
+					memcpy(xava.fl, xava.f, sizeof(int)*xava.bars);
 
 				if(kys) {
 					resizeWindow=1;

@@ -93,7 +93,13 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
 	xavaBailCondition(stereo == -1, "Output channels '%s' is not supported,"
 			" supported channels are", " 'mono' and 'stereo'", channels);
 
-	p->stereo = stereo ? 1 : 0; // makes the C compilers happy ", "D
+	// validate: input
+	p->stereo = stereo ? 1 : 0; // makes the C compilers happy
+	xavaBailCondition(!p->samplerate, "samplerate CANNOT BE 0!");
+	xavaBailCondition(p->samplelatency > p->inputsize, "Sample latency cannot be larger than the audio buffer itself!");
+	xavaWarnCondition(p->samplelatency*p->framerate > p->samplerate, "Sample latency might be too large, expect audio lags!");
+	xavaWarnCondition(p->samplelatency < 32, "Sample latency might be too low, high CPU usage is MOST LIKELY!");
+	xavaBailCondition(p->samplelatency == 0, "Sample latency CANNOT BE 0!");
 
 	// validate: bars
 	p->autobars = 1;
@@ -150,10 +156,6 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
 	}
 	xavaBailCondition(!foundAlignment, "Alignment '%s' is invalid!\n",
 			p->winA);
-
-	// validate: shadow
-	xavaBailCondition(sscanf(p->shadow_color, "#%x", &p->shdw_col) != 1,
-			"Shadow color should be a HTML color in the form '#xxxxxx'");
 }
 
 char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
@@ -186,6 +188,8 @@ char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	// config: input
 	inputMethod = (char *)xavaConfigGetString(hand->default_config.config, "input", "method", XAVA_DEFAULT_INPUT);
 	p->inputsize = (int)exp2((float)xavaConfigGetInt(hand->default_config.config, "input", "size", 12));
+	p->samplerate = xavaConfigGetInt(hand->default_config.config, "input", "rate", 44100);
+	p->samplelatency = xavaConfigGetInt(hand->default_config.config, "input", "latency", 128);
 
 	// config: output
 	outputMethod = (char *)xavaConfigGetString(hand->default_config.config, "output", "method", XAVA_DEFAULT_OUTPUT);
@@ -236,10 +240,6 @@ char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
 	p->interactF = xavaConfigGetBool(hand->default_config.config, "window", "interactable", 1);
 	p->taskbarF = xavaConfigGetBool(hand->default_config.config, "window", "taskbar_icon", 1);
 	p->holdSizeF = xavaConfigGetBool(hand->default_config.config, "window", "hold_size", false);
-
-	// config: shadow
-	p->shdw = xavaConfigGetInt(hand->default_config.config, "shadow", "size", 7);
-	p->shadow_color = (char *)xavaConfigGetString(hand->default_config.config, "shadow", "color", "#ff000000");
 
 	// config: filter
 	filterMethod = (char *)xavaConfigGetString(hand->default_config.config, "filter", "name", XAVA_DEFAULT_FILTER);

@@ -1,8 +1,8 @@
 #version 420 core
 
 // input vertex
-in vec4 fft_bars;
+in vec4 audio_data;
 
 void main() {
-	gl_Position = fft_bars;
+	gl_Position = audio_data;
 }

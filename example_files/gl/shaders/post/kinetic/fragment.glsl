@@ -1,42 +1,34 @@
-#ifdef GL_ES
-	precision mediump float;
-#endif
+#version 420 core
 
-varying vec2 v_texCoord;
+in vec2 texCoord;
 
-uniform sampler2D s_texture;
-uniform sampler2D s_depth;
+uniform sampler2D color_texture;
+uniform sampler2D depth_texture;
 
-uniform vec4 shadow_color;
-uniform vec2 shadow_offset;
-
-uniform vec4 bgcolor;
+uniform vec4 background_color;
 
 uniform float intensity;
 
-// Credit: https://github.com/Jam3/glsl-fast-gaussian-blur/blob/master/5.glsl
-vec4 blur5(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
-	vec4 color = vec4(0.0);
-	vec2 off1 = vec2(1.3333333333333333) * direction;
-	color += texture2D(image, uv) * 0.29411764705882354;
-	color += texture2D(image, uv + (off1 / resolution)) * 0.35294117647058826;
-	color += texture2D(image, uv - (off1 / resolution)) * 0.35294117647058826;
-	return color;
+layout(location=0) out vec4 FragColor;
+
+vec4 correctForAlphaBlend(vec4 color) {
+	return vec4(color.rgb*color.a, color.a);
+}
+
+vec4 append_color_properly(vec4 source, vec4 target) {
+	target.a    = target.a > source.a ? target.a : source.a;
+	target.rgb += source.rgb*target.a;
+	return target;
 }
 
 void main() {
-	vec4 depth = texture2D(s_depth, v_texCoord);
+	vec4 depth = texture(depth_texture, texCoord);
 
 	// test if infinite
-	if(depth.r == 1.0) {
-		vec4 bg = mix(vec4(0.0, 0.0, 0.0, 0.0), bgcolor, 1.0-intensity);
+	FragColor = append_color_properly(
+		texture(color_texture, texCoord),
+		vec4(background_color.rgb, background_color.a*(1.0-intensity)));
 
-		float depth = 1.0 - blur5(s_depth, shadow_offset+v_texCoord, vec2(2.0, 2.0), shadow_offset).r;
-		depth *= 1.6; // strenghten shadows
-
-		gl_FragColor = mix(bg, shadow_color, depth);
-	} else {
-		gl_FragColor = texture2D(s_texture, v_texCoord);
-	}
+	//FragColor = correctForAlphaBlend(FragColor);
 }
 

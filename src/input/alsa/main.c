@@ -7,10 +7,6 @@
 
 // input: ALSA
 
-// assuming stereo
-#define CHANNELS_COUNT 2
-#define SAMPLE_RATE 44100
-
 static void initialize_audio_parameters(snd_pcm_t** handle, struct audio_data* audio,
 snd_pcm_uframes_t* frames) {
 	// alsa: open device to capture audio
@@ -27,8 +23,8 @@ snd_pcm_uframes_t* frames) {
 
 	// trying to set 16bit
 	snd_pcm_hw_params_set_format(*handle, params, SND_PCM_FORMAT_S16_LE);
-	snd_pcm_hw_params_set_channels(*handle, params, CHANNELS_COUNT);
-	unsigned int sample_rate = SAMPLE_RATE;
+	snd_pcm_hw_params_set_channels(*handle, params, audio->channels);
+	unsigned int sample_rate = audio->rate;
 
 	// trying our rate
 	snd_pcm_hw_params_set_rate_near(*handle, params, &sample_rate, NULL);
@@ -114,7 +110,7 @@ EXP_FUNC void* xavaInput(void* data) {
 	snd_pcm_t* handle;
 	snd_pcm_uframes_t buffer_size;
 	snd_pcm_uframes_t period_size;
-	snd_pcm_uframes_t frames = audio->inputsize;
+	snd_pcm_uframes_t frames = audio->latency;
 
 	if(is_loop_device_for_sure(audio->source)) {
 		if(directory_exists("/sys/")) {
@@ -128,11 +124,14 @@ EXP_FUNC void* xavaInput(void* data) {
 	snd_pcm_get_params(handle, &buffer_size, &period_size);
 
 	int16_t buf[period_size];
-	frames = period_size / ((audio->format / 8) * CHANNELS_COUNT);
-	xavaSpam("Period size: %lu", period_size);
+	frames = period_size / ((audio->format / 8) * audio->channels);
+	audio->latency = period_size;\
+
+	xavaSpam("channels: %d, samplerate: %d, latency: %d",
+			audio->channels, audio->rate, audio->latency);
 
 	// frames * bits/8 * channels
-	//const int size = frames * (audio->format / 8) * CHANNELS_COUNT;
+	//const int size = frames * (audio->format / 8) * audio->channels;
 	signed char* buffer = malloc(period_size);
 	int n = 0;
 
@@ -140,15 +139,19 @@ EXP_FUNC void* xavaInput(void* data) {
 		switch (audio->format) {
 			case 16:
 				err = snd_pcm_readi(handle, buf, frames);
-				for(int i = 0; i < frames * 2; i += 2) {
-					if(audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
-					//stereo storing channels in buffer
-					if(audio->channels == 2) {
+
+				if(audio->channels == 1) {
+					for(int i = 0; i < frames; i++) {
+						audio->audio_out_l[n] = buf[i];
+						n++;
+						if(n == audio->inputsize - 1) n = 0;
+					}
+				} else if(audio->channels == 2) {
+					for(int i = 0; i < frames * 2; i += 2) {
+						//stereo storing channels in buffer
 						audio->audio_out_l[n] = buf[i];
 						audio->audio_out_r[n] = buf[i + 1];
 					}
-					n++;
-					if(n == audio->inputsize - 1) n = 0;
 				}
 				break;
 			default:
@@ -178,7 +181,6 @@ EXP_FUNC void* xavaInput(void* data) {
 EXP_FUNC void xavaInputHandleConfiguration(struct XAVA_HANDLE *xava) {
 	struct audio_data *audio = &xava->audio;
 	XAVACONFIG config = xava->default_config.config;
-	audio->rate = 44100;
 	audio->source = (char*)xavaConfigGetString(config, "input", "source", "Loopback,1");
 }
 

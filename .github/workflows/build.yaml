@@ -17,7 +17,7 @@ jobs:
           - sys: mingw32
             arch: i686
             icon: '⬛'
-            cmake-args: -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr
+            cmake-args: -DBUILD_LEGACY_OUTPUTS:BOOL=ON -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr
             build-args: '--parallel'
             env:
               CFLAGS: -Wdeclaration-after-statement -Werror
@@ -25,7 +25,7 @@ jobs:
           - sys: mingw64
             arch: x86_64
             icon: '🟦'
-            cmake-args: -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr
+            cmake-args: -DBUILD_LEGACY_OUTPUTS:BOOL=ON -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr
             build-args: --parallel
             env:
               CFLAGS: -Wdeclaration-after-statement -Werror
@@ -55,6 +55,7 @@ jobs:
           mingw-w64-${{matrix.arch}}-fftw
           mingw-w64-${{matrix.arch}}-glew
           mingw-w64-${{matrix.arch}}-nsis
+          mingw-w64-${{matrix.arch}}-SDL2
 
     - name: Build in debug mode
       env: ${{ matrix.env }}
