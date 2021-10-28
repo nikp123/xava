@@ -22,6 +22,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
     - [Build requirements](#build-requirements)
     - [Compilation](#compilation)
     - [Uninstalling](#uninstalling)
+- [Updating](#updating)
 - [Usage](#usage)
   - [Controls](#controls)
 - [Troubleshooting](#troubleshooting)
@@ -199,6 +200,18 @@ If you're building from source and installing via ``make install``, please do
     xargs rm < install_manifest.txt
 
 All installers/distro specific installation sources might be out of date.
+
+
+Updating
+--------
+
+If you happen to be updating this program, just keep in mind that breaking
+changes DO occur sometimes. In most cases, errors that show up might look like
+issue #43. In most cases, these can be fixed with a simple config reset.
+
+To do that just copy the new shader and config files from ```example_files```
+dir in this repository. Sorry if this has inconvenienced you, my code can be
+quite experimental sometimes....
 
 
 Usage
