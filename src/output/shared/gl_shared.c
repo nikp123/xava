@@ -556,21 +556,20 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 
 	// set and attach foreground color
 	float fgcol[4] = {
-		ARGB_R_32(conf->col),
-		ARGB_G_32(conf->col),
-		ARGB_B_32(conf->col),
+		ARGB_R_32(conf->col)/255.0,
+		ARGB_G_32(conf->col)/255.0,
+		ARGB_B_32(conf->col)/255.0,
 		conf->foreground_opacity
 	};
 	glUniform4f(PRE_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
 
 	// set background clear color
 	float bgcol[4] = {
-		ARGB_R_32(conf->bgcol),
-		ARGB_G_32(conf->bgcol),
-		ARGB_B_32(conf->bgcol),
+		ARGB_R_32(conf->bgcol)/255.0,
+		ARGB_G_32(conf->bgcol)/255.0,
+		ARGB_B_32(conf->bgcol)/255.0,
 		conf->background_opacity
 	};
-
 	glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 
 	glUseProgram(post.program);
