@@ -45,6 +45,8 @@ static GLfloat postVertices[] = {
 	-1.0f,  1.0f,  // Position 3
 	 0.0f,  1.0f}; // TexCoord 3
 
+static GLfloat shaderMemory[4096];
+
 // geometry information
 static GLuint PRE_REST;
 static GLuint PRE_BAR_WIDTH;
@@ -84,6 +86,9 @@ static GLuint POST_INTENSITY;
 // color information
 static GLuint POST_FGCOL;
 static GLuint POST_BGCOL;
+
+// GPU dark magic
+static GLuint POST_SSBO;
 
 // special
 static GLfloat resScale;
@@ -484,6 +489,14 @@ void SGLApply(struct XAVA_HANDLE *xava){
 			"Failed to create framebuffer(s)! Error code 0x%X\n",
 			status);
 
+	// bind SSBO - our shared GPU memory
+	glGenBuffers    (1, &POST_SSBO);
+	glBindBuffer    (GL_SHADER_STORAGE_BUFFER, POST_SSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, POST_SSBO);
+	glBufferData    (GL_SHADER_STORAGE_BUFFER, sizeof(shaderMemory),
+			shaderMemory, GL_DYNAMIC_COPY);
+	glBindBuffer    (GL_SHADER_STORAGE_BUFFER, 0);
+
 	glUseProgram(pre.program);
 
 	if(gl_options.use_fft) {
@@ -500,8 +513,8 @@ void SGLApply(struct XAVA_HANDLE *xava){
 	projectionMatrix[5] = 2.0/xava->h;
 
 	// do image translation
-	//projectionMatrix[3] = (float)xava->x/xava->w*2.0 - 1.0;
-	//projectionMatrix[7] = 1.0 - (float)(xava->y+conf->h)/xava->h*2.0;
+	projectionMatrix[3] = (float)xava->x/xava->w*2.0 - 1.0;
+	projectionMatrix[7] = 1.0 - (float)(xava->y+conf->h)/xava->h*2.0;
 
 	glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
@@ -543,21 +556,20 @@ void SGLClear(struct XAVA_HANDLE *xava) {
 
 	// set and attach foreground color
 	float fgcol[4] = {
-		ARGB_R_32(conf->col),
-		ARGB_G_32(conf->col),
-		ARGB_B_32(conf->col),
+		ARGB_R_32(conf->col)/255.0,
+		ARGB_G_32(conf->col)/255.0,
+		ARGB_B_32(conf->col)/255.0,
 		conf->foreground_opacity
 	};
 	glUniform4f(PRE_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
 
 	// set background clear color
 	float bgcol[4] = {
-		ARGB_R_32(conf->bgcol),
-		ARGB_G_32(conf->bgcol),
-		ARGB_B_32(conf->bgcol),
+		ARGB_R_32(conf->bgcol)/255.0,
+		ARGB_G_32(conf->bgcol)/255.0,
+		ARGB_B_32(conf->bgcol)/255.0,
 		conf->background_opacity
 	};
-
 	glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 
 	glUseProgram(post.program);
@@ -643,15 +655,15 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	glDisableVertexAttribArray(vertexBuffer);
 
+	// disable blending on the post stage as it produces
+	// invalid colors on the window manager end
+	glDisable(GL_BLEND);
+
 	/**
 	 * Once the texture has been conpleted, we now activate a seperate pipeline
 	 * which just displays that texture to the actual framebuffer for easier
 	 * shader writing
 	 * */
-
-	// disable blending on the post stage as it produces
-	// invalid colors on the window manager end
-	glDisable(GL_BLEND);
 
 	// Change framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -659,6 +671,11 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	// Switch to post shaders
 	glUseProgram(post.program);
+
+	// bind GPU memory
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, POST_SSBO);
+	glBufferData    (GL_SHADER_STORAGE_BUFFER, sizeof(shaderMemory),
+			shaderMemory, GL_DYNAMIC_COPY);
 
 	// update time
 	glUniform1f(POST_TIME, currentTime);
@@ -696,6 +713,10 @@ void SGLDraw(struct XAVA_HANDLE *xava) {
 
 	glDisableVertexAttribArray(POST_POS);
 	glDisableVertexAttribArray(POST_TEXCOORD);
+
+	// disable shared GPU memory
+	glBindBuffer    (GL_SHADER_STORAGE_BUFFER, 0);
+
 }
 
 void SGLDestroyProgram(struct SGLprogram *program) {

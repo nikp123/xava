@@ -40,7 +40,7 @@ endif()
 set(xava_VERSION_MAJOR 0)
 set(xava_VERSION_MINOR 7)
 set(xava_VERSION_PATCH 1)
-set(xava_VERSION_TWEAK 0)
+set(xava_VERSION_TWEAK 1)
 set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
 
 # Definitions
