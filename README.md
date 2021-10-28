@@ -207,7 +207,8 @@ Updating
 
 If you happen to be updating this program, just keep in mind that breaking
 changes DO occur sometimes. In most cases, errors that show up might look like
-issue #43. In most cases, these can be fixed with a simple config reset.
+[issue #43](https://github.com/nikp123/xava/issues/43).
+In most cases, these can be fixed with a simple config reset.
 
 To do that just copy the new shader and config files from ```example_files```
 dir in this repository. Sorry if this has inconvenienced you, my code can be
