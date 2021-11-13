@@ -107,7 +107,7 @@ EXP_FUNC void *get_symbol_address(XAVAMODULE *module, char *symbol) {
     return address;
 }
 
-EXP_FUNC bool is_module_valid(XAVAMODULE *module) {
+EXP_FUNC bool xava_module_valid(XAVAMODULE *module) {
     if(module->moduleHandle) 
         return 1;
     else

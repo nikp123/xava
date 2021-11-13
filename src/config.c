@@ -70,19 +70,19 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
 
     // validate: input method
     p->inputModule = load_input_module(inputMethod);
-    xavaBailCondition(!is_module_valid(p->inputModule),
+    xavaBailCondition(!xava_module_valid(p->inputModule),
             "Input method '%s' could not load.\nReason: %s",
             inputMethod, xava_module_error_get(p->inputModule));
 
     // validate: output method
     p->outputModule = load_output_module(outputMethod);
-    xavaBailCondition(!is_module_valid(p->outputModule),
+    xavaBailCondition(!xava_module_valid(p->outputModule),
             "Output method '%s' could not load.\nReason: %s",
             outputMethod, xava_module_error_get(p->outputModule));
 
     // validate: filter method
     p->filterModule = load_filter_module(filterMethod);
-    xavaBailCondition(!is_module_valid(p->filterModule),
+    xavaBailCondition(!xava_module_valid(p->filterModule),
             "Filter method '%s' could not load.\nReason: %s",
             filterMethod, xava_module_error_get(p->outputModule));
 

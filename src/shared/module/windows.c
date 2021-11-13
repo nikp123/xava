@@ -30,7 +30,7 @@ EXP_FUNC char *xava_module_error_get(XAVAMODULE *module) {
     return message;
 }
 
-EXP_FUNC bool is_module_valid(XAVAMODULE *module) {
+EXP_FUNC bool xava_module_valid(XAVAMODULE *module) {
     if(module->moduleHandle)
         return 1;
     else
