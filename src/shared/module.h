@@ -30,5 +30,9 @@ const char *xava_module_path_get(XAVAMODULE *module);
 // get the file extension of a module on the current system
 const char *xava_module_extension_get(void);
 
+// return module generated filename into result
+void xava_module_generate_filename(char *name,
+        const char *prefix, char *result);
+
 #endif
 

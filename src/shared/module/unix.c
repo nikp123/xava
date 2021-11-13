@@ -130,3 +130,8 @@ EXP_FUNC const char *xava_module_extension_get(void) {
     return LIBRARY_EXTENSION;
 }
 
+EXP_FUNC void xava_module_generate_filename(char *name,
+        const char *prefix, char *result) {
+    sprintf(result, "%s_%s%s", prefix, name, LIBRARY_EXTENSION);
+    return;
+}
