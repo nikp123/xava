@@ -209,7 +209,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
 	wl_display_dispatch_pending(wd.display);
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
 	XAVACONFIG config = hand->default_config.config;
 

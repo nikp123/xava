@@ -354,7 +354,7 @@ EXP_FUNC void xavaFilterCleanup(struct XAVA_HANDLE *hand) {
 	free(peak);
 }
 
-EXP_FUNC void xavaFilterHandleConfiguration(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaFilterLoadConfig(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
 	XAVACONFIG config = hand->default_config.config;
 

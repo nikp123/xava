@@ -648,7 +648,7 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
 	return;
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *hand) {
 	struct config_params *p = &hand->conf;
 	XAVACONFIG config = hand->default_config.config;
 

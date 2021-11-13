@@ -42,9 +42,9 @@
 
 static void*    (*xavaInput)                     (void*); // technically it's "struct audio_data*"
                                                           // but the compiler complains :(
-static void     (*xavaInputHandleConfiguration)  (struct XAVA_HANDLE*);
+static void     (*xavaInputLoadConfig)           (struct XAVA_HANDLE*);
 
-static void     (*xavaOutputHandleConfiguration) (struct XAVA_HANDLE*);
+static void     (*xavaOutputLoadConfig)          (struct XAVA_HANDLE*);
 static int      (*xavaInitOutput)                (struct XAVA_HANDLE*);
 static void     (*xavaOutputClear)               (struct XAVA_HANDLE*);
 static int      (*xavaOutputApply)               (struct XAVA_HANDLE*);
@@ -52,7 +52,7 @@ static XG_EVENT (*xavaOutputHandleInput)         (struct XAVA_HANDLE*);
 static void     (*xavaOutputDraw)                (struct XAVA_HANDLE*);
 static void     (*xavaOutputCleanup)             (struct XAVA_HANDLE*);
 
-static void     (*xavaFilterHandleConfiguration) (struct XAVA_HANDLE*);
+static void     (*xavaFilterLoadConfig) (struct XAVA_HANDLE*);
 static int      (*xavaFilterInit)                (struct XAVA_HANDLE*);
 static int      (*xavaFilterApply)               (struct XAVA_HANDLE*);
 static int      (*xavaFilterLoop)                (struct XAVA_HANDLE*);
@@ -239,30 +239,30 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		xavaIONotifyAddWatch(&thing);
 
 		// load symbols
-		xavaInput                    = get_symbol_address(p->inputModule, "xavaInput");
-		xavaInputHandleConfiguration = get_symbol_address(p->inputModule, "xavaInputHandleConfiguration");
+		xavaInput             = get_symbol_address(p->inputModule, "xavaInput");
+		xavaInputLoadConfig   = get_symbol_address(p->inputModule, "xavaInputLoadConfig");
 
-		xavaInitOutput                = get_symbol_address(p->outputModule, "xavaInitOutput");
-		xavaOutputClear               = get_symbol_address(p->outputModule, "xavaOutputClear");
-		xavaOutputApply               = get_symbol_address(p->outputModule, "xavaOutputApply");
-		xavaOutputHandleInput         = get_symbol_address(p->outputModule, "xavaOutputHandleInput");
-		xavaOutputDraw                = get_symbol_address(p->outputModule, "xavaOutputDraw");
-		xavaOutputCleanup             = get_symbol_address(p->outputModule, "xavaOutputCleanup");
-		xavaOutputHandleConfiguration = get_symbol_address(p->outputModule, "xavaOutputHandleConfiguration");
+		xavaInitOutput        = get_symbol_address(p->outputModule, "xavaInitOutput");
+		xavaOutputClear       = get_symbol_address(p->outputModule, "xavaOutputClear");
+		xavaOutputApply       = get_symbol_address(p->outputModule, "xavaOutputApply");
+		xavaOutputHandleInput = get_symbol_address(p->outputModule, "xavaOutputHandleInput");
+		xavaOutputDraw        = get_symbol_address(p->outputModule, "xavaOutputDraw");
+		xavaOutputCleanup     = get_symbol_address(p->outputModule, "xavaOutputCleanup");
+		xavaOutputLoadConfig  = get_symbol_address(p->outputModule, "xavaOutputLoadConfig");
 
 		if(!p->skipFilterF) {
-			xavaFilterInit                = get_symbol_address(p->filterModule, "xavaFilterInit");
-			xavaFilterApply               = get_symbol_address(p->filterModule, "xavaFilterApply");
-			xavaFilterLoop                = get_symbol_address(p->filterModule, "xavaFilterLoop");
-			xavaFilterCleanup             = get_symbol_address(p->filterModule, "xavaFilterCleanup");
-			xavaFilterHandleConfiguration = get_symbol_address(p->filterModule, "xavaFilterHandleConfiguration");
+			xavaFilterInit       = get_symbol_address(p->filterModule, "xavaFilterInit");
+			xavaFilterApply      = get_symbol_address(p->filterModule, "xavaFilterApply");
+			xavaFilterLoop       = get_symbol_address(p->filterModule, "xavaFilterLoop");
+			xavaFilterCleanup    = get_symbol_address(p->filterModule, "xavaFilterCleanup");
+			xavaFilterLoadConfig = get_symbol_address(p->filterModule, "xavaFilterLoadConfig");
 		}
 
 		// we're loading this first because I want output modes to adjust audio
 		// "renderer/filter" properties
 
 		// load output config
-		xavaOutputHandleConfiguration(&xava);
+		xavaOutputLoadConfig(&xava);
 
 		// set up audio properties BEFORE the input is initialized
 		audio->inputsize = p->inputsize;
@@ -274,11 +274,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 		audio->latency   = p->samplelatency;
 
 		// load input config
-		xavaInputHandleConfiguration(&xava);
+		xavaInputLoadConfig(&xava);
 
 		// load filter config
 		if(!p->skipFilterF)
-			xavaFilterHandleConfiguration(&xava);
+			xavaFilterLoadConfig(&xava);
 
 		// setup audio garbo
 		MALLOC_SELF(audio->audio_out_l, p->fftsize+1);

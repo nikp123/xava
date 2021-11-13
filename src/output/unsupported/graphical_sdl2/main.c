@@ -174,7 +174,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
 	return;
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s) {
+EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *s) {
 	struct config_params *p = &s->conf;
 	//struct XAVA_CONFIG config = s->default_config.config;
 

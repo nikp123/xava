@@ -371,6 +371,6 @@ EXP_FUNC int xavaOutputDraw(struct XAVA_HANDLE *hand) {
 	return 0;
 }
 
-EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *xava) {
 	// noop
 }
