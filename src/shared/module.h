@@ -12,7 +12,7 @@ extern void *get_symbol_address(XAVAMODULE *module, char *symbol);
 extern XAVAMODULE *load_input_module(char *name);
 extern XAVAMODULE *load_output_module(char *name);
 extern XAVAMODULE *load_filter_module(char *name);
-extern void destroy_module(XAVAMODULE *module);
+extern void xava_module_free(XAVAMODULE *module);
 
 /**
  * name is the user-specified module name

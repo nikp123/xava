@@ -134,7 +134,7 @@ XAVAMODULE *load_module_from_path(char *path) {
     return module;
 }
 
-EXP_FUNC void destroy_module(XAVAMODULE *module) {
+EXP_FUNC void xava_module_free(XAVAMODULE *module) {
     FreeLibrary(module->moduleHandle);
     free(module->name);
     free(module->path);

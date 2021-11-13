@@ -109,9 +109,9 @@ void cleanup(void) {
         xavaFilterCleanup(&xava);
 
     // destroy modules
-    destroy_module(p->inputModule);
-    destroy_module(p->outputModule);
-    destroy_module(p->filterModule);
+    xava_module_free(p->inputModule);
+    xava_module_free(p->outputModule);
+    xava_module_free(p->filterModule);
 
     // color information
     free(p->gradient_colors);

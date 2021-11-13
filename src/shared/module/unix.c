@@ -14,7 +14,7 @@ typedef struct xavamodule {
 
 char *LIBRARY_EXTENSION = ".so";
 
-EXP_FUNC void destroy_module(XAVAMODULE *module) {
+EXP_FUNC void xava_module_free(XAVAMODULE *module) {
     dlclose(module->moduleHandle);
     module->moduleHandle = 0;
     free(module->name);
