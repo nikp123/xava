@@ -22,7 +22,7 @@ EXP_FUNC void xava_module_free(XAVAMODULE *module) {
     free(module);
 }
 
-EXP_FUNC XAVAMODULE *load_module(char *name) {
+EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
     // Security check
     for(int i=0; i<strlen(name); i++) {
         // Disallow directory injections
@@ -67,7 +67,7 @@ EXP_FUNC XAVAMODULE *load_module(char *name) {
 // it's supposed to take in the path without the extension
 //
 // the extension gets added here, just as a FYI
-XAVAMODULE *load_module_from_path(char *path) {
+XAVAMODULE *xava_module_load_path(char *path) {
     size_t offset;
     for(offset = strlen(path); offset > 0; offset--) {
         if(path[offset-1] == '/')
