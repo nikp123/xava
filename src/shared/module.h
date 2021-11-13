@@ -14,5 +14,15 @@ extern XAVAMODULE *load_output_module(char *name);
 extern XAVAMODULE *load_filter_module(char *name);
 extern void destroy_module(XAVAMODULE *module);
 
+/**
+ * name is the user-specified module name
+ * prefix is the application-specified module name prefix
+ * root_prefix is the directory from where the module is
+ * supposed to be loaded (and it must include the last
+ * bracket)
+ **/
+extern XAVAMODULE *load_custom_module(char *name,
+        const char *prefix, const char *root_prefix);
+
 #endif
 

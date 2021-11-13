@@ -2,10 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../module.h"
+#include "../../shared.h"
 #include "internal.h"
 
-#include "../../shared.h"
+#if defined(__WIN32__)
+    #define DIR_BREAK '\\'
+#else
+    #define DIR_BREAK '/'
+#endif
 
 EXP_FUNC XAVAMODULE *load_output_module(char *name) {
     char *new_name = calloc(strlen(name)+strlen("out_") + 1, sizeof(char));
@@ -29,5 +33,26 @@ EXP_FUNC XAVAMODULE *load_filter_module(char *name) {
     XAVAMODULE *module = load_module(new_name);
     free(new_name);
     return module;
+}
+
+EXP_FUNC XAVAMODULE *load_custom_module(char *name, const char *prefix,
+        const char *root_prefix) {
+    char string_size = strlen(root_prefix) + 1 + strlen(prefix) + 1 +
+        strlen(name) + 1;
+    char path[string_size];
+
+    // a kinda security feature
+    for(size_t i=0; i<strlen(name); i++) {
+        xavaBailCondition(name[i] == DIRBRK,
+            "Directory injections are NOT allowed within the module name!");
+    }
+
+    xavaBailCondition(root_prefix[strlen(root_prefix)-1] != DIRBRK,
+        "Bug detected: The dev SHOULD'VE included the ending bracket at the "
+        "root_prefix parameter. Please report this!");
+
+    snprintf(path, string_size-1, "%s%s_%s",
+        root_prefix, prefix, name);
+    return load_module_from_path(path);
 }
 

@@ -107,6 +107,33 @@ EXP_FUNC XAVAMODULE *load_module(char *name) {
     return module; // if it failed XAVA would know (no error checks needed)
 }
 
+// because of stupidity this is not a entire path instead,
+// it's supposed to take in the path without the extension
+//
+// the extension gets added here, just as a FYI
+XAVAMODULE *load_module_from_path(char *path) {
+    size_t offset;
+    for(offset = strlen(path); offset > 0; offset--) {
+        if(path[offset-1] == '\\')
+            break;
+    }
+
+    char *new_name = &path[offset];
+    char full_path[strlen(path)+strlen(LIBRARY_EXTENSION)+1];
+    strcpy(full_path, path);
+    strcat(full_path, LIBRARY_EXTENSION);
+
+    XAVAMODULE *module   = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
+    module->moduleHandle = LoadLibrary(full_path);
+    module->error        = GetLastError();
+    module->name         = new_name;
+
+    xavaLog("Module loaded '%s' loaded at %p", 
+        module->name, module->moduleHandle);
+
+    return module;
+}
+
 EXP_FUNC void destroy_module(XAVAMODULE *module) {
     FreeLibrary(module->moduleHandle);
     free(module->name);
