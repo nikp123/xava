@@ -18,7 +18,7 @@ if(SDL2)
 			"${XAVA_MODULE_DIR}/main.c"
 			"src/output/graphical.c"
 			"src/output/shared/gl_shared.c"
-			"src/output/shared/gl.c"
+			"src/output/shared/glew.c"
 			"${GLOBAL_FUNCTION_SOURCES}")
 		target_link_libraries(out_sdl2 xava-shared "${SDL2_LIBRARIES}")
 		target_include_directories(out_sdl2 PRIVATE "${SDL2_INCLUDE_DIRS}")

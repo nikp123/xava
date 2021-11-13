@@ -4,7 +4,7 @@
 #include <SDL_opengl.h>
 #define GL_ALREADY_DEFINED
 
-#include "../shared/gl.h"
+#include "../shared/glew.h"
 
 #include "../graphical.h"
 #include "../../config.h"

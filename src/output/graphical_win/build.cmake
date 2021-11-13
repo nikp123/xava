@@ -20,7 +20,7 @@ if(WINAPI)
 				if(DWM_LIB)
 					add_library(out_win SHARED "${XAVA_MODULE_DIR}/main.c"
 						"src/output/graphical.c"
-						"src/output/shared/gl.c"
+						"src/output/shared/glew.c"
 						"src/output/shared/gl_shared.c"
 						"${GLOBAL_FUNCTION_SOURCES}")
 					add_definitions(-DGLEW_STATIC)

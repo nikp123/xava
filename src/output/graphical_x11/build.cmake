@@ -13,7 +13,7 @@ if(X11)
 			if(GLX_FOUND)
 				add_library(out_x11 SHARED "${XAVA_MODULE_DIR}/main.c"
 											"src/output/graphical.c"
-											"src/output/shared/gl.c"
+											"src/output/shared/glew.c"
 											"src/output/shared/gl_shared.c"
 											"${GLOBAL_FUNCTION_SOURCES}")
 				target_link_directories(out_x11 PRIVATE 

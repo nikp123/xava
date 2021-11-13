@@ -3,7 +3,7 @@
 #ifndef GL
 	#define GL
 #endif
-#include "gl.h"
+#include "glew.h"
 
 #include "../../shared.h"
 #include "../graphical.h"

@@ -19,7 +19,7 @@
 #include "../../shared.h"
 
 #ifdef GL
-	#include "../shared/gl.h"
+	#include "../shared/glew.h"
 	#include <X11/extensions/Xrender.h>
 	#include <GL/glx.h>
 #endif
