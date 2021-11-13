@@ -32,10 +32,11 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
     // Typically /usr/local/lib/xava/
     size_t new_size = strlen(name) + sizeof(PREFIX"/lib/xava/")
         + strlen(LIBRARY_EXTENSION);
+    new_size *= sizeof(char);
 
     // allocate enough for the system module size instead
     // because it's bigger, duh...
-    char *new_name = calloc(new_size, sizeof(char));
+    char *new_name = malloc(new_size);
 
     // regardless, try the local module first, as it has priority
     // over normal ones
@@ -55,7 +56,10 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
     XAVAMODULE *module = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
     module->moduleHandle = dlopen(new_name, RTLD_NOW);
     module->name = name;
-    module->path = new_name;
+
+    // don't ask, this is unexplainable C garbage at work again
+    module->path = strdup(new_name);
+    free(new_name);
 
     xavaLog("Module loaded '%s' loaded at %p", 
         module->name, module->moduleHandle);
