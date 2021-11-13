@@ -72,19 +72,19 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
     p->inputModule = load_input_module(inputMethod);
     xavaBailCondition(!is_module_valid(p->inputModule),
             "Input method '%s' could not load.\nReason: %s",
-            inputMethod, get_module_error(p->inputModule));
+            inputMethod, xava_module_error_get(p->inputModule));
 
     // validate: output method
     p->outputModule = load_output_module(outputMethod);
     xavaBailCondition(!is_module_valid(p->outputModule),
             "Output method '%s' could not load.\nReason: %s",
-            outputMethod, get_module_error(p->outputModule));
+            outputMethod, xava_module_error_get(p->outputModule));
 
     // validate: filter method
     p->filterModule = load_filter_module(filterMethod);
     xavaBailCondition(!is_module_valid(p->filterModule),
             "Filter method '%s' could not load.\nReason: %s",
-            filterMethod, get_module_error(p->outputModule));
+            filterMethod, xava_module_error_get(p->outputModule));
 
     // validate: output channels
     int stereo = -1;

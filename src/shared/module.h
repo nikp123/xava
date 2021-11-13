@@ -6,7 +6,7 @@
 // isn't supposed to mess with it
 typedef struct xavamodule XAVAMODULE;
 
-extern char *get_module_error(XAVAMODULE *module);
+extern char *xava_module_error_get(XAVAMODULE *module);
 extern bool is_module_valid(XAVAMODULE *module);
 extern void *get_symbol_address(XAVAMODULE *module, char *symbol);
 extern XAVAMODULE *load_input_module(char *name);

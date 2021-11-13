@@ -16,7 +16,7 @@ typedef struct xavamodule {
 
 char *LIBRARY_EXTENSION = ".dll";
 
-EXP_FUNC char *get_module_error(XAVAMODULE *module) {
+EXP_FUNC char *xava_module_error_get(XAVAMODULE *module) {
     char *message;
     FormatMessage(
             FORMAT_MESSAGE_ALLOCATE_BUFFER |

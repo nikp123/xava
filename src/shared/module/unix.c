@@ -90,7 +90,7 @@ XAVAMODULE *load_module_from_path(char *path) {
     return module;
 }
 
-EXP_FUNC char *get_module_error(XAVAMODULE *module) {
+EXP_FUNC char *xava_module_error_get(XAVAMODULE *module) {
     return dlerror();
 }
 
