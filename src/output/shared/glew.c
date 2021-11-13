@@ -1,7 +1,7 @@
 #include <math.h>
 
 #ifndef GL
-	#define GL
+    #define GL
 #endif
 #include "glew.h"
 
@@ -10,32 +10,32 @@
 
 
 void GLConfigLoad(struct XAVA_HANDLE *xava) {
-	SGLConfigLoad(xava);
+    SGLConfigLoad(xava);
 }
 
 void GLInit(struct XAVA_HANDLE *xava) {
-	glewInit();
+    glewInit();
 
-	SGLInit(xava);
+    SGLInit(xava);
 }
 
 void GLApply(struct XAVA_HANDLE *xava) {
-	SGLApply(xava);
+    SGLApply(xava);
 }
 
 XG_EVENT GLEvent(struct XAVA_HANDLE *xava) {
-	return SGLEvent(xava);
+    return SGLEvent(xava);
 }
 
 void GLClear(struct XAVA_HANDLE *xava) {
-	SGLClear(xava);
+    SGLClear(xava);
 }
 
 void GLDraw(struct XAVA_HANDLE *xava) {
-	SGLDraw(xava);
+    SGLDraw(xava);
 }
 
 void GLCleanup(struct XAVA_HANDLE *xava) {
-	SGLCleanup(xava);
+    SGLCleanup(xava);
 }
 

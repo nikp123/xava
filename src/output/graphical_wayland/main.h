@@ -2,9 +2,9 @@
 #define __WAYLAND_MAIN_H
 
 #ifdef EGL
-	#include <stdint.h>
-	#include <EGL/egl.h>
-	#include <GLES2/gl2.h>
+    #include <stdint.h>
+    #include <EGL/egl.h>
+    #include <GLES2/gl2.h>
 #endif
 
 #include <wayland-client.h>
@@ -12,12 +12,12 @@
 #include "../../shared.h"
 
 struct waydata {
-	struct wl_surface    *surface;
-	struct wl_display    *display;
-	struct wl_compositor *compositor;
-	struct XAVA_HANDLE   *hand;
-	XG_EVENT_STACK       *events;
-	struct wl_list       outputs;
+    struct wl_surface    *surface;
+    struct wl_display    *display;
+    struct wl_compositor *compositor;
+    struct XAVA_HANDLE   *hand;
+    XG_EVENT_STACK       *events;
+    struct wl_list       outputs;
 };
 
 

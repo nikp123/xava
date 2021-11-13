@@ -3,17 +3,17 @@
 
 // for static checker sake
 #if !defined(GL) && !defined(EGL)
-	#define GL
-	#warning "This WILL break your build. Fix it!"
+    #define GL
+    #warning "This WILL break your build. Fix it!"
 #endif
 
 #if defined(EGL)
-	#include <EGL/eglplatform.h>
-	#include <EGL/egl.h>
+    #include <EGL/eglplatform.h>
+    #include <EGL/egl.h>
 #endif
 
 #ifndef GL_ALREADY_DEFINED
-	#include <GL/glew.h>
+    #include <GL/glew.h>
 #endif
 
 #include "../../shared.h"

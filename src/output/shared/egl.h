@@ -2,21 +2,21 @@
 #define __EGL_H
 
 #ifndef EGL
-	#define EGL
+    #define EGL
 #endif
 #include "gl_shared.h"
 
 struct _escontext {
-	// because windowing systems are complicated
-	EGLNativeDisplayType native_display;
-	EGLNativeWindowType native_window;
+    // because windowing systems are complicated
+    EGLNativeDisplayType native_display;
+    EGLNativeWindowType native_window;
 
-	// EGL display
-	EGLDisplay  display;
-	// EGL context
-	EGLContext  context;
-	// EGL surface
-	EGLSurface  surface;
+    // EGL display
+    EGLDisplay  display;
+    // EGL context
+    EGLContext  context;
+    // EGL surface
+    EGLSurface  surface;
 };
 
 void       EGLConfigLoad(struct XAVA_HANDLE *xava);

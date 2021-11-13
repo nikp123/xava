@@ -1,5 +1,5 @@
 #ifdef __cplusplus
-	#define external extern "C"
+    #define external extern "C"
 #else
-	#define external
+    #define external
 #endif

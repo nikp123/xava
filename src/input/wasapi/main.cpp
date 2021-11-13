@@ -10,7 +10,7 @@
 #include "main.h"
 
 extern "C" {
-	#include "../../shared.h"
+    #include "../../shared.h"
 }
 
 // This variable is read by the main executable
@@ -27,39 +27,39 @@ static struct audio_data *audio;
 static int n;
 
 HRESULT sinkSetFormat(WAVEFORMATEX * pWF) {
-	// For the time being, just return OK.
-	pWF->wFormatTag = WAVE_FORMAT_PCM;
-	pWF->nChannels = audio->channels;
-	pWF->nSamplesPerSec = audio->rate;
-	pWF->nAvgBytesPerSec = 2*audio->rate*audio->channels;
-	pWF->nBlockAlign = 2*audio->channels;
-	pWF->wBitsPerSample = 16;
-	return ( S_OK ) ;
+    // For the time being, just return OK.
+    pWF->wFormatTag = WAVE_FORMAT_PCM;
+    pWF->nChannels = audio->channels;
+    pWF->nSamplesPerSec = audio->rate;
+    pWF->nAvgBytesPerSec = 2*audio->rate*audio->channels;
+    pWF->nBlockAlign = 2*audio->channels;
+    pWF->wBitsPerSample = 16;
+    return ( S_OK ) ;
 }
 
 HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
-	float *pBuffer = (float*)pData;
-	// convert 32-bit float to something usable
-	switch(audio->channels) {
-		case 1:
-			for(UINT32 i=0; i<NumFrames; i++) {
-				audio->audio_out_l[n] = *pBuffer++;
-				//audio->audio_out_l[n] += *pBuffer++;
-				audio->audio_out_l[n] *= 16383.5f;
-				n++;
-				if(n == audio->inputsize) n = 0;
-			}
-			break;
-		case 2:
-			for(UINT32 i=0; i<NumFrames; i++) {
-				audio->audio_out_l[n] = (*pBuffer++)*32767.0f;
-				audio->audio_out_r[n] = (*pBuffer++)*32767.0f;
-				n++;
-				if(n == audio->inputsize) n = 0;
-			}
-			break;
-	}
-	return S_OK;
+    float *pBuffer = (float*)pData;
+    // convert 32-bit float to something usable
+    switch(audio->channels) {
+        case 1:
+            for(UINT32 i=0; i<NumFrames; i++) {
+                audio->audio_out_l[n] = *pBuffer++;
+                //audio->audio_out_l[n] += *pBuffer++;
+                audio->audio_out_l[n] *= 16383.5f;
+                n++;
+                if(n == audio->inputsize) n = 0;
+            }
+            break;
+        case 2:
+            for(UINT32 i=0; i<NumFrames; i++) {
+                audio->audio_out_l[n] = (*pBuffer++)*32767.0f;
+                audio->audio_out_r[n] = (*pBuffer++)*32767.0f;
+                n++;
+                if(n == audio->inputsize) n = 0;
+            }
+            break;
+    }
+    return S_OK;
 }
 
 //-----------------------------------------------------------
@@ -77,122 +77,122 @@ HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
 extern "C" {
 
 EXP_FUNC void* xavaInput(void *audiodata) {
-	HRESULT hr;
-	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
-	UINT32 bufferFrameCount;
-	UINT32 numFramesAvailable;
-	IMMDeviceEnumerator *pEnumerator = NULL;
-	IMMDevice *pDevice = NULL;
-	IAudioClient *pAudioClient = NULL;
-	IAudioCaptureClient *pCaptureClient = NULL;
-	WAVEFORMATEX *pwfx = NULL;
-	UINT32 packetLength = 0;
-	BYTE *pData;
-	DWORD flags;
-	audio = (struct audio_data *)audiodata;
-	REFERENCE_TIME hnsDefaultDevicePeriod;
+    HRESULT hr;
+    REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
+    UINT32 bufferFrameCount;
+    UINT32 numFramesAvailable;
+    IMMDeviceEnumerator *pEnumerator = NULL;
+    IMMDevice *pDevice = NULL;
+    IAudioClient *pAudioClient = NULL;
+    IAudioCaptureClient *pCaptureClient = NULL;
+    WAVEFORMATEX *pwfx = NULL;
+    UINT32 packetLength = 0;
+    BYTE *pData;
+    DWORD flags;
+    audio = (struct audio_data *)audiodata;
+    REFERENCE_TIME hnsDefaultDevicePeriod;
 
-	n = 0; // reset the buffer counter
+    n = 0; // reset the buffer counter
 
-	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
-	hr = CoCreateInstance(
-			CLSID_MMDeviceEnumerator, NULL,
-			CLSCTX_ALL, IID_IMMDeviceEnumerator,
-			(void**)&pEnumerator);
-	xavaBailCondition(hr, "CoCreateInstance failed - Couldn't get IMMDeviceEnumerator");
+    hr = CoCreateInstance(
+            CLSID_MMDeviceEnumerator, NULL,
+            CLSCTX_ALL, IID_IMMDeviceEnumerator,
+            (void**)&pEnumerator);
+    xavaBailCondition(hr, "CoCreateInstance failed - Couldn't get IMMDeviceEnumerator");
 
-	hr = pEnumerator->GetDefaultAudioEndpoint(
-			strcmp(audio->source, "loopback") ? eCapture : eRender, eConsole, &pDevice);
-	xavaBailCondition(hr, "Failed to get default audio endpoint");
+    hr = pEnumerator->GetDefaultAudioEndpoint(
+            strcmp(audio->source, "loopback") ? eCapture : eRender, eConsole, &pDevice);
+    xavaBailCondition(hr, "Failed to get default audio endpoint");
 
-	hr = pDevice->Activate(
-		IID_IAudioClient, CLSCTX_ALL,
-		NULL, (void**)&pAudioClient);
-	xavaBailCondition(hr, "Failed setting up default audio endpoint");
+    hr = pDevice->Activate(
+        IID_IAudioClient, CLSCTX_ALL,
+        NULL, (void**)&pAudioClient);
+    xavaBailCondition(hr, "Failed setting up default audio endpoint");
 
-	hr = pAudioClient->GetMixFormat(&pwfx);
-	xavaBailCondition(hr, "Failed getting default audio endpoint mix format");
+    hr = pAudioClient->GetMixFormat(&pwfx);
+    xavaBailCondition(hr, "Failed getting default audio endpoint mix format");
 
-	hr = pAudioClient->Initialize(
-			AUDCLNT_SHAREMODE_SHARED,
-			strcmp(audio->source, "loopback") ? 0 : AUDCLNT_STREAMFLAGS_LOOPBACK,
-			hnsRequestedDuration,
-			0,
-			pwfx,
-			NULL);
-	xavaBailCondition(hr, "Failed initilizing default audio endpoint");
+    hr = pAudioClient->Initialize(
+            AUDCLNT_SHAREMODE_SHARED,
+            strcmp(audio->source, "loopback") ? 0 : AUDCLNT_STREAMFLAGS_LOOPBACK,
+            hnsRequestedDuration,
+            0,
+            pwfx,
+            NULL);
+    xavaBailCondition(hr, "Failed initilizing default audio endpoint");
 
-	// Get the size of the allocated buffer.
-	hr = pAudioClient->GetBufferSize(&bufferFrameCount);
-	xavaBailCondition(hr, "Failed getting buffer size");
+    // Get the size of the allocated buffer.
+    hr = pAudioClient->GetBufferSize(&bufferFrameCount);
+    xavaBailCondition(hr, "Failed getting buffer size");
 
-	hr = pAudioClient->GetService(
-		IID_IAudioCaptureClient,
-		(void**)&pCaptureClient);
-	xavaBailCondition(hr, "Failed getting capture service");
+    hr = pAudioClient->GetService(
+        IID_IAudioCaptureClient,
+        (void**)&pCaptureClient);
+    xavaBailCondition(hr, "Failed getting capture service");
 
-	// Set the audio sink format to use.
-	hr = sinkSetFormat(pwfx);
-	xavaBailCondition(hr, "Failed setting format");
+    // Set the audio sink format to use.
+    hr = sinkSetFormat(pwfx);
+    xavaBailCondition(hr, "Failed setting format");
 
-	hr = pAudioClient->Start();  // Start recording.
-	xavaBailCondition(hr, "Failed starting capture");
+    hr = pAudioClient->Start();  // Start recording.
+    xavaBailCondition(hr, "Failed starting capture");
 
-	hr = pAudioClient->GetDevicePeriod(&hnsDefaultDevicePeriod, NULL);
-	xavaBailCondition(hr, "Error getting device period");
+    hr = pAudioClient->GetDevicePeriod(&hnsDefaultDevicePeriod, NULL);
+    xavaBailCondition(hr, "Error getting device period");
 
-	LONG lTimeBetweenFires = 1000*audio->latency/audio->rate; // convert to milliseconds
+    LONG lTimeBetweenFires = 1000*audio->latency/audio->rate; // convert to milliseconds
 
-	// Each loop fills about half of the shared buffer.
-	while (!audio->terminate) {
-		Sleep(lTimeBetweenFires);
+    // Each loop fills about half of the shared buffer.
+    while (!audio->terminate) {
+        Sleep(lTimeBetweenFires);
 
-		hr = pCaptureClient->GetNextPacketSize(&packetLength);
-		xavaBailCondition(hr, "Failure getting buffer size");
+        hr = pCaptureClient->GetNextPacketSize(&packetLength);
+        xavaBailCondition(hr, "Failure getting buffer size");
 
-		while (packetLength != 0) {
-			// Get the available data in the shared buffer.
-			hr = pCaptureClient->GetBuffer(
-					&pData,
-					&numFramesAvailable,
-					&flags, NULL, NULL);
-			xavaBailCondition(hr, "Failure to capture available buffer data");
+        while (packetLength != 0) {
+            // Get the available data in the shared buffer.
+            hr = pCaptureClient->GetBuffer(
+                    &pData,
+                    &numFramesAvailable,
+                    &flags, NULL, NULL);
+            xavaBailCondition(hr, "Failure to capture available buffer data");
 
-			//if (flags & AUDCLNT_BUFFERFLAGS_SILENT) pData = NULL;  // Tell CopyData to write silence.
+            //if (flags & AUDCLNT_BUFFERFLAGS_SILENT) pData = NULL;  // Tell CopyData to write silence.
 
-			// Copy the available capture data to the audio sink.
-			hr = sinkCopyData(pData, numFramesAvailable);
-			xavaBailCondition(hr, "Failure copying buffer data");
+            // Copy the available capture data to the audio sink.
+            hr = sinkCopyData(pData, numFramesAvailable);
+            xavaBailCondition(hr, "Failure copying buffer data");
 
-			hr = pCaptureClient->ReleaseBuffer(numFramesAvailable);
-			xavaBailCondition(hr, "Failed to release buffer");
+            hr = pCaptureClient->ReleaseBuffer(numFramesAvailable);
+            xavaBailCondition(hr, "Failed to release buffer");
 
-			hr = pCaptureClient->GetNextPacketSize(&packetLength);
-			xavaBailCondition(hr, "Failure getting buffer size");
-		}
-	}
+            hr = pCaptureClient->GetNextPacketSize(&packetLength);
+            xavaBailCondition(hr, "Failure getting buffer size");
+        }
+    }
 
-	hr = pAudioClient->Stop();  // Stop recording.
-	xavaBailCondition(hr, "Failure stopping capture");
+    hr = pAudioClient->Stop();  // Stop recording.
+    xavaBailCondition(hr, "Failure stopping capture");
 
-	CoTaskMemFree(pwfx);
-	pEnumerator->Release();
-	pDevice->Release();
-	pAudioClient->Release();
-	pCaptureClient->Release();
+    CoTaskMemFree(pwfx);
+    pEnumerator->Release();
+    pDevice->Release();
+    pAudioClient->Release();
+    pCaptureClient->Release();
 
-	CoUninitialize();
+    CoUninitialize();
 
-	return 0;
+    return 0;
 }
 
 
 EXP_FUNC void xavaInputLoadConfig(struct XAVA_HANDLE *xava) {
-	struct audio_data *audio = &xava->audio;
-	XAVACONFIG config = xava->default_config.config;
+    struct audio_data *audio = &xava->audio;
+    XAVACONFIG config = xava->default_config.config;
 
-	audio->source = xavaConfigGetString(config, "input", "source", "loopback");
+    audio->source = xavaConfigGetString(config, "input", "source", "loopback");
 }
 
 } // extern "C"
