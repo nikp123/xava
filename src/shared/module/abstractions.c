@@ -11,7 +11,7 @@
     #define DIR_BREAK '/'
 #endif
 
-EXP_FUNC XAVAMODULE *load_output_module(char *name) {
+EXP_FUNC XAVAMODULE *xava_module_output_load(char *name) {
     char *new_name = calloc(strlen(name)+strlen("out_") + 1, sizeof(char));
     sprintf(new_name, "out_%s", name);
     XAVAMODULE *module = load_module(new_name);
@@ -19,7 +19,7 @@ EXP_FUNC XAVAMODULE *load_output_module(char *name) {
     return module;
 }
 
-EXP_FUNC XAVAMODULE *load_input_module(char *name) {
+EXP_FUNC XAVAMODULE *xava_module_input_load(char *name) {
     char *new_name = calloc(strlen(name)+strlen("in_") + 1, sizeof(char));
     sprintf(new_name, "in_%s", name);
     XAVAMODULE *module = load_module(new_name);
@@ -27,7 +27,7 @@ EXP_FUNC XAVAMODULE *load_input_module(char *name) {
     return module;
 }
 
-EXP_FUNC XAVAMODULE *load_filter_module(char *name) {
+EXP_FUNC XAVAMODULE *xava_module_filter_load(char *name) {
     char *new_name = calloc(strlen(name)+strlen("filter_") + 1, sizeof(char));
     sprintf(new_name, "filter_%s", name);
     XAVAMODULE *module = load_module(new_name);

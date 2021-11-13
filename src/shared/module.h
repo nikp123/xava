@@ -9,9 +9,9 @@ typedef struct xavamodule XAVAMODULE;
 extern char *xava_module_error_get(XAVAMODULE *module);
 extern bool xava_module_valid(XAVAMODULE *module);
 extern void *xava_module_symbol_address_get(XAVAMODULE *module, char *symbol);
-extern XAVAMODULE *load_input_module(char *name);
-extern XAVAMODULE *load_output_module(char *name);
-extern XAVAMODULE *load_filter_module(char *name);
+extern XAVAMODULE *xava_module_input_load(char *name);
+extern XAVAMODULE *xava_module_output_load(char *name);
+extern XAVAMODULE *xava_module_filter_load(char *name);
 extern void xava_module_free(XAVAMODULE *module);
 
 /**
