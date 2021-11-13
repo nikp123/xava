@@ -247,7 +247,7 @@ void internal_SGLLoadShader(struct SGLprogram *program,
 	free(returned_path);
 }
 
-void SGLShadersLoad(struct XAVA_HANDLE *xava) {
+void SGLConfigLoad(struct XAVA_HANDLE *xava) {
 	XAVACONFIG config = xava->default_config.config;
 	struct config_params *p = &xava->conf;
 

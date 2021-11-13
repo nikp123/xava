@@ -10,6 +10,6 @@
 	void     waylandEGLApply(struct XAVA_HANDLE *xava);
 	XG_EVENT waylandEGLEvent(struct waydata *wd);
 	void     waylandEGLDraw(struct XAVA_HANDLE *xava);
-	void     waylandEGLShadersLoad(struct XAVA_HANDLE *xava);
+	void     waylandEGLConfigLoad(struct XAVA_HANDLE *xava);
 	void     waylandEGLWindowResize(struct waydata *wd, int w, int h);
 #endif

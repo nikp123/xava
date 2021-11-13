@@ -5,8 +5,8 @@
 #include "../graphical.h"
 
 
-void EGLShadersLoad(struct XAVA_HANDLE *xava) {
-	SGLShadersLoad(xava);
+void EGLConfigLoad(struct XAVA_HANDLE *xava) {
+	SGLConfigLoad(xava);
 }
 
 EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESContext) {

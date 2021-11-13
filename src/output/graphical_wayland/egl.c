@@ -18,8 +18,8 @@
 struct _escontext ESContext;
 
 // dummy abstraction function
-void waylandEGLShadersLoad(struct XAVA_HANDLE *xava) {
-	EGLShadersLoad(xava);
+void waylandEGLConfigLoad(struct XAVA_HANDLE *xava) {
+	EGLConfigLoad(xava);
 }
 
 void waylandEGLCreateWindow(struct waydata *wd) {

@@ -164,7 +164,7 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *hand) {
 	monitorName = strdup(xavaConfigGetString
 		(config, "wayland", "monitor_name", "ignore"));
 
-	waylandEGLShadersLoad(hand);
+	waylandEGLConfigLoad(hand);
 
 	// Vsync is implied, although system timers must be used
 	p->vsync = 0;

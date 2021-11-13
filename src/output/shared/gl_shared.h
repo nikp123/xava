@@ -18,7 +18,7 @@
 
 #include "../../shared.h"
 
-void     SGLShadersLoad(struct XAVA_HANDLE *xava);
+void     SGLConfigLoad(struct XAVA_HANDLE *xava);
 void     SGLInit(struct XAVA_HANDLE *xava);
 void     SGLApply(struct XAVA_HANDLE *xava);
 XG_EVENT SGLEvent(struct XAVA_HANDLE *xava);

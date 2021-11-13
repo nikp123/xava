@@ -157,6 +157,6 @@ EXP_FUNC void xavaOutputHandleConfiguration(struct XAVA_HANDLE *s) {
 	// VSync doesnt work on SDL2 :(
 	p->vsync = 0;
 
-	GLShadersLoad(s);
+	GLConfigLoad(s);
 }
 

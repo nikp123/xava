@@ -19,7 +19,7 @@ struct _escontext {
 	EGLSurface  surface;
 };
 
-void       EGLShadersLoad(struct XAVA_HANDLE *xava);
+void       EGLConfigLoad(struct XAVA_HANDLE *xava);
 EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESContext);
 void       EGLInit(struct XAVA_HANDLE *xava);
 void       EGLApply(struct XAVA_HANDLE *xava);
