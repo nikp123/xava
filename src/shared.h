@@ -43,6 +43,7 @@
 #include "shared/ionotify.h"
 #include "shared/config.h"
 #include "shared/io.h"
+#include "shared/version.h"
 
 // Shared audio data sturct
 struct audio_data {

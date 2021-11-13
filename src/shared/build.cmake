@@ -32,6 +32,7 @@ add_library(xava-shared SHARED
 	src/shared/module/abstractions.c
 	src/shared/ionotify.c
 	src/shared/io.c
+	src/shared/version.c
 	${ADDITIONAL_SHARED_SOURCES}
 )
 set_target_properties(xava-shared PROPERTIES COMPILE_FLAGS "-fPIC")

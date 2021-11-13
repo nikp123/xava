@@ -45,6 +45,10 @@ set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PAT
 
 # Definitions
 add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION}")
+add_definitions(-DXAVA_VERSION_MAJOR"=${xava_VERSION_MAJOR}")
+add_definitions(-DXAVA_VERSION_MINOR"=${xava_VERSION_MINOR}")
+add_definitions(-DXAVA_VERSION_PATCH"=${xava_VERSION_PATCH}")
+add_definitions(-DXAVA_VERSION_TWEAK"=${xava_VERSION_TWEAK}")
 add_definitions(-DPREFIX="${XAVA_LINK_TO_INSTALL_DIR}")
 
 # Windows-y things
