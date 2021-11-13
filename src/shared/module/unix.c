@@ -94,7 +94,7 @@ EXP_FUNC char *xava_module_error_get(XAVAMODULE *module) {
     return dlerror();
 }
 
-EXP_FUNC void *get_symbol_address(XAVAMODULE *module, char *symbol) {
+EXP_FUNC void *xava_module_symbol_address_get(XAVAMODULE *module, char *symbol) {
     void *address = dlsym(module->moduleHandle, symbol);
 
     // the program would crash with an NULL pointer error anyway

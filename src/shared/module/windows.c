@@ -37,7 +37,7 @@ EXP_FUNC bool xava_module_valid(XAVAMODULE *module) {
         return 0;
 }
 
-EXP_FUNC void *get_symbol_address(XAVAMODULE *module, char *symbol) {
+EXP_FUNC void *xava_module_symbol_address_get(XAVAMODULE *module, char *symbol) {
     void *addr = GetProcAddress(module->moduleHandle, symbol);
 
     if(addr == NULL) {

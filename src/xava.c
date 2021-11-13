@@ -239,23 +239,23 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         xavaIONotifyAddWatch(&thing);
 
         // load symbols
-        xavaInput             = get_symbol_address(p->inputModule, "xavaInput");
-        xavaInputLoadConfig   = get_symbol_address(p->inputModule, "xavaInputLoadConfig");
+        xavaInput             = xava_module_symbol_address_get(p->inputModule, "xavaInput");
+        xavaInputLoadConfig   = xava_module_symbol_address_get(p->inputModule, "xavaInputLoadConfig");
 
-        xavaInitOutput        = get_symbol_address(p->outputModule, "xavaInitOutput");
-        xavaOutputClear       = get_symbol_address(p->outputModule, "xavaOutputClear");
-        xavaOutputApply       = get_symbol_address(p->outputModule, "xavaOutputApply");
-        xavaOutputHandleInput = get_symbol_address(p->outputModule, "xavaOutputHandleInput");
-        xavaOutputDraw        = get_symbol_address(p->outputModule, "xavaOutputDraw");
-        xavaOutputCleanup     = get_symbol_address(p->outputModule, "xavaOutputCleanup");
-        xavaOutputLoadConfig  = get_symbol_address(p->outputModule, "xavaOutputLoadConfig");
+        xavaInitOutput        = xava_module_symbol_address_get(p->outputModule, "xavaInitOutput");
+        xavaOutputClear       = xava_module_symbol_address_get(p->outputModule, "xavaOutputClear");
+        xavaOutputApply       = xava_module_symbol_address_get(p->outputModule, "xavaOutputApply");
+        xavaOutputHandleInput = xava_module_symbol_address_get(p->outputModule, "xavaOutputHandleInput");
+        xavaOutputDraw        = xava_module_symbol_address_get(p->outputModule, "xavaOutputDraw");
+        xavaOutputCleanup     = xava_module_symbol_address_get(p->outputModule, "xavaOutputCleanup");
+        xavaOutputLoadConfig  = xava_module_symbol_address_get(p->outputModule, "xavaOutputLoadConfig");
 
         if(!p->skipFilterF) {
-            xavaFilterInit       = get_symbol_address(p->filterModule, "xavaFilterInit");
-            xavaFilterApply      = get_symbol_address(p->filterModule, "xavaFilterApply");
-            xavaFilterLoop       = get_symbol_address(p->filterModule, "xavaFilterLoop");
-            xavaFilterCleanup    = get_symbol_address(p->filterModule, "xavaFilterCleanup");
-            xavaFilterLoadConfig = get_symbol_address(p->filterModule, "xavaFilterLoadConfig");
+            xavaFilterInit       = xava_module_symbol_address_get(p->filterModule, "xavaFilterInit");
+            xavaFilterApply      = xava_module_symbol_address_get(p->filterModule, "xavaFilterApply");
+            xavaFilterLoop       = xava_module_symbol_address_get(p->filterModule, "xavaFilterLoop");
+            xavaFilterCleanup    = xava_module_symbol_address_get(p->filterModule, "xavaFilterCleanup");
+            xavaFilterLoadConfig = xava_module_symbol_address_get(p->filterModule, "xavaFilterLoadConfig");
         }
 
         // we're loading this first because I want output modes to adjust audio
