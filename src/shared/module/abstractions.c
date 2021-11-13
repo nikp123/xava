@@ -35,7 +35,7 @@ EXP_FUNC XAVAMODULE *load_filter_module(char *name) {
     return module;
 }
 
-EXP_FUNC XAVAMODULE *load_custom_module(char *name, const char *prefix,
+EXP_FUNC XAVAMODULE *xava_module_custom_load(char *name, const char *prefix,
         const char *root_prefix) {
     char string_size = strlen(root_prefix) + 1 + strlen(prefix) + 1 +
         strlen(name) + 1;

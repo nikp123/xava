@@ -21,7 +21,7 @@ extern void xava_module_free(XAVAMODULE *module);
  * supposed to be loaded (and it must include the last
  * bracket)
  **/
-extern XAVAMODULE *load_custom_module(char *name,
+extern XAVAMODULE *xava_module_custom_load(char *name,
         const char *prefix, const char *root_prefix);
 
 // get the path of a loaded module
