@@ -9,6 +9,7 @@
 
 typedef struct xavamodule {
     char *name;
+    char *path;
     HMODULE moduleHandle;
     DWORD error;
 } XAVAMODULE;
@@ -100,9 +101,7 @@ EXP_FUNC XAVAMODULE *load_module(char *name) {
     // try again
     module->moduleHandle = LoadLibrary(path);
     module->error        = GetLastError();
-
-    // cleanup
-    free(path);
+    module->path         = path;
 
     return module; // if it failed XAVA would know (no error checks needed)
 }
@@ -127,6 +126,7 @@ XAVAMODULE *load_module_from_path(char *path) {
     module->moduleHandle = LoadLibrary(full_path);
     module->error        = GetLastError();
     module->name         = new_name;
+    module->path         = strdup(full_path);
 
     xavaLog("Module loaded '%s' loaded at %p", 
         module->name, module->moduleHandle);
@@ -137,5 +137,19 @@ XAVAMODULE *load_module_from_path(char *path) {
 EXP_FUNC void destroy_module(XAVAMODULE *module) {
     FreeLibrary(module->moduleHandle);
     free(module->name);
+    free(module->path);
     free(module);
 }
+
+const char *xava_module_path_get(XAVAMODULE *module) {
+    // prevent NULL-pointer exception
+    if(module == NULL)
+        return NULL;
+
+    return module->path;
+}
+
+const char *xava_module_extension_get(void) {
+    return LIBRARY_EXTENSION;
+}
+

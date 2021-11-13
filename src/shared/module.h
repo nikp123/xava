@@ -24,5 +24,11 @@ extern void destroy_module(XAVAMODULE *module);
 extern XAVAMODULE *load_custom_module(char *name,
         const char *prefix, const char *root_prefix);
 
+// get the path of a loaded module
+const char *xava_module_path_get(XAVAMODULE *module);
+
+// get the file extension of a module on the current system
+const char *xava_module_extension_get(void);
+
 #endif
 

@@ -9,6 +9,7 @@
 typedef struct xavamodule {
     char *name;
     void **moduleHandle;
+    char *path;
 } XAVAMODULE;
 
 char *LIBRARY_EXTENSION = ".so";
@@ -17,6 +18,7 @@ EXP_FUNC void destroy_module(XAVAMODULE *module) {
     dlclose(module->moduleHandle);
     module->moduleHandle = 0;
     free(module->name);
+    free(module->path);
     free(module);
 }
 
@@ -53,6 +55,7 @@ EXP_FUNC XAVAMODULE *load_module(char *name) {
     XAVAMODULE *module = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
     module->moduleHandle = dlopen(new_name, RTLD_NOW);
     module->name = name;
+    module->path = new_name;
 
     xavaLog("Module loaded '%s' loaded at %p", 
         module->name, module->moduleHandle);
@@ -79,6 +82,7 @@ XAVAMODULE *load_module_from_path(char *path) {
     XAVAMODULE *module = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
     module->moduleHandle = dlopen(full_path, RTLD_NOW);
     module->name = new_name;
+    module->path = strdup(full_path);
 
     xavaLog("Module loaded '%s' loaded at %p", 
         module->name, module->moduleHandle);
@@ -108,5 +112,17 @@ EXP_FUNC bool is_module_valid(XAVAMODULE *module) {
         return 1;
     else
         return 0;
+}
+
+EXP_FUNC const char *xava_module_path_get(XAVAMODULE *module) {
+    // prevent NULL-pointer exception
+    if(module == NULL)
+        return NULL;
+
+    return module->path;
+}
+
+EXP_FUNC const char *xava_module_extension_get(void) {
+    return LIBRARY_EXTENSION;
 }
 
