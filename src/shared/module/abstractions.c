@@ -53,6 +53,6 @@ EXP_FUNC XAVAMODULE *xava_module_custom_load(char *name, const char *prefix,
 
     snprintf(path, string_size-1, "%s%s_%s",
         root_prefix, prefix, name);
-    return xava_module_load_path(path);
+    return xava_module_path_load(path);
 }
 

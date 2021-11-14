@@ -110,7 +110,7 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
 // it's supposed to take in the path without the extension
 //
 // the extension gets added here, just as a FYI
-EXP_FUNC XAVAMODULE *xava_module_load_path(char *path) {
+EXP_FUNC XAVAMODULE *xava_module_path_load(char *path) {
     size_t offset;
     for(offset = strlen(path); offset > 0; offset--) {
         if(path[offset-1] == '\\')
