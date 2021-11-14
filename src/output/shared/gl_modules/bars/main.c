@@ -237,7 +237,7 @@ EXP_FUNC void xava_gl_module_clear(XAVAGLModuleOptions *options) {
     glUniform4f(PRE_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
     glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 
-    glClearColor(bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
+    //glClearColor(bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 }
 
 EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
@@ -266,10 +266,6 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
         glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
         glBlendFuncSeparate(GL_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE, GL_ZERO);
     }
-
-    // since im not bothering to do the math, this'll do
-    // - used to balance out intensity across various number of bars
-    intensity /= xava->bars;
 
     // bind render target to texture
     xava_gl_module_post_pre_draw_setup(&post);

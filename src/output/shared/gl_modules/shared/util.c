@@ -16,6 +16,11 @@ float xava_gl_module_util_calculate_intensity(struct XAVA_HANDLE *xava) {
                     (float)2.0*(float)i/(float)xava->bars);
         }
     }
+
+    // since im not bothering to do the math, this'll do
+    // - used to balance out intensity across various number of bars
+    intensity /= xava->bars;
+
     return intensity;
 }
 
