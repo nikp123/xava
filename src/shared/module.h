@@ -12,6 +12,7 @@ extern void *xava_module_symbol_address_get(XAVAMODULE *module, char *symbol);
 extern XAVAMODULE *xava_module_input_load(char *name);
 extern XAVAMODULE *xava_module_output_load(char *name);
 extern XAVAMODULE *xava_module_filter_load(char *name);
+extern XAVAMODULE *xava_module_load_path(char *path);
 extern void xava_module_free(XAVAMODULE *module);
 
 /**
@@ -25,14 +26,15 @@ extern XAVAMODULE *xava_module_custom_load(char *name,
         const char *prefix, const char *root_prefix);
 
 // get the path of a loaded module
-const char *xava_module_path_get(XAVAMODULE *module);
+extern const char *xava_module_path_get(XAVAMODULE *module);
 
 // get the file extension of a module on the current system
-const char *xava_module_extension_get(void);
+extern const char *xava_module_extension_get(void);
 
 // return module generated filename into result
-void xava_module_generate_filename(char *name,
+extern void xava_module_generate_filename(char *name,
         const char *prefix, char *result);
+
 
 #endif
 
