@@ -15,9 +15,14 @@ if(GL_MODULES)
             "${GLEW_LIBRARY_DIRS}")
         target_include_directories(gl_bars PRIVATE 
             "${GLEW_INCLUDE_DIRS}")
-        target_link_libraries(gl_bars xava-shared 
-            "${GLEW_LIBRARIES}")
-        target_compile_definitions(gl_bars PUBLIC -DGL)
+        if(WINDOWS OR MINGW OR MSVC OR CYGWIN)
+            target_link_libraries(gl_bars xava-shared GLEW::glew_s "-lopengl32")
+            target_compile_definitions(gl_bars PUBLIC -DGL -DGLEW_STATIC)
+        else()
+            target_link_libraries(gl_bars xava-shared 
+                "${GLEW_LIBRARIES}")
+            target_compile_definitions(gl_bars PUBLIC -DGL)
+        endif()
         set_target_properties(gl_bars PROPERTIES PREFIX "")
         set_target_properties(gl_bars PROPERTIES OUTPUT_NAME "gl/module/bars/module")
         configure_file("${XAVA_MODULE_DIR}/vertex.glsl"   gl/module/bars/vertex.glsl   COPYONLY)
