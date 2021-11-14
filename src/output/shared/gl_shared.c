@@ -69,8 +69,10 @@ void SGLConfigLoad(struct XAVA_HANDLE *xava) {
     LOAD_FUNC_POINTER(event);
     LOAD_FUNC_POINTER(draw);
     LOAD_FUNC_POINTER(cleanup);
+    LOAD_FUNC_POINTER(ionotify_callback);
 
     module_options.xava = xava;
+    module_options.ionotify_callback = options.func.ionotify_callback;
 
     // check if the module is of a appropriate version
     xava_version_verify(options.func.version());
@@ -116,6 +118,7 @@ void SGLCleanup(struct XAVA_HANDLE *xava) {
     options.func.event = NULL;
     options.func.init = NULL;
     options.func.version = NULL;
+    options.func.ionotify_callback = NULL;
 
     free(module_options.module_prefix);
     xava_module_free(options.module_handle);
