@@ -18,7 +18,6 @@ void xava_gl_module_shader_load(
     XAVAIONOTIFYWATCHSETUP a;
     MALLOC_SELF(a, 1);
 
-    xavaLog("%s", options->module_prefix);
     switch(type) {
         case SGL_PRE:
             strcpy(file_path, options->module_prefix);
