@@ -80,7 +80,6 @@ EXP_FUNC void xava_gl_module_ionotify_callback(XAVA_IONOTIFY_EVENT event,
 EXP_FUNC void xava_gl_module_config_load(XAVAGLModuleOptions *options) {
     xava_gl_module_shader_load(&pre, SGL_PRE, SGL_VERT, "", options);
     xava_gl_module_shader_load(&pre, SGL_PRE, SGL_FRAG, "", options);
-    xava_gl_module_shader_load(&pre, SGL_PRE, SGL_CONFIG, "", options);
 
     post.options = options;
     xava_gl_module_post_config_load(&post);
