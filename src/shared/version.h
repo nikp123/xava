@@ -21,5 +21,8 @@ bool                       xava_version_greater(xava_version host, xava_version 
 bool                       xava_version_equal(xava_version host, xava_version target);
 bool                       xava_version_breaking_check(xava_version target);
 XAVA_VERSION_COMPATIBILITY xava_version_verify(xava_version target);
+
+#define xava_version_get() (xava_version){XAVA_VERSION_MAJOR, XAVA_VERSION_MINOR, XAVA_VERSION_TWEAK, XAVA_VERSION_PATCH}
+
 #endif
 
