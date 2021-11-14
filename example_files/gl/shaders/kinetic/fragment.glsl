@@ -16,19 +16,15 @@ vec4 correctForAlphaBlend(vec4 color) {
 }
 
 vec4 append_color_properly(vec4 source, vec4 target) {
-	target.a    = target.a > source.a ? target.a : source.a;
-	target.rgb += source.rgb*target.a;
+	target.rgb += mix(target.rgb, source.rgb, source.a);
+	target.a    = max(target.a, source.a);
 	return target;
 }
 
 void main() {
-	vec4 depth = texture(depth_texture, texCoord);
-
 	// test if infinite
 	FragColor = append_color_properly(
 		texture(color_texture, texCoord),
 		vec4(background_color.rgb, background_color.a*(1.0-intensity)));
-
-	//FragColor = correctForAlphaBlend(FragColor);
 }
 
