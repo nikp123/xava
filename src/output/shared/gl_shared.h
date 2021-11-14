@@ -18,6 +18,28 @@
 
 #include "../../shared.h"
 
+typedef struct XAVAGLModuleOptions {
+    GLdouble            resolution_scale;
+    char               *module_prefix;
+    struct XAVA_HANDLE *xava;
+} XAVAGLModuleOptions;
+
+typedef struct XAVAGLHostOptions {
+    char       *module_name;
+    XAVAMODULE *module_handle;
+
+    struct functions {
+        xava_version (*version)(void);
+        void         (*config_load)(XAVAGLModuleOptions*);
+        void         (*init)(XAVAGLModuleOptions*);
+        void         (*apply)(XAVAGLModuleOptions*);
+        XG_EVENT     (*event)(XAVAGLModuleOptions*);
+        void         (*clear)(XAVAGLModuleOptions*);
+        void         (*draw)(XAVAGLModuleOptions*);
+        void         (*cleanup)(XAVAGLModuleOptions*);
+    } func;
+} XAVAGLHostOptions;
+
 void     SGLConfigLoad(struct XAVA_HANDLE *xava);
 void     SGLInit(struct XAVA_HANDLE *xava);
 void     SGLApply(struct XAVA_HANDLE *xava);

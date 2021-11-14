@@ -119,6 +119,13 @@ if(UNIX AND NOT APPLE)
 	configure_file("assets/linux/xava.desktop.template" "xava.desktop" NEWLINE_STYLE UNIX)
 endif()
 
+# Build GL modules
+file(GLOB gl_modules "src/output/shared/gl_modules/*/build.cmake")
+foreach(dir ${gl_modules})
+	get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
+	include(${dir})
+endforeach()
+
 # Build filter modules
 file(GLOB filters "src/filters/*/build.cmake" )
 foreach(dir ${filters})
@@ -183,7 +190,7 @@ install (FILES "${CMAKE_CURRENT_BINARY_DIR}/final-LICENSE.txt" DESTINATION share
 install (FILES example_files/config RENAME config.example DESTINATION share/xava)
 
 # Install vertex shaders
-file(GLOB filters "example_files/gl/shaders/*/*/vertex.glsl" )
+file(GLOB filters "example_files/gl/shaders/*/vertex.glsl" )
 foreach(files ${filters})
 	get_filename_component(path ${files} REALPATH DIRECTORY)
 	string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
@@ -192,7 +199,7 @@ foreach(files ${filters})
 endforeach()
 
 # Install geometry shaders
-file(GLOB filters "example_files/gl/shaders/*/*/geometry.glsl" )
+file(GLOB filters "example_files/gl/shaders/*/geometry.glsl" )
 foreach(files ${filters})
 	get_filename_component(path ${files} REALPATH DIRECTORY)
 	string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
@@ -201,7 +208,7 @@ foreach(files ${filters})
 endforeach()
 
 # Install fragment shaders
-file(GLOB filters "example_files/gl/shaders/*/*/fragment.glsl" )
+file(GLOB filters "example_files/gl/shaders/*/fragment.glsl" )
 foreach(files ${filters})
 	get_filename_component(path ${files} REALPATH DIRECTORY)
 	string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
@@ -210,7 +217,7 @@ foreach(files ${filters})
 endforeach()
 
 # Install shader configs
-file(GLOB filters "example_files/gl/shaders/*/*/config.ini" )
+file(GLOB filters "example_files/gl/shaders/*/config.ini" )
 foreach(files ${filters})
 	get_filename_component(path ${files} REALPATH DIRECTORY)
 	string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
