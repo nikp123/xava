@@ -85,7 +85,7 @@ EXP_FUNC XAVAMODULE *xava_module_path_load(char *path) {
 
     XAVAMODULE *module = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
     module->moduleHandle = dlopen(full_path, RTLD_NOW);
-    module->name = new_name;
+    module->name = strdup(new_name);
     module->path = strdup(full_path);
 
     xavaLog("Module loaded '%s' loaded at %p", 
@@ -102,7 +102,7 @@ EXP_FUNC void *xava_module_symbol_address_get(XAVAMODULE *module, char *symbol) 
     void *address = dlsym(module->moduleHandle, symbol);
 
     // the program would crash with an NULL pointer error anyway
-    xavaBailCondition(!address, "Failed to find symbol '%s' in file '%s'",
+    xavaBailCondition(!address, "Failed to find symbol '%s' in module '%s'",
         symbol, module->name);
 
     xavaLog("Symbol '%s' of '%s' found at: %p",

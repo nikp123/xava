@@ -67,11 +67,11 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
         if(name[i] == '\\') return NULL;
     }
 
-    char *new_name = malloc(strlen(name)+strlen(LIBRARY_EXTENSION)+1);
+    char new_name[strlen(name)+strlen(LIBRARY_EXTENSION)+1];
     sprintf(new_name, "%s%s", name, LIBRARY_EXTENSION);
 
     XAVAMODULE *module = malloc(sizeof(XAVAMODULE));
-    module->name = new_name;
+    module->name         = strdup(name);
     module->moduleHandle = LoadLibrary(new_name);
     module->error        = GetLastError();
 
@@ -125,7 +125,7 @@ EXP_FUNC XAVAMODULE *xava_module_path_load(char *path) {
     XAVAMODULE *module   = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
     module->moduleHandle = LoadLibrary(full_path);
     module->error        = GetLastError();
-    module->name         = new_name;
+    module->name         = strdup(new_name);
     module->path         = strdup(full_path);
 
     xavaLog("Module loaded '%s' loaded at %p", 

@@ -47,9 +47,9 @@ EXP_FUNC XAVAMODULE *xava_module_custom_load(char *name, const char *prefix,
             "Directory injections are NOT allowed within the module name!");
     }
 
-    xavaBailCondition(root_prefix[strlen(root_prefix)-1] != DIRBRK,
-        "Bug detected: The dev SHOULD'VE included the ending bracket at the "
-        "root_prefix parameter. Please report this!");
+    //xavaBailCondition(root_prefix[strlen(root_prefix)-1] != DIRBRK,
+    //    "Bug detected: The dev SHOULD'VE included the ending bracket at the "
+    //    "root_prefix parameter. Please report this!");
 
     snprintf(path, string_size-1, "%s%s_%s",
         root_prefix, prefix, name);
