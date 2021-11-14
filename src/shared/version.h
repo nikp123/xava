@@ -15,11 +15,11 @@ typedef struct xava_version {
     int patch;
 } xava_version;
 
-xava_version               xavaGetHostVersion(void);
-bool                       xavaIsVersionLess(xava_version host, xava_version target);
-bool                       xavaIsVersionGreater(xava_version host, xava_version target);
-bool                       xavaIsVersionEqual(xava_version host, xava_version target);
-bool                       xavaIsBreakingVersion(xava_version target);
-XAVA_VERSION_COMPATIBILITY xavaVerifyVersion(xava_version target);
+xava_version               xava_version_host_get(void);
+bool                       xava_version_less(xava_version host, xava_version target);
+bool                       xava_version_greater(xava_version host, xava_version target);
+bool                       xava_version_equal(xava_version host, xava_version target);
+bool                       xava_version_breaking_check(xava_version target);
+XAVA_VERSION_COMPATIBILITY xava_version_verify(xava_version target);
 #endif
 

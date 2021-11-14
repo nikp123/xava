@@ -1,6 +1,6 @@
 #include "../shared.h"
 
-EXP_FUNC xava_version xavaGetHostVersion(void) {
+EXP_FUNC xava_version xava_version_host_get(void) {
     xava_version v;
     v.major = XAVA_VERSION_MAJOR;
     v.minor = XAVA_VERSION_MINOR;
@@ -9,7 +9,7 @@ EXP_FUNC xava_version xavaGetHostVersion(void) {
     return v;
 }
 
-EXP_FUNC bool xavaIsVersionLess(xava_version host, xava_version target)
+EXP_FUNC bool xava_version_less(xava_version host, xava_version target)
 {
     if(target.major > host.major) {
         return false;
@@ -38,7 +38,7 @@ EXP_FUNC bool xavaIsVersionLess(xava_version host, xava_version target)
     return false;
 }
 
-EXP_FUNC bool xavaIsVersionGreater(xava_version host, xava_version target)
+EXP_FUNC bool xava_version_greater(xava_version host, xava_version target)
 {
     if(target.major > host.major) {
         return true;
@@ -67,7 +67,7 @@ EXP_FUNC bool xavaIsVersionGreater(xava_version host, xava_version target)
     return false;
 }
 
-EXP_FUNC bool xavaIsVersionEqual(xava_version host, xava_version target)
+EXP_FUNC bool xava_version_equal(xava_version host, xava_version target)
 {
     if(target.major == host.major && target.minor == host.minor &&
         target.tweak == host.tweak && target.patch == host.patch) {
@@ -76,7 +76,7 @@ EXP_FUNC bool xavaIsVersionEqual(xava_version host, xava_version target)
     return false;
 }
 
-EXP_FUNC bool xavaIsBreakingVersion(xava_version target)
+EXP_FUNC bool xava_version_breaking_check(xava_version target)
 {
     // list of all versions that broke something in terms of internal variables
     xava_version breaking_versions[] = {
@@ -84,7 +84,7 @@ EXP_FUNC bool xavaIsBreakingVersion(xava_version target)
     };
 
     for(int i = 0; i < sizeof(breaking_versions)/sizeof(xava_version); i++) {
-        if(xavaIsVersionLess(breaking_versions[i], target)) {
+        if(xava_version_less(breaking_versions[i], target)) {
             return true;
         }
     }
@@ -92,20 +92,20 @@ EXP_FUNC bool xavaIsBreakingVersion(xava_version target)
     return false;
 }
 
-EXP_FUNC XAVA_VERSION_COMPATIBILITY xavaVerifyVersion(xava_version target)
+EXP_FUNC XAVA_VERSION_COMPATIBILITY xava_version_verify(xava_version target)
 {
-    xava_version host = xavaGetHostVersion();
+    xava_version host = xava_version_host_get();
 
-    if(xavaIsVersionEqual(host, target)) {
+    if(xava_version_equal(host, target)) {
         return XAVA_VERSIONS_COMPATIBLE;
     }
 
-    if(xavaIsBreakingVersion(target)) {
+    if(xava_version_breaking_check(target)) {
         xavaError("The version of the module is NOT compatible with the current build");
         return XAVA_VERSIONS_INCOMPATIBLE;
     }
 
-    if(xavaIsVersionGreater(host, target)) {
+    if(xava_version_greater(host, target)) {
         xavaError("Please update XAVA to run this.");
         return XAVA_VERSIONS_INCOMPATIBLE;
     }
