@@ -55,7 +55,7 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
 
     XAVAMODULE *module = (XAVAMODULE*) malloc(sizeof(XAVAMODULE));
     module->moduleHandle = dlopen(new_name, RTLD_NOW);
-    module->name = name;
+    module->name = strdup(name);
 
     // don't ask, this is unexplainable C garbage at work again
     module->path = strdup(new_name);
