@@ -141,7 +141,7 @@ EXP_FUNC void xava_module_free(XAVAMODULE *module) {
     free(module);
 }
 
-const char *xava_module_path_get(XAVAMODULE *module) {
+EXP_FUNC const char *xava_module_path_get(XAVAMODULE *module) {
     // prevent NULL-pointer exception
     if(module == NULL)
         return NULL;
@@ -149,7 +149,7 @@ const char *xava_module_path_get(XAVAMODULE *module) {
     return module->path;
 }
 
-const char *xava_module_extension_get(void) {
+EXP_FUNC const char *xava_module_extension_get(void) {
     return LIBRARY_EXTENSION;
 }
 
