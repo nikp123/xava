@@ -306,23 +306,28 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         xavaIONotifyStart(xava.ionotify);
 
         while(!reloadConf) { //jumbing back to this loop means that you resized the screen
-            // handle for user setting too many bars
-            if (p->fixedbars) {
-                p->autobars = 0;
-                if (p->fixedbars * p->bw + p->fixedbars * p->bs - p->bs > p->w) p->autobars = 1;
-            }
+            if(p->ignoreWindowSizeF == false) {
+                // handle for user setting too many bars
+                if (p->fixedbars) {
+                    p->autobars = 0;
+                    if (p->fixedbars * p->bw + p->fixedbars * p->bs - p->bs > p->w)
+                        p->autobars = 1;
+                }
 
-            //getting orignial numbers of barss incase of resize
-            if (p->autobars == 1)  {
-                xava.bars = (p->w + p->bs) / (p->bw + p->bs);
+                //getting orignial numbers of barss incase of resize
+                if (p->autobars == 1)  {
+                    xava.bars = (p->w + p->bs) / (p->bw + p->bs);
 
-                //if (p->bs != 0) bars = (w - bars * p->bs + p->bs) / bw;
-            } else xava.bars = p->fixedbars;
+                    //if (p->bs != 0) bars = (w - bars * p->bs + p->bs) / bw;
+                } else xava.bars = p->fixedbars;
 
-            if (xava.bars < 1) xava.bars = 1; // must have at least 1 bars
+                if (xava.bars < 1) xava.bars = 1; // must have at least 1 bars
 
-            if (p->stereo) { // stereo must have even numbers of bars
-                if (xava.bars%2) xava.bars--;
+                if (p->stereo) { // stereo must have even numbers of bars
+                    if (xava.bars%2) xava.bars--;
+                }
+            } else {
+                xava.bars = p->fixedbars;
             }
 
             if(!p->skipFilterF)

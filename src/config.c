@@ -100,6 +100,8 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
     xavaWarnCondition(p->samplelatency*p->framerate > p->samplerate, "Sample latency might be too large, expect audio lags!");
     xavaWarnCondition(p->samplelatency < 32, "Sample latency might be too low, high CPU usage is MOST LIKELY!");
     xavaBailCondition(p->samplelatency == 0, "Sample latency CANNOT BE 0!");
+    xavaBailCondition((p->fixedbars>0)&&(p->fixedbars%2)&&p->stereo,
+            "Cannot have stereo AND an odd number of bars!");
 
     // validate: bars
     p->autobars = 1;
@@ -154,6 +156,10 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
             break;
         }
     }
+
+    // MUST be set by the output module instead as it is QUITE memory unsafe
+    p->ignoreWindowSizeF = false;
+
     xavaBailCondition(!foundAlignment, "Alignment '%s' is invalid!\n",
             p->winA);
 }

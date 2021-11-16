@@ -107,11 +107,13 @@ struct config_params {
 
     // 6 - special flags
     bool fullF, transF, borderF, bottomF, interactF, taskbarF, holdSizeF;
-    bool skipFilterF;
+    bool skipFilterF, ignoreWindowSizeF;
     // fullF = fullscreen toggle, transF = transparency toggle,
     // borderF = window border toggle, interactF = interaction
     // toggle, taskbarF = taskbar icon toggle
     // skipFilterF = literally just skips the filter stage
+    // ignoreWindowSizeF = forces the engine to ignore window geometry for bar
+    //      calculation
 };
 
 // XAVA handle
