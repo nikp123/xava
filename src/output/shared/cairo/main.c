@@ -7,7 +7,7 @@
 #include "util/module.h"
 #include "util/region.h"
 #include "util/array.h"
-#include "../../graphical.h"
+#include "../graphical.h"
 
 #define LOAD_FUNC_POINTER(name) \
     module.func.name = xava_module_symbol_address_get(module.handle, "xava_cairo_module_" #name); \
@@ -48,7 +48,7 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
             // path gets reset here
             strcpy(path, "cairo/module/");
             strcat(path, module_name);
- 
+
             // we need the path without the extension for the folder that's going
             // to store our shaders
             module.prefix = strdup(path);
@@ -64,7 +64,7 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
                     path, xava_module_error_get(module.handle));
 
             strcat(path, xava_module_extension_get());
-            xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, path, 
+            xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, path,
                 &returned_path) == false, "Failed to open cairo module '%s'", path);
 
             // remove the file extension because of my bad design
@@ -157,7 +157,7 @@ void __internal_xava_output_cairo_apply(xava_cairo_handle *handle) {
 
 void __internal_xava_output_cairo_draw(xava_cairo_handle *handle) {
     if(handle->feature_level == XAVA_CAIRO_FEATURE_FULL_DRAW) {
-        cairo_set_source_rgba(handle->cr, 
+        cairo_set_source_rgba(handle->cr,
                 ARGB_R_32(handle->xava->conf.bgcol)/255.0,
                 ARGB_G_32(handle->xava->conf.bgcol)/255.0,
                 ARGB_B_32(handle->xava->conf.bgcol)/255.0,
@@ -192,7 +192,7 @@ void __internal_xava_output_cairo_clear(xava_cairo_handle *handle) {
     if(handle->feature_level == XAVA_CAIRO_FEATURE_FULL_DRAW)
         return;
 
-    cairo_set_source_rgba(handle->cr, 
+    cairo_set_source_rgba(handle->cr,
         ARGB_R_32(handle->xava->conf.bgcol)/255.0,
         ARGB_G_32(handle->xava->conf.bgcol)/255.0,
         ARGB_B_32(handle->xava->conf.bgcol)/255.0,

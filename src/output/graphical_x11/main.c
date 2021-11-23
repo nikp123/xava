@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "../graphical.h"
+#include "../shared/graphical.h"
 #include "../../config.h"
 #include "../../shared.h"
 

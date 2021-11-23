@@ -16,7 +16,7 @@ if(SDL2)
 
 		add_library(out_sdl2 SHARED
 			"${XAVA_MODULE_DIR}/main.c"
-			"src/output/graphical.c"
+			"src/output/shared/graphical.c"
 			"src/output/shared/gl/main.c"
 			"src/output/shared/gl/glew.c"
 			"${GLOBAL_FUNCTION_SOURCES}")

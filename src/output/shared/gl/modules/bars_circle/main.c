@@ -8,7 +8,7 @@
 #include "../../main.h"
 
 #include "../../../../../shared.h"
-#include "../../../../graphical.h"
+#include "../../../graphical.h"
 
 // functions needed by something else
 void xava_gl_module_clear(XAVAGLModuleOptions *options);

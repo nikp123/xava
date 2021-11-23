@@ -6,7 +6,7 @@
 #include <math.h>
 #include <limits.h>
 
-#include "output/graphical.h"
+#include "output/shared/graphical.h"
 #include "config.h"
 #include "shared.h"
 

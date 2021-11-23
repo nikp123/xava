@@ -9,7 +9,7 @@
     #define EGL
 #endif
 
-#include "../graphical.h"
+#include "../shared/graphical.h"
 #include "../shared/gl/egl.h"
 
 #include "egl.h"

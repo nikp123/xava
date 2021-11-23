@@ -19,7 +19,7 @@ if(WINAPI)
 				find_library(DWM_LIB dwmapi HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
 				if(DWM_LIB)
 					add_library(out_win SHARED "${XAVA_MODULE_DIR}/main.c"
-						"src/output/graphical.c"
+						"src/output/shared/graphical.c"
 						"src/output/shared/gl/glew.c"
 						"src/output/shared/gl/main.c"
 						"${GLOBAL_FUNCTION_SOURCES}")

@@ -46,7 +46,7 @@ if(WAYLAND)
 			"${XAVA_MODULE_DIR}/zwlr.c"
 			"src/output/shared/gl/egl.c"
 			"src/output/shared/gl/main.c"
-			"src/output/graphical.c"
+			"src/output/shared/graphical.c"
 			"${XAVA_MODULE_DIR}/gen/xdg-shell-client-protocol.c"
 			"${XAVA_MODULE_DIR}/gen/xdg-output-unstable-v1-client-protocol.c"
 			"${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c"

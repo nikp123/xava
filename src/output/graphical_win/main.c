@@ -11,7 +11,7 @@
 #include "../shared/gl/glew.h"
 #include <GL/wglext.h>
 
-#include "../graphical.h"
+#include "../shared/graphical.h"
 #include "../../shared.h"
 
 #include "main.h"

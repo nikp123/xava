@@ -6,7 +6,7 @@
 
 #include "../shared/gl/glew.h"
 
-#include "../graphical.h"
+#include "../shared/graphical.h"
 #include "../../config.h"
 #include "../../shared.h"
 

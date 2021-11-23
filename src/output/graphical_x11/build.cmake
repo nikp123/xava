@@ -12,15 +12,15 @@ if(X11)
 			pkg_check_modules(GLX QUIET gl xrender glew)
 			if(GLX_FOUND)
 				add_library(out_x11 SHARED "${XAVA_MODULE_DIR}/main.c"
-											"src/output/graphical.c"
+											"src/output/shared/graphical.c"
 											"src/output/shared/gl/glew.c"
 											"src/output/shared/gl/main.c"
 											"${GLOBAL_FUNCTION_SOURCES}")
-				target_link_directories(out_x11 PRIVATE 
+				target_link_directories(out_x11 PRIVATE
 					"${GLX_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
-				target_include_directories(out_x11 PRIVATE 
+				target_include_directories(out_x11 PRIVATE
 					"${GLX_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
-				target_link_libraries(out_x11 xava-shared 
+				target_link_libraries(out_x11 xava-shared
 					"${GLX_LIBRARIES}" "${X11_LIBRARIES}")
 				target_compile_definitions(out_x11 PUBLIC -DGL)
 				set_target_properties(out_x11 PROPERTIES PREFIX "")
@@ -35,15 +35,15 @@ if(X11)
 			pkg_check_modules(EGL QUIET egl glesv2)
 			if(EGL_FOUND)
 				add_library(out_x11_egl SHARED "${XAVA_MODULE_DIR}/main.c"
-											"src/output/graphical.c"
+											"src/output/shared/graphical.c"
 											"src/output/shared/gl/egl.c"
 											"src/output/shared/gl/main.c"
 											"${GLOBAL_FUNCTION_SOURCES}")
-				target_link_directories(out_x11_egl PRIVATE 
+				target_link_directories(out_x11_egl PRIVATE
 					"${EGL_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
-				target_include_directories(out_x11_egl PRIVATE 
+				target_include_directories(out_x11_egl PRIVATE
 					"${EGL_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
-				target_link_libraries(out_x11_egl xava-shared GLEW 
+				target_link_libraries(out_x11_egl xava-shared GLEW
 					"${EGL_LIBRARIES}" "${X11_LIBRARIES}")
 				target_compile_definitions(out_x11_egl PUBLIC -DEGL)
 				set_target_properties(out_x11_egl PROPERTIES PREFIX "")
@@ -57,15 +57,15 @@ if(X11)
 			pkg_check_modules(CAIRO QUIET cairo)
 			if(CAIRO_FOUND)
 				add_library(out_x11_cairo SHARED "${XAVA_MODULE_DIR}/main.c"
-											"src/output/graphical.c"
+											"src/output/shared/graphical.c"
 											"src/output/shared/cairo/main.c"
 											"src/output/shared/cairo/util/module.c"
 											"src/output/shared/cairo/util/feature_compat.c"
 											"src/output/shared/cairo/util/region.c"
 											"${GLOBAL_FUNCTION_SOURCES}")
-				target_link_directories(out_x11_cairo PRIVATE 
+				target_link_directories(out_x11_cairo PRIVATE
 					"${CAIRO_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
-				target_include_directories(out_x11_cairo PRIVATE 
+				target_include_directories(out_x11_cairo PRIVATE
 					"${CAIRO_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
 				target_link_libraries(out_x11_cairo xava-shared
 					"${CAIRO_LIBRARIES}" "${X11_LIBRARIES}")
@@ -79,7 +79,7 @@ if(X11)
 			endif()
 
 			# Add legal disclaimer
-			file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_x11.txt" 
+			file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_x11.txt"
 				"X11 license can be obtained at: https://raw.githubusercontent.com/mirror/libX11/master/COPYING\n")
 		else()
 			message(WARNING "X11, Xrandr and/or Xfixes library not found; X11 won't build")

@@ -1,7 +1,7 @@
 #include <cairo/cairo.h>
 #include "../../util/module.h"
 #include "../../util/array.h"
-#include "../../../../graphical.h"
+#include "../../../graphical.h"
 #include "../../../../../shared.h"
 
 // report version

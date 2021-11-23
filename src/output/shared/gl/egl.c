@@ -2,7 +2,7 @@
 #include "egl.h"
 
 #include "../../../shared.h"
-#include "../../graphical.h"
+#include "../graphical.h"
 
 
 void EGLConfigLoad(struct XAVA_HANDLE *xava) {

@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-#include "../graphical.h"
+#include "../shared/graphical.h"
 #include "../../shared.h"
 
 #include "main.h"
