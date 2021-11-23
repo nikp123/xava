@@ -246,12 +246,11 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *xava) {
         calculate_win_pos(xava,
                 xavaXScreen->width, xavaXScreen->height,
                 conf->w, conf->h);
-        xavaLog("%d %d %d %d",
-                xavaXScreen->width,
-                xavaXScreen->height,
-                conf->w,
-                conf->h);
-        xavaLog("I was here");
+        //xavaLog("%d %d %d %d",
+        //        xavaXScreen->width,
+        //        xavaXScreen->height,
+        //        conf->w,
+        //        conf->h);
     }
 
     // 32 bit color means alpha channel support
