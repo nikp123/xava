@@ -219,9 +219,9 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     projectionMatrix[3] = (float)center_fixed_x/xava->outer.w*2.0 - 1.0;
     projectionMatrix[7] = 1.0 - (float)center_fixed_y/xava->outer.h*2.0;
 
-    xavaLog("Scale X/Y: %f %f Translation X/Y: %f %f",
-            projectionMatrix[0], projectionMatrix[5],
-            projectionMatrix[3], projectionMatrix[7]);
+    //xavaLog("Scale X/Y: %f %f Translation X/Y: %f %f",
+    //        projectionMatrix[0], projectionMatrix[5],
+    //        projectionMatrix[3], projectionMatrix[7]);
 
     glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
