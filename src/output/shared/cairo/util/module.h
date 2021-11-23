@@ -37,9 +37,11 @@ typedef struct xava_cairo_module {
 
         // event handler
         XG_EVENT           (*event)      (xava_cairo_module_handle*);
- 
+
+        // placeholder
+        //void             (*clear)      (xava_cairo_module_handle*);
+
         // only used with draw_region
-        void               (*clear)      (xava_cairo_module_handle*);
         void               (*draw_region)(xava_cairo_module_handle*);
 
         // no matter what condition, this ensures a safe write

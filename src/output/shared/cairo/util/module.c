@@ -25,9 +25,14 @@ XAVA_CAIRO_FEATURE xava_cairo_module_check_compatibility(xava_cairo_module *modu
             XAVA_CAIRO_FEATURE_DRAW_REGION_SAFE,
             "Skipping region bounds checking as all of them are safe!");
 
-    xavaReturnSpamCondition(lowest_common_denominator & XAVA_CAIRO_FEATURE_FULL_DRAW,
-            XAVA_CAIRO_FEATURE_FULL_DRAW,
-            "Skipping region bounds checking as all of them are drawing the frame anyway!");
+    // if regions arent supported, full draws MUST be
+    if((lowest_common_denominator & XAVA_CAIRO_FEATURE_DRAW_REGION) == 0) {
+        xavaReturnSpamCondition(lowest_common_denominator & XAVA_CAIRO_FEATURE_FULL_DRAW,
+                XAVA_CAIRO_FEATURE_FULL_DRAW,
+                "Skipping region bounds checking as all of them are drawing the frame anyway!");
+
+        xavaBail("No common drawing mode exists. Most likely a BUG!");
+    }
 
     bool pass = true;
     for(size_t i = 0; i < arr_count(modules)-1; i++) {
@@ -39,12 +44,5 @@ XAVA_CAIRO_FEATURE xava_cairo_module_check_compatibility(xava_cairo_module *modu
         }
     }
 
-    xavaReturnSpamCondition(pass, XAVA_CAIRO_FEATURE_DRAW_REGION,
-            "Apparently safely drawing regions is possible?");
-
-    xavaReturnErrorCondition(!(lowest_common_denominator&XAVA_CAIRO_FEATURE_FULL_DRAW),
-            0, "Failed to find a common drawing mode!");
-
-    xavaLog("Falling back to full draw");
-    return XAVA_CAIRO_FEATURE_FULL_DRAW;
+    return XAVA_CAIRO_FEATURE_DRAW_REGION;
 }

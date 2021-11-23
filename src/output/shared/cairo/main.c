@@ -38,6 +38,7 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
         // add module name
         xava_cairo_module module;
         module.name = module_name;
+        module.regions = NULL;
 
         // the part of the function where module path gets figured out
         do {
@@ -95,7 +96,6 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
             module.features = module.func.config_load(&module.config);
 
             if(module.features & XAVA_CAIRO_FEATURE_DRAW_REGION) {
-                LOAD_FUNC_POINTER(clear);
                 LOAD_FUNC_POINTER(draw_region);
             }
 
@@ -133,6 +133,9 @@ void __internal_xava_output_cairo_apply(xava_cairo_handle *handle) {
         xava_cairo_module        *module = &handle->modules[i];
         struct functions         *f      = &module->func;
         xava_cairo_module_handle *config = &module->config;
+        if(module->regions != NULL)
+            arr_free(module->regions);
+
         module->regions = f->regions(config);
     }
 
@@ -153,12 +156,15 @@ void __internal_xava_output_cairo_apply(xava_cairo_handle *handle) {
 }
 
 void __internal_xava_output_cairo_draw(xava_cairo_handle *handle) {
-    cairo_set_source_rgba(handle->cr, 
-            ARGB_R_32(handle->xava->conf.bgcol)/255.0,
-            ARGB_G_32(handle->xava->conf.bgcol)/255.0,
-            ARGB_B_32(handle->xava->conf.bgcol)/255.0,
-            handle->xava->conf.background_opacity);
-    cairo_paint(handle->cr);
+    if(handle->feature_level == XAVA_CAIRO_FEATURE_FULL_DRAW) {
+        cairo_set_source_rgba(handle->cr, 
+                ARGB_R_32(handle->xava->conf.bgcol)/255.0,
+                ARGB_G_32(handle->xava->conf.bgcol)/255.0,
+                ARGB_B_32(handle->xava->conf.bgcol)/255.0,
+                handle->xava->conf.background_opacity);
+        cairo_set_operator(handle->cr, CAIRO_OPERATOR_SOURCE);
+        cairo_paint(handle->cr);
+    }
 
     for(size_t i = 0; i < arr_count(handle->modules); i++) {
         struct functions *f = &handle->modules[i].func;
@@ -181,12 +187,18 @@ void __internal_xava_output_cairo_draw(xava_cairo_handle *handle) {
 }
 
 void __internal_xava_output_cairo_clear(xava_cairo_handle *handle) {
-    if(handle->feature_level != XAVA_CAIRO_FEATURE_DRAW_REGION)
+    // what is even the point of this function when you're already spendin'
+    // precious CPU cycles
+    if(handle->feature_level == XAVA_CAIRO_FEATURE_FULL_DRAW)
         return;
 
-    for(size_t i = 0; i < arr_count(handle->modules); i++) {
-        handle->modules[i].func.clear(&handle->modules[i].config);
-    }
+    cairo_set_source_rgba(handle->cr, 
+        ARGB_R_32(handle->xava->conf.bgcol)/255.0,
+        ARGB_G_32(handle->xava->conf.bgcol)/255.0,
+        ARGB_B_32(handle->xava->conf.bgcol)/255.0,
+        handle->xava->conf.background_opacity);
+    cairo_set_operator(handle->cr, CAIRO_OPERATOR_SOURCE);
+    cairo_paint(handle->cr);
 }
 
 void __internal_xava_output_cairo_cleanup(xava_cairo_handle *handle) {
