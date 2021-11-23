@@ -4,7 +4,7 @@
 #ifndef EGL
     #define EGL
 #endif
-#include "gl_shared.h"
+#include "main.h"
 
 struct _escontext {
     // because windowing systems are complicated

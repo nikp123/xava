@@ -120,7 +120,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # Build GL modules
-file(GLOB gl_modules "src/output/shared/gl_modules/*/build.cmake")
+file(GLOB gl_modules "src/output/shared/gl/modules/*/build.cmake")
 foreach(dir ${gl_modules})
 	get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
 	include(${dir})

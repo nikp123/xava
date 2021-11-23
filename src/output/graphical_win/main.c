@@ -8,7 +8,7 @@
 #include <dwmapi.h>
 
 // it must be in this OCD breaking order or it will fail to compile ;(
-#include "../shared/glew.h"
+#include "../shared/gl/glew.h"
 #include <GL/wglext.h>
 
 #include "../graphical.h"

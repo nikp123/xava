@@ -19,12 +19,12 @@
 #include "../../shared.h"
 
 #ifdef GL
-    #include "../shared/glew.h"
+    #include "../shared/gl/glew.h"
     #include <X11/extensions/Xrender.h>
     #include <GL/glx.h>
 #endif
 #ifdef EGL
-    #include "../shared/egl.h"
+    #include "../shared/gl/egl.h"
 #endif
 #ifdef CAIRO
     #include "../shared/cairo/main.h"

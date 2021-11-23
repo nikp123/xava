@@ -1,5 +1,5 @@
-#ifndef __GL_SHARED_H
-#define __GL_SHARED_H
+#ifndef __XAVA_OUTPUT_GL_MAIN_H
+#define __XAVA_OUTPUT_GL_MAIN_H
 
 // for static checker sake
 #if !defined(GL) && !defined(EGL)
@@ -16,7 +16,7 @@
     #include <GL/glew.h>
 #endif
 
-#include "../../shared.h"
+#include "../../../shared.h"
 
 typedef struct XAVAGLModuleOptions {
     GLdouble            resolution_scale;

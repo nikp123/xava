@@ -10,7 +10,7 @@
 #endif
 
 #include "../graphical.h"
-#include "../shared/egl.h"
+#include "../shared/gl/egl.h"
 
 #include "egl.h"
 #include "main.h"

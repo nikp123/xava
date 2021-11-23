@@ -2,9 +2,9 @@
 #include <string.h>
 #include <math.h>
 
-#include "../../shared.h"
+#include "../../../shared.h"
 
-#include "gl_shared.h"
+#include "main.h"
 
 static XAVAGLModuleOptions module_options;
 static XAVAGLHostOptions   options;

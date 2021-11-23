@@ -1,9 +1,9 @@
 #ifndef __GL_H
 #define __GL_H
 
-#include "gl_shared.h"
+#include "main.h"
 
-#include "../../shared.h"
+#include "../../../shared.h"
 
 
 void     GLConfigLoad(struct XAVA_HANDLE *xava);

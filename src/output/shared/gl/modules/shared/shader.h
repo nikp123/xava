@@ -1,7 +1,7 @@
 #ifndef __GL_MODULE_SHARED_SHADER_H
 #define __GL_MODULE_SHARED_SHADER_H
 
-#include "../../gl_shared.h"
+#include "../../main.h"
 
 typedef enum sgl_shader_type {
     SGL_PRE,

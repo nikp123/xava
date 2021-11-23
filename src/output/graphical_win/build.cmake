@@ -20,8 +20,8 @@ if(WINAPI)
 				if(DWM_LIB)
 					add_library(out_win SHARED "${XAVA_MODULE_DIR}/main.c"
 						"src/output/graphical.c"
-						"src/output/shared/glew.c"
-						"src/output/shared/gl_shared.c"
+						"src/output/shared/gl/glew.c"
+						"src/output/shared/gl/main.c"
 						"${GLOBAL_FUNCTION_SOURCES}")
 					add_definitions(-DGLEW_STATIC)
 					target_link_libraries(out_win xava-shared GLEW::glew_s "-lgdi32 -lwinmm -lopengl32 -ldwmapi")
