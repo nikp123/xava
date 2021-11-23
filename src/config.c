@@ -237,8 +237,8 @@ char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
     //p->monitor_num = xavaConfigGetInt(hand->default_config.config, "window", "monitor", 0);
 
     p->winA = (char *)xavaConfigGetString(hand->default_config.config, "window", "alignment", "none");
-    p->x = xavaConfigGetInt(hand->default_config.config, "window", "x_padding", 0);
-    p->y = xavaConfigGetInt(hand->default_config.config, "window", "y_padding", 0);
+    p->x    = xavaConfigGetInt(hand->default_config.config, "window", "x_padding", 0);
+    p->y    = xavaConfigGetInt(hand->default_config.config, "window", "y_padding", 0);
     p->fullF = xavaConfigGetBool(hand->default_config.config, "window", "fullscreen", 0);
     p->transF = xavaConfigGetBool(hand->default_config.config, "window", "transparency", 1);
     p->borderF = xavaConfigGetBool(hand->default_config.config, "window", "border", 0);

@@ -310,13 +310,14 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                 // handle for user setting too many bars
                 if (p->fixedbars) {
                     p->autobars = 0;
-                    if (p->fixedbars * p->bw + p->fixedbars * p->bs - p->bs > p->w)
+                    if (p->fixedbars * p->bw + p->fixedbars * p->bs - p->bs >
+                            xava.inner.w)
                         p->autobars = 1;
                 }
 
                 //getting orignial numbers of barss incase of resize
                 if (p->autobars == 1)  {
-                    xava.bars = (p->w + p->bs) / (p->bw + p->bs);
+                    xava.bars = (xava.inner.w + p->bs) / (p->bw + p->bs);
 
                     //if (p->bs != 0) bars = (w - bars * p->bs + p->bs) / bw;
                 } else xava.bars = p->fixedbars;

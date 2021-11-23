@@ -137,9 +137,9 @@ struct XAVA_HANDLE {
 
     // visualizer size INSIDE of the window
     struct dimensions {
-        int x, y;          // display offset in the visualizer window
-        unsigned int w, h; // window dimensions
-    } inner, outer;
+        int32_t  x, y; // display offset in the visualizer window
+        uint32_t w, h; // window dimensions
+    } inner, outer, host_display;
 
     XAVAIONOTIFY ionotify;
 };
