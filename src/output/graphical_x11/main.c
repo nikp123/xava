@@ -26,11 +26,14 @@
 #ifdef EGL
     #include "../shared/egl.h"
 #endif
+#ifdef CAIRO
+    #include "../shared/cairo/main.h"
+    #include <cairo/cairo.h>
+    #include <cairo/cairo-xlib.h>
+#endif
 
 // random magic values go here
 #define SCREEN_CONNECTED 0
-
-static Pixmap gradientBox = 0;
 
 static XEvent xavaXEvent;
 static Colormap xavaXColormap;
@@ -85,6 +88,13 @@ static bool reloadOnDisplayConfigure;
     static struct _escontext ESContext;
 #endif
 
+#ifdef CAIRO
+    Drawable xavaXCairoDrawable;
+    cairo_surface_t *xavaXCairoSurface;
+    //cairo_t *xavaCairoHandle;
+    xava_cairo_handle *xavaCairoHandle;
+#endif
+
 // mwmHints helps us comunicate with the window manager
 struct mwmHints {
     unsigned long flags;
@@ -113,11 +123,11 @@ enum {
 #define _NET_WM_STATE_TOGGLE 2
 
 #ifdef GL
-int XGLInit(struct config_params *p) {
+int XGLInit(struct config_params *conf) {
     // we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
     xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
     glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
-    if(p->transF) {
+    if(conf->transF) {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
@@ -156,19 +166,19 @@ void snatchColor(char *name, char *colorStr, unsigned int *colorNum, char *datab
     sscanf(value.addr, "#%06X", colorNum);
 }
 
-void calculateColors(struct config_params *p) {
+void calculateColors(struct config_params *conf) {
     XrmInitialize();
     XrmDatabase xavaXResDB = NULL;
     char *databaseName = XResourceManagerString(xavaXDisplay);
     if(databaseName) {
         xavaXResDB = XrmGetStringDatabase(databaseName);
     }
-    snatchColor("color5", p->color, &p->col, databaseName, &xavaXResDB);
-    snatchColor("color4", p->bcolor, &p->bgcol, databaseName, &xavaXResDB);
+    snatchColor("color5", conf->color, &conf->col, databaseName, &xavaXResDB);
+    snatchColor("color4", conf->bcolor, &conf->bgcol, databaseName, &xavaXResDB);
 }
 
-EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
-    struct config_params *p = &hand->conf;
+EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *xava) {
+    struct config_params *conf = &xava->conf;
 
     // NVIDIA CPU cap utilization in Vsync fix
     setenv("__GL_YIELD", "USLEEP", 0);
@@ -216,11 +226,12 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
         XRRFreeOutputInfo(xavaXOutputInfo);
 
         if(!strcmp(screenname, monitorName)) {
-            calculate_win_pos(p, screenwidth, screenheight);
+            calculate_win_pos(xava, screenwidth, screenheight,
+                    conf->w, conf->h);
 
             // correct window offsets
-            p->wx += screenx;
-            p->wy += screeny;
+            xava->outer.x += screenx;
+            xava->outer.y += screeny;
             break;
         } else {
             free(screenname);
@@ -232,12 +243,14 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
     // in case that no screen matches, just use default behavior
     if(screenname == NULL) {
-        calculate_win_pos(p, xavaXScreen->width, xavaXScreen->height);
+        calculate_win_pos(xava,
+                xavaXScreen->width, xavaXScreen->height,
+                conf->w, conf->h);
     }
 
     // 32 bit color means alpha channel support
     #ifdef GL
-    if(p->transF) {
+    if(conf->transF) {
         fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
         fbconfig = 0;
         for(int i = 0; i<numfbconfigs; i++) {
@@ -254,11 +267,11 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
         }
     } else
     #endif
-        XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, p->transF ? 32 : 24, TrueColor, &xavaVInfo);
+        XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, conf->transF ? 32 : 24, TrueColor, &xavaVInfo);
 
     xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
     xavaXColormap = xavaAttr.colormap;
-    calculateColors(p);
+    calculateColors(conf);
     xavaAttr.background_pixel = 0;
     xavaAttr.border_pixel = 0;
 
@@ -268,8 +281,17 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
     int xavaWindowFlags = CWOverrideRedirect | CWBackingStore |  CWEventMask | CWColormap | CWBorderPixel | CWBackPixel;
 
-    xavaXWindow = XCreateWindow(xavaXDisplay, xavaXRoot, p->wx, p->wy, (unsigned int)p->w,
-        (unsigned int)p->h, 0, xavaVInfo.depth, InputOutput, xavaVInfo.visual, xavaWindowFlags, &xavaAttr);
+    xavaXWindow = XCreateWindow(xavaXDisplay,
+        xavaXRoot,
+        xava->outer.x, xava->outer.y,
+        xava->outer.w, xava->outer.h,
+        0,
+        xavaVInfo.depth,
+        InputOutput,
+        xavaVInfo.visual,
+        xavaWindowFlags,
+        &xavaAttr);
+
     XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
     // The "X" button is handled by the window manager and not Xorg, so we set up a Atom
@@ -285,15 +307,15 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
     XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask | VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
 
     #ifdef GL
-        xavaBailCondition(XGLInit(p), "Failed to load GLX extensions");
-        GLInit(hand);
+        xavaBailCondition(XGLInit(conf), "Failed to load GLX extensions");
+        GLInit(xava);
     #endif
 
     #ifdef EGL
         ESContext.native_window = xavaXWindow;
         ESContext.native_display = xavaXDisplay;
-        EGLCreateContext(hand, &ESContext);
-        EGLInit(hand);
+        EGLCreateContext(xava, &ESContext);
+        EGLInit(xava);
     #endif
 
     XMapWindow(xavaXDisplay, xavaXWindow);
@@ -328,27 +350,27 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
     xev.xclient.data.l[4] = 0;
 
     // keep window in bottom property
-    xev.xclient.data.l[0] = p->bottomF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+    xev.xclient.data.l[0] = conf->bottomF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
     xev.xclient.data.l[1] = wmStateBelow;
     XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-    if(p->bottomF) XLowerWindow(xavaXDisplay, xavaXWindow);
+    if(conf->bottomF) XLowerWindow(xavaXDisplay, xavaXWindow);
 
     // remove window from taskbar
-    xev.xclient.data.l[0] = p->taskbarF ? _NET_WM_STATE_REMOVE : _NET_WM_STATE_ADD;
+    xev.xclient.data.l[0] = conf->taskbarF ? _NET_WM_STATE_REMOVE : _NET_WM_STATE_ADD;
     xev.xclient.data.l[1] = taskbar;
     XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
     // Setting window options
     struct mwmHints hints;
     hints.flags = (1L << 1);
-    hints.decorations = p->borderF;
+    hints.decorations = conf->borderF;
     XChangeProperty(xavaXDisplay, xavaXWindow, mwmHintsProperty, mwmHintsProperty, 32, PropModeReplace, (unsigned char *)&hints, 5);
 
     // move the window in case it didn't by default
     XWindowAttributes xwa;
     XGetWindowAttributes(xavaXDisplay, xavaXWindow, &xwa);
-    if(strcmp(p->winA, "none"))
-        XMoveWindow(xavaXDisplay, xavaXWindow, p->wx, p->wy);
+    if(strcmp(conf->winA, "none"))
+        XMoveWindow(xavaXDisplay, xavaXWindow, xava->outer.x, xava->outer.y);
 
     // query for the RR extension in X11
     int error;
@@ -370,21 +392,33 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
         }
     }
 
+    #if defined(CAIRO)
+        xavaXCairoSurface = cairo_xlib_surface_create(xavaXDisplay,
+            xavaXWindow, xwa.visual,
+            xava->outer.w, xava->outer.h);
+        cairo_xlib_surface_set_size(xavaXCairoSurface,
+                xava->outer.w, xava->outer.h);
+        __internal_xava_output_cairo_init(xavaCairoHandle,
+                cairo_create(xavaXCairoSurface));
+    #endif
+
     return 0;
 }
 
-EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *xava) {
     #if defined(EGL)
-        EGLClear(hand);
+        EGLClear(xava);
     #elif defined(GL)
-        GLClear(hand);
+        GLClear(xava);
+    #elif defined(CAIRO)
+        __internal_xava_output_cairo_clear(xavaCairoHandle);
     #endif
 }
 
-EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
-    struct config_params *p = &hand->conf;
+EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *xava) {
+    struct config_params *conf = &xava->conf;
 
-    calculateColors(p);
+    calculateColors(conf);
 
     //Atom xa = XInternAtom(xavaXDisplay, "_NET_WM_WINDOW_TYPE", 0); May be used in the future
     //Atom prop;
@@ -405,14 +439,14 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
     xev.xclient.window = xavaXWindow;
     xev.xclient.message_type = wmState;
     xev.xclient.format = 32;
-    xev.xclient.data.l[0] = p->fullF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+    xev.xclient.data.l[0] = conf->fullF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
     xev.xclient.data.l[1] = fullScreen;
     xev.xclient.data.l[2] = 0;
     XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
-    xavaOutputClear(hand);
+    xavaOutputClear(xava);
 
-    if(!p->interactF){
+    if(!conf->interactF){
         XRectangle rect;
         XserverRegion region = XFixesCreateRegion(xavaXDisplay, &rect, 1);
         XFixesSetWindowShapeRegion(xavaXDisplay, xavaXWindow, ShapeInput, 0, 0, region);
@@ -422,16 +456,20 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
     XGetWindowAttributes(xavaXDisplay, xavaXWindow, &windowAttribs);
 
     #if defined(EGL)
-        EGLApply(hand);
+        EGLApply(xava);
     #elif defined(GL)
-        GLApply(hand);
+        GLApply(xava);
+    #elif defined(CAIRO)
+        __internal_xava_output_cairo_apply(xavaCairoHandle);
+        cairo_xlib_surface_set_size(xavaXCairoSurface,
+                xava->outer.w, xava->outer.h);
     #endif
 
     return 0;
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
-    struct config_params *p = &hand->conf;
+EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *xava) {
+    struct config_params *conf = &xava->conf;
 
     // this way we avoid event stacking which requires a full frame to process a single event
     XG_EVENT action = XAVA_IGNORE;
@@ -448,25 +486,25 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
                     // resizeTerminal = 2
                     // bail = -1
                     case XK_a:
-                        p->bs++;
+                        conf->bs++;
                         return XAVA_RESIZE;
                     case XK_s:
-                        if(p->bs > 0) p->bs--;
+                        if(conf->bs > 0) conf->bs--;
                         return XAVA_RESIZE;
                     case XK_f: // fullscreen
-                        p->fullF = !p->fullF;
+                        conf->fullF = !conf->fullF;
                         return XAVA_RESIZE;
                     case XK_Up:
-                        p->sens *= 1.05;
+                        conf->sens *= 1.05;
                         break;
                     case XK_Down:
-                        p->sens *= 0.95;
+                        conf->sens *= 0.95;
                         break;
                     case XK_Left:
-                        p->bw++;
+                        conf->bw++;
                         return XAVA_RESIZE;
                     case XK_Right:
-                        if (p->bw > 1) p->bw--;
+                        if (conf->bw > 1) conf->bw--;
                         return XAVA_RESIZE;
                     case XK_r: //reload config
                         return XAVA_RELOAD;
@@ -477,15 +515,15 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
                     case XK_b:
                         // WARNING: Assumes that alpha is the
                         // upper 8-bits and that rand is 16-bit
-                        p->bgcol &= 0xff00000;
-                        p->bgcol |= ((rand()<<16)|rand())&0x00ffffff;
+                        conf->bgcol &= 0xff00000;
+                        conf->bgcol |= ((rand()<<16)|rand())&0x00ffffff;
                         return XAVA_REDRAW;
                     case XK_c:
-                        if(p->gradients) break;
+                        if(conf->gradients) break;
                         // WARNING: Assumes that alpha is the
                         // upper 8-bits and that rand is 16-bit
-                        p->col &= 0xff00000;
-                        p->col |= ((rand()<<16)|rand())&0x00ffffff;
+                        conf->col &= 0xff00000;
+                        conf->col |= ((rand()<<16)|rand())&0x00ffffff;
                         return XAVA_REDRAW;
             }
             break;
@@ -499,8 +537,9 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
             // This is needed to track the window size
             XConfigureEvent trackedXavaXWindow;
             trackedXavaXWindow = xavaXEvent.xconfigure;
-            if(hand->w != (uint32_t)trackedXavaXWindow.width || hand->h != (uint32_t)trackedXavaXWindow.height) {
-                calculate_inner_win_pos(hand,
+            if(xava->outer.w != (uint32_t)trackedXavaXWindow.width ||
+               xava->outer.h != (uint32_t)trackedXavaXWindow.height) {
+                calculate_win_geo(xava,
                         trackedXavaXWindow.width,
                         trackedXavaXWindow.height);
             }
@@ -528,12 +567,12 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
     }
 
     #ifdef EGL
-    if(EGLEvent(hand) == XAVA_RELOAD) {
+    if(EGLEvent(xava) == XAVA_RELOAD) {
         action = XAVA_RELOAD;
     }
     #endif
     #ifdef GL
-    if(GLEvent(hand) == XAVA_RELOAD) {
+    if(GLEvent(xava) == XAVA_RELOAD) {
         action = XAVA_RELOAD;
     }
     #endif
@@ -541,22 +580,22 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
     return action;
 }
 
-EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *xava) {
     #if defined(EGL)
-        EGLDraw(hand);
+        EGLDraw(xava);
         eglSwapBuffers(ESContext.display, ESContext.surface);
     #elif defined(GL)
-        GLDraw(hand);
+        GLDraw(xava);
         glXSwapBuffers(xavaXDisplay, xavaXWindow);
         glXWaitGL();
+    #elif defined(CAIRO)
+        __internal_xava_output_cairo_draw(xavaCairoHandle);
     #endif
 
     return;
 }
 
-EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
-    UNUSED(hand);
-
+EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *xava) {
     // Root mode leaves artifacts on screen even though the window is dead
     XClearWindow(xavaXDisplay, xavaXWindow);
 
@@ -564,14 +603,14 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
     XSync(xavaXDisplay, 1);
 
     #if defined(EGL)
-        EGLCleanup(hand, &ESContext);
+        EGLCleanup(xava, &ESContext);
     #elif defined(GL)
         glXMakeCurrent(xavaXDisplay, 0, 0);
         glXDestroyContext(xavaXDisplay, xavaGLXContext);
-        GLCleanup(hand);
+        GLCleanup(xava);
+    #elif defined(CAIRO)
+        __internal_xava_output_cairo_cleanup(xavaCairoHandle);
     #endif
-
-    if(gradientBox != 0) { XFreePixmap(xavaXDisplay, gradientBox); gradientBox = 0; };
 
     XFreeGC(xavaXDisplay, xavaXGraphics);
     XDestroyWindow(xavaXDisplay, xavaXWindow);
@@ -581,8 +620,11 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
     return;
 }
 
-EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *hand) {
-    XAVACONFIG config = hand->default_config.config;
+EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *xava) {
+    XAVACONFIG config = xava->default_config.config;
+    struct config_params *conf = &xava->conf;
+
+    UNUSED(conf);
 
     reloadOnDisplayConfigure = xavaConfigGetBool
         (config, "x11", "reload_on_display_configure", 0);
@@ -594,13 +636,18 @@ EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *hand) {
     // Xquartz doesnt support ARGB windows
     // Therefore transparency is impossible on macOS
     #ifdef __APPLE__
-        p->transF = 0;
+        conf->transF = 0;
+    #endif
+
+    #ifdef CAIRO
+        conf->vsync = 0;
+        xavaCairoHandle = __internal_xava_output_cairo_load_config(xava);
     #endif
 
     #if defined(EGL)
-        EGLConfigLoad(hand);
+        EGLConfigLoad(xava);
     #elif defined(GL)
-        GLConfigLoad(hand);
+        GLConfigLoad(xava);
     #endif
 }
 

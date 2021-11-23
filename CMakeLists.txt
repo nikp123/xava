@@ -126,6 +126,13 @@ foreach(dir ${gl_modules})
 	include(${dir})
 endforeach()
 
+# Build Cairo modules
+file(GLOB cairo_modules "src/output/shared/cairo/modules/*/build.cmake")
+foreach(dir ${cairo_modules})
+	get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
+	include(${dir})
+endforeach()
+
 # Build filter modules
 file(GLOB filters "src/filters/*/build.cmake" )
 foreach(dir ${filters})

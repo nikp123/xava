@@ -25,7 +25,11 @@ static void layer_surface_configure(void *data,
     struct XAVA_HANDLE *xava = wd->hand;
 
     if(width != 0 && height != 0) {
-        calculate_inner_win_pos(xava, width, height);
+        struct wlOutput *output = wl_output_get_desired();
+
+        calculate_win_pos(xava,
+                output->width, output->height,
+                width, height);
 
         waylandEGLWindowResize(wd, width, height);
 
@@ -62,8 +66,8 @@ static struct zwlr_alignment_info handle_window_alignment(struct config_params *
 
     struct zwlr_alignment_info align = {0};
 
-    align.width_margin = p->wx;
-    align.height_margin = p->wy;
+    align.width_margin  = p->x;
+    align.height_margin = p->y;
 
     // margins are reversed on opposite edges for user convenience
 

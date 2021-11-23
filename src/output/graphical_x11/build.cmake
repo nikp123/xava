@@ -54,6 +54,30 @@ if(X11)
 				message(WARNING "EGL and or GLESv2 library not found; \"x11_egl\" won't build")
 			endif()
 
+			pkg_check_modules(CAIRO QUIET cairo)
+			if(CAIRO_FOUND)
+				add_library(out_x11_cairo SHARED "${XAVA_MODULE_DIR}/main.c"
+											"src/output/graphical.c"
+											"src/output/shared/cairo/main.c"
+											"src/output/shared/cairo/util/module.c"
+											"src/output/shared/cairo/util/feature_compat.c"
+											"src/output/shared/cairo/util/region.c"
+											"${GLOBAL_FUNCTION_SOURCES}")
+				target_link_directories(out_x11_cairo PRIVATE 
+					"${CAIRO_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
+				target_include_directories(out_x11_cairo PRIVATE 
+					"${CAIRO_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
+				target_link_libraries(out_x11_cairo xava-shared
+					"${CAIRO_LIBRARIES}" "${X11_LIBRARIES}")
+				target_compile_definitions(out_x11_cairo PUBLIC -DCAIRO)
+				set_target_properties(out_x11_cairo PROPERTIES PREFIX "")
+				install(TARGETS out_x11_cairo DESTINATION lib/xava)
+
+				# Maybe EGL license?
+			else()
+				message(WARNING "Cairo library not found; \"x11_cairo\" won't build")
+			endif()
+
 			# Add legal disclaimer
 			file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_x11.txt" 
 				"X11 license can be obtained at: https://raw.githubusercontent.com/mirror/libX11/master/COPYING\n")

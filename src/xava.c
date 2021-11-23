@@ -417,8 +417,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                     for (i = 0; i < xava.bars; i++) {
                         if(xava.f[i] < 1)
                             xava.f[i] = 1;
-                        else if(xava.f[i] > p->h)
-                            xava.f[i] = p->h;
+                        else if(xava.f[i] > xava.inner.h)
+                            xava.f[i] = xava.inner.h;
                     }
                 }
 

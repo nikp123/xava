@@ -23,6 +23,7 @@ typedef struct gl_module_post_render {
         GLuint POS;
         GLuint TEXCOORD;
         GLuint RESOLUTION;
+        GLuint DOTS;
 
         // textures
         GLuint TEXTURE;

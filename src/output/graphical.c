@@ -2,93 +2,124 @@
 
 #include "graphical.h"
 
-void calculate_win_pos(struct config_params *p, uint32_t scrW, uint32_t scrH) {
-    if(!strcmp(p->winA, "top")){
-        p->wx = (int)(scrW - p->w) / 2 + p->wx;
-    }else if(!strcmp(p->winA, "bottom")){
-        p->wx = (int)(scrW - p->w) / 2 + p->wx;
-        p->wy = (int)(scrH - p->h) - p->wy;
-    }else if(!strcmp(p->winA, "top_left")){
-        // noop
-    }else if(!strcmp(p->winA, "top_right")){
-        p->wx = (int)(scrW - p->w) - p->wx;
-    }else if(!strcmp(p->winA, "left")){
-        p->wy = (int)(scrH - p->h) / 2;
-    }else if(!strcmp(p->winA, "right")){
-        p->wx = (int)(scrW - p->w) - p->wx;
-        p->wy = (int)(scrH - p->h) / 2 + p->wy;
-    }else if(!strcmp(p->winA, "bottom_left")){
-        p->wy = (int)(scrH - p->h) - p->wy;
-    }else if(!strcmp(p->winA, "bottom_right")){
-        p->wx = (int)(scrW - p->w) - p->wx;
-        p->wy = (int)(scrH - p->h) - p->wy;
-    }else if(!strcmp(p->winA, "center")){
-        p->wx = (int)(scrW - p->w) / 2 + p->wx;
-        p->wy = (int)(scrH - p->h) / 2 + p->wy;
-    }
-    // Some error checking
-    #ifdef DEBUG
-        xavaLogCondition(p->wx > (int)(scrW-p->w),
-                "Screen out of bounds (X axis) (%d %d %d %d)",
-                scrW, scrH, p->wx, p->w);
-        xavaLogCondition(p->wy > (int)(scrH-p->h),
-                "Screen out of bounds (Y axis) (%d %d %d %d)",
-                scrW, scrH, p->wy, p->h);
-    #endif
-}
 
-void calculate_inner_win_pos(struct XAVA_HANDLE *xava,
-        unsigned int newW, unsigned int newH) {
+void __internal_xava_graphical_calculate_win_pos_keep(struct XAVA_HANDLE *xava,
+                                            uint32_t winW, uint32_t winH) {
     struct config_params *conf = &xava->conf;
 
-    // sanity check
-    if(!conf->fullF || !conf->holdSizeF) {
-        xava->w = newW;
-        xava->h = newH;
-        conf->w = xava->w;
-        conf->h = xava->h;
-    }
-
-    // if the screen is smaller we need to shrink the visualizer
-    xava->w = newW;
-    xava->h = newH;
-    conf->w = MIN(xava->w, conf->w);
-    conf->h = MIN(xava->h, conf->h);
+    xava->outer.w = winW;
+    xava->outer.h = winH;
+    xava->inner.w = conf->w;
+    xava->inner.h = conf->h;
+    // skip resetting the outer x, as those can be troublesome
+    xava->inner.x = 0;
+    xava->inner.y = 0;
 
     // if the window is the same as display
-    if((xava->w == conf->w) && (xava->h == conf->h))
+    if((xava->outer.w <= conf->w) || (xava->outer.h <= conf->h)) {
+        xava->inner.w = xava->outer.w;
+        xava->inner.h = xava->outer.h;
         return;
-
-    if(!strcmp(conf->winA, "top")) {
-        xava->x = (xava->w-conf->w)/2 + conf->wx;
-        xava->y = 0 + conf->wy;
-    } else if(!strcmp(conf->winA, "bottom")) {
-        xava->x = (xava->w-conf->w)/2 + conf->wx;
-        xava->y = xava->h - conf->h - conf->wy;
-    } else if(!strcmp(conf->winA, "top_left")) {
-        xava->x = 0 + conf->wx;
-        xava->y = 0 + conf->wy;
-    } else if(!strcmp(conf->winA, "top_right")) {
-        xava->x = xava->w-conf->w - conf->wx;
-        xava->y = 0 + conf->wy;
-    } else if(!strcmp(conf->winA, "left")) {
-        xava->x = 0 + conf->wx;
-        xava->y = (xava->h - conf->h)/2 + conf->wy;
-    } else if(!strcmp(conf->winA, "right")) {
-        xava->x = xava->w-conf->w - conf->wx;
-        xava->y = (xava->h - conf->h)/2 + conf->wy;
-    } else if(!strcmp(conf->winA, "bottom_left")) {
-        xava->x = 0 + conf->wx;
-        xava->y = xava->h - conf->h - conf->wy;
-    } else if(!strcmp(conf->winA, "bottom_right")) {
-        xava->x = xava->w-conf->w - conf->wx;
-        xava->y = xava->h - conf->h - conf->wy;
-    } else if(!strcmp(conf->winA, "center")) {
-        xava->x = (xava->w - conf->w)/2 + conf->wx;
-        xava->y = (xava->h - conf->h)/2 + conf->wy;
     }
 
-    xavaLog("Resized window to (w: %d, h: %d, x: %d, y: %d)",
-            xava->w, xava->h, xava->x, xava->y);
+    if(!strcmp(conf->winA, "top")) {
+        xava->inner.x = (winW - conf->w) / 2 + conf->x;
+        xava->inner.y = 0                    + conf->y;
+    } else if(!strcmp(conf->winA, "bottom")) {
+        xava->inner.x = (winW - conf->w) / 2 + conf->x;
+        xava->inner.y = winH - conf->h       - conf->y;
+    } else if(!strcmp(conf->winA, "top_left")) {
+        xava->inner.x = 0                    + conf->x;
+        xava->inner.y = 0                    + conf->y;
+    } else if(!strcmp(conf->winA, "top_right")) {
+        xava->inner.x = winW - conf->w       - conf->x;
+        xava->inner.y = 0                    + conf->y;
+    } else if(!strcmp(conf->winA, "left")) {
+        xava->inner.x = 0                    + conf->x;
+        xava->inner.y = (winH - conf->h) / 2 + conf->y;
+    } else if(!strcmp(conf->winA, "right")) {
+        xava->inner.x = winW - conf->w       - conf->x;
+        xava->inner.y = (winH - conf->h) / 2 + conf->y;
+    } else if(!strcmp(conf->winA, "bottom_left")) {
+        xava->inner.x = 0                    + conf->x;
+        xava->inner.y = winH - conf->h       - conf->y;
+    } else if(!strcmp(conf->winA, "bottom_right")) {
+        xava->inner.x = winW - conf->w       - conf->x;
+        xava->inner.y = winH - conf->h       - conf->y;
+    } else if(!strcmp(conf->winA, "center")) {
+        xava->inner.x = (winW - conf->w) / 2 + conf->x;
+        xava->inner.y = (winH - conf->h) / 2 + conf->y;
+    }
+}
+
+void __internal_xava_graphical_calculate_win_pos_nokeep(struct XAVA_HANDLE *xava,
+                                            uint32_t scrW, uint32_t scrH,
+                                            uint32_t winW, uint32_t winH) {
+    struct config_params *conf = &xava->conf;
+
+    xava->outer.w = winW;
+    xava->outer.h = winH;
+    xava->inner.w = winW;
+    xava->inner.h = winH;
+    xava->inner.x = 0;
+    xava->inner.y = 0;
+    xava->outer.x = 0;
+    xava->outer.y = 0;
+
+    if(!strcmp(conf->winA, "top")) {
+        xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
+    } else if(!strcmp(conf->winA, "bottom")) {
+        xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
+        xava->outer.y = (int32_t)(scrH - winH)     - conf->y;
+    } else if(!strcmp(conf->winA, "top_left")) {
+        // noop
+    } else if(!strcmp(conf->winA, "top_right")) {
+        xava->outer.x = (int32_t)(scrW - winW)     - conf->x;
+    } else if(!strcmp(conf->winA, "left")) {
+        xava->outer.y = (int32_t)(scrH - winH) / 2;
+    } else if(!strcmp(conf->winA, "right")) {
+        xava->outer.x = (int32_t)(scrW - winW)     - conf->x;
+        xava->outer.y = (int32_t)(scrH - winH) / 2 + conf->y;
+    } else if(!strcmp(conf->winA, "bottom_left")) {
+        xava->outer.y = (int32_t)(scrH - winH)     - conf->y;
+    } else if(!strcmp(conf->winA, "bottom_right")) {
+        xava->outer.x = (int32_t)(scrW - winW)     - conf->x;
+        xava->outer.y = (int32_t)(scrH - winH)     - conf->y;
+    } else if(!strcmp(conf->winA, "center")) {
+        xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
+        xava->outer.y = (int32_t)(scrH - winH) / 2 + conf->y;
+    }
+}
+
+void calculate_win_geo(struct XAVA_HANDLE *xava, uint32_t winW, uint32_t winH) {
+    if(xava->conf.holdSizeF) {
+        __internal_xava_graphical_calculate_win_pos_keep(xava, winW, winH);
+    } else {
+        xava->outer.w = winW;
+        xava->outer.h = winH;
+        xava->inner.w = xava->conf.w;
+        xava->inner.h = xava->conf.h;
+        // skip resetting the outer x, as those can be troublesome
+        xava->inner.x = 0;
+        xava->inner.y = 0;
+    }
+}
+
+void calculate_win_pos(struct XAVA_HANDLE *xava, uint32_t scrW, uint32_t scrH,
+                        uint32_t winW, uint32_t winH) {
+    if(xava->conf.holdSizeF) {
+        __internal_xava_graphical_calculate_win_pos_keep(xava, winW, winH);
+    } else {
+        __internal_xava_graphical_calculate_win_pos_nokeep(xava, scrW, scrH,
+                                                                winW, winH);
+    }
+
+    // Some error checking
+    xavaLogCondition(xava->outer.x > (int)(scrW-winW),
+            "Screen out of bounds (X axis) (%d %d %d %d)",
+            scrW, scrH, xava->outer.x, winW);
+    xavaLogCondition(xava->outer.y > (int)(scrH-winH),
+            "Screen out of bounds (Y axis) (%d %d %d %d)",
+            scrW, scrH, xava->outer.y, winH);
 }
 

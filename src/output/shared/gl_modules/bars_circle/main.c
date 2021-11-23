@@ -142,8 +142,10 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     struct config_params *conf = &xava->conf;
 
     // automatically assign this so it isn't invalid during framebuffer creation
-    xava->w = conf->w;
-    xava->h = conf->h;
+    xava->outer.w = conf->w;
+    xava->outer.h = conf->h;
+    xava->inner.w = conf->w;
+    xava->inner.h = conf->h;
 
     // create programs
     xava_gl_module_program_create(&pre);
@@ -207,20 +209,24 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
     // do image scaling
-    projectionMatrix[0] = (float)conf->w/xava->w;
-    projectionMatrix[5] = (float)conf->h/xava->h;
+    projectionMatrix[0] = (float)xava->inner.w/xava->outer.w;
+    projectionMatrix[5] = (float)xava->inner.h/xava->outer.h;
 
-    float center_fixed_x = xava->x+conf->w/2.0;
-    float center_fixed_y = xava->y+conf->h/2.0;
+    float center_fixed_x = xava->inner.x+xava->inner.w/2.0;
+    float center_fixed_y = xava->inner.y+xava->inner.h/2.0;
 
     // do image translation
-    projectionMatrix[3] = (float)center_fixed_x/xava->w*2.0 - 1.0;
-    projectionMatrix[7] = 1.0 - (float)center_fixed_y/xava->h*2.0;
+    projectionMatrix[3] = (float)center_fixed_x/xava->outer.w*2.0 - 1.0;
+    projectionMatrix[7] = 1.0 - (float)center_fixed_y/xava->outer.h*2.0;
+
+    xavaLog("Scale X/Y: %f %f Translation X/Y: %f %f",
+            projectionMatrix[0], projectionMatrix[5],
+            projectionMatrix[3], projectionMatrix[7]);
 
     glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
     // update screen resoltion
-    glUniform2f(PRE_RESOLUTION, xava->w, xava->h);
+    glUniform2f(PRE_RESOLUTION, xava->outer.w, xava->outer.h);
 
     // update spacing info
     glUniform1f(PRE_REST,        (float)xava->rest);
@@ -322,7 +328,7 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
 
         angle += additional_angle;
 
-        float height = (float)xava->f[i]/xava->h*(1.0-y1);
+        float height = (float)xava->f[i]/xava->inner.h*(1.0-y1);
         y2 += height > min_height ? height : min_height;
 
         // top left

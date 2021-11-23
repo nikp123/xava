@@ -36,14 +36,16 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *s)
     // calculating window x and y position
     xavaBailCondition(SDL_GetCurrentDisplayMode(0, &xavaSDLVInfo),
             "Error opening display: %s", SDL_GetError());
-    calculate_win_pos(p, xavaSDLVInfo.w, xavaSDLVInfo.h);
+    calculate_win_pos(s, xavaSDLVInfo.w, xavaSDLVInfo.h,
+            p->w, p->h);
 
     // creating a window
     Uint32 windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
     if(p->fullF) windowFlags |= SDL_WINDOW_FULLSCREEN;
     if(!p->borderF) windowFlags |= SDL_WINDOW_BORDERLESS;
     if(p->vsync) windowFlags |= SDL_RENDERER_PRESENTVSYNC;
-    xavaSDLWindow = SDL_CreateWindow("XAVA", p->wx, p->wy, p->w, p->h, windowFlags);
+    xavaSDLWindow = SDL_CreateWindow("XAVA", s->outer.x, s->outer.y,
+            s->outer.w, s->outer.h, windowFlags);
     xavaBailCondition(!xavaSDLWindow, "SDL window cannot be created: %s", SDL_GetError());
     //SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "cannot create SDL window", NULL);
 
@@ -72,7 +74,11 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *s) {
     GLApply(s);
 
     // Window size patch, because xava wipes w and h for some reason.
-    calculate_inner_win_pos(s, xavaSDLWindowSurface->w, xavaSDLWindowSurface->h);
+    xavaBailCondition(SDL_GetCurrentDisplayMode(
+                SDL_GetWindowDisplayIndex(xavaSDLWindow), &xavaSDLVInfo),
+            "Error opening display: %s", SDL_GetError());
+    calculate_win_pos(s, xavaSDLVInfo.w, xavaSDLVInfo.h,
+            xavaSDLWindowSurface->w, xavaSDLWindowSurface->h);
     return 0;
 }
 
@@ -131,7 +137,12 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *s) {
                 if(xavaSDLEvent.window.event == SDL_WINDOWEVENT_CLOSE) return -1;
                 else if(xavaSDLEvent.window.event == SDL_WINDOWEVENT_RESIZED){
                     // if the user resized the window
-                    calculate_inner_win_pos(s, xavaSDLEvent.window.data1, xavaSDLEvent.window.data2);
+                    xavaBailCondition(SDL_GetCurrentDisplayMode(
+                                SDL_GetWindowDisplayIndex(xavaSDLWindow),
+                                &xavaSDLVInfo),
+                            "Error opening display: %s", SDL_GetError());
+                    calculate_win_pos(s, xavaSDLVInfo.w, xavaSDLVInfo.h,
+                            xavaSDLEvent.window.data1, xavaSDLEvent.window.data2);
                     return XAVA_RESIZE;
                 }
                 break;

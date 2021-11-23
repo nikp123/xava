@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <unistd.h>
 #include <wayland-client-core.h>
 
@@ -26,14 +27,15 @@ const struct xdg_wm_base_listener xdg_wm_base_listener = {
 static void xdg_toplevel_handle_configure(void *data,
         struct xdg_toplevel *xdg_toplevel, int32_t w, int32_t h,
         struct wl_array *states) {
-    struct waydata           *wd   = data;
-    struct XAVA_HANDLE       *hand = wd->hand;
-    struct config_params     *p    = &hand->conf;
+    struct waydata       *wd   = data;
+    struct XAVA_HANDLE   *xava = wd->hand;
+    struct config_params *conf = &xava->conf;
 
     if(w == 0 && h == 0) return;
 
-    if(p->w != w && p->h != h) {
-        calculate_inner_win_pos(hand, w, h);
+    if(conf->w != w && conf->h != h) {
+        // fixme when i get proper monitor support on XDG
+        calculate_win_pos(xava, UINT_MAX, UINT_MAX, w, h);
 
         waylandEGLWindowResize(wd, w, h);
 

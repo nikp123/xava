@@ -93,11 +93,11 @@ struct config_params {
                                                     // -1 = Adaptive Vsync
 
     // 4 - geometry
-    uint32_t bw, bs;                                // bar width and height
-    uint32_t w, h;                                    // display width and height (not to be mixed with window dimensions)
-    int wx, wy;                                        // window position on the desktop in
-                                                    // x and y coordinates
-    char *winA;                                        // pointer to a string of alignment
+    uint32_t bw, bs;                                // bar width and spacing
+    uint32_t w, h;                                  // configured window width and height
+    int32_t  x, y;                                  // x and y padding
+
+    char *winA;                                     // pointer to a string of alignment
 
     // 5 - audio
     uint32_t inputsize;                                // size of the input audio buffer
@@ -136,8 +136,10 @@ struct XAVA_HANDLE {
     } default_config;
 
     // visualizer size INSIDE of the window
-    int x, y;          // display offset in the visualizer window
-    unsigned int w, h; // window dimensions
+    struct dimensions {
+        int x, y;          // display offset in the visualizer window
+        unsigned int w, h; // window dimensions
+    } inner, outer;
 
     XAVAIONOTIFY ionotify;
 };

@@ -94,6 +94,8 @@ void xava_gl_module_post_init(gl_module_post_render *vars) {
     gl->DEPTH      = glGetUniformLocation(post->program, "depth_texture");
     gl->RESOLUTION = glGetUniformLocation(post->program, "resolution");
 
+    gl->DOTS       = glGetAttribLocation (post->program, "v_dots");
+
     if(vars->features & GL_MODULE_POST_TIME)
         gl->TIME       = glGetUniformLocation(post->program, "time");
     if(vars->features & GL_MODULE_POST_INTENSITY)
@@ -114,14 +116,14 @@ void xava_gl_module_post_apply(gl_module_post_render *vars) {
     glUseProgram(vars->post.program);
 
     // update screen resoltion
-    glUniform2f(gl->RESOLUTION, xava->w, xava->h);
+    glUniform2f(gl->RESOLUTION, xava->outer.w, xava->outer.h);
 
     // set texture properties
     glGenTextures(1,              &vars->FBO.final_texture);
     glBindTexture(GL_TEXTURE_2D,   vars->FBO.final_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-            xava->w*options->resolution_scale,
-            xava->h*options->resolution_scale,
+            xava->outer.w*options->resolution_scale,
+            xava->outer.h*options->resolution_scale,
             0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -132,8 +134,8 @@ void xava_gl_module_post_apply(gl_module_post_render *vars) {
     glGenTextures(1,             &vars->FBO.depth_texture);
     glBindTexture(GL_TEXTURE_2D,  vars->FBO.depth_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-            xava->w*options->resolution_scale,
-            xava->h*options->resolution_scale,
+            xava->outer.w*options->resolution_scale,
+            xava->outer.h*options->resolution_scale,
             0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -163,11 +165,11 @@ void xava_gl_module_post_pre_draw_setup(gl_module_post_render *vars) {
         // bind render target to texture
         glBindFramebuffer(GL_FRAMEBUFFER, vars->FBO.framebuffer);
         glViewport(0, 0,
-                xava->w*options->resolution_scale,
-                xava->h*options->resolution_scale);
+                xava->outer.w*options->resolution_scale,
+                xava->outer.h*options->resolution_scale);
     } else {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, xava->w, xava->h);
+        glViewport(0, 0, xava->outer.w, xava->outer.h);
     }
 }
 
@@ -184,7 +186,7 @@ void xava_gl_module_post_draw(gl_module_post_render *vars) {
      * */
     // Change framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, xava->w, xava->h);
+    glViewport(0, 0, xava->outer.w, xava->outer.h);
 
     // Switch to post shaders
     glUseProgram(vars->post.program);
@@ -199,6 +201,8 @@ void xava_gl_module_post_draw(gl_module_post_render *vars) {
 
     // Clear the color buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    glPointSize(100.0);
 
     // set attribute array pointers for the texture unit and vertex unit
     glVertexAttribPointer(vars->gl_vars.POS, 2, GL_FLOAT,
@@ -224,6 +228,9 @@ void xava_gl_module_post_draw(gl_module_post_render *vars) {
     // draw frame
     GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+    glDrawArrays(GL_POINTS, 0, 6);
 
     glDisableVertexAttribArray(vars->gl_vars.POS);
     glDisableVertexAttribArray(vars->gl_vars.TEXCOORD);

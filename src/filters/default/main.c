@@ -84,9 +84,9 @@ void monstercat_filter(int bars, int waves, double monstercat, int *data) {
     }
 }
 
-EXP_FUNC int xavaFilterInit(struct XAVA_HANDLE *hand) {
-    struct audio_data *audio = &hand->audio;
-    struct config_params *p  = &hand->conf;
+EXP_FUNC int xavaFilterInit(struct XAVA_HANDLE *xava) {
+    struct audio_data *audio = &xava->audio;
+    struct config_params *p  = &xava->conf;
 
     // fft: planning to rock
     CALLOC_SELF(outl, audio->fftsize/2+1);
@@ -100,55 +100,55 @@ EXP_FUNC int xavaFilterInit(struct XAVA_HANDLE *hand) {
     xavaBailCondition(highcf > audio->rate / 2,
             "Higher cutoff cannot be higher than the sample rate / 2");
 
-    MALLOC_SELF(fc, hand->bars);
-    MALLOC_SELF(fre, hand->bars);
-    MALLOC_SELF(fpeak, hand->bars);
-    MALLOC_SELF(k, hand->bars);
-    MALLOC_SELF(f, hand->bars);
-    MALLOC_SELF(lcf, hand->bars);
-    MALLOC_SELF(hcf, hand->bars);
-    MALLOC_SELF(fmem, hand->bars);
-    MALLOC_SELF(flast, hand->bars);
-    MALLOC_SELF(flastd, hand->bars);
-    MALLOC_SELF(fall, hand->bars);
-    MALLOC_SELF(fl, hand->bars);
-    MALLOC_SELF(fr, hand->bars);
-    MALLOC_SELF(peak, hand->bars);
+    MALLOC_SELF(fc, xava->bars);
+    MALLOC_SELF(fre, xava->bars);
+    MALLOC_SELF(fpeak, xava->bars);
+    MALLOC_SELF(k, xava->bars);
+    MALLOC_SELF(f, xava->bars);
+    MALLOC_SELF(lcf, xava->bars);
+    MALLOC_SELF(hcf, xava->bars);
+    MALLOC_SELF(fmem, xava->bars);
+    MALLOC_SELF(flast, xava->bars);
+    MALLOC_SELF(flastd, xava->bars);
+    MALLOC_SELF(fall, xava->bars);
+    MALLOC_SELF(fl, xava->bars);
+    MALLOC_SELF(fr, xava->bars);
+    MALLOC_SELF(peak, xava->bars);
 
     return 0;
 }
 
-EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
-    struct audio_data *audio = &hand->audio;
-    struct config_params *p  = &hand->conf;
+EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *xava) {
+    struct audio_data *audio = &xava->audio;
+    struct config_params *p  = &xava->conf;
 
     // if fc is not cleared that means that the variables are not initialized
-    REALLOC_SELF(fc,hand->bars);
-    REALLOC_SELF(fre,hand->bars);
-    REALLOC_SELF(fpeak,hand->bars);
-    REALLOC_SELF(k,hand->bars);
-    REALLOC_SELF(f,hand->bars);
-    REALLOC_SELF(lcf,hand->bars);
-    REALLOC_SELF(hcf,hand->bars);
-    REALLOC_SELF(fmem,hand->bars);
-    REALLOC_SELF(flast,hand->bars);
-    REALLOC_SELF(flastd,hand->bars);
-    REALLOC_SELF(fall,hand->bars);
-    REALLOC_SELF(fl,hand->bars);
-    REALLOC_SELF(fr,hand->bars);
-    REALLOC_SELF(peak,hand->bars+1);
+    REALLOC_SELF(fc,xava->bars);
+    REALLOC_SELF(fre,xava->bars);
+    REALLOC_SELF(fpeak,xava->bars);
+    REALLOC_SELF(k,xava->bars);
+    REALLOC_SELF(f,xava->bars);
+    REALLOC_SELF(lcf,xava->bars);
+    REALLOC_SELF(hcf,xava->bars);
+    REALLOC_SELF(fmem,xava->bars);
+    REALLOC_SELF(flast,xava->bars);
+    REALLOC_SELF(flastd,xava->bars);
+    REALLOC_SELF(fall,xava->bars);
+    REALLOC_SELF(fl,xava->bars);
+    REALLOC_SELF(fr,xava->bars);
+    REALLOC_SELF(peak,xava->bars+1);
 
     // oddoneout only works if the number of bars is odd, go figure
     if(oddoneout) {
-        if (!(hand->bars%2))
-            hand->bars--;
+        if (!(xava->bars%2))
+            xava->bars--;
     }
 
     // update pointers for the main handle
-    hand->f  = f;
-    hand->fl = flastd;
+    xava->f  = f;
+    xava->fl = flastd;
 
-    for (int i = 0; i < hand->bars; i++) {
+    for (int i = 0; i < xava->bars; i++) {
         flast[i] = 0;
         flastd[i] = 0;
         fall[i] = 0;
@@ -166,21 +166,21 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
     }
 
     // process [smoothing]: calculate gravity
-    g = gravity * ((float)(p->h-1) / 2160) * (60 / (float)p->framerate);
+    g = gravity * ((float)(xava->inner.h-1) / 2160) * (60 / (float)p->framerate);
 
     // checks if there is stil extra room, will use this to center
-    hand->rest = (p->w - hand->bars * p->bw - hand->bars * p->bs + p->bs) / 2;
-    if(hand->rest < 0)
-        hand->rest = 0;
+    xava->rest = (xava->inner.w - xava->bars * p->bw - xava->bars * p->bs + p->bs) / 2;
+    if(xava->rest < 0)
+        xava->rest = 0;
 
-    if (p->stereo) hand->bars = hand->bars / 2; // in stereo onle half number of bars per channel
+    if (p->stereo) xava->bars = xava->bars / 2; // in stereo onle half number of bars per channel
 
-    if ((smcount > 0) && (hand->bars > 0)) {
-        smh = (double)(((double)smcount)/((double)hand->bars));
+    if ((smcount > 0) && (xava->bars > 0)) {
+        smh = (double)(((double)smcount)/((double)xava->bars));
     }
 
     // since oddoneout requires every odd bar, why not split them in half?
-    calcbars = oddoneout ? hand->bars/2+1 : hand->bars;
+    calcbars = oddoneout ? xava->bars/2+1 : xava->bars;
 
     // frequency constant that we'll use for logarithmic progression of frequencies
     double freqconst = log(highcf-lowcf)/log(pow(calcbars, logScale));
@@ -213,17 +213,17 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *hand) {
     // process: weigh signal to frequencies height and EQ
     for (n = 0; n < calcbars; n++) {
         k[n] = pow(fc[n], eqBalance);
-        k[n] *= (float)(p->h-1) / 100;
+        k[n] *= (float)(xava->inner.h-1) / 100;
         k[n] *= smooth[(int)floor(((double)n) * smh)];
     }
 
     if (p->stereo)
-        hand->bars = hand->bars * 2;
+        xava->bars = xava->bars * 2;
 }
 
-EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
-    struct audio_data *audio = &hand->audio;
-    struct config_params *p  = &hand->conf;
+EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *xava) {
+    struct audio_data *audio = &xava->audio;
+    struct config_params *p  = &xava->conf;
     int i;
 
     // process: execute FFT and sort frequency bands
@@ -239,8 +239,8 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
     }
 
     if(oddoneout) {
-        for(int i=hand->bars/2; i>0; i--) {
-            fl[i*2-1+hand->bars%2]=fl[i];
+        for(int i=xava->bars/2; i>0; i--) {
+            fl[i*2-1+xava->bars%2]=fl[i];
             fl[i]=0;
         }
     }
@@ -248,20 +248,20 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
     // process [smoothing]
     if (monstercat) {
         if (p->stereo) {
-            monstercat_filter(hand->bars / 2, waves, monstercat, fl);
-            monstercat_filter(hand->bars / 2, waves, monstercat, fr);
+            monstercat_filter(xava->bars / 2, waves, monstercat, fl);
+            monstercat_filter(xava->bars / 2, waves, monstercat, fr);
         } else {
             monstercat_filter(calcbars, waves, monstercat, fl);
         }
     }
 
     //preperaing signal for drawing
-    for (i=0; i<hand->bars; i++) {
+    for (i=0; i<xava->bars; i++) {
         if (p->stereo) {
-            if (i < hand->bars / 2) {
-                f[i] = fl[hand->bars / 2 - i - 1];
+            if (i < xava->bars / 2) {
+                f[i] = fl[xava->bars / 2 - i - 1];
             } else {
-                f[i] = fr[i - hand->bars / 2];
+                f[i] = fr[i - xava->bars / 2];
             }
         } else {
             f[i] = fl[i];
@@ -271,7 +271,7 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
 
     // process [smoothing]: falloff
     if (g > 0) {
-        for (i = 0; i < hand->bars; i++) {
+        for (i = 0; i < xava->bars; i++) {
             if (f[i] < flast[i]) {
                 f[i] = fpeak[i] - (g * fall[i] * fall[i]);
                 fall[i]++;
@@ -285,11 +285,11 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
 
     // process [smoothing]: integral
     if (integral > 0) {
-        for (i=0; i<hand->bars; i++) {
+        for (i=0; i<xava->bars; i++) {
             f[i] = fmem[i] * integral + f[i];
             fmem[i] = f[i];
 
-            int diff = p->h - f[i];
+            int diff = xava->inner.h - f[i];
             if (diff < 0) diff = 0;
             double div = 1.0 / (double)(diff + 1);
             //f[o] = f[o] - pow(div, 10) * (height + 1);
@@ -299,10 +299,10 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
 
     // process [oddoneout]
     if(oddoneout) {
-        for(i=1; i<hand->bars-1; i+=2) {
+        for(i=1; i<xava->bars-1; i+=2) {
             f[i] = f[i+1]/2 + f[i-1]/2;
         }
-        for(i=hand->bars-3; i>1; i-=2) {
+        for(i=xava->bars-3; i>1; i-=2) {
             int sum = f[i+1]/2 + f[i-1]/2;
             if(sum>f[i]) f[i] = sum;
         }
@@ -311,11 +311,11 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
     senseLow = true;
 
     // automatic sens adjustment
-    if (p->autosens&&(!hand->pauseRendering)) {
+    if (p->autosens&&(!xava->pauseRendering)) {
         // don't adjust on complete silence
         // as when switching tracks for example
-        for (i=0; i<hand->bars; i++) {
-            if (f[i] > (int)((p->h-1)*(100+overshoot)/100) ) {
+        for (i=0; i<xava->bars; i++) {
+            if (f[i] > (int)((xava->inner.h-1)*(100+overshoot)/100) ) {
                 senseLow = false;
                 p->sens *= 0.985;
                 break;
@@ -327,7 +327,7 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *hand) {
     }
 }
 
-EXP_FUNC void xavaFilterCleanup(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaFilterCleanup(struct XAVA_HANDLE *xava) {
     free(outl);
     free(outr);
     fftwf_destroy_plan(pl);
@@ -354,9 +354,9 @@ EXP_FUNC void xavaFilterCleanup(struct XAVA_HANDLE *hand) {
     free(peak);
 }
 
-EXP_FUNC void xavaFilterLoadConfig(struct XAVA_HANDLE *hand) {
-    struct config_params *p = &hand->conf;
-    XAVACONFIG config = hand->default_config.config;
+EXP_FUNC void xavaFilterLoadConfig(struct XAVA_HANDLE *xava) {
+    struct config_params *p = &xava->conf;
+    XAVACONFIG config = xava->default_config.config;
 
     p->sens     = xavaConfigGetDouble(config, "filter", "sensitivity", 100.0) *
         XAVA_PREDEFINED_SENS_VALUE; // check shared.h for details

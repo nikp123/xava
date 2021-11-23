@@ -90,8 +90,10 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     struct config_params *conf = &xava->conf;
 
     // automatically assign this so it isn't invalid during framebuffer creation
-    xava->w = conf->w;
-    xava->h = conf->h;
+    xava->outer.w = conf->w;
+    xava->outer.h = conf->h;
+    xava->inner.w = conf->w;
+    xava->inner.h = conf->h;
 
     // create programs
     xava_gl_module_program_create(&pre);
@@ -171,17 +173,17 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     }
 
     // do image scaling
-    projectionMatrix[0] = 2.0/xava->w;
-    projectionMatrix[5] = 2.0/xava->h;
+    projectionMatrix[0] = 2.0/xava->outer.w;
+    projectionMatrix[5] = 2.0/xava->outer.h;
 
     // do image translation
-    projectionMatrix[3] = (float)xava->x/xava->w*2.0 - 1.0;
-    projectionMatrix[7] = 1.0 - (float)(xava->y+conf->h)/xava->h*2.0;
+    projectionMatrix[3] = (float)xava->inner.x/xava->outer.w*2.0 - 1.0;
+    projectionMatrix[7] = 1.0 - (float)(xava->inner.y+xava->inner.h)/xava->outer.h*2.0;
 
     glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
     // update screen resoltion
-    glUniform2f(PRE_RESOLUTION, xava->w, xava->h);
+    glUniform2f(PRE_RESOLUTION, xava->outer.w, xava->outer.h);
 
     // update spacing info
     glUniform1f(PRE_REST,        (float)xava->rest);
