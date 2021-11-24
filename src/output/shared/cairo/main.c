@@ -138,6 +138,9 @@ void __internal_xava_output_cairo_apply(xava_cairo_handle *handle) {
         if(module->regions != NULL)
             arr_free(module->regions);
 
+        // update cr because wayland's thing requires that the drawing
+        // surface be initialized on every resize
+        module->config.cr = handle->cr;
         module->regions = f->regions(config);
     }
 
