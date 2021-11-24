@@ -55,42 +55,13 @@ void __internal_xava_graphical_calculate_win_pos_keep(struct XAVA_HANDLE *xava,
 }
 
 void __internal_xava_graphical_calculate_win_pos_nokeep(struct XAVA_HANDLE *xava,
-                                        uint32_t scrW, uint32_t scrH,
                                         uint32_t winW, uint32_t winH) {
-    struct config_params *conf = &xava->conf;
-
     xava->outer.w = winW;
     xava->outer.h = winH;
     xava->inner.w = winW;
     xava->inner.h = winH;
     xava->inner.x = 0;
     xava->inner.y = 0;
-    xava->outer.x = 0;
-    xava->outer.y = 0;
-
-    if(!strcmp(conf->winA, "top")) {
-        xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
-    } else if(!strcmp(conf->winA, "bottom")) {
-        xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
-        xava->outer.y = (int32_t)(scrH - winH)     - conf->y;
-    } else if(!strcmp(conf->winA, "top_left")) {
-        // noop
-    } else if(!strcmp(conf->winA, "top_right")) {
-        xava->outer.x = (int32_t)(scrW - winW)     - conf->x;
-    } else if(!strcmp(conf->winA, "left")) {
-        xava->outer.y = (int32_t)(scrH - winH) / 2;
-    } else if(!strcmp(conf->winA, "right")) {
-        xava->outer.x = (int32_t)(scrW - winW)     - conf->x;
-        xava->outer.y = (int32_t)(scrH - winH) / 2 + conf->y;
-    } else if(!strcmp(conf->winA, "bottom_left")) {
-        xava->outer.y = (int32_t)(scrH - winH)     - conf->y;
-    } else if(!strcmp(conf->winA, "bottom_right")) {
-        xava->outer.x = (int32_t)(scrW - winW)     - conf->x;
-        xava->outer.y = (int32_t)(scrH - winH)     - conf->y;
-    } else if(!strcmp(conf->winA, "center")) {
-        xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
-        xava->outer.y = (int32_t)(scrH - winH) / 2 + conf->y;
-    }
 }
 
 void calculate_win_geo(struct XAVA_HANDLE *xava, uint32_t winW, uint32_t winH) {
@@ -109,6 +80,11 @@ void calculate_win_geo(struct XAVA_HANDLE *xava, uint32_t winW, uint32_t winH) {
 
 void calculate_win_pos(struct XAVA_HANDLE *xava, uint32_t scrW, uint32_t scrH,
                         uint32_t winW, uint32_t winH) {
+    struct config_params *conf = &xava->conf;
+
+    xava->outer.x = 0;
+    xava->outer.y = 0;
+
     if(xava->conf.holdSizeF) {
         if(xava->conf.fullF) {
             __internal_xava_graphical_calculate_win_pos_keep(xava, scrW, scrH);
@@ -116,8 +92,37 @@ void calculate_win_pos(struct XAVA_HANDLE *xava, uint32_t scrW, uint32_t scrH,
             __internal_xava_graphical_calculate_win_pos_keep(xava, winW, winH);
         }
     } else {
-        __internal_xava_graphical_calculate_win_pos_nokeep(xava, scrW, scrH,
-                                                                winW, winH);
+        if(xava->conf.fullF) {
+            __internal_xava_graphical_calculate_win_pos_nokeep(xava, scrW, scrH);
+        } else {
+            __internal_xava_graphical_calculate_win_pos_nokeep(xava, winW, winH);
+        }
+    }
+
+    if(xava->conf.fullF == false) {
+        if(!strcmp(conf->winA, "top")) {
+            xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
+        } else if(!strcmp(conf->winA, "bottom")) {
+            xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
+            xava->outer.y = (int32_t)(scrH - winH)     - conf->y;
+        } else if(!strcmp(conf->winA, "top_left")) {
+            // noop
+        } else if(!strcmp(conf->winA, "top_right")) {
+            xava->outer.x = (int32_t)(scrW - winW)     - conf->x;
+        } else if(!strcmp(conf->winA, "left")) {
+            xava->outer.y = (int32_t)(scrH - winH) / 2;
+        } else if(!strcmp(conf->winA, "right")) {
+            xava->outer.x = (int32_t)(scrW - winW)     - conf->x;
+            xava->outer.y = (int32_t)(scrH - winH) / 2 + conf->y;
+        } else if(!strcmp(conf->winA, "bottom_left")) {
+            xava->outer.y = (int32_t)(scrH - winH)     - conf->y;
+        } else if(!strcmp(conf->winA, "bottom_right")) {
+            xava->outer.x = (int32_t)(scrW - winW)     - conf->x;
+            xava->outer.y = (int32_t)(scrH - winH)     - conf->y;
+        } else if(!strcmp(conf->winA, "center")) {
+            xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
+            xava->outer.y = (int32_t)(scrH - winH) / 2 + conf->y;
+        }
     }
 
     // Some error checking
