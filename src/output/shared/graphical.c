@@ -110,7 +110,11 @@ void calculate_win_geo(struct XAVA_HANDLE *xava, uint32_t winW, uint32_t winH) {
 void calculate_win_pos(struct XAVA_HANDLE *xava, uint32_t scrW, uint32_t scrH,
                         uint32_t winW, uint32_t winH) {
     if(xava->conf.holdSizeF) {
-        __internal_xava_graphical_calculate_win_pos_keep(xava, scrW, scrH);
+        if(xava->conf.fullF) {
+            __internal_xava_graphical_calculate_win_pos_keep(xava, scrW, scrH);
+        } else {
+            __internal_xava_graphical_calculate_win_pos_keep(xava, winW, winH);
+        }
     } else {
         __internal_xava_graphical_calculate_win_pos_nokeep(xava, scrW, scrH,
                                                                 winW, winH);
