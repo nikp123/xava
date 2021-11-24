@@ -13,6 +13,7 @@ typedef struct xava_cairo_module_handle {
     char               *prefix;
     struct XAVA_HANDLE *xava;
     cairo_t            *cr;
+    XG_EVENT_STACK     *events;
 } xava_cairo_module_handle;
 
 typedef struct xava_cairo_module {
@@ -35,8 +36,8 @@ typedef struct xava_cairo_module {
         // report drawn regions
         xava_cairo_region* (*regions)    (xava_cairo_module_handle*);
 
-        // event handler
-        XG_EVENT           (*event)      (xava_cairo_module_handle*);
+        // event handler (events are stored in a variable in the handle)
+        void               (*event)      (xava_cairo_module_handle*);
 
         // placeholder
         //void             (*clear)      (xava_cairo_module_handle*);

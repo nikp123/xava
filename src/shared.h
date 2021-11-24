@@ -139,7 +139,13 @@ struct XAVA_HANDLE {
     struct dimensions {
         int32_t  x, y; // display offset in the visualizer window
         uint32_t w, h; // window dimensions
-    } inner, outer, host_display;
+    } inner, outer;
+
+    // since inner screen space may not match with bar space
+    // this exists to bridge that gap
+    struct bar_space {
+        uint32_t w, h;
+    } bar_space;
 
     XAVAIONOTIFY ionotify;
 };

@@ -581,6 +581,32 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *xava) {
         action = XAVA_RELOAD;
     }
     #endif
+    #ifdef CAIRO
+    switch(__internal_xava_output_cairo_event(xavaCairoHandle)) {
+        case XAVA_RELOAD:
+            action = XAVA_RELOAD;
+            break;
+        case XAVA_QUIT:
+            action = XAVA_QUIT;
+            break;
+        case XAVA_RESIZE:
+            // check if there aren't any higher priority events
+            if((action != XAVA_QUIT) && (action != XAVA_RELOAD)) {
+                action = XAVA_RESIZE;
+            }
+            break;
+        case XAVA_REDRAW:
+            // check if there aren't any higher priority events
+            if((action != XAVA_QUIT) && (action != XAVA_RELOAD) &&
+               (action != XAVA_RESIZE)) {
+                action = XAVA_REDRAW;
+            }
+            break;
+        case XAVA_IGNORE:
+            // otherwise just ignore
+            break;
+    }
+    #endif
 
     return action;
 }

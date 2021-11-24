@@ -43,8 +43,16 @@ EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* 
 }
 
 // event handler
-EXP_FUNC XG_EVENT           xava_cairo_module_event      (xava_cairo_module_handle* handle) {
-    return XAVA_IGNORE;
+EXP_FUNC void               xava_cairo_module_event      (xava_cairo_module_handle* handle) {
+    struct XAVA_HANDLE *xava = handle->xava;
+
+    // check if the visualizer bounds were changed
+    if((xava->inner.w != xava->bar_space.w) ||
+       (xava->inner.h != xava->bar_space.h)) {
+        xava->bar_space.w = xava->inner.w;
+        xava->bar_space.h = xava->inner.h;
+        pushXAVAEventStack(handle->events, XAVA_RESIZE);
+    }
 }
 
 // placeholder, as it literally does nothing atm
@@ -104,7 +112,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     struct config_params *conf = &xava->conf;
 
     cairo_new_path(handle->cr);
-    cairo_set_source_rgba(handle->cr, 
+    cairo_set_source_rgba(handle->cr,
             ARGB_R_32(conf->col)/255.0,
             ARGB_G_32(conf->col)/255.0,
             ARGB_B_32(conf->col)/255.0,

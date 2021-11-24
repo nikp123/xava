@@ -311,13 +311,13 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                 if (p->fixedbars) {
                     p->autobars = 0;
                     if (p->fixedbars * p->bw + p->fixedbars * p->bs - p->bs >
-                            xava.inner.w)
+                            xava.bar_space.w)
                         p->autobars = 1;
                 }
 
                 //getting orignial numbers of barss incase of resize
                 if (p->autobars == 1)  {
-                    xava.bars = (xava.inner.w + p->bs) / (p->bw + p->bs);
+                    xava.bars = (xava.bar_space.w + p->bs) / (p->bw + p->bs);
 
                     //if (p->bs != 0) bars = (w - bars * p->bs + p->bs) / bw;
                 } else xava.bars = p->fixedbars;
@@ -418,8 +418,8 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                     for (i = 0; i < xava.bars; i++) {
                         if(xava.f[i] < 1)
                             xava.f[i] = 1;
-                        else if(xava.f[i] > xava.inner.h)
-                            xava.f[i] = xava.inner.h;
+                        else if(xava.f[i] > xava.bar_space.h)
+                            xava.f[i] = xava.bar_space.h;
                     }
                 }
 

@@ -23,6 +23,7 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
     handle->xava = xava;
 
     arr_init(handle->modules);
+    handle->events = newXAVAEventStack();
 
     // loop until all entries have been read
     char key_name[128];
@@ -93,6 +94,7 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
             module.config.name   = module.name;
             module.config.xava   = xava;
             module.config.prefix = module.prefix;
+            module.config.events = handle->events;
             module.features = module.func.config_load(&module.config);
 
             if(module.features & XAVA_CAIRO_FEATURE_DRAW_REGION) {
@@ -153,6 +155,31 @@ void __internal_xava_output_cairo_apply(xava_cairo_handle *handle) {
             module->func.apply(&module->config);
         }
     }
+}
+
+XG_EVENT __internal_xava_output_cairo_event(xava_cairo_handle *handle) {
+    XG_EVENT event = XAVA_IGNORE;
+
+    // run the module's event handlers
+    for(size_t i = 0; i < arr_count(handle->modules); i++) {
+        handle->modules[i].func.event(&handle->modules[i].config);
+    }
+
+    // process new events (if any)
+    while(pendingXAVAEventStack(handle->events)) {
+        event = popXAVAEventStack(handle->events);
+
+        switch(event) {
+            case XAVA_RESIZE:
+                return XAVA_RESIZE;
+            case XAVA_QUIT:
+                return XAVA_QUIT;
+            default:
+                break;
+        }
+    }
+
+    return event;
 }
 
 void __internal_xava_output_cairo_draw(xava_cairo_handle *handle) {
