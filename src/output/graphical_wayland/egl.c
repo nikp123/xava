@@ -1,26 +1,13 @@
-#include <GLES2/gl2.h>
 #include <stdint.h>
-#include <wayland-egl-core.h>
-#include <wayland-egl.h>
 #include <EGL/egl.h>
-
-// this is so that my static analyser doesn't bitch as much
-#ifndef EGL
-    #define EGL
-#endif
+#include <wayland-egl.h>
+#include <wayland-egl-core.h>
 
 #include "../shared/graphical.h"
 #include "../shared/gl/egl.h"
 
 #include "egl.h"
 #include "main.h"
-
-struct _escontext ESContext;
-
-// dummy abstraction function
-void waylandEGLConfigLoad(struct XAVA_HANDLE *xava) {
-    EGLConfigLoad(xava);
-}
 
 void waylandEGLCreateWindow(struct waydata *wd) {
     //region = wl_compositor_create_region(wd->compositor);
@@ -35,44 +22,12 @@ void waylandEGLCreateWindow(struct waydata *wd) {
 
     xavaSpam("Created EGL window!");
 
-    ESContext.native_window = egl_window;
-    ESContext.native_display = wd->display;
-}
-
-void waylandEGLInit(struct waydata *wd) {
-    struct XAVA_HANDLE *xava = wd->hand;
-
-    // creates everything EGL related
-    waylandEGLCreateWindow(wd);
-
-    xavaBailCondition(EGLCreateContext(xava, &ESContext) == EGL_FALSE,
-            "Failed to create EGL context");
-
-    EGLInit(xava);
-}
-
-XG_EVENT waylandEGLEvent(struct waydata *wd) {
-    struct XAVA_HANDLE *xava = wd->hand;
-
-    return EGLEvent(xava);
+    wd->ESContext.native_window = egl_window;
+    wd->ESContext.native_display = wd->display;
 }
 
 void waylandEGLWindowResize(struct waydata *wd, int w, int h) {
-    wl_egl_window_resize(ESContext.native_window, w, h, 0, 0);
+    wl_egl_window_resize(wd->ESContext.native_window, w, h, 0, 0);
     wl_surface_commit(wd->surface);
-}
-
-void waylandEGLApply(struct XAVA_HANDLE *xava) {
-    EGLApply(xava);
-}
-
-void waylandEGLDraw(struct XAVA_HANDLE *xava) {
-    EGLDraw(xava);
-    eglSwapBuffers(ESContext.display, ESContext.surface);
-}
-
-void waylandEGLDestroy(struct waydata *wd) {
-    EGLCleanup(wd->hand, &ESContext);
-    wl_egl_window_destroy(ESContext.native_window);
 }
 

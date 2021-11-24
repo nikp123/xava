@@ -14,7 +14,10 @@
 #include "registry.h"
 #include "zwlr.h"
 #include "xdg.h"
-#include "egl.h"
+#ifdef EGL
+    #include "egl.h"
+    #include "../shared/gl/egl.h"
+#endif
 
 /* Globals */
 struct waydata wd;
@@ -43,7 +46,10 @@ const struct wl_callback_listener wl_surface_frame_listener = {
 };
 
 EXP_FUNC void xavaOutputCleanup(void *v) {
-    waylandEGLDestroy(&wd);
+    #ifdef EGL
+        EGLCleanup(wd.hand, &wd.ESContext);
+        wl_egl_window_destroy(wd.ESContext.native_window);
+    #endif
 
     if(backgroundLayer) {
         zwlr_cleanup(&wd);
@@ -100,7 +106,15 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
     // process all of this, FINALLY
     wl_surface_commit(wd.surface);
 
-    waylandEGLInit(&wd);
+    #ifdef EGL
+        // creates everything EGL related
+        waylandEGLCreateWindow(&wd);
+
+        xavaBailCondition(EGLCreateContext(wd.hand, &wd.ESContext) == EGL_FALSE,
+                "Failed to create EGL context");
+
+        EGLInit(hand);
+    #endif
     return EXIT_SUCCESS;
 }
 
@@ -118,7 +132,9 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 
     xavaOutputClear(hand);
 
-    waylandEGLApply(hand);
+    #ifdef EGL
+        EGLApply(hand);
+    #endif
 
     return EXIT_SUCCESS;
 }
@@ -141,16 +157,19 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
         }
     }
 
-    if(waylandEGLEvent(&wd) == XAVA_RELOAD) {
-        return XAVA_RELOAD;
-    }
+    #ifdef EGL
+        event = EGLEvent(wd.hand);
+    #endif
 
     return event;
 }
 
 // super optimized, because cpus are shit at graphics
 EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
-    waylandEGLDraw(hand);
+    #ifdef EGL
+        EGLDraw(hand);
+        eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface);
+    #endif
 
     wl_display_dispatch_pending(wd.display);
 }
@@ -164,7 +183,9 @@ EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *hand) {
     monitorName = strdup(xavaConfigGetString
         (config, "wayland", "monitor_name", "ignore"));
 
-    waylandEGLConfigLoad(hand);
+    #ifdef EGL
+        EGLConfigLoad(hand);
+    #endif
 
     // Vsync is implied, although system timers must be used
     p->vsync = 0;

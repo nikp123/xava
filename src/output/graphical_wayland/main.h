@@ -3,8 +3,7 @@
 
 #ifdef EGL
     #include <stdint.h>
-    #include <EGL/egl.h>
-    #include <GLES2/gl2.h>
+    #include "../shared/gl/egl.h"
 #endif
 
 #include <wayland-client.h>
@@ -18,6 +17,9 @@ struct waydata {
     struct XAVA_HANDLE   *hand;
     XG_EVENT_STACK       *events;
     struct wl_list       outputs;
+    #ifdef EGL
+        struct _escontext ESContext;
+    #endif
 };
 
 
