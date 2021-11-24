@@ -202,10 +202,21 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
 }
 
 EXP_FUNC XG_EVENT xava_gl_module_event(XAVAGLModuleOptions *options) {
+    struct XAVA_HANDLE *xava = options->xava;
+
     if(shouldRestart) {
         shouldRestart = false;
         return XAVA_RELOAD;
     }
+
+    // check if the visualizer bounds were changed
+    if((xava->inner.w != xava->bar_space.w) ||
+       (xava->inner.h != xava->bar_space.h)) {
+        xava->bar_space.w = xava->inner.w;
+        xava->bar_space.h = xava->inner.h;
+        return XAVA_RESIZE;
+    }
+
     return XAVA_IGNORE;
 }
 
