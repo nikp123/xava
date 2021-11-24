@@ -6,6 +6,11 @@
     #include "../shared/gl/egl.h"
 #endif
 
+#ifdef CAIRO
+    #include <cairo/cairo.h>
+    #include "../shared/cairo/main.h"
+#endif
+
 #include <wayland-client.h>
 
 #include "../../shared.h"
@@ -19,6 +24,24 @@ struct waydata {
     struct wl_list       outputs;
     #ifdef EGL
         struct _escontext ESContext;
+    #endif
+    #ifdef SHM
+        struct wayland_shm {
+            struct dimenisions {
+                uint32_t w;
+                uint32_t h;
+                uint32_t stride;
+            } dim;
+            struct wl_shm *ref;
+            uint32_t      max_size;
+            uint8_t       *buffer;
+            int32_t       fd;
+            bool          fb_unsafe;
+        } shm;
+    #endif
+    #ifdef CAIRO
+        cairo_surface_t   *cairo_surface;
+        xava_cairo_handle *cairo_handle;
     #endif
 };
 

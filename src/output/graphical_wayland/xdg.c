@@ -8,7 +8,15 @@
 
 #include "xdg.h"
 #include "main.h"
-#include "egl.h"
+#ifdef EGL
+    #include "egl.h"
+#endif
+#ifdef SHM
+    #include "shm.h"
+#endif
+#ifdef CAIRO
+    #include "cairo.h"
+#endif
 
 static struct xdg_surface *xavaXDGSurface;
 static struct xdg_toplevel *xavaXDGToplevel;
@@ -35,13 +43,27 @@ static void xdg_toplevel_handle_configure(void *data,
 
     if(conf->w != w && conf->h != h) {
         // fixme when i get proper monitor support on XDG
-        calculate_win_pos(xava, UINT_MAX, UINT_MAX, w, h);
+        calculate_win_geo(xava, w, h);
 
-        waylandEGLWindowResize(wd, w, h);
+        #ifdef EGL
+            waylandEGLWindowResize(wd, w, h);
+        #endif
+
+        #ifdef SHM
+            reallocSHM(wd);
+        #endif
+
+        #ifdef CAIRO
+            xava_output_wayland_cairo_resize(wd);
+        #endif
 
         pushXAVAEventStack(wd->events, XAVA_REDRAW);
         pushXAVAEventStack(wd->events, XAVA_RESIZE);
     }
+
+    #ifdef SHM
+        update_frame(wd);
+    #endif
 }
 
 static void xdg_toplevel_handle_close(void *data,

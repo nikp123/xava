@@ -15,8 +15,17 @@
 #include "zwlr.h"
 #include "xdg.h"
 #ifdef EGL
+    #include <wayland-egl.h>
+    #include <wayland-egl-core.h>
     #include "egl.h"
     #include "../shared/gl/egl.h"
+#endif
+#ifdef SHM
+    #include "shm.h"
+#endif
+#ifdef CAIRO
+    #include "cairo.h"
+    #include "../shared/cairo/main.h"
 #endif
 
 /* Globals */
@@ -30,16 +39,13 @@ uint32_t fgcol,bgcol;
 static void wl_surface_frame_done(void *data, struct wl_callback *cb,
         uint32_t time) {
     struct waydata *wd = data;
+    UNUSED(wd);
 
     wl_callback_destroy(cb);
 
-    // request update
-    cb = wl_surface_frame(wd->surface);
-
-    wl_callback_add_listener(cb, &wl_surface_frame_listener, wd);
-
-    // signal to wayland about it
-    wl_surface_commit(wd->surface);
+    #ifdef SHM
+        update_frame(wd);
+    #endif
 }
 const struct wl_callback_listener wl_surface_frame_listener = {
     .done = wl_surface_frame_done,
@@ -48,7 +54,12 @@ const struct wl_callback_listener wl_surface_frame_listener = {
 EXP_FUNC void xavaOutputCleanup(void *v) {
     #ifdef EGL
         EGLCleanup(wd.hand, &wd.ESContext);
-        wl_egl_window_destroy(wd.ESContext.native_window);
+        wl_egl_window_destroy((struct wl_egl_window*)
+                wd.ESContext.native_window);
+    #endif
+    #ifdef CAIRO
+        __internal_xava_output_cairo_cleanup(wd.cairo_handle);
+        closeSHM(&wd);
     #endif
 
     if(backgroundLayer) {
@@ -115,11 +126,28 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
 
         EGLInit(hand);
     #endif
+    #ifdef SHM
+        // because wl_shm needs the framebuffer size **NOW**
+        // we are going to provide it with the default size
+        calculate_win_geo(hand, hand->conf.w, hand->conf.h);
+
+        wd.shm.fd = syscall(SYS_memfd_create, "buffer", 0);
+
+        wd.shm.max_size = 0;
+        wd.shm.fb_unsafe = false;
+
+        reallocSHM(&wd);
+    #endif
+    #ifdef CAIRO
+        xava_output_wayland_cairo_init(&wd);
+    #endif
     return EXIT_SUCCESS;
 }
 
 EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
-    // noop
+    #ifdef CAIRO
+        __internal_xava_output_cairo_clear(wd.cairo_handle);
+    #endif
 }
 
 EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
@@ -134,6 +162,9 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
 
     #ifdef EGL
         EGLApply(hand);
+    #endif
+    #ifdef CAIRO
+        __internal_xava_output_cairo_apply(wd.cairo_handle);
     #endif
 
     return EXIT_SUCCESS;
@@ -160,6 +191,9 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
     #ifdef EGL
         event = EGLEvent(wd.hand);
     #endif
+    #ifdef CAIRO
+        event = __internal_xava_output_cairo_event(wd.cairo_handle);
+    #endif
 
     return event;
 }
@@ -169,6 +203,23 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
     #ifdef EGL
         EGLDraw(hand);
         eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface);
+    #endif
+    #ifdef CAIRO
+        __internal_xava_output_cairo_draw(wd.cairo_handle);
+
+        // more like fucking brain damage, amirite
+        wl_surface_damage_buffer(wd.surface, 0, 0,
+                hand->outer.w, hand->outer.h);
+    #endif
+
+    #ifdef SHM
+        // when using non-EGL wayland, the framerate is controlled by the wl_callbacks
+        struct wl_callback *cb = wl_surface_frame(wd.surface);
+        wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
+
+        // signal to wayland about it
+        wl_surface_commit(wd.surface);
+        wl_display_roundtrip(wd.display);
     #endif
 
     wl_display_dispatch_pending(wd.display);
@@ -185,6 +236,10 @@ EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *hand) {
 
     #ifdef EGL
         EGLConfigLoad(hand);
+    #endif
+
+    #ifdef CAIRO
+        wd.cairo_handle = __internal_xava_output_cairo_load_config(hand);
     #endif
 
     // Vsync is implied, although system timers must be used

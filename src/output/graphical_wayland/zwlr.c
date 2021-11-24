@@ -7,7 +7,15 @@
 #include "zwlr.h"
 #include "main.h"
 #include "wl_output.h"
-#include "egl.h"
+#ifdef EGL
+    #include "egl.h"
+#endif
+#ifdef SHM
+    #include "shm.h"
+#endif
+#ifdef CAIRO
+    #include "cairo.h"
+#endif
 
 static struct zwlr_layer_surface_v1 *xavaWLRLayerSurface;
 struct zwlr_layer_shell_v1 *xavaWLRLayerShell;
@@ -25,13 +33,19 @@ static void layer_surface_configure(void *data,
     struct XAVA_HANDLE *xava = wd->hand;
 
     if(width != 0 && height != 0) {
-        struct wlOutput *output = wl_output_get_desired();
+        calculate_win_geo(xava, width, height);
 
-        calculate_win_pos(xava,
-                output->width, output->height,
-                width, height);
+        #ifdef EGL
+            waylandEGLWindowResize(wd, width, height);
+        #endif
 
-        waylandEGLWindowResize(wd, width, height);
+        #ifdef SHM
+            reallocSHM(wd);
+        #endif
+
+        #ifdef CAIRO
+            xava_output_wayland_cairo_resize(wd);
+        #endif
 
         pushXAVAEventStack(wd->events, XAVA_REDRAW);
         pushXAVAEventStack(wd->events, XAVA_RESIZE);
@@ -39,6 +53,10 @@ static void layer_surface_configure(void *data,
 
     // Respond to compositor
     zwlr_layer_surface_v1_ack_configure(surface, serial);
+
+    #ifdef SHM
+        update_frame(wd);
+    #endif
 }
 
 static void layer_surface_closed(void *data,

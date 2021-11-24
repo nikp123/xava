@@ -1,3 +1,4 @@
+#include <EGL/eglplatform.h>
 #include <stdint.h>
 #include <EGL/egl.h>
 #include <wayland-egl.h>
@@ -22,12 +23,13 @@ void waylandEGLCreateWindow(struct waydata *wd) {
 
     xavaSpam("Created EGL window!");
 
-    wd->ESContext.native_window = egl_window;
+    wd->ESContext.native_window = (EGLNativeWindowType)egl_window;
     wd->ESContext.native_display = wd->display;
 }
 
 void waylandEGLWindowResize(struct waydata *wd, int w, int h) {
-    wl_egl_window_resize(wd->ESContext.native_window, w, h, 0, 0);
+    wl_egl_window_resize((struct wl_egl_window*)wd->ESContext.native_window,
+                    w, h, 0, 0);
     wl_surface_commit(wd->surface);
 }
 
