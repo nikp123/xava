@@ -32,7 +32,7 @@ EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* han
 float xava_generate_star_angle(void) {
     float r = (float)rand()/(float)INT_MAX;
 
-    return 1.0 - pow(sin(r*M_PI), 0.5);
+    return 0.7 - pow(sin(r*M_PI), 0.5);
 }
 
 uint32_t xava_generate_star_size(void) {
