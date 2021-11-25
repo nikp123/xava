@@ -56,6 +56,7 @@ jobs:
           mingw-w64-${{matrix.arch}}-glew
           mingw-w64-${{matrix.arch}}-nsis
           mingw-w64-${{matrix.arch}}-SDL2
+          mingw-w64-${{matrix.arch}}-cairo
 
     - name: Build in debug mode
       env: ${{ matrix.env }}
@@ -117,7 +118,7 @@ jobs:
       if: contains(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update -y
-        sudo apt-get install pkg-config cmake libfftw3-dev portaudio19-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libglew-dev libportaudio2 wayland-protocols libpipewire-0.2-dev -y
+        sudo apt-get install pkg-config cmake libcairo2-dev libfftw3-dev portaudio19-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libglew-dev libportaudio2 wayland-protocols libpipewire-0.2-dev -y
 
     - name: Build in debug mode
       env: ${{ matrix.env }}
