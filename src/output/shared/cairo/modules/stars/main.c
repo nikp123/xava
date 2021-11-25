@@ -29,13 +29,6 @@ EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* han
     arr_init(stars);
 }
 
-float xava_box_muller_transform(void) {
-    float u1 = (float)rand()/(float)INT_MAX;
-    float u2 = (float)rand()/(float)INT_MAX;
-
-    return (float)sqrt(-2.0*log(u1))*(float)sin(2.0*M_PI*u2)/2.0;
-}
-
 float xava_generate_star_angle(void) {
     float r = (float)rand()/(float)INT_MAX;
 
@@ -63,7 +56,6 @@ EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* ha
         stars[i].x     = fmod(rand(), xava->outer.w);
         stars[i].y     = fmod(rand(), xava->outer.h);
         stars[i].size  = xava_generate_star_size();
-        xavaLog("%d", stars[i].size);
     }
 }
 
@@ -108,38 +100,44 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     // - used to balance out intensity across various number of bars
     intensity /= xava->bars;
 
-    for(register int i=0; i<star_count; i++) {
-        float alpha = (float)(1+star_max_size-stars[i].size)/star_max_size;
+    // batching per color because that's fast in cairo
+    for(register int j=1; j<=star_max_size; j++) {
+        float alpha = (float)(1+star_max_size-j)/star_max_size;
 
-        cairo_new_path(handle->cr);
         cairo_set_source_rgba(handle->cr,
                 ARGB_R_32(conf->col)/255.0,
                 ARGB_G_32(conf->col)/255.0,
                 ARGB_B_32(conf->col)/255.0,
                 conf->foreground_opacity*alpha);
+        for(register int i=0; i<star_count; i++) {
+            // we're drawing per star
+            if(stars[i].size != j)
+                continue;
 
-        stars[i].x += stars[i].size*cos(stars[i].angle)*intensity;
-        stars[i].y += stars[i].size*sin(stars[i].angle)*intensity;
+            stars[i].x += stars[i].size*cos(stars[i].angle)*intensity;
+            stars[i].y += stars[i].size*sin(stars[i].angle)*intensity;
 
-        if(stars[i].x < 0.0-stars[i].size) {
-            stars[i].x = xava->outer.w;
-            stars[i].angle = xava_generate_star_angle();
-        } else if(stars[i].x > xava->outer.w+stars[i].size) {
-            stars[i].x = 0;
-            stars[i].angle = xava_generate_star_angle();
+            if(stars[i].x < 0.0-stars[i].size) {
+                stars[i].x = xava->outer.w;
+                stars[i].angle = xava_generate_star_angle();
+            } else if(stars[i].x > xava->outer.w+stars[i].size) {
+                stars[i].x = 0;
+                stars[i].angle = xava_generate_star_angle();
+            }
+
+            if(stars[i].y < 0.0-stars[i].size) {
+                stars[i].y = xava->outer.h;
+                stars[i].angle = xava_generate_star_angle();
+            } else if(stars[i].y > xava->outer.h+stars[i].size) {
+                stars[i].y = 0;
+                stars[i].angle = xava_generate_star_angle();
+            }
+
+            cairo_rectangle(handle->cr, stars[i].x, stars[i].y,
+                    stars[i].size, stars[i].size);
         }
 
-        if(stars[i].y < 0.0-stars[i].size) {
-            stars[i].y = xava->outer.h;
-            stars[i].angle = xava_generate_star_angle();
-        } else if(stars[i].y > xava->outer.h+stars[i].size) {
-            stars[i].y = 0;
-            stars[i].angle = xava_generate_star_angle();
-        }
-
-        cairo_rectangle(handle->cr, stars[i].x, stars[i].y,
-                stars[i].size, stars[i].size);
-
+        // execute batch
         cairo_fill(handle->cr);
     }
 }

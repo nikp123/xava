@@ -46,7 +46,6 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     XAVA   *xava = handle->xava;
     XAVA_CONFIG *conf = &xava->conf;
 
-    cairo_new_path(handle->cr);
     cairo_set_source_rgba(handle->cr,
             ARGB_R_32(conf->col)/255.0,
             ARGB_G_32(conf->col)/255.0,
