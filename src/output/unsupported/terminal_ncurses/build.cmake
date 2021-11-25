@@ -7,6 +7,7 @@ if(NCURSES)
 	if(NCURSES_FOUND)
 		add_library(out_ncurses SHARED 
 			"${XAVA_MODULE_DIR}/main.c"
+			"src/output/shared/graphical.c"
 			"${GLOBAL_FUNCTION_SOURCES}")
 		target_link_libraries(out_ncurses xava-shared "${NCURSES_LIBRARIES}")
 		target_include_directories(out_ncurses PRIVATE "${NCURSES_INCLUDE_DIRS}")

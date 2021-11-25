@@ -3,7 +3,7 @@
 #include <string.h>
 #include <wchar.h>
 
-#include "../../graphical.h"
+#include "../../shared/graphical.h"
 #include "../../../shared.h"
 
 int gradient_size = 64;
@@ -31,7 +31,7 @@ int num_bar_heights = (sizeof(bar_heights) / sizeof(bar_heights[0]));
 // static struct colors the_color_redefinitions[MAX_COLOR_REDEFINITION];
 
 // general: cleanup
-EXP_FUNC void xavaOutputCleanup(XAVA *hand) {
+EXP_FUNC void xavaOutputCleanup(XAVA *xava) {
     echo();
     system("setfont  >/dev/null 2>&1");
     system("setfont /usr/share/consolefonts/Lat2-Fixed16.psf.gz  >/dev/null 2>&1");
@@ -92,8 +92,8 @@ static NCURSES_COLOR_T change_color_definition(NCURSES_COLOR_T color_number,
     return return_color_number;
 }
 
-EXP_FUNC void xavaInitOutput(XAVA *hand) {
-    XAVA_CONFIG *p = &hand->conf;
+EXP_FUNC int xavaInitOutput(XAVA *xava) {
+    XAVA_CONFIG *conf = &xava->conf;
     initscr();
     curs_set(0);
     timeout(0);
@@ -101,28 +101,32 @@ EXP_FUNC void xavaInitOutput(XAVA *hand) {
     start_color();
     use_default_colors();
 
-    getmaxyx(stdscr, p->h, p->w);
+    int neww, newh;
+    getmaxyx(stdscr, newh, neww);
+    calculate_win_geo(xava, neww, newh);
+    xava->bar_space.w = xava->inner.w;
+    xava->bar_space.h = xava->inner.h;
     clear();
 
     NCURSES_COLOR_T color_pair_number = 16;
 
     NCURSES_COLOR_T bg_color_number;
-    bg_color_number = change_color_definition(0, p->bcolor, p->bgcol);
+    bg_color_number = change_color_definition(0, conf->bcolor, conf->bgcol);
 
-    if (!p->gradients) {
+    if (!conf->gradients) {
 
         NCURSES_COLOR_T fg_color_number;
-        fg_color_number = change_color_definition(1, p->color, p->col);
+        fg_color_number = change_color_definition(1, conf->color, conf->col);
 
         init_pair(color_pair_number, fg_color_number, bg_color_number);
 
     } else {
 
         // 0 -> col1, 1-> col1<=>col2, 2 -> col2 and so on
-        short unsigned int rgb[2 * p->gradients - 1][3];
+        short unsigned int rgb[2 * conf->gradients - 1][3];
         char next_color[14];
 
-        gradient_size = p->h;
+        gradient_size = xava->outer.h;
 
         if (gradient_size > COLORS)
             gradient_size = COLORS - 1;
@@ -133,22 +137,22 @@ EXP_FUNC void xavaInitOutput(XAVA *hand) {
         if (gradient_size > MAX_COLOR_REDEFINITION)
             gradient_size = MAX_COLOR_REDEFINITION - 1;
 
-        for (int i = 0; i < p->gradients; i++) {
+        for (int i = 0; i < conf->gradients; i++) {
             int col = (i + 1) * 2 - 2;
-            sscanf(p->gradient_colors[i] + 1, "%02hx%02hx%02hx", &rgb[col][0], &rgb[col][1],
+            sscanf(conf->gradient_colors[i] + 1, "%02hx%02hx%02hx", &rgb[col][0], &rgb[col][1],
                     &rgb[col][2]);
         }
 
         // sscanf(gradient_color_1 + 1, "%02hx%02hx%02hx", &rgb[0][0], &rgb[0][1], &rgb[0][2]);
         // sscanf(gradient_color_2 + 1, "%02hx%02hx%02hx", &rgb[1][0], &rgb[1][1], &rgb[1][2]);
 
-        int individual_size = gradient_size / (p->gradients - 1);
+        int individual_size = gradient_size / (conf->gradients - 1);
 
-        for (int i = 0; i < p->gradients - 1; i++) {
+        for (int i = 0; i < conf->gradients - 1; i++) {
 
             int col = (i + 1) * 2 - 2;
-            if (i == p->gradients - 1)
-                col = 2 * (p->gradients - 1) - 2;
+            if (i == conf->gradients - 1)
+                col = 2 * (conf->gradients - 1) - 2;
 
             for (int j = 0; j < individual_size; j++) {
 
@@ -170,8 +174,8 @@ EXP_FUNC void xavaInitOutput(XAVA *hand) {
             }
         }
 
-        int left = individual_size * (p->gradients - 1);
-        int col = 2 * (p->gradients)-2;
+        int left = individual_size * (conf->gradients - 1);
+        int col = 2 * (conf->gradients)-2;
         while (left < gradient_size) {
             sprintf(next_color, "#%02x%02x%02x", rgb[col][0], rgb[col][1], rgb[col][2]);
             change_color_definition(color_pair_number, next_color, color_pair_number);
@@ -187,12 +191,14 @@ EXP_FUNC void xavaInitOutput(XAVA *hand) {
     if (bg_color_number != -1)
         bkgd(COLOR_PAIR(color_pair_number));
 
-    for (int y = 0; y < p->h/8; y++) {
-        for (int x = 0; x < p->h; x++) {
+    for (int y = 0; y < xava->outer.h/8; y++) {
+        for (int x = 0; x < xava->outer.h; x++) {
             mvaddch(y, x, ' ');
         }
     }
     refresh();
+
+    return 0;
 }
 
 void change_colors(int cur_height, int tot_height) {
@@ -205,53 +211,54 @@ void change_colors(int cur_height, int tot_height) {
     attron(COLOR_PAIR(cur_height + 16));
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
-    XAVA_CONFIG *p = &hand->conf;
+EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
+    XAVA_CONFIG *conf = &xava->conf;
     char ch = getch();
 
     int neww,newh;
     getmaxyx(stdscr, newh, neww);
     newh*=8;
-    if(neww!=p->w||newh!=p->h) {
-        p->w=neww;
-        p->h=newh;
+    if(neww!=xava->outer.w||newh!=xava->outer.h) {
+        calculate_win_geo(xava, neww, newh);
+        xava->bar_space.w = xava->inner.w;
+        xava->bar_space.h = xava->inner.h;
         return XAVA_RESIZE;
     }
 
     switch (ch) {
         case 'a':
-            p->bs++;
+            conf->bs++;
             return XAVA_RESIZE;
         case 's':
-            if(p->bs > 0)
-                p->bs--;
+            if(conf->bs > 0)
+                conf->bs--;
             return XAVA_RESIZE;
         case 65: // key up
-            p->sens = p->sens * 1.05;
+            conf->sens = conf->sens * 1.05;
             break;
         case 66: // key down
-            p->sens = p->sens * 0.95;
+            conf->sens = conf->sens * 0.95;
             break;
         case 68: // key right
-            p->bw++;
+            conf->bw++;
             return XAVA_RESIZE;
         case 67: // key left
-            if (p->bw > 1)
-                p->bw--;
+            if (conf->bw > 1)
+                conf->bw--;
             return XAVA_RESIZE;
         case 'r': // reload config
             return XAVA_RELOAD;
         case 'f': // change forground color
-            if (p->col < 7)
-                p->col++;
+            if (conf->col < 7)
+                conf->col++;
             else
-                p->col = 0;
+                conf->col = 0;
             return XAVA_RESIZE;
         case 'b': // change backround color
-            if (p->bgcol < 7)
-                p->bgcol++;
+            if (conf->bgcol < 7)
+                conf->bgcol++;
             else
-                p->bgcol = 0;
+                conf->bgcol = 0;
             return XAVA_REDRAW;
         case 'q':
             return XAVA_QUIT;
@@ -260,40 +267,40 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
     return XAVA_IGNORE;
 }
 
-EXP_FUNC void xavaOutputClear(XAVA *hand) {
+EXP_FUNC void xavaOutputClear(XAVA *xava) {
     system("clear");
     clear();
 }
 
-EXP_FUNC void xavaOutputApply(XAVA *hand) {
-    xavaOutputClear(hand);
+EXP_FUNC void xavaOutputApply(XAVA *xava) {
+    xavaOutputClear(xava);
 }
 
 #define TERMINAL_RESIZED -1
 
-EXP_FUNC int xavaOutputDraw(XAVA *hand) {
-    XAVA_CONFIG *p = &hand->conf;
+EXP_FUNC int xavaOutputDraw(XAVA *xava) {
+    XAVA_CONFIG *conf = &xava->conf;
 
-    int height = p->h/8-1;
+    int height = xava->outer.h/8-1;
 
-    for(int i=0; i<hand->bars; i++) {
-        int diff=hand->f[i]-hand->fl[i];
+    for(int i=0; i<xava->bars; i++) {
+        int diff=xava->f[i]-xava->fl[i];
         if(diff==0) continue;
 
-        int xoffset = hand->rest+(p->bw+p->bs)*i;
+        int xoffset = xava->rest+(conf->bw+conf->bs)*i;
         if(diff>0) {
-            for(int k=greatestDivisible(hand->fl[i], 8); k<hand->f[i]; k+=8) {
+            for(int k=greatestDivisible(xava->fl[i], 8); k<xava->f[i]; k+=8) {
                 //change_colors(k, height);
-                int kdiff=hand->f[i]-k; if(kdiff > 8) kdiff = 8;
-                for(int j=0; j<p->bw; j++) {
+                int kdiff=xava->f[i]-k; if(kdiff > 8) kdiff = 8;
+                for(int j=0; j<conf->bw; j++) {
                     mvaddch(height-k/8, xoffset+j, 0x40 + kdiff);
                 }
             }
         } else {
-            for(int k=greatestDivisible(hand->f[i], 8); k<hand->fl[i]; k+=8) {
-                int kdiff=hand->f[i]-k;
+            for(int k=greatestDivisible(xava->f[i], 8); k<xava->fl[i]; k+=8) {
+                int kdiff=xava->f[i]-k;
                 //change_colors(k, height);
-                for(int j=0; j<p->bw; j++) {
+                for(int j=0; j<conf->bw; j++) {
                     if(kdiff<=0)
                         mvaddch(height-k/8, xoffset+j, ' ');
                     else
@@ -322,7 +329,7 @@ EXP_FUNC int xavaOutputDraw(XAVA *hand) {
     //max_update_y = (max_update_y + num_bar_heights) / num_bar_heights;
 
     //for (int y = 0; y < max_update_y; y++) {
-    //    if (p->gradients) {
+    //    if (conf->gradients) {
     //        change_colors(y, height);
     //    }
 
@@ -331,7 +338,7 @@ EXP_FUNC int xavaOutputDraw(XAVA *hand) {
     //            continue;
     //        }
 
-    //        int cur_col = bar * p->bw + bar * p->bs + rest;
+    //        int cur_col = bar * conf->bw + bar * conf->bs + rest;
     //        int f_cell = (f[bar] - 1) / num_bar_heights;
     //        int f_last_cell = (flastd[bar] - 1) / num_bar_heights;
 
@@ -349,7 +356,7 @@ EXP_FUNC int xavaOutputDraw(XAVA *hand) {
     //                continue;
     //            }
 
-    //            for (int col = cur_col, i = 0; i < p->bw; i++, col++) {
+    //            for (int col = cur_col, i = 0; i < conf->bw; i++, col++) {
     //                //if (is_tty) {
     //                    mvaddch(height - y, col, 0x41 + bar_step);
     //                //} else {
@@ -359,7 +366,7 @@ EXP_FUNC int xavaOutputDraw(XAVA *hand) {
     //        } else if (f_last_cell >= y) {
     //            // This bar was taller during the last frame than during this frame, so
     //            // clear the excess characters.
-    //            for (int col = cur_col, i = 0; i < p->bw; i++, col++) {
+    //            for (int col = cur_col, i = 0; i < conf->bw; i++, col++) {
     //                mvaddch(height - y, col, ' ');
     //            }
     //        }
