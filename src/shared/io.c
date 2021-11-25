@@ -71,13 +71,38 @@ EXP_FUNC unsigned long xavaGetTime(void) {
     #endif
 }
 
+#ifdef __WIN32__
+// sleep in 100ns intervals
+BOOLEAN __internal_xava_shared_io_sleep_windows(LONGLONG ns) {
+    /* Declarations */
+    HANDLE timer;   /* Timer handle */
+    LARGE_INTEGER li;   /* Time defintion */
+    /* Create timer */
+    if(!(timer = CreateWaitableTimer(NULL, TRUE, NULL)))
+        return FALSE;
+    /* Set timer properties */
+    li.QuadPart = -ns;
+    if(!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE)){
+        CloseHandle(timer);
+        return FALSE;
+    }
+    /* Start & wait for timer */
+    WaitForSingleObject(timer, INFINITE);
+    /* Clean resources */
+    CloseHandle(timer);
+    /* Slept without problems */
+    return TRUE;
+}
+#endif
+
 EXP_FUNC unsigned long xavaSleep(unsigned long oldTime, int framerate) {
     unsigned long newTime = 0;
     if(framerate) {
     #ifdef WIN
         newTime = xavaGetTime();
         if(newTime-oldTime<1000/framerate&&newTime>oldTime)
-            Sleep(1000/framerate-(newTime-oldTime));
+            __internal_xava_shared_io_sleep_windows(
+                (1000/framerate-(newTime-oldTime)) * 10000);
         return xavaGetTime();
     #else
         newTime = xavaGetTime();
