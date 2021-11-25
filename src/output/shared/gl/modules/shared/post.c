@@ -53,7 +53,7 @@ void xava_gl_module_post_update_colors(gl_module_post_render *vars) {
 void xava_gl_module_post_config_load(gl_module_post_render *vars) {
     XAVAGLModuleOptions *options = vars->options;
     XAVA  *xava    = options->xava;
-    XAVACONFIG           config = xava->default_config.config;
+    xava_config_source           config = xava->default_config.config;
 
     char *shader;
 

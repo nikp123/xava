@@ -65,7 +65,7 @@ unsigned int parse_color(char *colorStr, int defaultColor) {
     return retColor;
 }
 
-void validate_config(XAVA *hand, XAVACONFIG config) {
+void validate_config(XAVA *hand, xava_config_source config) {
     XAVA_CONFIG *p = &hand->conf;
 
     // validate: input method

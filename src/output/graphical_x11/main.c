@@ -652,7 +652,7 @@ EXP_FUNC void xavaOutputCleanup(XAVA *xava) {
 }
 
 EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
-    XAVACONFIG config = xava->default_config.config;
+    xava_config_source config = xava->default_config.config;
     XAVA_CONFIG *conf = &xava->conf;
 
     UNUSED(conf);

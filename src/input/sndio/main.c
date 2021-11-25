@@ -60,7 +60,7 @@ EXP_FUNC void* xavaInput(void* data)
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
     XAVA_AUDIO *audio = &xava->audio;
-    XAVACONFIG config = xava->default_config.config;
+    xava_config_source config = xava->default_config.config;
     audio->rate = 44100;
     audio->source = (char*)xavaConfigGetString(config, "input", "source", SIO_DEVANY);
 }

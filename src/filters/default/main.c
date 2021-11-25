@@ -356,7 +356,7 @@ EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
 
 EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
     XAVA_CONFIG *p = &xava->conf;
-    XAVACONFIG config = xava->default_config.config;
+    xava_config_source config = xava->default_config.config;
 
     p->sens     = xavaConfigGetDouble(config, "filter", "sensitivity", 100.0) *
         XAVA_PREDEFINED_SENS_VALUE; // check shared.h for details

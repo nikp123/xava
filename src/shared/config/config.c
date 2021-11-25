@@ -12,8 +12,8 @@ struct xava_config {
     char *filename;
 };
 
-EXP_FUNC XAVACONFIG xavaConfigOpen(const char *filename) {
-    XAVACONFIG config = MALLOC_SELF(config, 1);
+EXP_FUNC xava_config_source xavaConfigOpen(const char *filename) {
+    xava_config_source config = MALLOC_SELF(config, 1);
     xavaReturnErrorCondition(!config, NULL, "Failed to allocate config");
     config->filename = strdup(filename);
     config->ini = iniparser_load(config->filename);
@@ -22,46 +22,46 @@ EXP_FUNC XAVACONFIG xavaConfigOpen(const char *filename) {
     return config;
 }
 
-EXP_FUNC void xavaConfigClose(XAVACONFIG config) {
+EXP_FUNC void xavaConfigClose(xava_config_source config) {
     iniparser_freedict(config->ini);
     free(config->filename);
     free(config);
 }
 
 // This shouldn't exist, but yet here we are
-EXP_FUNC bool xavaConfigGetBool  (XAVACONFIG config, const char *section, const char *key,
+EXP_FUNC bool xavaConfigGetBool  (xava_config_source config, const char *section, const char *key,
         bool default_value) {
     char ini_key[64]; // i cannot be fucked to do this shit anymore
     snprintf(ini_key, 64, "%s:%s", section, key);
     return iniparser_getboolean(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC int xavaConfigGetInt(XAVACONFIG config, const char *section, const char *key,
+EXP_FUNC int xavaConfigGetInt(xava_config_source config, const char *section, const char *key,
         int default_value) {
     char ini_key[64]; // i cannot be fucked to do this shit anymore
     snprintf(ini_key, 64, "%s:%s", section, key);
     return iniparser_getint(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC double xavaConfigGetDouble(XAVACONFIG config, const char *section, const char *key,
+EXP_FUNC double xavaConfigGetDouble(xava_config_source config, const char *section, const char *key,
         double default_value) {
     char ini_key[64]; // i cannot be fucked to do this shit anymore
     snprintf(ini_key, 64, "%s:%s", section, key);
     return iniparser_getdouble(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC char* xavaConfigGetString(XAVACONFIG config, const char *section, const char *key,
+EXP_FUNC char* xavaConfigGetString(xava_config_source config, const char *section, const char *key,
         const char* default_value) {
     char ini_key[64]; // i cannot be fucked to do this shit anymore
     snprintf(ini_key, 64, "%s:%s", section, key);
     return (char*)iniparser_getstring(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC int xavaConfigGetKeyNumber(XAVACONFIG config, const char *section) {
+EXP_FUNC int xavaConfigGetKeyNumber(xava_config_source config, const char *section) {
     return iniparser_getsecnkeys(config->ini, section);
 }
 
-EXP_FUNC char **xavaConfigGetKeys(XAVACONFIG config, const char *section) {
+EXP_FUNC char **xavaConfigGetKeys(xava_config_source config, const char *section) {
     char **returned_section_keys = NULL;
     iniparser_getseckeys(config->ini, section, (const char**)returned_section_keys);
 

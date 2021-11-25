@@ -17,7 +17,7 @@
 xava_cairo_handle *__internal_xava_output_cairo_load_config(
         XAVA *xava) {
 
-    XAVACONFIG config = xava->default_config.config;
+    xava_config_source config = xava->default_config.config;
     xava_cairo_handle *handle;
     MALLOC_SELF(handle, 1);
     handle->xava = xava;

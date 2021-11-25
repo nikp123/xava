@@ -160,7 +160,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
     XAVA_AUDIO *audio = &xava->audio;
-    XAVACONFIG config = xava->default_config.config;
+    xava_config_source config = xava->default_config.config;
 
     // default to ignore or change to keep 'em searching
     audio->source = (char*)xavaConfigGetString(config, "input", "source", "default");

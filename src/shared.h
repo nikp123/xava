@@ -132,7 +132,7 @@ typedef struct XAVA {
 
     struct config {
         // handle to the config file itself
-        XAVACONFIG        config;
+        xava_config_source        config;
     } default_config;
 
     // visualizer size INSIDE of the window

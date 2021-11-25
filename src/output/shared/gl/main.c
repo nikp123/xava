@@ -14,7 +14,7 @@ static XAVAGLHostOptions   options;
     xavaBailCondition(options.func.name == NULL, "xava_gl_module_" #name " not found!");
 
 void SGLConfigLoad(XAVA *xava) {
-    XAVACONFIG config = xava->default_config.config;
+    xava_config_source config = xava->default_config.config;
     module_options.resolution_scale =
         xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f);
 

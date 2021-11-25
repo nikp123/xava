@@ -21,7 +21,7 @@ typedef struct xava_gl_module_program {
         GLuint handle;
     } frag, vert, geo;
     GLuint     program;
-    XAVACONFIG config;
+    xava_config_source config;
 } xava_gl_module_program;
 
 GLint xava_gl_module_shader_build(struct shader *shader, GLenum shader_type);

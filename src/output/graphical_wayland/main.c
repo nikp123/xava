@@ -227,7 +227,7 @@ EXP_FUNC void xavaOutputDraw(XAVA *hand) {
 
 EXP_FUNC void xavaOutputLoadConfig(XAVA *hand) {
     XAVA_CONFIG *p = &hand->conf;
-    XAVACONFIG config = hand->default_config.config;
+    xava_config_source config = hand->default_config.config;
 
     backgroundLayer = xavaConfigGetBool
         (config, "wayland", "background_layer", 1);
