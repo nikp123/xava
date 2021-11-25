@@ -124,7 +124,6 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     }
 
     cairo_fill(handle->cr);
-    cairo_save(handle->cr);
 }
 
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
