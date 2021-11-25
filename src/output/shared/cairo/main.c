@@ -15,7 +15,7 @@
 
 // creates flexible instances, which ARE memory managed and must be free-d after use
 xava_cairo_handle *__internal_xava_output_cairo_load_config(
-        struct XAVA_HANDLE *xava) {
+        XAVA *xava) {
 
     XAVACONFIG config = xava->default_config.config;
     xava_cairo_handle *handle;

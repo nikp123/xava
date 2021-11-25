@@ -66,7 +66,7 @@ gl_module_post_render post;
 EXP_FUNC void xava_gl_module_ionotify_callback(XAVA_IONOTIFY_EVENT event,
                                 const char *filename,
                                 int id,
-                                struct XAVA_HANDLE* xava) {
+                                XAVA* xava) {
     switch(event) {
         case XAVA_IONOTIFY_CHANGED:
             shouldRestart = true;
@@ -86,7 +86,7 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModuleOptions *options) {
 }
 
 EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
-    struct XAVA_HANDLE *xava = options->xava;
+    XAVA *xava = options->xava;
     struct config_params *conf = &xava->conf;
 
     // automatically assign this so it isn't invalid during framebuffer creation
@@ -147,7 +147,7 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
 }
 
 EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
-    struct XAVA_HANDLE *xava = options->xava;
+    XAVA *xava = options->xava;
     struct config_params *conf = &xava->conf;
 
     glUseProgram(pre.program);
@@ -202,7 +202,7 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
 }
 
 EXP_FUNC XG_EVENT xava_gl_module_event(XAVAGLModuleOptions *options) {
-    struct XAVA_HANDLE *xava = options->xava;
+    XAVA *xava = options->xava;
 
     if(shouldRestart) {
         shouldRestart = false;
@@ -225,7 +225,7 @@ EXP_FUNC XG_EVENT xava_gl_module_event(XAVAGLModuleOptions *options) {
 // is often preceded by a slight state change such as a color change, so we pass color info to the
 // shaders HERE and ONLY HERE.
 EXP_FUNC void xava_gl_module_clear(XAVAGLModuleOptions *options) {
-    struct XAVA_HANDLE *xava   = options->xava;
+    XAVA *xava   = options->xava;
     struct config_params *conf = &xava->conf;
 
     // if you want to fiddle with certain uniforms from a shader, YOU MUST SWITCH TO IT
@@ -253,7 +253,7 @@ EXP_FUNC void xava_gl_module_clear(XAVAGLModuleOptions *options) {
 }
 
 EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
-    struct XAVA_HANDLE   *xava  = options->xava;
+    XAVA   *xava  = options->xava;
 
     float intensity = xava_gl_module_util_calculate_intensity(xava);
     float time      = xava_gl_module_util_obtain_time();

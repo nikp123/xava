@@ -4,11 +4,11 @@
 #include "../../shared.h"
 
 // updates geometry as well as position data
-void calculate_win_pos(struct XAVA_HANDLE *xava, uint32_t scrW, uint32_t scrH,
+void calculate_win_pos(XAVA *xava, uint32_t scrW, uint32_t scrH,
                 uint32_t winW, uint32_t winH);
 
 // just geometry data
-void calculate_win_geo(struct XAVA_HANDLE *xava, uint32_t winW, uint32_t winH);
+void calculate_win_geo(XAVA *xava, uint32_t winW, uint32_t winH);
 
 #define DEF_FG_COL 6
 #define DEF_BG_COL 0

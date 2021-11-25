@@ -42,34 +42,34 @@
 
 static void*    (*xavaInput)                     (void*); // technically it's "struct audio_data*"
                                                           // but the compiler complains :(
-static void     (*xavaInputLoadConfig)           (struct XAVA_HANDLE*);
+static void     (*xavaInputLoadConfig)           (XAVA*);
 
-static void     (*xavaOutputLoadConfig)          (struct XAVA_HANDLE*);
-static int      (*xavaInitOutput)                (struct XAVA_HANDLE*);
-static void     (*xavaOutputClear)               (struct XAVA_HANDLE*);
-static int      (*xavaOutputApply)               (struct XAVA_HANDLE*);
-static XG_EVENT (*xavaOutputHandleInput)         (struct XAVA_HANDLE*);
-static void     (*xavaOutputDraw)                (struct XAVA_HANDLE*);
-static void     (*xavaOutputCleanup)             (struct XAVA_HANDLE*);
+static void     (*xavaOutputLoadConfig)          (XAVA*);
+static int      (*xavaInitOutput)                (XAVA*);
+static void     (*xavaOutputClear)               (XAVA*);
+static int      (*xavaOutputApply)               (XAVA*);
+static XG_EVENT (*xavaOutputHandleInput)         (XAVA*);
+static void     (*xavaOutputDraw)                (XAVA*);
+static void     (*xavaOutputCleanup)             (XAVA*);
 
-static void     (*xavaFilterLoadConfig) (struct XAVA_HANDLE*);
-static int      (*xavaFilterInit)                (struct XAVA_HANDLE*);
-static int      (*xavaFilterApply)               (struct XAVA_HANDLE*);
-static int      (*xavaFilterLoop)                (struct XAVA_HANDLE*);
-static int      (*xavaFilterCleanup)             (struct XAVA_HANDLE*);
+static void     (*xavaFilterLoadConfig) (XAVA*);
+static int      (*xavaFilterInit)                (XAVA*);
+static int      (*xavaFilterApply)               (XAVA*);
+static int      (*xavaFilterLoop)                (XAVA*);
+static int      (*xavaFilterCleanup)             (XAVA*);
 
 char *configPath;
 
 static _Bool kys = 0, should_reload = 0;
 
 // teh main XAVA handle (made just to not piss off MinGW)
-static struct XAVA_HANDLE xava;
+static XAVA xava;
 
 // XAVA magic variables, too many of them indeed
 static pthread_t p_thread;
 
 void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
-        int id, struct XAVA_HANDLE *xava) {
+        int id, XAVA *xava) {
     switch(event) {
         case XAVA_IONOTIFY_CHANGED:
         case XAVA_IONOTIFY_DELETED:

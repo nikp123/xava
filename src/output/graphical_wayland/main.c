@@ -75,7 +75,7 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
     free(monitorName);
 }
 
-EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
+EXP_FUNC int xavaInitOutput(XAVA *hand) {
     wd.hand   = hand;
     wd.events = newXAVAEventStack();
 
@@ -144,13 +144,13 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *hand) {
     return EXIT_SUCCESS;
 }
 
-EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputClear(XAVA *hand) {
     #ifdef CAIRO
         __internal_xava_output_cairo_clear(wd.cairo_handle);
     #endif
 }
 
-EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
+EXP_FUNC int xavaOutputApply(XAVA *hand) {
     // TODO: Fullscreen support
     //if(p->fullF) xdg_toplevel_set_fullscreen(xavaWLSurface, NULL);
     //else        xdg_toplevel_unset_fullscreen(xavaWLSurface);
@@ -170,7 +170,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *hand) {
     return EXIT_SUCCESS;
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
     //struct config_params     *p    = &s->conf;
 
     XG_EVENT event = XAVA_IGNORE;
@@ -199,7 +199,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
 }
 
 // super optimized, because cpus are shit at graphics
-EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputDraw(XAVA *hand) {
     #ifdef EGL
         EGLDraw(hand);
         eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface);
@@ -225,7 +225,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *hand) {
     wl_display_dispatch_pending(wd.display);
 }
 
-EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputLoadConfig(XAVA *hand) {
     struct config_params *p = &hand->conf;
     XAVACONFIG config = hand->default_config.config;
 

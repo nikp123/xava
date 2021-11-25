@@ -5,11 +5,11 @@
 #include "../graphical.h"
 
 
-void EGLConfigLoad(struct XAVA_HANDLE *xava) {
+void EGLConfigLoad(XAVA *xava) {
     SGLConfigLoad(xava);
 }
 
-EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESContext) {
+EGLBoolean EGLCreateContext(XAVA *xava, struct _escontext *ESContext) {
     struct config_params *conf = &xava->conf;
     EGLint numConfigs;
     EGLint majorVersion;
@@ -95,28 +95,28 @@ EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESConte
     return EGL_TRUE;
 }
 
-void EGLInit(struct XAVA_HANDLE *xava) {
+void EGLInit(XAVA *xava) {
     glewInit();
     SGLInit(xava);
 }
 
-void EGLApply(struct XAVA_HANDLE *xava) {
+void EGLApply(XAVA *xava) {
     SGLApply(xava);
 }
 
-XG_EVENT EGLEvent(struct XAVA_HANDLE *xava) {
+XG_EVENT EGLEvent(XAVA *xava) {
     return SGLEvent(xava);
 }
 
-void EGLClear(struct XAVA_HANDLE *xava) {
+void EGLClear(XAVA *xava) {
     SGLClear(xava);
 }
 
-void EGLDraw(struct XAVA_HANDLE *xava) {
+void EGLDraw(XAVA *xava) {
     SGLDraw(xava);
 }
 
-void EGLCleanup(struct XAVA_HANDLE *xava, struct _escontext *ESContext) {
+void EGLCleanup(XAVA *xava, struct _escontext *ESContext) {
     SGLCleanup(xava);
     eglDestroyContext(ESContext->display, ESContext->context);
     eglDestroySurface(ESContext->display, ESContext->surface);

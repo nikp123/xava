@@ -177,7 +177,7 @@ void calculateColors(struct config_params *conf) {
     snatchColor("color4", conf->bcolor, &conf->bgcol, databaseName, &xavaXResDB);
 }
 
-EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *xava) {
+EXP_FUNC int xavaInitOutput(XAVA *xava) {
     struct config_params *conf = &xava->conf;
 
     // NVIDIA CPU cap utilization in Vsync fix
@@ -410,7 +410,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *xava) {
     return 0;
 }
 
-EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputClear(XAVA *xava) {
     #if defined(EGL)
         EGLClear(xava);
     #elif defined(GL)
@@ -420,7 +420,7 @@ EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *xava) {
     #endif
 }
 
-EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *xava) {
+EXP_FUNC int xavaOutputApply(XAVA *xava) {
     struct config_params *conf = &xava->conf;
 
     calculateColors(conf);
@@ -473,7 +473,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *xava) {
     return 0;
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *xava) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
     struct config_params *conf = &xava->conf;
 
     // this way we avoid event stacking which requires a full frame to process a single event
@@ -611,7 +611,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *xava) {
     return action;
 }
 
-EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputDraw(XAVA *xava) {
     #if defined(EGL)
         EGLDraw(xava);
         eglSwapBuffers(ESContext.display, ESContext.surface);
@@ -626,7 +626,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *xava) {
     return;
 }
 
-EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputCleanup(XAVA *xava) {
     // Root mode leaves artifacts on screen even though the window is dead
     XClearWindow(xavaXDisplay, xavaXWindow);
 
@@ -651,7 +651,7 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *xava) {
     return;
 }
 
-EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
     XAVACONFIG config = xava->default_config.config;
     struct config_params *conf = &xava->conf;
 

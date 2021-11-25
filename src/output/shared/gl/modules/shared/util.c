@@ -2,7 +2,7 @@
 
 #include "util.h"
 
-float xava_gl_module_util_calculate_intensity(struct XAVA_HANDLE *xava) {
+float xava_gl_module_util_calculate_intensity(XAVA *xava) {
     struct config_params *conf = &xava->conf;
 
     float intensity = 0.0;

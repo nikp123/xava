@@ -17,7 +17,7 @@ SDL_DisplayMode xavaSDLVInfo;
 
 SDL_GLContext xavaSDLGLContext;
 
-EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *s)
+EXP_FUNC void xavaOutputCleanup(XAVA *s)
 {
     GLCleanup(s);
     SDL_GL_DeleteContext(xavaSDLGLContext);
@@ -26,7 +26,7 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *s)
     SDL_Quit();
 }
 
-EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *s)
+EXP_FUNC int xavaInitOutput(XAVA *s)
 {
     struct config_params *p = &s->conf;
 
@@ -55,11 +55,11 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *s)
     return 0;
 }
 
-EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *s) {
+EXP_FUNC void xavaOutputClear(XAVA *s) {
     GLClear(s);
 }
 
-EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *s) {
+EXP_FUNC int xavaOutputApply(XAVA *s) {
     struct config_params *p = &s->conf;
 
     // toggle fullscreen
@@ -82,7 +82,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *s) {
     return 0;
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *s) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *s) {
     struct config_params *p = &s->conf;
 
     while(SDL_PollEvent(&xavaSDLEvent) != 0) {
@@ -155,13 +155,13 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *s) {
     return XAVA_IGNORE;
 }
 
-EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *s) {
+EXP_FUNC void xavaOutputDraw(XAVA *s) {
     GLDraw(s);
     SDL_GL_SwapWindow(xavaSDLWindow);
     return;
 }
 
-EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *s) {
+EXP_FUNC void xavaOutputLoadConfig(XAVA *s) {
     struct config_params *p = &s->conf;
     //struct XAVA_CONFIG config = s->default_config.config;
 

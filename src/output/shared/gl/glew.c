@@ -9,33 +9,33 @@
 #include "../graphical.h"
 
 
-void GLConfigLoad(struct XAVA_HANDLE *xava) {
+void GLConfigLoad(XAVA *xava) {
     SGLConfigLoad(xava);
 }
 
-void GLInit(struct XAVA_HANDLE *xava) {
+void GLInit(XAVA *xava) {
     glewInit();
 
     SGLInit(xava);
 }
 
-void GLApply(struct XAVA_HANDLE *xava) {
+void GLApply(XAVA *xava) {
     SGLApply(xava);
 }
 
-XG_EVENT GLEvent(struct XAVA_HANDLE *xava) {
+XG_EVENT GLEvent(XAVA *xava) {
     return SGLEvent(xava);
 }
 
-void GLClear(struct XAVA_HANDLE *xava) {
+void GLClear(XAVA *xava) {
     SGLClear(xava);
 }
 
-void GLDraw(struct XAVA_HANDLE *xava) {
+void GLDraw(XAVA *xava) {
     SGLDraw(xava);
 }
 
-void GLCleanup(struct XAVA_HANDLE *xava) {
+void GLCleanup(XAVA *xava) {
     SGLCleanup(xava);
 }
 

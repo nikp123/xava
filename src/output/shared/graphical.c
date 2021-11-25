@@ -7,7 +7,7 @@
 #define SET_INNER_Y(val) \
     xava->inner.y = ((xava->outer.h == xava->inner.h)? 0 : (val))
 
-void __internal_xava_graphical_calculate_win_pos_keep(struct XAVA_HANDLE *xava,
+void __internal_xava_graphical_calculate_win_pos_keep(XAVA *xava,
                                             uint32_t winW, uint32_t winH) {
     struct config_params *conf = &xava->conf;
 
@@ -54,7 +54,7 @@ void __internal_xava_graphical_calculate_win_pos_keep(struct XAVA_HANDLE *xava,
     }
 }
 
-void __internal_xava_graphical_calculate_win_pos_nokeep(struct XAVA_HANDLE *xava,
+void __internal_xava_graphical_calculate_win_pos_nokeep(XAVA *xava,
                                         uint32_t winW, uint32_t winH) {
     xava->outer.w = winW;
     xava->outer.h = winH;
@@ -64,7 +64,7 @@ void __internal_xava_graphical_calculate_win_pos_nokeep(struct XAVA_HANDLE *xava
     xava->inner.y = 0;
 }
 
-void calculate_win_geo(struct XAVA_HANDLE *xava, uint32_t winW, uint32_t winH) {
+void calculate_win_geo(XAVA *xava, uint32_t winW, uint32_t winH) {
     if(xava->conf.holdSizeF) {
         __internal_xava_graphical_calculate_win_pos_keep(xava, winW, winH);
     } else {
@@ -78,7 +78,7 @@ void calculate_win_geo(struct XAVA_HANDLE *xava, uint32_t winW, uint32_t winH) {
     }
 }
 
-void calculate_win_pos(struct XAVA_HANDLE *xava, uint32_t scrW, uint32_t scrH,
+void calculate_win_pos(XAVA *xava, uint32_t scrW, uint32_t scrH,
                         uint32_t winW, uint32_t winH) {
     struct config_params *conf = &xava->conf;
 

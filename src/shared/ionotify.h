@@ -7,7 +7,7 @@ typedef void*                             XAVAIONOTIFY;
 typedef struct xava_ionotify_watch_setup* XAVAIONOTIFYWATCHSETUP;
 
 // make the compilers shuttings up
-struct XAVA_HANDLE;
+typedef struct XAVA XAVA;
 
 // doubt that XAVA_IONOTIFY_DELETED ever be implemented, but I don't care
 typedef enum xava_ionotify_event {
@@ -22,11 +22,11 @@ struct xava_ionotify_watch_setup {
     XAVAIONOTIFY       ionotify;
     int                id;
     char               *filename;
-    struct XAVA_HANDLE *xava;
+    XAVA *xava;
     void               (*xava_ionotify_func)(XAVA_IONOTIFY_EVENT,
-                                            const char *filename, 
+                                            const char *filename,
                                             int id,
-                                            struct XAVA_HANDLE*);
+                                            XAVA*);
 };
 
 extern XAVAIONOTIFY      xavaIONotifySetup(void);

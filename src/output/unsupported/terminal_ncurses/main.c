@@ -31,7 +31,7 @@ int num_bar_heights = (sizeof(bar_heights) / sizeof(bar_heights[0]));
 // static struct colors the_color_redefinitions[MAX_COLOR_REDEFINITION];
 
 // general: cleanup
-EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputCleanup(XAVA *hand) {
     echo();
     system("setfont  >/dev/null 2>&1");
     system("setfont /usr/share/consolefonts/Lat2-Fixed16.psf.gz  >/dev/null 2>&1");
@@ -92,7 +92,7 @@ static NCURSES_COLOR_T change_color_definition(NCURSES_COLOR_T color_number,
     return return_color_number;
 }
 
-EXP_FUNC void xavaInitOutput(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaInitOutput(XAVA *hand) {
     struct config_params *p = &hand->conf;
     initscr();
     curs_set(0);
@@ -205,7 +205,7 @@ void change_colors(int cur_height, int tot_height) {
     attron(COLOR_PAIR(cur_height + 16));
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
     struct config_params *p = &hand->conf;
     char ch = getch();
 
@@ -260,18 +260,18 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *hand) {
     return XAVA_IGNORE;
 }
 
-EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputClear(XAVA *hand) {
     system("clear");
     clear();
 }
 
-EXP_FUNC void xavaOutputApply(struct XAVA_HANDLE *hand) {
+EXP_FUNC void xavaOutputApply(XAVA *hand) {
     xavaOutputClear(hand);
 }
 
 #define TERMINAL_RESIZED -1
 
-EXP_FUNC int xavaOutputDraw(struct XAVA_HANDLE *hand) {
+EXP_FUNC int xavaOutputDraw(XAVA *hand) {
     struct config_params *p = &hand->conf;
 
     int height = p->h/8-1;
@@ -371,6 +371,6 @@ EXP_FUNC int xavaOutputDraw(struct XAVA_HANDLE *hand) {
     return 0;
 }
 
-EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
     // noop
 }

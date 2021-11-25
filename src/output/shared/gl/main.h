@@ -21,10 +21,10 @@
 typedef struct XAVAGLModuleOptions {
     GLdouble            resolution_scale;
     char               *module_prefix;
-    struct XAVA_HANDLE *xava;
+    XAVA *xava;
     void                (*ionotify_callback)(XAVA_IONOTIFY_EVENT,
                                 const char* filename, int id,
-                                struct XAVA_HANDLE*);
+                                XAVA*);
 } XAVAGLModuleOptions;
 
 typedef struct XAVAGLHostOptions {
@@ -44,17 +44,17 @@ typedef struct XAVAGLHostOptions {
                         (XAVA_IONOTIFY_EVENT,
                         const char* filename,
                         int id,
-                        struct XAVA_HANDLE*);
+                        XAVA*);
     } func;
 } XAVAGLHostOptions;
 
-void     SGLConfigLoad(struct XAVA_HANDLE *xava);
-void     SGLInit(struct XAVA_HANDLE *xava);
-void     SGLApply(struct XAVA_HANDLE *xava);
-XG_EVENT SGLEvent(struct XAVA_HANDLE *xava);
-void     SGLClear(struct XAVA_HANDLE *xava);
-void     SGLDraw(struct XAVA_HANDLE *xava);
-void     SGLCleanup(struct XAVA_HANDLE *xava);
+void     SGLConfigLoad(XAVA *xava);
+void     SGLInit(XAVA *xava);
+void     SGLApply(XAVA *xava);
+XG_EVENT SGLEvent(XAVA *xava);
+void     SGLClear(XAVA *xava);
+void     SGLDraw(XAVA *xava);
+void     SGLCleanup(XAVA *xava);
 
 #endif
 

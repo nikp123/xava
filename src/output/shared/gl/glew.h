@@ -6,13 +6,13 @@
 #include "../../../shared.h"
 
 
-void     GLConfigLoad(struct XAVA_HANDLE *xava);
-void     GLInit(struct XAVA_HANDLE *xava);
-void     GLClear(struct XAVA_HANDLE *xava);
-void     GLApply(struct XAVA_HANDLE *xava);
-XG_EVENT GLEvent(struct XAVA_HANDLE *xava);
-void     GLDraw(struct XAVA_HANDLE *xava);
-void     GLCleanup(struct XAVA_HANDLE *xava);
+void     GLConfigLoad(XAVA *xava);
+void     GLInit(XAVA *xava);
+void     GLClear(XAVA *xava);
+void     GLApply(XAVA *xava);
+XG_EVENT GLEvent(XAVA *xava);
+void     GLDraw(XAVA *xava);
+void     GLCleanup(XAVA *xava);
 
 #endif
 

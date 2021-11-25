@@ -19,13 +19,13 @@ struct _escontext {
     EGLSurface  surface;
 };
 
-void       EGLConfigLoad(struct XAVA_HANDLE *xava);
-EGLBoolean EGLCreateContext(struct XAVA_HANDLE *xava, struct _escontext *ESContext);
-void       EGLInit(struct XAVA_HANDLE *xava);
-void       EGLApply(struct XAVA_HANDLE *xava);
-XG_EVENT   EGLEvent(struct XAVA_HANDLE *xava);
-void       EGLClear(struct XAVA_HANDLE *xava);
-void       EGLDraw(struct XAVA_HANDLE *xava);
-void       EGLCleanup(struct XAVA_HANDLE *xava, struct _escontext *ESContext);
+void       EGLConfigLoad(XAVA *xava);
+EGLBoolean EGLCreateContext(XAVA *xava, struct _escontext *ESContext);
+void       EGLInit(XAVA *xava);
+void       EGLApply(XAVA *xava);
+XG_EVENT   EGLEvent(XAVA *xava);
+void       EGLClear(XAVA *xava);
+void       EGLDraw(XAVA *xava);
+void       EGLCleanup(XAVA *xava, struct _escontext *ESContext);
 #endif
 

@@ -117,7 +117,7 @@ struct config_params {
 };
 
 // XAVA handle
-struct XAVA_HANDLE {
+typedef struct XAVA {
     // variables that XAVA outputs
     uint32_t bars;        // number of output bars
     uint32_t rest;        // number of screen units until first bar
@@ -148,6 +148,6 @@ struct XAVA_HANDLE {
     } bar_space;
 
     XAVAIONOTIFY ionotify;
-};
+} XAVA;
 
 #endif

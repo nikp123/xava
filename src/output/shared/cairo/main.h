@@ -7,7 +7,7 @@
 #include "util/module.h"
 
 typedef struct xava_cairo_handle {
-    struct XAVA_HANDLE *xava;
+    XAVA *xava;
     cairo_t            *cr; // name used by a lot of docs, so I'm going with it
 
     XG_EVENT_STACK     *events;
@@ -17,7 +17,7 @@ typedef struct xava_cairo_handle {
 } xava_cairo_handle;
 
 xava_cairo_handle *__internal_xava_output_cairo_load_config(
-                                        struct XAVA_HANDLE *xava);
+                                        XAVA *xava);
 void               __internal_xava_output_cairo_init(xava_cairo_handle *handle,
                                                      cairo_t *cr);
 void              __internal_xava_output_cairo_apply(xava_cairo_handle *handle);

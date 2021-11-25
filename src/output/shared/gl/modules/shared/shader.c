@@ -11,7 +11,7 @@ void xava_gl_module_shader_load(
         sgl_shader_stage stage,
         const char *name,
         XAVAGLModuleOptions *options) {
-    struct XAVA_HANDLE *xava = options->xava;
+    XAVA *xava = options->xava;
     RawData *file;
     char *returned_path;
     char file_path[MAX_PATH];

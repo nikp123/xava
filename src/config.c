@@ -65,7 +65,7 @@ unsigned int parse_color(char *colorStr, int defaultColor) {
     return retColor;
 }
 
-void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
+void validate_config(XAVA *hand, XAVACONFIG config) {
     struct config_params *p = &hand->conf;
 
     // validate: input method
@@ -164,7 +164,7 @@ void validate_config(struct XAVA_HANDLE *hand, XAVACONFIG config) {
             p->winA);
 }
 
-char *load_config(char *configPath, struct XAVA_HANDLE *hand) {
+char *load_config(char *configPath, XAVA *hand) {
     struct config_params *p = &hand->conf;
 
     // config: creating path to default config file

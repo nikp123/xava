@@ -60,7 +60,7 @@ void *xavaHandleForWindowFuncBecauseWinAPIIsOutdated;
 LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     // this shit is beyond retarded
-    struct XAVA_HANDLE *xava = xavaHandleForWindowFuncBecauseWinAPIIsOutdated;
+    XAVA *xava = xavaHandleForWindowFuncBecauseWinAPIIsOutdated;
 
     // god why
     if(xava == NULL)
@@ -138,7 +138,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return XAVA_IGNORE;
 }
 
-EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputClear(XAVA *xava) {
     #ifdef GL
         GLClear(xava);
     #endif
@@ -179,7 +179,7 @@ void GetDesktopResolution(int *horizontal, int *vertical) {
     return;
 }
 
-EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *xava) {
+EXP_FUNC int xavaInitOutput(XAVA *xava) {
     struct config_params *conf = &xava->conf;
 
     // reset event trackers
@@ -313,7 +313,7 @@ EXP_FUNC int xavaInitOutput(struct XAVA_HANDLE *xava) {
     return 0;
 }
 
-EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *xava) {
+EXP_FUNC int xavaOutputApply(XAVA *xava) {
     struct config_params *conf = &xava->conf;
 
     //ReleaseDC(xavaWinWindow, xavaWinFrame);
@@ -372,7 +372,7 @@ EXP_FUNC int xavaOutputApply(struct XAVA_HANDLE *xava) {
     return 0;
 }
 
-EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *xava) {
+EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
     // don't even fucking ask
     xavaHandleForWindowFuncBecauseWinAPIIsOutdated = xava;
 
@@ -419,7 +419,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(struct XAVA_HANDLE *xava) {
     return XAVA_IGNORE;
 }
 
-EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputDraw(XAVA *xava) {
     #ifdef GL
         wglMakeCurrent(xavaWinFrame, xavaWinGLFrame);
         GLDraw(xava);
@@ -432,7 +432,7 @@ EXP_FUNC void xavaOutputDraw(struct XAVA_HANDLE *xava) {
     #endif
 }
 
-EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputCleanup(XAVA *xava) {
     #ifdef GL
         GLCleanup(xava);
         wglMakeCurrent(NULL, NULL);
@@ -451,7 +451,7 @@ EXP_FUNC void xavaOutputCleanup(struct XAVA_HANDLE *xava) {
     //CloseHandle(xavaWinModule);
 }
 
-EXP_FUNC void xavaOutputLoadConfig(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
     struct config_params *conf = &xava->conf;
 
     #ifdef GL

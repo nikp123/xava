@@ -7,7 +7,7 @@
 struct hax {
     void *original_data;
     void (*xava_ionotify_func)(XAVA_IONOTIFY_EVENT,
-            const char *filename, int id, struct XAVA_HANDLE*);
+            const char *filename, int id, XAVA*);
 };
 
 static struct hax hax[100];

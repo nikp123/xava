@@ -27,7 +27,7 @@ const struct wl_buffer_listener wl_buffer_listener = {
 };
 
 struct wl_buffer *wl_create_framebuffer(struct waydata *wd) {
-    struct XAVA_HANDLE   *xava = wd->hand;
+    XAVA   *xava = wd->hand;
 
     int width = xava->outer.w, height = xava->outer.h;
     int stride = width*sizeof(uint32_t);
@@ -58,7 +58,7 @@ void update_frame(struct waydata *wd) {
 }
 
 void reallocSHM(struct waydata *wd) {
-    struct XAVA_HANDLE   *hand = wd->hand;
+    XAVA   *hand = wd->hand;
 
     munmap(wd->shm.buffer, wd->shm.max_size);
 

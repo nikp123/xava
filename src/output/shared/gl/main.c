@@ -13,7 +13,7 @@ static XAVAGLHostOptions   options;
     options.func.name = xava_module_symbol_address_get(options.module_handle, "xava_gl_module_" #name); \
     xavaBailCondition(options.func.name == NULL, "xava_gl_module_" #name " not found!");
 
-void SGLConfigLoad(struct XAVA_HANDLE *xava) {
+void SGLConfigLoad(XAVA *xava) {
     XAVACONFIG config = xava->default_config.config;
     module_options.resolution_scale =
         xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f);
@@ -81,32 +81,32 @@ void SGLConfigLoad(struct XAVA_HANDLE *xava) {
     options.func.config_load(&module_options);
 }
 
-void SGLInit(struct XAVA_HANDLE *xava) {
+void SGLInit(XAVA *xava) {
     module_options.xava = xava;
     options.func.init(&module_options);
 }
 
-void SGLApply(struct XAVA_HANDLE *xava){
+void SGLApply(XAVA *xava){
     module_options.xava = xava;
     options.func.apply(&module_options);
 }
 
-XG_EVENT SGLEvent(struct XAVA_HANDLE *xava) {
+XG_EVENT SGLEvent(XAVA *xava) {
     module_options.xava = xava;
     return options.func.event(&module_options);
 }
 
-void SGLClear(struct XAVA_HANDLE *xava) {
+void SGLClear(XAVA *xava) {
     module_options.xava = xava;
     options.func.clear(&module_options);
 }
 
-void SGLDraw(struct XAVA_HANDLE *xava) {
+void SGLDraw(XAVA *xava) {
     module_options.xava = xava;
     options.func.draw(&module_options);
 }
 
-void SGLCleanup(struct XAVA_HANDLE *xava) {
+void SGLCleanup(XAVA *xava) {
     module_options.xava = xava;
     options.func.cleanup(&module_options);
 

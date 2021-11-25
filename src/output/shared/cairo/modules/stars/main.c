@@ -27,7 +27,7 @@ EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* han
 }
 
 EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* handle) {
-    struct XAVA_HANDLE *xava = handle->xava;
+    XAVA *xava = handle->xava;
 
     arr_resize(stars, star_count);
 
@@ -63,7 +63,7 @@ EXP_FUNC void               xava_cairo_module_draw_safe  (xava_cairo_module_hand
 
 // assume that the entire screen's being overwritten
 EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_handle* handle) {
-    struct XAVA_HANDLE   *xava = handle->xava;
+    XAVA   *xava = handle->xava;
     struct config_params *conf = &xava->conf;
 
     cairo_new_path(handle->cr);
@@ -122,5 +122,5 @@ EXP_FUNC void         xava_cairo_module_ionotify_callback
                 (XAVA_IONOTIFY_EVENT event,
                 const char* filename,
                 int id,
-                struct XAVA_HANDLE* xava) {
+                XAVA* xava) {
 }

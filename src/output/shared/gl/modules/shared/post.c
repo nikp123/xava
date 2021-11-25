@@ -52,7 +52,7 @@ void xava_gl_module_post_update_colors(gl_module_post_render *vars) {
 
 void xava_gl_module_post_config_load(gl_module_post_render *vars) {
     XAVAGLModuleOptions *options = vars->options;
-    struct XAVA_HANDLE  *xava    = options->xava;
+    XAVA  *xava    = options->xava;
     XAVACONFIG           config = xava->default_config.config;
 
     char *shader;
@@ -110,7 +110,7 @@ void xava_gl_module_post_apply(gl_module_post_render *vars) {
     if(!vars->enabled) return;
 
     XAVAGLModuleOptions *options = vars->options;
-    struct XAVA_HANDLE *xava = options->xava;
+    XAVA *xava = options->xava;
     struct gl_vars *gl = &vars->gl_vars;
 
     glUseProgram(vars->post.program);
@@ -159,7 +159,7 @@ void xava_gl_module_post_apply(gl_module_post_render *vars) {
 
 void xava_gl_module_post_pre_draw_setup(gl_module_post_render *vars) {
     XAVAGLModuleOptions *options = vars->options;
-    struct XAVA_HANDLE  *xava    = options->xava;
+    XAVA  *xava    = options->xava;
 
     if(vars->enabled) {
         // bind render target to texture
@@ -177,7 +177,7 @@ void xava_gl_module_post_draw(gl_module_post_render *vars) {
     if(!vars->enabled) return;
 
     XAVAGLModuleOptions *options = vars->options;
-    struct XAVA_HANDLE *xava = options->xava;
+    XAVA *xava = options->xava;
 
     /**
      * Once the texture has been conpleted, we now activate a seperate pipeline

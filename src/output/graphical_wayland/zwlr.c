@@ -30,7 +30,7 @@ static void layer_surface_configure(void *data,
         struct zwlr_layer_surface_v1 *surface,
         uint32_t serial, uint32_t width, uint32_t height) {
     struct waydata *wd = data;
-    struct XAVA_HANDLE *xava = wd->hand;
+    XAVA *xava = wd->hand;
 
     if(width != 0 && height != 0) {
         calculate_win_geo(xava, width, height);
@@ -125,7 +125,7 @@ static struct zwlr_alignment_info handle_window_alignment(struct config_params *
 }
 
 void zwlr_init(struct waydata *wd) {
-    struct XAVA_HANDLE     *hand   = wd->hand;
+    XAVA     *hand   = wd->hand;
     struct config_params   *p      = &hand->conf;
     struct wlOutput        *output = wl_output_get_desired();
 

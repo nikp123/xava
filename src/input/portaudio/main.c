@@ -168,7 +168,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
     return 0;
 } 
 
-EXP_FUNC void xavaInputLoadConfig(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
     struct audio_data *audio = &xava->audio;
     XAVACONFIG config = xava->default_config.config;
     audio->source = (char*)xavaConfigGetString(config, "input", "source", "auto");

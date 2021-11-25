@@ -19,7 +19,7 @@ struct waydata {
     struct wl_surface    *surface;
     struct wl_display    *display;
     struct wl_compositor *compositor;
-    struct XAVA_HANDLE   *hand;
+    XAVA   *hand;
     XG_EVENT_STACK       *events;
     struct wl_list       outputs;
     #ifdef EGL
@@ -50,6 +50,6 @@ extern const struct wl_callback_listener wl_surface_frame_listener;
 
 extern char* monitorName;
 
-EXP_FUNC void xavaOutputClear(struct XAVA_HANDLE *hand);
+EXP_FUNC void xavaOutputClear(XAVA *hand);
 
 #endif

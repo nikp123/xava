@@ -84,7 +84,7 @@ void monstercat_filter(int bars, int waves, double monstercat, int *data) {
     }
 }
 
-EXP_FUNC int xavaFilterInit(struct XAVA_HANDLE *xava) {
+EXP_FUNC int xavaFilterInit(XAVA *xava) {
     struct audio_data *audio = &xava->audio;
     struct config_params *p  = &xava->conf;
 
@@ -118,7 +118,7 @@ EXP_FUNC int xavaFilterInit(struct XAVA_HANDLE *xava) {
     return 0;
 }
 
-EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaFilterApply(XAVA *xava) {
     struct audio_data *audio = &xava->audio;
     struct config_params *p  = &xava->conf;
 
@@ -221,7 +221,7 @@ EXP_FUNC void xavaFilterApply(struct XAVA_HANDLE *xava) {
         xava->bars = xava->bars * 2;
 }
 
-EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaFilterLoop(XAVA *xava) {
     struct audio_data *audio = &xava->audio;
     struct config_params *p  = &xava->conf;
     int i;
@@ -327,7 +327,7 @@ EXP_FUNC void xavaFilterLoop(struct XAVA_HANDLE *xava) {
     }
 }
 
-EXP_FUNC void xavaFilterCleanup(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
     free(outl);
     free(outr);
     fftwf_destroy_plan(pl);
@@ -354,7 +354,7 @@ EXP_FUNC void xavaFilterCleanup(struct XAVA_HANDLE *xava) {
     free(peak);
 }
 
-EXP_FUNC void xavaFilterLoadConfig(struct XAVA_HANDLE *xava) {
+EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
     struct config_params *p = &xava->conf;
     XAVACONFIG config = xava->default_config.config;
 

@@ -11,7 +11,7 @@ typedef struct xava_cairo_module_handle {
     XAVA_CAIRO_FEATURE use_feature;
     char               *name;
     char               *prefix;
-    struct XAVA_HANDLE *xava;
+    XAVA *xava;
     cairo_t            *cr;
     XG_EVENT_STACK     *events;
 } xava_cairo_module_handle;
@@ -58,7 +58,7 @@ typedef struct xava_cairo_module {
                         (XAVA_IONOTIFY_EVENT,
                         const char* filename,
                         int id,
-                        struct XAVA_HANDLE*);
+                        XAVA*);
     } func;
 
     // module handle for fun

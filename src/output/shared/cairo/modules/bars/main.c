@@ -24,7 +24,7 @@ EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* ha
 
 // report drawn regions
 EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* handle) {
-    struct XAVA_HANDLE *xava = handle->xava;
+    XAVA *xava = handle->xava;
     struct config_params *conf = &xava->conf;
 
     xava_cairo_region *regions;
@@ -44,7 +44,7 @@ EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* 
 
 // event handler
 EXP_FUNC void               xava_cairo_module_event      (xava_cairo_module_handle* handle) {
-    struct XAVA_HANDLE *xava = handle->xava;
+    XAVA *xava = handle->xava;
 
     // check if the visualizer bounds were changed
     if((xava->inner.w != xava->bar_space.w) ||
@@ -60,7 +60,7 @@ EXP_FUNC void               xava_cairo_module_clear      (xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_handle* handle) {
-    struct XAVA_HANDLE   *xava = handle->xava;
+    XAVA   *xava = handle->xava;
     struct config_params *conf = &xava->conf;
 
     cairo_new_path(handle->cr);
@@ -108,7 +108,7 @@ EXP_FUNC void               xava_cairo_module_draw_safe  (xava_cairo_module_hand
 
 // assume that the entire screen's being overwritten
 EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_handle* handle) {
-    struct XAVA_HANDLE   *xava = handle->xava;
+    XAVA   *xava = handle->xava;
     struct config_params *conf = &xava->conf;
 
     cairo_new_path(handle->cr);
@@ -135,5 +135,5 @@ EXP_FUNC void         xava_cairo_module_ionotify_callback
                 (XAVA_IONOTIFY_EVENT event,
                 const char* filename,
                 int id,
-                struct XAVA_HANDLE* xava) {
+                XAVA* xava) {
 }

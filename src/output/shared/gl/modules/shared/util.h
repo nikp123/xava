@@ -3,7 +3,7 @@
 
 #include "../../main.h"
 
-float xava_gl_module_util_calculate_intensity(struct XAVA_HANDLE *xava);
+float xava_gl_module_util_calculate_intensity(XAVA *xava);
 float xava_gl_module_util_obtain_time(void);
 #endif
 
