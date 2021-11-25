@@ -7,7 +7,7 @@
 
 // input: ALSA
 
-static void initialize_audio_parameters(snd_pcm_t** handle, struct audio_data* audio,
+static void initialize_audio_parameters(snd_pcm_t** handle, XAVA_AUDIO* audio,
 snd_pcm_uframes_t* frames) {
     // alsa: open device to capture audio
     int err = snd_pcm_open(handle, audio->source, SND_PCM_STREAM_CAPTURE, 0);
@@ -65,7 +65,7 @@ static int get_certain_frame(signed char* buffer, int buffer_index, int adjustme
     return temp;
 }
 
-static void fill_audio_outs(struct audio_data* audio, signed char* buffer,
+static void fill_audio_outs(XAVA_AUDIO* audio, signed char* buffer,
     const int size) {
     int radj = audio->format / 4; // adjustments for interleaved
     int ladj = audio->format / 8;
@@ -106,7 +106,7 @@ static _Bool directory_exists(const char * path) {
 
 EXP_FUNC void* xavaInput(void* data) {
     int err;
-    struct audio_data* audio = (struct audio_data*)data;
+    XAVA_AUDIO* audio = (XAVA_AUDIO*)data;
     snd_pcm_t* handle;
     snd_pcm_uframes_t buffer_size;
     snd_pcm_uframes_t period_size;
@@ -179,7 +179,7 @@ EXP_FUNC void* xavaInput(void* data) {
 }
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVACONFIG config = xava->default_config.config;
     audio->source = (char*)xavaConfigGetString(config, "input", "source", "Loopback,1");
 }

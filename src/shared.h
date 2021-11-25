@@ -46,7 +46,7 @@
 #include "shared/version.h"
 
 // Shared audio data sturct
-struct audio_data {
+typedef struct XAVA_AUDIO {
     float        *audio_out_r;
     float        *audio_out_l;
     int            format;
@@ -57,7 +57,7 @@ struct audio_data {
     char        error_message[1024];
     int            inputsize, fftsize;        // inputsize and fftsize
     uint32_t    latency;                // try to keep (this) latency in samples
-};
+} XAVA_AUDIO;
 
 // configuration parameters
 typedef struct XAVA_CONFIG {
@@ -127,7 +127,7 @@ typedef struct XAVA {
     bool pauseRendering;
 
     // handles to both config variables and the audio state
-    struct audio_data audio;
+    XAVA_AUDIO audio;
     XAVA_CONFIG conf;
 
     struct config {

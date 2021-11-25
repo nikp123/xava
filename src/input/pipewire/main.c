@@ -17,7 +17,7 @@ static int n = 0;
 struct pwdata {
     struct pw_main_loop *loop;
     struct pw_stream *stream;
-    struct audio_data *audio;
+    XAVA_AUDIO *audio;
     double accumulator;
 
     // C-based cringe
@@ -32,7 +32,7 @@ struct pwdata {
 static void on_process(void *userdata)
 {
     struct pwdata *pwdata = userdata;
-    struct audio_data *audio = pwdata->audio;
+    XAVA_AUDIO *audio = pwdata->audio;
     struct pw_buffer *b;
     struct spa_buffer *buf;
     int i, n_frames, stride;
@@ -159,7 +159,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 }
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVACONFIG config = xava->default_config.config;
 
     // default to ignore or change to keep 'em searching

@@ -18,7 +18,7 @@ int open_fifo(const char *path) {
 // input: FIFO
 EXP_FUNC void* xavaInput(void* data)
 {
-    struct audio_data *audio = (struct audio_data *)data;
+    XAVA_AUDIO *audio = (XAVA_AUDIO *)data;
     int fd;
     int n = 0;
     //signed char buf[1024];
@@ -85,7 +85,7 @@ EXP_FUNC void* xavaInput(void* data)
 }
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVACONFIG config = xava->default_config.config;
     xavaWarnCondition(audio->rate != 44100, 
             "Changing the audio rate won't do much as that depends on your MPD "

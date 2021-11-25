@@ -15,7 +15,7 @@ typedef struct {
     SAMPLE      *recordedSamples;
 } paTestData;
 
-static struct audio_data *audio;
+static XAVA_AUDIO *audio;
 static int n = 0;
 
 static int recordCallback(const void *inputBuffer, void *outputBuffer,
@@ -71,7 +71,7 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 }
 
 EXP_FUNC void* xavaInput(void *audiodata) {
-    audio = (struct audio_data *)audiodata;
+    audio = (XAVA_AUDIO *)audiodata;
 
     PaStreamParameters inputParameters;
     PaStream* stream;
@@ -169,7 +169,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 } 
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVACONFIG config = xava->default_config.config;
     audio->source = (char*)xavaConfigGetString(config, "input", "source", "auto");
 }

@@ -13,7 +13,7 @@ pa_mainloop *m_pulseaudio_mainloop;
 
 void cb(__attribute__((unused)) pa_context *pulseaudio_context, const pa_server_info *i, void *userdata){
     //getting default sink name
-    struct audio_data *audio = (struct audio_data *)userdata;
+    XAVA_AUDIO *audio = (XAVA_AUDIO *)userdata;
     audio->source = malloc(sizeof(char) * 1024);
 
     strcpy(audio->source,i->default_sink_name);
@@ -62,7 +62,7 @@ void pulseaudio_context_state_callback(pa_context *pulseaudio_context,
 
 
 void getPulseDefaultSink(void* data) {
-    struct audio_data *audio = (struct audio_data *)data;
+    XAVA_AUDIO *audio = (XAVA_AUDIO *)data;
     pa_mainloop_api *mainloop_api;
     pa_context *pulseaudio_context;
     int ret;
@@ -94,7 +94,7 @@ void getPulseDefaultSink(void* data) {
 
 EXP_FUNC void* xavaInput(void* data)
 {
-    struct audio_data *audio = (struct audio_data *)data;
+    XAVA_AUDIO *audio = (XAVA_AUDIO *)data;
     int i, n;
     int16_t buf[audio->inputsize];
 
@@ -161,7 +161,7 @@ EXP_FUNC void* xavaInput(void* data)
 }
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVACONFIG config = xava->default_config.config;
     audio->source = (char*)xavaConfigGetString(config, "input", "source", "auto");
 }

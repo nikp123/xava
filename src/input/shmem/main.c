@@ -36,7 +36,7 @@ typedef struct {
 //input: SHMEM
 EXP_FUNC void* xavaInput(void* data)
 {
-    struct audio_data *audio = (struct audio_data *)data;
+    XAVA_AUDIO *audio = (XAVA_AUDIO *)data;
     vis_t *mmap_area;
     int fd; /* file descriptor to mmaped area */
     int mmap_count = sizeof( vis_t);
@@ -88,7 +88,7 @@ EXP_FUNC void* xavaInput(void* data)
 }
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVACONFIG config = xava->default_config.config;
     audio->rate = 44100;
     audio->source = (char*)xavaConfigGetString(config, "input", "source", "/squeezelite-00:00:00:00:00:00");

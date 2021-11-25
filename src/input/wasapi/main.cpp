@@ -23,7 +23,7 @@ const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 
-static struct audio_data *audio;
+static XAVA_AUDIO *audio;
 static int n;
 
 HRESULT sinkSetFormat(WAVEFORMATEX * pWF) {
@@ -89,7 +89,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
     UINT32 packetLength = 0;
     BYTE *pData;
     DWORD flags;
-    audio = (struct audio_data *)audiodata;
+    audio = (XAVA_AUDIO *)audiodata;
     REFERENCE_TIME hnsDefaultDevicePeriod;
 
     n = 0; // reset the buffer counter
@@ -189,7 +189,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVACONFIG config = xava->default_config.config;
 
     audio->source = xavaConfigGetString(config, "input", "source", "loopback");

@@ -85,7 +85,7 @@ void monstercat_filter(int bars, int waves, double monstercat, int *data) {
 }
 
 EXP_FUNC int xavaFilterInit(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVA_CONFIG *p  = &xava->conf;
 
     // fft: planning to rock
@@ -119,7 +119,7 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
 }
 
 EXP_FUNC void xavaFilterApply(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVA_CONFIG *p  = &xava->conf;
 
     // if fc is not cleared that means that the variables are not initialized
@@ -222,7 +222,7 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
 }
 
 EXP_FUNC void xavaFilterLoop(XAVA *xava) {
-    struct audio_data *audio = &xava->audio;
+    XAVA_AUDIO *audio = &xava->audio;
     XAVA_CONFIG *p  = &xava->conf;
     int i;
 
