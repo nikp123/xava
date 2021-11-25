@@ -58,7 +58,7 @@ if(MINGW)
 
 	if(CMAKE_BUILD_TYPE STREQUAL "Release")
 		message(STATUS "Since release build, console is being disabled")
-		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -mwindows")
+		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
 
 		# Prepare NSI file for compilation
 		#file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/example_files" xava_EXAMPLE_FILES)
