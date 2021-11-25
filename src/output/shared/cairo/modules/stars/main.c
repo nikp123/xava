@@ -36,8 +36,6 @@ EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* ha
         stars[i].x     = fmod(rand(), xava->outer.w);
         stars[i].y     = fmod(rand(), xava->outer.h);
         stars[i].size  = rand()%4+1;
-        xavaLog("%f %f %f %d", stars[i].angle, stars[i].x, stars[i].y,
-                stars[i].size);
     }
 }
 
