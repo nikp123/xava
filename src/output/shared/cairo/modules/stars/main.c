@@ -1,6 +1,11 @@
+#include <stdio.h>
 #include <limits.h>
 #include <math.h>
+
 #include <cairo/cairo.h>
+
+#include "../shared/config.h"
+
 #include "../../util/module.h"
 #include "../../util/array.h"
 #include "../../../graphical.h"
@@ -11,9 +16,18 @@ struct star {
     float angle;
     uint32_t size;
 } *stars;
-float star_density = 0.0001;
-uint32_t star_count = 0;
-uint32_t star_max_size = 5;
+
+struct options {
+    struct star_options {
+        float    density;
+        uint32_t count;
+        uint32_t max_size;
+        char     *color_str;
+        uint32_t color;
+    } star;
+} options;
+
+xava_config_source *config_file;
 
 // report version
 EXP_FUNC xava_version xava_cairo_module_version(void) {
@@ -22,6 +36,18 @@ EXP_FUNC xava_version xava_cairo_module_version(void) {
 
 // load all the necessary config data and report supported drawing modes
 EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_handle* handle) {
+    config_file = xava_cairo_module_file_load(
+            XAVA_CAIRO_FILE_CONFIG, handle, "config.ini", NULL);
+
+    options.star.count     = xavaConfigGetInt(*config_file, "stars", "count", 0);
+    options.star.density   = 0.0001 * 
+        xavaConfigGetDouble(*config_file, "stars", "density", 1.0);
+    options.star.max_size  = xavaConfigGetInt(*config_file, "stars", "max_size", 5);
+    options.star.color_str = xavaConfigGetString(*config_file, "stars", "color", NULL); 
+
+    xavaBailCondition(options.star.max_size < 1, "max_size cannot be below 1");
+    xavaBailCondition(options.star.count < 0, "star count cannot be negative");
+
     return XAVA_CAIRO_FEATURE_FULL_DRAW;
 }
 
@@ -38,14 +64,19 @@ float xava_generate_star_angle(void) {
 uint32_t xava_generate_star_size(void) {
     float r = (float)rand()/(float)INT_MAX;
 
-    return floor((1.0-pow(r, 0.5))*star_max_size)+1;
+    return floor((1.0-pow(r, 0.5))*options.star.max_size)+1;
 }
 
 EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* handle) {
     XAVA *xava = handle->xava;
 
-    // very scientific, much wow
-    star_count = (float)xava->outer.w*(float)xava->outer.h*star_density;
+    int32_t star_count;
+    if(options.star.count == 0) {
+        // very scientific, much wow
+        star_count = xava->outer.w*xava->outer.h*options.star.density;
+    } else {
+        star_count = options.star.count;
+    }
 
     arr_resize(stars, star_count);
 
@@ -57,6 +88,25 @@ EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* ha
         stars[i].y     = fmod(rand(), xava->outer.h);
         stars[i].size  = xava_generate_star_size();
     }
+
+    if(options.star.color_str == NULL) {
+        options.star.color = xava->conf.col;
+
+        // this is dumb, but it works
+        options.star.color |= ((uint8_t)xava->conf.foreground_opacity*0xFF)<<24;
+    } else do {
+        int err = sscanf(options.star.color_str,
+                "#%08x", &options.star.color);
+        if(err == 1)
+            break;
+
+        err = sscanf(options.star.color_str,
+                "#%08X", &options.star.color);
+        if(err == 1)
+            break;
+
+        xavaBail("'%s' is not a valid color", options.star.color_str);
+    } while(0);
 }
 
 // report drawn regions
@@ -101,15 +151,15 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     intensity /= xava->bars;
 
     // batching per color because that's fast in cairo
-    for(register int j=1; j<=star_max_size; j++) {
-        float alpha = (float)(1+star_max_size-j)/star_max_size;
+    for(register int j=1; j<=options.star.max_size; j++) {
+        float alpha = (float)(1+options.star.max_size-j)/options.star.max_size;
 
         cairo_set_source_rgba(handle->cr,
-                ARGB_R_32(conf->col)/255.0,
-                ARGB_G_32(conf->col)/255.0,
-                ARGB_B_32(conf->col)/255.0,
-                conf->foreground_opacity*alpha);
-        for(register int i=0; i<star_count; i++) {
+                ARGB_R_32(options.star.color)/255.0,
+                ARGB_G_32(options.star.color)/255.0,
+                ARGB_B_32(options.star.color)/255.0,
+                ARGB_A_32(options.star.color)/255.0*alpha);
+        for(register int i=0; i<arr_count(stars); i++) {
             // we're drawing per star
             if(stars[i].size != j)
                 continue;
@@ -144,6 +194,9 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
     arr_free(stars);
+
+    xavaConfigClose(*config_file);
+    free(config_file); // a fun hacky quirk because bad design
 }
 
 // ionotify fun

@@ -1,9 +1,7 @@
 # Project default
-option(CAIRO_MODULES "GL_MODULES" ON)
+option(CAIRO_MODULES "CAIRO_MODULES" ON)
 
-# Xorg
 if(CAIRO_MODULES)
-    # OpenGL/CAIRO
     pkg_check_modules(CAIRO QUIET cairo)
     if(CAIRO_FOUND)
         add_library(cairo_kinetic SHARED "${XAVA_MODULE_DIR}/main.c"
@@ -22,7 +20,7 @@ if(CAIRO_MODULES)
         endif()
         set_target_properties(cairo_kinetic PROPERTIES PREFIX "")
         set_target_properties(cairo_kinetic PROPERTIES IMPORT_PREFIX "")
-        configure_file("${XAVA_MODULE_DIR}/config.cfg"   cairo/module/kinetic/config.cfg   COPYONLY)
+        configure_file("${XAVA_MODULE_DIR}/config.ini"   cairo/module/kinetic/config.ini   COPYONLY)
         set_target_properties(cairo_kinetic PROPERTIES OUTPUT_NAME "cairo/module/kinetic/module")
         install(TARGETS cairo_kinetic RENAME module DESTINATION share/xava/cairo/module/kinetic/)
     else()
