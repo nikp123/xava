@@ -139,7 +139,7 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModuleOptions *options) {
 
 EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     XAVA *xava = options->xava;
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     // automatically assign this so it isn't invalid during framebuffer creation
     xava->outer.w = conf->w;
@@ -200,7 +200,7 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
 
 EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     XAVA *xava = options->xava;
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     glUseProgram(pre.program);
 
@@ -269,7 +269,7 @@ EXP_FUNC XG_EVENT xava_gl_module_event(XAVAGLModuleOptions *options) {
 // shaders HERE and ONLY HERE.
 EXP_FUNC void xava_gl_module_clear(XAVAGLModuleOptions *options) {
     XAVA *xava   = options->xava;
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     // if you want to fiddle with certain uniforms from a shader, YOU MUST SWITCH TO IT
     // (https://www.khronos.org/opengl/wiki/GLSL_:_common_mistakes#glUniform_doesn.27t_work)

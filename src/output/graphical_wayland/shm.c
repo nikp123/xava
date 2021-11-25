@@ -48,7 +48,7 @@ struct wl_buffer *wl_create_framebuffer(struct waydata *wd) {
 }
 
 void update_frame(struct waydata *wd) {
-    //struct config_params     *p    = &wd->s->conf;
+    //XAVA_CONFIG     *p    = &wd->s->conf;
 
     // Update frame and inform wayland 
     struct wl_buffer *buffer = wl_create_framebuffer(wd);

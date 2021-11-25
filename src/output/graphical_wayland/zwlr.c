@@ -76,7 +76,7 @@ const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
  * enough functionality for this to work
  * It assumes clients are able to pick their own positions
 **/
-static struct zwlr_alignment_info handle_window_alignment(struct config_params *p) {
+static struct zwlr_alignment_info handle_window_alignment(XAVA_CONFIG *p) {
     const uint32_t top = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
     const uint32_t bottom = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
     const uint32_t left = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
@@ -126,7 +126,7 @@ static struct zwlr_alignment_info handle_window_alignment(struct config_params *
 
 void zwlr_init(struct waydata *wd) {
     XAVA     *hand   = wd->hand;
-    struct config_params   *p      = &hand->conf;
+    XAVA_CONFIG   *p      = &hand->conf;
     struct wlOutput        *output = wl_output_get_desired();
 
     // Create a "wallpaper" surface

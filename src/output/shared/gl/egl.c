@@ -10,7 +10,7 @@ void EGLConfigLoad(XAVA *xava) {
 }
 
 EGLBoolean EGLCreateContext(XAVA *xava, struct _escontext *ESContext) {
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
     EGLint numConfigs;
     EGLint majorVersion;
     EGLint minorVersion;

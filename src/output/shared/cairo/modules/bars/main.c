@@ -25,7 +25,7 @@ EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* ha
 // report drawn regions
 EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* handle) {
     XAVA *xava = handle->xava;
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     xava_cairo_region *regions;
     arr_init(regions);
@@ -61,7 +61,7 @@ EXP_FUNC void               xava_cairo_module_clear      (xava_cairo_module_hand
 
 EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_handle* handle) {
     XAVA   *xava = handle->xava;
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     cairo_new_path(handle->cr);
 
@@ -109,7 +109,7 @@ EXP_FUNC void               xava_cairo_module_draw_safe  (xava_cairo_module_hand
 // assume that the entire screen's being overwritten
 EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_handle* handle) {
     XAVA   *xava = handle->xava;
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     cairo_new_path(handle->cr);
     cairo_set_source_rgba(handle->cr,

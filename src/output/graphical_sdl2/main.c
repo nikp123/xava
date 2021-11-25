@@ -28,7 +28,7 @@ EXP_FUNC void xavaOutputCleanup(XAVA *s)
 
 EXP_FUNC int xavaInitOutput(XAVA *s)
 {
-    struct config_params *p = &s->conf;
+    XAVA_CONFIG *p = &s->conf;
 
     xavaBailCondition(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS),
             "Unable to initailize SDL2: %s", SDL_GetError());
@@ -60,7 +60,7 @@ EXP_FUNC void xavaOutputClear(XAVA *s) {
 }
 
 EXP_FUNC int xavaOutputApply(XAVA *s) {
-    struct config_params *p = &s->conf;
+    XAVA_CONFIG *p = &s->conf;
 
     // toggle fullscreen
     SDL_SetWindowFullscreen(xavaSDLWindow, SDL_WINDOW_FULLSCREEN & p->fullF);
@@ -83,7 +83,7 @@ EXP_FUNC int xavaOutputApply(XAVA *s) {
 }
 
 EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *s) {
-    struct config_params *p = &s->conf;
+    XAVA_CONFIG *p = &s->conf;
 
     while(SDL_PollEvent(&xavaSDLEvent) != 0) {
         switch(xavaSDLEvent.type) {
@@ -162,7 +162,7 @@ EXP_FUNC void xavaOutputDraw(XAVA *s) {
 }
 
 EXP_FUNC void xavaOutputLoadConfig(XAVA *s) {
-    struct config_params *p = &s->conf;
+    XAVA_CONFIG *p = &s->conf;
     //struct XAVA_CONFIG config = s->default_config.config;
 
     // VSync doesnt work on SDL2 :(

@@ -123,7 +123,7 @@ enum {
 #define _NET_WM_STATE_TOGGLE 2
 
 #ifdef GL
-int XGLInit(struct config_params *conf) {
+int XGLInit(XAVA_CONFIG *conf) {
     // we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
     xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
     glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
@@ -166,7 +166,7 @@ void snatchColor(char *name, char *colorStr, unsigned int *colorNum, char *datab
     sscanf(value.addr, "#%06X", colorNum);
 }
 
-void calculateColors(struct config_params *conf) {
+void calculateColors(XAVA_CONFIG *conf) {
     XrmInitialize();
     XrmDatabase xavaXResDB = NULL;
     char *databaseName = XResourceManagerString(xavaXDisplay);
@@ -178,7 +178,7 @@ void calculateColors(struct config_params *conf) {
 }
 
 EXP_FUNC int xavaInitOutput(XAVA *xava) {
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     // NVIDIA CPU cap utilization in Vsync fix
     setenv("__GL_YIELD", "USLEEP", 0);
@@ -421,7 +421,7 @@ EXP_FUNC void xavaOutputClear(XAVA *xava) {
 }
 
 EXP_FUNC int xavaOutputApply(XAVA *xava) {
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     calculateColors(conf);
 
@@ -474,7 +474,7 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
 }
 
 EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     // this way we avoid event stacking which requires a full frame to process a single event
     XG_EVENT action = XAVA_IGNORE;
@@ -653,7 +653,7 @@ EXP_FUNC void xavaOutputCleanup(XAVA *xava) {
 
 EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
     XAVACONFIG config = xava->default_config.config;
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     UNUSED(conf);
 

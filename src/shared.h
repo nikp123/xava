@@ -60,7 +60,7 @@ struct audio_data {
 };
 
 // configuration parameters
-struct config_params {
+typedef struct XAVA_CONFIG {
     // for internal use only
     double sens;
     int32_t fixedbars;
@@ -114,7 +114,7 @@ struct config_params {
     // skipFilterF = literally just skips the filter stage
     // ignoreWindowSizeF = forces the engine to ignore window geometry for bar
     //      calculation
-};
+} XAVA_CONFIG;
 
 // XAVA handle
 typedef struct XAVA {
@@ -128,7 +128,7 @@ typedef struct XAVA {
 
     // handles to both config variables and the audio state
     struct audio_data audio;
-    struct config_params conf;
+    XAVA_CONFIG conf;
 
     struct config {
         // handle to the config file itself

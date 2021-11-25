@@ -37,7 +37,7 @@ static void xdg_toplevel_handle_configure(void *data,
         struct wl_array *states) {
     struct waydata       *wd   = data;
     XAVA   *xava = wd->hand;
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     if(w == 0 && h == 0) return;
 

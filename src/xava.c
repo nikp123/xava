@@ -90,7 +90,7 @@ void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
 
 // general: cleanup
 void cleanup(void) {
-    struct config_params *p     = &xava.conf;
+    XAVA_CONFIG *p     = &xava.conf;
     struct audio_data    *audio = &xava.audio;
 
     xavaIONotifyKill(xava.ionotify);
@@ -220,7 +220,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
     // general: main loop
     while (1) {
         // extract the shorthand sub-handles
-        struct config_params     *p     = &xava.conf;
+        XAVA_CONFIG     *p     = &xava.conf;
         struct audio_data        *audio = &xava.audio;
 
         // initialize ioNotify engine

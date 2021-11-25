@@ -9,7 +9,7 @@
 
 void __internal_xava_graphical_calculate_win_pos_keep(XAVA *xava,
                                             uint32_t winW, uint32_t winH) {
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     xava->outer.w = winW;
     xava->outer.h = winH;
@@ -80,7 +80,7 @@ void calculate_win_geo(XAVA *xava, uint32_t winW, uint32_t winH) {
 
 void calculate_win_pos(XAVA *xava, uint32_t scrW, uint32_t scrH,
                         uint32_t winW, uint32_t winH) {
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     xava->outer.x = 0;
     xava->outer.y = 0;

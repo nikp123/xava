@@ -93,7 +93,7 @@ static NCURSES_COLOR_T change_color_definition(NCURSES_COLOR_T color_number,
 }
 
 EXP_FUNC void xavaInitOutput(XAVA *hand) {
-    struct config_params *p = &hand->conf;
+    XAVA_CONFIG *p = &hand->conf;
     initscr();
     curs_set(0);
     timeout(0);
@@ -206,7 +206,7 @@ void change_colors(int cur_height, int tot_height) {
 }
 
 EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
-    struct config_params *p = &hand->conf;
+    XAVA_CONFIG *p = &hand->conf;
     char ch = getch();
 
     int neww,newh;
@@ -272,7 +272,7 @@ EXP_FUNC void xavaOutputApply(XAVA *hand) {
 #define TERMINAL_RESIZED -1
 
 EXP_FUNC int xavaOutputDraw(XAVA *hand) {
-    struct config_params *p = &hand->conf;
+    XAVA_CONFIG *p = &hand->conf;
 
     int height = p->h/8-1;
 

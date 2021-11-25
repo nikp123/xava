@@ -86,7 +86,7 @@ void monstercat_filter(int bars, int waves, double monstercat, int *data) {
 
 EXP_FUNC int xavaFilterInit(XAVA *xava) {
     struct audio_data *audio = &xava->audio;
-    struct config_params *p  = &xava->conf;
+    XAVA_CONFIG *p  = &xava->conf;
 
     // fft: planning to rock
     CALLOC_SELF(outl, audio->fftsize/2+1);
@@ -120,7 +120,7 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
 
 EXP_FUNC void xavaFilterApply(XAVA *xava) {
     struct audio_data *audio = &xava->audio;
-    struct config_params *p  = &xava->conf;
+    XAVA_CONFIG *p  = &xava->conf;
 
     // if fc is not cleared that means that the variables are not initialized
     REALLOC_SELF(fc,xava->bars);
@@ -223,7 +223,7 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
 
 EXP_FUNC void xavaFilterLoop(XAVA *xava) {
     struct audio_data *audio = &xava->audio;
-    struct config_params *p  = &xava->conf;
+    XAVA_CONFIG *p  = &xava->conf;
     int i;
 
     // process: execute FFT and sort frequency bands
@@ -355,7 +355,7 @@ EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
 }
 
 EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
-    struct config_params *p = &xava->conf;
+    XAVA_CONFIG *p = &xava->conf;
     XAVACONFIG config = xava->default_config.config;
 
     p->sens     = xavaConfigGetDouble(config, "filter", "sensitivity", 100.0) *

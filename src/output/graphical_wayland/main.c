@@ -171,7 +171,7 @@ EXP_FUNC int xavaOutputApply(XAVA *hand) {
 }
 
 EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
-    //struct config_params     *p    = &s->conf;
+    //XAVA_CONFIG     *p    = &s->conf;
 
     XG_EVENT event = XAVA_IGNORE;
 
@@ -226,7 +226,7 @@ EXP_FUNC void xavaOutputDraw(XAVA *hand) {
 }
 
 EXP_FUNC void xavaOutputLoadConfig(XAVA *hand) {
-    struct config_params *p = &hand->conf;
+    XAVA_CONFIG *p = &hand->conf;
     XAVACONFIG config = hand->default_config.config;
 
     backgroundLayer = xavaConfigGetBool

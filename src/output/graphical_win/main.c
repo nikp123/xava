@@ -66,7 +66,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if(xava == NULL)
         return DefWindowProc(hWnd,msg,wParam,lParam);
 
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     switch(msg) {
         case WM_CREATE:
@@ -180,7 +180,7 @@ void GetDesktopResolution(int *horizontal, int *vertical) {
 }
 
 EXP_FUNC int xavaInitOutput(XAVA *xava) {
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     // reset event trackers
     resized=FALSE;
@@ -314,7 +314,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
 }
 
 EXP_FUNC int xavaOutputApply(XAVA *xava) {
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     //ReleaseDC(xavaWinWindow, xavaWinFrame);
 
@@ -452,7 +452,7 @@ EXP_FUNC void xavaOutputCleanup(XAVA *xava) {
 }
 
 EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
-    struct config_params *conf = &xava->conf;
+    XAVA_CONFIG *conf = &xava->conf;
 
     #ifdef GL
         // VSync is a must due to shit Windows timers
