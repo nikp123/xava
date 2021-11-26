@@ -4,7 +4,7 @@
 #include "array.h"
 
 XAVA_CAIRO_FEATURE xava_cairo_module_check_compatibility(xava_cairo_module *modules) {
-    XAVA_CAIRO_FEATURE lowest_common_denominator = 
+    XAVA_CAIRO_FEATURE lowest_common_denominator =
         XAVA_CAIRO_FEATURE_DRAW_REGION_SAFE |
         XAVA_CAIRO_FEATURE_DRAW_REGION |
         XAVA_CAIRO_FEATURE_FULL_DRAW;
@@ -15,7 +15,7 @@ XAVA_CAIRO_FEATURE xava_cairo_module_check_compatibility(xava_cairo_module *modu
                 0, "Module sanity check failed for \'%s\'", modules[i].name);
         lowest_common_denominator &= modules[i].features;
     }
-    xavaReturnErrorCondition(lowest_common_denominator == 0, 
+    xavaReturnErrorCondition(lowest_common_denominator == 0,
             0, "Modules do not have inter-compatible drawing methods!\n",
             "Please report this to the developer WHILST including your "
             "current configuration.");
@@ -42,6 +42,13 @@ XAVA_CAIRO_FEATURE xava_cairo_module_check_compatibility(xava_cairo_module *modu
                 pass = false;
             }
         }
+    }
+
+    if(pass == false) {
+        xavaBailCondition(
+                (lowest_common_denominator & XAVA_CAIRO_FEATURE_FULL_DRAW) == 0,
+                "No common drawing mode exists since no regions match. RIP.");
+        return XAVA_CAIRO_FEATURE_FULL_DRAW;
     }
 
     return XAVA_CAIRO_FEATURE_DRAW_REGION;

@@ -1,5 +1,5 @@
 #ifndef __XAVA_OUTPUT_SHARED_CAIRO_UTIL_MODULE_H
-#define __XAVA_OUTPUT_SHARED_CAIRO_UTIL_MODULE_H 
+#define __XAVA_OUTPUT_SHARED_CAIRO_UTIL_MODULE_H
 
 #include <stdbool.h>
 #include <cairo/cairo.h>
@@ -11,7 +11,7 @@ typedef struct xava_cairo_module_handle {
     XAVA_CAIRO_FEATURE use_feature;
     char               *name;
     char               *prefix;
-    XAVA *xava;
+    XAVA               *xava;
     cairo_t            *cr;
     XG_EVENT_STACK     *events;
 } xava_cairo_module_handle;
