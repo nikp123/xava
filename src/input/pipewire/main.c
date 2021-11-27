@@ -26,7 +26,7 @@ struct pwdata {
         char channels[32];
     } audio_str;
 
-    bool target;
+    bool autoconnect;
 };
 
 static void on_process(void *userdata)
@@ -43,7 +43,7 @@ static void on_process(void *userdata)
         return;
     }
 
-    // list of SPA buffers 
+    // list of SPA buffers
     buf = b->buffer;
 
     // Test the first buffer of the first SPA buffer
@@ -106,7 +106,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
             pw_get_library_version());
 
     // if different from default, the target is set
-    pwdata.target = strcmp(pwdata.audio->source, "default");
+    pwdata.autoconnect = strcmp(pwdata.audio->source, "none");
 
     // blame C
     sprintf(pwdata.audio_str.rate, "%d", pwdata.audio->rate);
@@ -121,16 +121,18 @@ EXP_FUNC void* xavaInput(void *audiodata) {
                 PW_KEY_MEDIA_CLASS, "Stream/Input/Audio",
                 PW_KEY_MEDIA_ICON_NAME, PACKAGE,
                 PW_KEY_APP_NAME, PACKAGE,
-                PW_KEY_APP_ID, "com.github.nikp123." PACKAGE,
+                PW_KEY_APP_ID, "com.github.nikp123."PACKAGE,
                 PW_KEY_AUDIO_RATE, pwdata.audio_str.rate,
                 PW_KEY_AUDIO_CHANNELS, pwdata.audio_str.channels,
                 NULL);
 
     // append target if non-default
-    if(pwdata.target) {
+    if(strcmp(pwdata.audio->source, "default")) {
         pw_properties_set(props, PW_KEY_NODE_TARGET, pwdata.audio->source);
-        //pw_properties_set(props, PW_KEY_NODE_AUTOCONNECT, "false");
     }
+
+    if(pwdata.autoconnect == false)
+        pw_properties_set(props, PW_KEY_NODE_AUTOCONNECT, "false");
 
     pwdata.loop = pw_main_loop_new(NULL);
     pwdata.stream = pw_stream_new_simple(
