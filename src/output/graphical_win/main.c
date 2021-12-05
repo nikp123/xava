@@ -209,7 +209,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     // extended and standard window styles
     DWORD dwExStyle=0, dwStyle=0;
     if(conf->transF) dwExStyle|=WS_EX_TRANSPARENT;
-    if(!conf->interactF) dwExStyle|=WS_EX_LAYERED|WS_EX_COMPOSITED;
+    if(!conf->interactF) dwExStyle|=WS_EX_LAYERED;
     if(!conf->taskbarF) dwExStyle|=WS_EX_TOOLWINDOW;
     if(conf->borderF) dwStyle|=WS_CAPTION;
 
