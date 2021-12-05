@@ -62,7 +62,7 @@ float xava_generate_star_angle(void) {
 }
 
 uint32_t xava_generate_star_size(void) {
-    float r = (float)rand()/(float)INT_MAX;
+    float r = (float)rand()/(float)RAND_MAX;
 
     return floor((1.0-pow(r, 0.5))*options.star.max_size)+1;
 }
