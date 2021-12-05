@@ -76,6 +76,8 @@ if(MINGW)
 
 	# This is to prevent DLL hell, also helps a fuckton with packaging
 	set(CMAKE_SHARED_LINKER_FLAGS "-static")
+
+	add_definitions("-DXAVA_PREDEFINED_SENS_VALUE=0.005")
 else()
 	# This hack is a of courtesy of: https://stackoverflow.com/a/40947954/3832385
 	if(GNU)
