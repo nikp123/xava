@@ -221,10 +221,10 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     xavaBailCondition(!xavaWinWindow, "CreateWindowEx failed");
 
     // transparency fix
-    if(conf->transF) SetLayeredWindowAttributes(xavaWinWindow, 0x00FFFFFF, 
-            255, LWA_ALPHA);
-    SetWindowPos(xavaWinWindow, conf->bottomF ? HWND_BOTTOM : HWND_NOTOPMOST, 
-            xava->outer.x, xava->outer.y, 
+    if(conf->transF) SetLayeredWindowAttributes(xavaWinWindow, 0x00FFFFFF,
+            255, LWA_ALPHA | LWA_COLORKEY);
+    SetWindowPos(xavaWinWindow, conf->bottomF ? HWND_BOTTOM : HWND_NOTOPMOST,
+            xava->outer.x, xava->outer.y,
             xava->outer.w, xava->outer.h,
             SWP_SHOWWINDOW);
 
@@ -234,6 +234,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
     bb.hRgnBlur = hRgn;
     bb.fEnable = conf->transF;
+    bb.fTransitionOnMaximized = true;
     DwmEnableBlurBehindWindow(xavaWinWindow, &bb);
 
     xavaWinFrame = GetDC(xavaWinWindow);
@@ -299,7 +300,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     #endif
     #ifdef CAIRO
         xavaCairoSurface = cairo_win32_surface_create(xavaWinFrame);
-        __internal_xava_output_cairo_init(xavaCairoHandle, 
+        __internal_xava_output_cairo_init(xavaCairoHandle,
                 cairo_create(xavaCairoSurface));
     #endif
 
@@ -352,7 +353,7 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
         SetWindowLongPtr(xavaWinWindow, GWL_STYLE, Style);
 
         SetWindowPos(xavaWinWindow, 0,
-                xava->outer.w, xava->outer.y, 
+                xava->outer.w, xava->outer.y,
                 xava->outer.w, xava->outer.h,
                 SWP_FRAMECHANGED | SWP_SHOWWINDOW);
     }
@@ -394,7 +395,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
             resized=FALSE;
             return XAVA_RESIZE;
         }
- 
+
         if(r != XAVA_IGNORE)
             return r;
     }
@@ -404,7 +405,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
             return XAVA_RELOAD;
         }
     #endif
- 
+
     #ifdef CAIRO
         XG_EVENT event = __internal_xava_output_cairo_event(xavaCairoHandle);
         switch(event) {
@@ -425,7 +426,7 @@ EXP_FUNC void xavaOutputDraw(XAVA *xava) {
         GLDraw(xava);
         SwapBuffers(xavaWinFrame);
     #endif
- 
+
     #ifdef CAIRO
         __internal_xava_output_cairo_draw(xavaCairoHandle);
         SwapBuffers(xavaWinFrame);
