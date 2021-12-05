@@ -40,10 +40,10 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
             XAVA_CAIRO_FILE_CONFIG, handle, "config.ini", NULL);
 
     options.star.count     = xavaConfigGetInt(*config_file, "stars", "count", 0);
-    options.star.density   = 0.0001 * 
+    options.star.density   = 0.0001 *
         xavaConfigGetDouble(*config_file, "stars", "density", 1.0);
     options.star.max_size  = xavaConfigGetInt(*config_file, "stars", "max_size", 5);
-    options.star.color_str = xavaConfigGetString(*config_file, "stars", "color", NULL); 
+    options.star.color_str = xavaConfigGetString(*config_file, "stars", "color", NULL);
 
     xavaBailCondition(options.star.max_size < 1, "max_size cannot be below 1");
     xavaBailCondition(options.star.count < 0, "star count cannot be negative");
@@ -56,7 +56,7 @@ EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* han
 }
 
 float xava_generate_star_angle(void) {
-    float r = (float)rand()/(float)INT_MAX;
+    float r = (float)rand()/(float)RAND_MAX;
 
     return 0.7 - pow(sin(r*M_PI), 0.5);
 }
