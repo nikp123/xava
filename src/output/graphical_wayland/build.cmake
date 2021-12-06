@@ -4,6 +4,31 @@ set(WL_PROT_DIR "/usr/share/wayland-protocols")
 # Project default
 option(WAYLAND "WAYLAND" ON)
 
+function(generate_wayland_source input output)
+    get_filename_component(FILE_EXT "${output}" LAST_EXT)
+    if(FILE_EXT MATCHES ".c")
+        add_custom_command(PRE_BUILD OUTPUT
+            "${XAVA_MODULE_DIR}/gen/${output}"
+            COMMAND wayland-scanner private-code
+            "${input}"
+            "${XAVA_MODULE_DIR}/gen/${output}")
+    elseif(FILE_EXT MATCHES ".h")
+        execute_process(
+            COMMAND wayland-scanner client-header
+            "${input}"
+            "${XAVA_MODULE_DIR}/gen/${output}"
+            RESULT_VARIABLE _EXIT_CODE
+            OUTPUT_FILE "${XAVA_MODULE_DIR}/gen/${output}")
+
+        if(_EXIT_CODE)
+            message(FATAL_ERROR "An error occured while processing ${input}")
+        endif()
+    else()
+        message(FATAL_ERROR "Invalid file extension: ${extension} of file ${output}")
+    endif()
+endfunction()
+
+
 # Wayland
 if(WAYLAND)
     pkg_check_modules(WAYLAND QUIET wayland-client)
@@ -11,31 +36,31 @@ if(WAYLAND)
         set(_CFLAG_SYMBOLS_HIDE "-fvisibility=hidden")
 
         # Hacky way to deal with wayland-scanner (but will be used for now)
-        execute_process(COMMAND wayland-scanner client-header
+        generate_wayland_source(
             "${WL_PROT_DIR}/stable/xdg-shell/xdg-shell.xml"
-            "${XAVA_MODULE_DIR}/gen/xdg-shell-client-protocol.h")
-        execute_process(COMMAND wayland-scanner private-code
+            "xdg-shell-client-protocol.h")
+        generate_wayland_source(
             "${WL_PROT_DIR}/stable/xdg-shell/xdg-shell.xml"
-            "${XAVA_MODULE_DIR}/gen/xdg-shell-client-protocol.c")
-        execute_process(COMMAND wayland-scanner client-header
+            "xdg-shell-client-protocol.c")
+        generate_wayland_source(
             "${WL_PROT_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml"
-            "${XAVA_MODULE_DIR}/gen/xdg-output-unstable-v1-client-protocol.h")
-        execute_process(COMMAND wayland-scanner private-code
+            "xdg-output-unstable-v1-client-protocol.h")
+        generate_wayland_source(
             "${WL_PROT_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml"
-            "${XAVA_MODULE_DIR}/gen/xdg-output-unstable-v1-client-protocol.c")
+            "xdg-output-unstable-v1-client-protocol.c")
 
-        execute_process(COMMAND wayland-scanner client-header
+        generate_wayland_source(
             "${XAVA_MODULE_DIR}/protocols/wlr-layer-shell-unstable-v1.xml"
-            "${XAVA_MODULE_DIR}/gen/wlr-layer-shell-unstable-v1-client-protocol.h")
-        execute_process(COMMAND wayland-scanner private-code
+            "wlr-layer-shell-unstable-v1-client-protocol.h")
+        generate_wayland_source(
             "${XAVA_MODULE_DIR}/protocols/wlr-layer-shell-unstable-v1.xml"
-            "${XAVA_MODULE_DIR}/gen/wlr-layer-shell-unstable-v1-client-protocol.c")
-        execute_process(COMMAND wayland-scanner client-header
+            "wlr-layer-shell-unstable-v1-client-protocol.c")
+        generate_wayland_source(
             "${XAVA_MODULE_DIR}/protocols/wlr-output-management-unstable-v1.xml"
-            "${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.h")
-        execute_process(COMMAND wayland-scanner private-code
+            "wlr-output-managment-unstable-v1.h")
+        generate_wayland_source(
             "${XAVA_MODULE_DIR}/protocols/wlr-output-management-unstable-v1.xml"
-            "${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c")
+            "wlr-output-managment-unstable-v1.c")
 
         # Wayland is such a fucking mess that I won't even bother adding license disclaimers
         # Only if someone complains, then I might
@@ -60,12 +85,12 @@ if(WAYLAND)
             "${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c"
             "${XAVA_MODULE_DIR}/gen/wlr-layer-shell-unstable-v1-client-protocol.c"
             "${GLOBAL_FUNCTION_SOURCES}")
-        target_link_libraries(out_wayland xava-shared 
+        target_link_libraries(out_wayland xava-shared
             ${WAYLAND_LIBRARIES} ${WAYLAND_EGL_LIBRARIES} OpenGL
             GL wayland-egl GLEW)
-        target_include_directories(out_wayland PRIVATE 
+        target_include_directories(out_wayland PRIVATE
             ${WAYLAND_INCLUDE_DIRS} ${WAYLAND_EGL_INCLUDE_DIRS})
-        target_link_directories(out_wayland PRIVATE 
+        target_link_directories(out_wayland PRIVATE
             ${WAYLAND_LIBRARY_DIRS} ${WAYLAND_EGL_LIBRARY_DIRS})
         set_target_properties(out_wayland PROPERTIES PREFIX "")
         install(TARGETS out_wayland DESTINATION lib/xava)
@@ -94,11 +119,11 @@ if(WAYLAND)
             "${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c"
             "${XAVA_MODULE_DIR}/gen/wlr-layer-shell-unstable-v1-client-protocol.c"
             "${GLOBAL_FUNCTION_SOURCES}")
-        target_link_libraries(out_wayland_cairo xava-shared 
+        target_link_libraries(out_wayland_cairo xava-shared
             ${WAYLAND_LIBRARIES} ${CAIRO_LIBRARIES})
-        target_include_directories(out_wayland_cairo PRIVATE 
+        target_include_directories(out_wayland_cairo PRIVATE
             ${WAYLAND_INCLUDE_DIRS} ${CAIRO_INCLUDE_DIRS})
-        target_link_directories(out_wayland_cairo PRIVATE 
+        target_link_directories(out_wayland_cairo PRIVATE
             ${WAYLAND_LIBRARY_DIRS} ${CAIRO_LIBRARY_DIRS})
         set_target_properties(out_wayland_cairo PROPERTIES PREFIX "")
         install(TARGETS out_wayland_cairo DESTINATION lib/xava)
