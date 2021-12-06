@@ -27,13 +27,7 @@ if(SDL2)
 		target_compile_definitions(out_sdl2 PUBLIC -DSDL -DGL)
 		install(TARGETS out_sdl2 DESTINATION lib/xava)
 
-		# 1001 reasons to not write shit in C
-		if(MINGW)
-			add_custom_command(TARGET out_sdl2 POST_BUILD
-				COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${xava_dep_dirs}"
-				python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:out_sdl2> --copy
-			)
-		endif()
+		find_and_copy_dlls(out_sdl2)
 
 		# Add legal disclaimer
 		file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_sdl2.txt"

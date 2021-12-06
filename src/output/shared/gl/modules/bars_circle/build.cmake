@@ -28,12 +28,7 @@ if(GL_MODULES)
         set_target_properties(gl_bars_circle PROPERTIES OUTPUT_NAME "gl/module/bars_circle/module")
 
         # this copies the dlls for mr. windows
-        #if(MINGW)
-        #    add_custom_command(TARGET gl_bars_circle POST_BUILD
-        #        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${xava_dep_dirs}"
-        #        python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:gl_bars_circle> --copy
-        #    )
-        #endif()
+        #find_and_copy_dlls(gl_bars_circle)
 
         configure_file("${XAVA_MODULE_DIR}/vertex.glsl"   gl/module/bars_circle/vertex.glsl   COPYONLY)
         configure_file("${XAVA_MODULE_DIR}/fragment.glsl" gl/module/bars_circle/fragment.glsl COPYONLY)

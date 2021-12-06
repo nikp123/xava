@@ -30,11 +30,7 @@ if(WINAPI)
                         -DGLEW_STATIC)
                     set_target_properties(out_win PROPERTIES PREFIX "")
 
-                    # copy dependency dll's because fucking windows
-                    add_custom_command(TARGET out_win POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${xava_dep_dirs}"
-                        python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:out_win> --copy
-                    )
+                    find_and_copy_dlls(out_win)
                 else()
                     message(WARNING "OpenGL library not found, WinAPI app won't build")
                 endif()
@@ -57,10 +53,7 @@ if(WINAPI)
                     target_compile_definitions(out_win_cairo PUBLIC -DWIN -DCAIRO)
                     set_target_properties(out_win_cairo PROPERTIES PREFIX "")
 
-                    add_custom_command(TARGET out_win_cairo POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${xava_dep_dirs}"
-                        python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:out_win_cairo> --copy
-                    )
+                    find_and_copy_dlls(out_win_cairo)
                 else()
                     message(WARNING "Cairo library not found, \"win_cairo\" won't build")
                 endif()

@@ -14,13 +14,7 @@ if(FILTER_DEFAULT)
 	set_target_properties(filter_default PROPERTIES PREFIX "")
 	install(TARGETS filter_default DESTINATION lib/xava)
 
-	# 1001 reasons to not write shit in C
-	if(MINGW)
-		add_custom_command(TARGET filter_default POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${xava_dep_dirs}"
-			python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:filter_default> --copy
-		)
-	endif()
+	find_and_copy_dlls(filter_default)
 
 	# Add legal disclaimer
 	file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_fftw.txt"

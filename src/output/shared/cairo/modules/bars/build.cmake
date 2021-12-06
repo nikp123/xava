@@ -20,12 +20,7 @@ if(CAIRO_MODULES)
         configure_file("${XAVA_MODULE_DIR}/config.ini"   cairo/module/bars/config.ini   COPYONLY)
 
         # this copies the dlls for mr. windows
-        #if(MINGW)
-        #    add_custom_command(TARGET cairo_bars POST_BUILD
-        #        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${xava_dep_dirs}"
-        #        python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:cairo_bars> --copy
-        #    )
-        #endif()
+        #find_and_copy_dlls(cairo_bars)
 
         set_target_properties(cairo_bars PROPERTIES OUTPUT_NAME "cairo/module/bars/module")
         install(TARGETS cairo_bars RENAME module DESTINATION share/xava/cairo/module/bars/)
