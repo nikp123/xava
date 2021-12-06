@@ -20,6 +20,15 @@ if(PORTAUDIO)
 		set_target_properties(in_portaudio PROPERTIES PREFIX "")
 		install(TARGETS in_portaudio DESTINATION lib/xava)
 
+		# 1001 reasons to not write shit in C
+		if(MINGW)
+			string(JOIN ":" xava_dep_dirs ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin)
+			add_custom_command(TARGET xava-shared POST_BUILD
+				COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
+				python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:xava-shared> --copy
+			)
+		endif()
+
 		# Add legal disclaimer
 		file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_portaudio.txt"
 			"PortAudio license can be obtained at: http://www.portaudio.com/license.html\n")

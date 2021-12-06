@@ -11,23 +11,35 @@ if(GL_MODULES)
                                     "${XAVA_MODULE_DIR}/../shared/post.c"
                                     "${XAVA_MODULE_DIR}/../shared/util.c"
                                     "${GLOBAL_FUNCTION_SOURCES}")
-        target_link_directories(gl_bars PRIVATE 
+        target_link_directories(gl_bars PRIVATE
             "${GLEW_LIBRARY_DIRS}")
-        target_include_directories(gl_bars PRIVATE 
+        target_include_directories(gl_bars PRIVATE
             "${GLEW_INCLUDE_DIRS}")
         if(WINDOWS OR MINGW OR MSVC OR CYGWIN)
             target_link_libraries(gl_bars xava-shared GLEW::glew_s "-lopengl32")
             target_compile_definitions(gl_bars PUBLIC -DGL -DGLEW_STATIC)
         else()
-            target_link_libraries(gl_bars xava-shared 
+            target_link_libraries(gl_bars xava-shared
                 "${GLEW_LIBRARIES}")
             target_compile_definitions(gl_bars PUBLIC -DGL)
         endif()
+
         set_target_properties(gl_bars PROPERTIES PREFIX "")
         set_target_properties(gl_bars PROPERTIES IMPORT_PREFIX "")
         set_target_properties(gl_bars PROPERTIES OUTPUT_NAME "gl/module/bars/module")
+
+        # this copies the dlls for mr. windows
+        #if(MINGW)
+        #    string(JOIN ":" xava_dep_dirs ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin)
+        #    add_custom_command(TARGET gl_bars POST_BUILD
+        #        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
+        #        python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:gl_bars> --copy
+        #    )
+        #endif()
+
         configure_file("${XAVA_MODULE_DIR}/vertex.glsl"   gl/module/bars/vertex.glsl   COPYONLY)
         configure_file("${XAVA_MODULE_DIR}/fragment.glsl" gl/module/bars/fragment.glsl COPYONLY)
+
         install(TARGETS gl_bars RENAME module DESTINATION share/xava/gl/module/bars/)
         install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/vertex.glsl"   RENAME vertex.glsl.example   DESTINATION share/xava/gl/module/bars/)
         install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/fragment.glsl" RENAME fragment.glsl.example DESTINATION share/xava/gl/module/bars/)

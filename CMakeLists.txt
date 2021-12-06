@@ -74,9 +74,6 @@ if(MINGW)
 
 	set(ADDITIONAL_OBJS ${CMAKE_CURRENT_BINARY_DIR}/xava.rc)
 
-	# This is to prevent DLL hell, also helps a fuckton with packaging
-	set(CMAKE_SHARED_LINKER_FLAGS "-static")
-
 	add_definitions("-DXAVA_PREDEFINED_SENS_VALUE=0.005")
 else()
 	# This hack is a of courtesy of: https://stackoverflow.com/a/40947954/3832385
@@ -197,6 +194,15 @@ endforeach()
 install (TARGETS xava DESTINATION bin)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/final-LICENSE.txt" DESTINATION share/licenses/xava)
 install (FILES example_files/config RENAME config.example DESTINATION share/xava)
+
+# 1001 reasons to not write shit in C
+if(MINGW)
+	string(JOIN ":" xava_dep_dirs ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin)
+	add_custom_command(TARGET xava POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
+		python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:xava> --copy
+	)
+endif()
 
 # Install vertex shaders
 file(GLOB filters "example_files/gl/shaders/*/vertex.glsl" )

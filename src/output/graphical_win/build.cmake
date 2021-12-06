@@ -5,9 +5,6 @@ if(NOT (MSYS OR MINGW OR MSVC))
     set(WINAPI OFF)
 endif()
 
-set(GLEW_USE_STATIC_LIBS ON)
-find_package(GLEW)
-
 # winapi
 if(WINAPI)
     find_library(GDI_LIB gdi32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
@@ -17,7 +14,10 @@ if(WINAPI)
             find_library(DWM_LIB dwmapi HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
             if(DWM_LIB)
                 find_library(WGL_LIB opengl32 HINTS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
-                if(WGL_LIB)
+
+                set(GLEW_USE_STATIC_LIBS ON)
+                find_package(GLEW)
+                if(WGL_LIB AND GLEW)
                     add_library(out_win SHARED "${XAVA_MODULE_DIR}/main.c"
                         "src/output/shared/graphical.c"
                         "src/output/shared/gl/glew.c"
@@ -29,13 +29,19 @@ if(WINAPI)
                     target_compile_definitions(out_win PUBLIC -DWIN -DGL
                         -DGLEW_STATIC)
                     set_target_properties(out_win PROPERTIES PREFIX "")
+
+                    # copy dependency dll's because fucking windows
+                    string(JOIN ":" xava_dep_dirs ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin)
+                    add_custom_command(TARGET out_win POST_BUILD
+                        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
+                        python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:out_win> --copy
+                    )
                 else()
                     message(WARNING "OpenGL library not found, WinAPI app won't build")
                 endif()
 
-                pkg_check_modules(CAIRO QUIET cairo pixman-1)
+                pkg_check_modules(CAIRO QUIET cairo)
                 if(CAIRO_FOUND)
-	                set(CMAKE_SHARED_LINKER_FLAGS "")
                     add_library(out_win_cairo SHARED "${XAVA_MODULE_DIR}/main.c"
                         "src/output/shared/graphical.c"
                         "src/output/shared/cairo/main.c"
@@ -51,6 +57,12 @@ if(WINAPI)
                         "${CAIRO_INCLUDE_DIRS}")
                     target_compile_definitions(out_win_cairo PUBLIC -DWIN -DCAIRO)
                     set_target_properties(out_win_cairo PROPERTIES PREFIX "")
+
+                    string(JOIN ":" xava_dep_dirs ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin)
+                    add_custom_command(TARGET out_win_cairo POST_BUILD
+                        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
+                        python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:out_win_cairo> --copy
+                    )
                 else()
                     message(WARNING "Cairo library not found, \"win_cairo\" won't build")
                 endif()

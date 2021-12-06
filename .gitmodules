@@ -4,3 +4,6 @@
 [submodule "lib/x-watcher"]
 	path = lib/x-watcher
 	url = https://github.com/nikp123/x-watcher
+[submodule "thirdparty/mingw-bundledlls"]
+	path = thirdparty/mingw-bundledlls
+	url = https://github.com/mpreisler/mingw-bundledlls
