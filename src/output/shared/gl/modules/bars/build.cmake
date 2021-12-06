@@ -30,7 +30,6 @@ if(GL_MODULES)
 
         # this copies the dlls for mr. windows
         #if(MINGW)
-        #    string(JOIN ":" xava_dep_dirs ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin)
         #    add_custom_command(TARGET gl_bars POST_BUILD
         #        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
         #        python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:gl_bars> --copy

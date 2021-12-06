@@ -74,6 +74,10 @@ if(MINGW)
 
 	set(ADDITIONAL_OBJS ${CMAKE_CURRENT_BINARY_DIR}/xava.rc)
 
+	# set global binary library search path
+	string(JOIN ":" xava_dep_dirs ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin
+		/mingw64/bin /mingw32/bin /clang64/bin /clange32/bin /clangarm64/bin)
+
 	add_definitions("-DXAVA_PREDEFINED_SENS_VALUE=0.005")
 else()
 	# This hack is a of courtesy of: https://stackoverflow.com/a/40947954/3832385
@@ -197,7 +201,6 @@ install (FILES example_files/config RENAME config.example DESTINATION share/xava
 
 # 1001 reasons to not write shit in C
 if(MINGW)
-	string(JOIN ":" xava_dep_dirs ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin)
 	add_custom_command(TARGET xava POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
 		python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:xava> --copy
