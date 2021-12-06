@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-windows:
-    name: 🚧 🟦 windows (x86)
+    name: 🚧🟦 windows (x86)
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
