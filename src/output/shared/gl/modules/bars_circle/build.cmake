@@ -4,8 +4,9 @@ option(GL_MODULES "GL_MODULES" ON)
 # Xorg
 if(GL_MODULES)
     # OpenGL/GLEW
+    find_library(GLEW glew32)
     pkg_check_modules(GLEW QUIET glew)
-    if(GLEW_FOUND)
+    if(GLEW OR GLEW_FOUND)
         add_library(gl_bars_circle SHARED "${XAVA_MODULE_DIR}/main.c"
                                     "${XAVA_MODULE_DIR}/../shared/shader.c"
                                     "${XAVA_MODULE_DIR}/../shared/post.c"
@@ -15,14 +16,14 @@ if(GL_MODULES)
             "${GLEW_LIBRARY_DIRS}")
         target_include_directories(gl_bars_circle PRIVATE 
             "${GLEW_INCLUDE_DIRS}")
+
         if(WINDOWS OR MINGW OR MSVC OR CYGWIN)
-            target_link_libraries(gl_bars_circle xava-shared GLEW::glew_s "-lopengl32")
-            target_compile_definitions(gl_bars_circle PUBLIC -DGL -DGLEW_STATIC)
+            target_link_libraries(gl_bars_circle xava-shared "-lglew32 -lopengl32")
         else()
-            target_link_libraries(gl_bars_circle xava-shared 
-                "${GLEW_LIBRARIES}")
-            target_compile_definitions(gl_bars_circle PUBLIC -DGL)
+            target_link_libraries(gl_bars_circle xava-shared "${GLEW_LIBRARIES}")
         endif()
+        target_compile_definitions(gl_bars_circle PUBLIC -DGL)
+
         set_target_properties(gl_bars_circle PROPERTIES PREFIX "")
         set_target_properties(gl_bars_circle PROPERTIES IMPORT_PREFIX "")
         set_target_properties(gl_bars_circle PROPERTIES OUTPUT_NAME "gl/module/bars_circle/module")

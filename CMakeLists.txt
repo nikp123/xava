@@ -74,10 +74,12 @@ if(MINGW)
 	endif()
 
 	# Prepare NSI file for compilation
-	#file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/example_files" xava_EXAMPLE_FILES)
-	string(REPLACE "/" "\\" xava_EXAMPLE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/example_files")
-	string(REPLACE "/" "\\" xava_SOURCE_DIR    "${CMAKE_CURRENT_SOURCE_DIR}")
 	configure_file("assets/windows/xava.nsi.template" "xava.nsi" NEWLINE_STYLE CRLF)
+
+	# Do not convert the file paths to Windows-native ones as we're building in Linux
+	#file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/example_files" xava_EXAMPLE_FILES)
+	#string(REPLACE "/" "\\" xava_EXAMPLE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/example_files")
+	#string(REPLACE "/" "\\" xava_SOURCE_DIR    "${CMAKE_CURRENT_SOURCE_DIR}")
 
 	set(xava_EXECUTABLE_WINDOWS_ICO_PATH "${CMAKE_CURRENT_SOURCE_DIR}/assets/windows/xava.ico")
 	configure_file("assets/windows/xava.rc.template" "xava.rc" NEWLINE_STYLE CRLF)
@@ -94,8 +96,6 @@ if(MINGW)
 	string(JOIN "${xava_dep_dirs_separator}" xava_dep_dirs
 		./ ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin
 		/mingw64/bin /mingw32/bin /clang64/bin /clang32/bin /clangarm64/bin)
-
-	message(ERROR ${xava_dep_dirs})
 
 	add_definitions("-DXAVA_PREDEFINED_SENS_VALUE=0.005")
 else()
@@ -226,41 +226,7 @@ if(MINGW)
 	)
 endif()
 
-# Install vertex shaders
-file(GLOB filters "example_files/gl/shaders/*/vertex.glsl" )
-foreach(files ${filters})
-	get_filename_component(path ${files} REALPATH DIRECTORY)
-	string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
-	string(REPLACE "vertex.glsl" "" target_path ${target_path})
-	install(FILES "example_files/${target_path}/vertex.glsl" RENAME vertex.glsl.example DESTINATION "share/xava/${target_path}")
-endforeach()
-
-# Install geometry shaders
-file(GLOB filters "example_files/gl/shaders/*/geometry.glsl" )
-foreach(files ${filters})
-	get_filename_component(path ${files} REALPATH DIRECTORY)
-	string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
-	string(REPLACE "geometry.glsl" "" target_path ${target_path})
-	install(FILES "example_files/${target_path}/geometry.glsl" RENAME geometry.glsl.example DESTINATION "share/xava/${target_path}")
-endforeach()
-
-# Install fragment shaders
-file(GLOB filters "example_files/gl/shaders/*/fragment.glsl" )
-foreach(files ${filters})
-	get_filename_component(path ${files} REALPATH DIRECTORY)
-	string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
-	string(REPLACE "fragment.glsl" "" target_path ${target_path})
-	install(FILES "example_files/${target_path}/fragment.glsl" RENAME fragment.glsl.example DESTINATION "share/xava/${target_path}")
-endforeach()
-
-# Install shader configs
-file(GLOB filters "example_files/gl/shaders/*/config.ini" )
-foreach(files ${filters})
-	get_filename_component(path ${files} REALPATH DIRECTORY)
-	string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
-	string(REPLACE "config.ini" "" target_path ${target_path})
-	install(FILES "example_files/${target_path}/config.ini" RENAME config.ini.example DESTINATION "share/xava/${target_path}")
-endforeach()
+include("src/cmake/copy_gl_shaders.cmake")
 
 if(UNIX AND NOT APPLE)
     install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
