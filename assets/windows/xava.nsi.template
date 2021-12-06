@@ -28,12 +28,9 @@ Section
 
     # include these files
     File xava.exe
-    File out*.dll
-    File in*.dll
-    File filter*.dll
-    File libxava-shared.dll
-    File libwinpthread-1.dll
-    File /r @xava_EXAMPLE_FILES@\gl
+    File *.dll
+    File /nonfatal /r gl
+    File /nonfatal /r cairo
     File @xava_EXAMPLE_FILES@\config
     File final-LICENSE.txt
     File README.txt
