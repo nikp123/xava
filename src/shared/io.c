@@ -61,9 +61,7 @@ EXP_FUNC int xavaMkdir(const char *dir) {
 // returned in UNIX time except milliseconds
 EXP_FUNC unsigned long xavaGetTime(void) {
     #ifdef WIN
-        GetSystemTime(&time);
-        newTime = time.wSecond*1000+time.wMilliseconds;
-        return time.wSecond*1000+time.wMilliseconds;
+        return timeGetTime();
     #else
         struct timeval tv;
         gettimeofday(&tv, NULL);
