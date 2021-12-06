@@ -21,7 +21,7 @@ if(CAIRO_MODULES)
         # this copies the dlls for mr. windows
         #if(MINGW)
         #    add_custom_command(TARGET cairo_stars POST_BUILD
-        #        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
+        #        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${xava_dep_dirs}"
         #        python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:cairo_stars> --copy
         #    )
         #endif()

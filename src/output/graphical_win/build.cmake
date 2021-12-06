@@ -32,7 +32,7 @@ if(WINAPI)
 
                     # copy dependency dll's because fucking windows
                     add_custom_command(TARGET out_win POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
+                        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${xava_dep_dirs}"
                         python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:out_win> --copy
                     )
                 else()
@@ -58,7 +58,7 @@ if(WINAPI)
                     set_target_properties(out_win_cairo PROPERTIES PREFIX "")
 
                     add_custom_command(TARGET out_win_cairo POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="./:${xava_dep_dirs}"
+                        COMMAND ${CMAKE_COMMAND} -E env MINGW_BUNDLEDLLS_SEARCH_PATH="${xava_dep_dirs}"
                         python "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mingw-bundledlls/mingw-bundledlls" $<TARGET_FILE:out_win_cairo> --copy
                     )
                 else()
