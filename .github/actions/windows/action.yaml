@@ -1,0 +1,5 @@
+runs:
+  using: docker
+  image: docker://ghcr.io/nikp123/xava:windows-archlinux-mingw64-ownstuff
+
+  entrypoint: './.github/actions/windows/build.sh'

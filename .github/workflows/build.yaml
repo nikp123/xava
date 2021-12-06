@@ -10,87 +10,27 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        include:
-          - sys: mingw32
-            arch: i686
-            icon: '⬛'
-            cmake-args: -DBUILD_LEGACY_OUTPUTS:BOOL=ON -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr
-            build-args: '--parallel'
-            env:
-              CFLAGS: -Wdeclaration-after-statement -Werror
-              CXXFLAGS: -Werror
-          - sys: mingw64
-            arch: x86_64
-            icon: '🟦'
-            cmake-args: -DBUILD_LEGACY_OUTPUTS:BOOL=ON -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr
-            build-args: --parallel
-            env:
-              CFLAGS: -Wdeclaration-after-statement -Werror
-              CXXFLAGS: -Werror
-
-    name: 🚧${{ matrix.icon }} ${{ matrix.sys }} (${{ matrix.arch }})
-
-    defaults:
-      run:
-        shell: msys2 {0}
-
+    name: 🚧 🟦 windows (x86)
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: true
 
-    - name: '${{ matrix.icon }} Prepare MSYS2'
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: ${{matrix.sys}}
-        update: true
-        install: >-
-          git
-          make
-          mingw-w64-${{matrix.arch}}-gcc
-          mingw-w64-${{matrix.arch}}-cmake
-          mingw-w64-${{matrix.arch}}-fftw
-          mingw-w64-${{matrix.arch}}-glew
-          mingw-w64-${{matrix.arch}}-nsis
-          mingw-w64-${{matrix.arch}}-SDL2
-          mingw-w64-${{matrix.arch}}-cairo
+    - name: Run container
+      uses: ./.github/actions/windows
 
-    - name: Build in debug mode
-      env: ${{ matrix.env }}
-      shell: msys2 {0}
-      run: |
-        mkdir debug
-        cd debug
-        ${{ matrix.cmake-path }}cmake --version
-        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Debug -Werror=dev ..
-        ${{ matrix.cmake-path }}cmake --build . --config Debug ${{ matrix.build-args }}
-
-    - name: Build in release mode
-      env: ${{ matrix.env }}
-      shell: msys2 {0}
-      run: |
-        mkdir release
-        cd release
-        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
-        ${{ matrix.cmake-path }}cmake --build . --config Release ${{ matrix.build-args }}
-
-    - name: Building Windows installer
-      env: ${{ matrix.env }}
-      shell: msys2 {0}
-      run: |
-        cd release
-        cp /${{ matrix.sys }}/bin/libwinpthread-1.dll .
-        makensis xava.nsi
-        mv xava-win-installer.exe xava-win-installer-${{matrix.arch}}.exe
-
-    - name: Uploading artifact
+    - name: Uploading artifact for i686
       uses: actions/upload-artifact@v2
       with:
-        name: xava-unstable-installer-${{matrix.arch}}.exe
-        path: release/xava-win-installer-${{matrix.arch}}.exe
+        name: xava-unstable-installer-i686.exe
+        path: xava-win-installer-i686.exe
+
+    - name: Uploading artifact for x86_64
+      uses: actions/upload-artifact@v2
+      with:
+        name: xava-unstable-installer-x86_64.exe
+        path: xava-win-installer-x86_64.exe
 
   build-cmake:
     runs-on: ${{ matrix.os }}

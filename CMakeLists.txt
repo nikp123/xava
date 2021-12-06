@@ -74,16 +74,15 @@ if(MINGW)
 
 	set(ADDITIONAL_OBJS ${CMAKE_CURRENT_BINARY_DIR}/xava.rc)
 
-	if(WIN32)
-		message(WARNING "your mom")
-		set(xava_dep_dirs_separator "\;")
-	else()
-		set(xava_dep_dirs_separator ":")
-	endif()
+	# For Windows you use ';', but it's broken, so don't even bother
+	# If you really care about building this on Windows, learn how to use
+	# Docker and build the .github/actions/windows/build.sh file using
+	# the windows-archlinux-mingw64-ownstuff image in the repo
+	set(xava_dep_dirs_separator ":")
 
 	# set global binary library search path
 	string(JOIN "${xava_dep_dirs_separator}" xava_dep_dirs
-		${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin
+		./ ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES} ${CMAKE_FIND_ROOT_PATH}/bin
 		/mingw64/bin /mingw32/bin /clang64/bin /clang32/bin /clangarm64/bin)
 
 	message(ERROR ${xava_dep_dirs})
