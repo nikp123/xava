@@ -27,9 +27,9 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
 
     // loop until all entries have been read
     char key_name[128];
-    size_t key_number = 1;
+    uint32_t key_number = 1;
     do {
-        snprintf(key_name, 128, "module_%lu", key_number);
+        snprintf(key_name, 128, "module_%u", key_number);
         char *module_name = xavaConfigGetString(config, "cairo", key_name, NULL);
 
         // module invalid, probably means that all desired modules are loaded
