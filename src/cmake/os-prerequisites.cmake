@@ -42,9 +42,12 @@ else()
         add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
         set(BUILD_DEBUG_FLAGS "-rdynamic")
         set(CMAKE_SHARED_LINKER_FLAGS "-rdynamic")
-
-        # Add proper version info to the desktop shortcut file
-        configure_file("assets/linux/xava.desktop.template" "xava.desktop" NEWLINE_STYLE UNIX)
     endif()
+endif()
+
+# XDG-like desktop target
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
+    # Add proper version info to the desktop shortcut file
+    configure_file("assets/linux/xava.desktop.template" "xava.desktop" NEWLINE_STYLE UNIX)
 endif()
 
