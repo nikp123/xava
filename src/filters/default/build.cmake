@@ -7,17 +7,17 @@ list(APPEND INCLUDE_DIRS "${FFTW3_INCLUDE_DIRS}")
 list(APPEND LINK_DIRS "${FFTW3_LIBRARY_DIRS}")
 
 if(FILTER_DEFAULT)
-	message(STATUS "Default filter enabled!")
-	add_library(filter_default SHARED "${XAVA_MODULE_DIR}/main.c"
-										"${GLOBAL_FUNCTION_SOURCES}")
-	target_link_libraries(filter_default xava-shared "${FFTW3_LIBRARIES}")
-	set_target_properties(filter_default PROPERTIES PREFIX "")
-	install(TARGETS filter_default DESTINATION lib/xava)
+    message(STATUS "Default filter enabled!")
+    add_library(filter_default SHARED "${XAVA_MODULE_DIR}/main.c"
+                                        "${GLOBAL_FUNCTION_SOURCES}")
+    target_link_libraries(filter_default xava-shared "${FFTW3_LIBRARIES}")
+    set_target_properties(filter_default PROPERTIES PREFIX "")
+    install(TARGETS filter_default DESTINATION lib/xava)
 
-	find_and_copy_dlls(filter_default)
+    find_and_copy_dlls(filter_default)
 
-	# Add legal disclaimer
-	file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_fftw.txt"
-		"FFTW License can be obtained at: http://fftw.org/doc/License-and-Copyright.html\n")
+    # Add legal disclaimer
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_fftw.txt"
+        "FFTW License can be obtained at: http://fftw.org/doc/License-and-Copyright.html\n")
 endif()
 
