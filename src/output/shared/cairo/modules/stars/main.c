@@ -28,6 +28,25 @@ struct options {
 } options;
 
 xava_config_source *config_file;
+XAVAIONOTIFY       file_notifications;
+
+// ionotify fun
+void         xava_cairo_module_ionotify_callback
+                (XAVA_IONOTIFY_EVENT event,
+                const char* filename,
+                int id,
+                XAVA* xava) {
+    xava_cairo_module_handle *handle = (xava_cairo_module_handle*)xava;
+    switch(event) {
+        case XAVA_IONOTIFY_CHANGED:
+            // trigger restart
+            pushXAVAEventStack(handle->events, XAVA_RELOAD);
+            break;
+        default:
+            // noop
+            break;
+    }
+}
 
 // report version
 EXP_FUNC xava_version xava_cairo_module_version(void) {
@@ -36,8 +55,9 @@ EXP_FUNC xava_version xava_cairo_module_version(void) {
 
 // load all the necessary config data and report supported drawing modes
 EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_handle* handle) {
+    char config_file_path[MAX_PATH];
     config_file = xava_cairo_module_file_load(
-            XAVA_CAIRO_FILE_CONFIG, handle, "config.ini", NULL);
+            XAVA_CAIRO_FILE_CONFIG, handle, "config.ini", config_file_path);
 
     options.star.count     = xavaConfigGetInt(*config_file, "stars", "count", 0);
     options.star.density   = 0.0001 *
@@ -47,6 +67,22 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
 
     xavaBailCondition(options.star.max_size < 1, "max_size cannot be below 1");
     xavaBailCondition(options.star.count < 0, "star count cannot be negative");
+
+    // setup file notifications
+    file_notifications = xavaIONotifySetup();
+
+    XAVAIONOTIFYWATCHSETUP setup;
+    MALLOC_SELF(setup, 1);
+    setup->filename           = config_file_path;
+    setup->id                 = 1;
+    setup->xava_ionotify_func = xava_cairo_module_ionotify_callback;
+    setup->xava               = (XAVA*) handle;
+    setup->ionotify           = file_notifications;
+    xavaIONotifyAddWatch(setup);
+
+    xavaIONotifyStart(file_notifications);
+
+    free(setup);
 
     return XAVA_CAIRO_FEATURE_FULL_DRAW;
 }
@@ -195,14 +231,9 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
     arr_free(stars);
 
+    xavaIONotifyKill(file_notifications);
+
     xavaConfigClose(*config_file);
     free(config_file); // a fun hacky quirk because bad design
 }
 
-// ionotify fun
-EXP_FUNC void         xava_cairo_module_ionotify_callback
-                (XAVA_IONOTIFY_EVENT event,
-                const char* filename,
-                int id,
-                XAVA* xava) {
-}
