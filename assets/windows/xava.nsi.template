@@ -31,7 +31,7 @@ Section
     File *.dll
     File /nonfatal /r gl
     File /nonfatal /r cairo
-    File @xava_EXAMPLE_FILES@\config
+    File @xava_EXAMPLE_FILES_NSIS@\config
     File final-LICENSE.txt
     File README.txt
 
