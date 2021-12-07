@@ -10,8 +10,8 @@
 #include "../graphical.h"
 
 #define LOAD_FUNC_POINTER(name) \
-    module.func.name = xava_module_symbol_address_get(module.handle, "xava_cairo_module_" #name); \
-    xavaBailCondition(module.func.name == NULL, "xava_cairo_module_" #name " not found!");
+    module->func.name = xava_module_symbol_address_get(module->handle, "xava_cairo_module_" #name); \
+    xavaBailCondition(module->func.name == NULL, "xava_cairo_module_" #name " not found!");
 
 // creates flexible instances, which ARE memory managed and must be free-d after use
 xava_cairo_handle *__internal_xava_output_cairo_load_config(
@@ -80,8 +80,14 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
             free(returned_path);
         } while(0);
 
+        // append loaded module to cairo handle
+        arr_add(handle->modules, module);
+
         // the part of the function where function pointers get loaded per module
         {
+            struct xava_cairo_module *module =
+                &handle->modules[arr_count(handle->modules)-1];
+
             LOAD_FUNC_POINTER(version);
             LOAD_FUNC_POINTER(config_load);
             LOAD_FUNC_POINTER(regions);
@@ -91,30 +97,27 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
             LOAD_FUNC_POINTER(cleanup);
             LOAD_FUNC_POINTER(ionotify_callback);
 
-            module.config.name   = module.name;
-            module.config.xava   = xava;
-            module.config.prefix = module.prefix;
-            module.config.events = handle->events;
-            module.features = module.func.config_load(&module.config);
+            module->config.name   = module->name;
+            module->config.xava   = xava;
+            module->config.prefix = module->prefix;
+            module->config.events = handle->events;
+            module->features = module->func.config_load(&module->config);
 
-            if(module.features & XAVA_CAIRO_FEATURE_DRAW_REGION) {
+            if(module->features & XAVA_CAIRO_FEATURE_DRAW_REGION) {
                 LOAD_FUNC_POINTER(draw_region);
             }
 
-            if(module.features & XAVA_CAIRO_FEATURE_DRAW_REGION_SAFE) {
+            if(module->features & XAVA_CAIRO_FEATURE_DRAW_REGION_SAFE) {
                 LOAD_FUNC_POINTER(draw_safe);
             }
 
-            if(module.features & XAVA_CAIRO_FEATURE_FULL_DRAW) {
+            if(module->features & XAVA_CAIRO_FEATURE_FULL_DRAW) {
                 LOAD_FUNC_POINTER(draw_full);
             }
 
             // remember to increment the key number
             key_number++;
         }
-
-        // append loaded module to cairo handle
-        arr_add(handle->modules, module);
     } while(1);
 
     return handle;
