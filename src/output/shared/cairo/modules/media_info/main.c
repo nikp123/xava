@@ -239,21 +239,21 @@ cairo_surface_t *xava_cairo_module_draw_new_media_screen(
     cover_geo.display_mode = ARTWORK_PRESERVE;
     cover_geo.texture_mode = ARTWORK_NEAREST;
 
-    title.font = "Gotham";
-    title.weight = TEXT_NORMAL;
+    title.font = "Noto Sans";
+    title.weight = TEXT_BOLD;
     title.x = 0.175;
-    title.y = 0.075;
-    title.size = 60;
+    title.y = 0.100;
+    title.size = 40;
     title.color.r = 1.0;
     title.color.g = 1.0;
     title.color.b = 1.0;
     title.color.a = 1.0;
 
-    artist.font = "Gotham Book";
+    artist.font = "Noto Sans";
     artist.weight = TEXT_NORMAL;
     artist.x = 0.175;
-    artist.y = 0.175;
-    artist.size = 48;
+    artist.y = 0.160;
+    artist.size = 28;
     artist.color.r = 1.0;
     artist.color.g = 1.0;
     artist.color.b = 1.0;

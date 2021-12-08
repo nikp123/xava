@@ -29,9 +29,28 @@ void media_data_update
 
     data->last_timestamp = xavaGetTime();
 
-    if(strncmp(properties.metadata.track_id, data->last_track_id, TRACK_ID_LENGHT)) {
+    bool should_update = false;
+
+    // check track ID for mismatches
+    if(strncmp(properties.metadata.track_id, data->last_track_id, TRACK_ID_LENGHT))
+        should_update = true;
+
+    // check album name for mismatches
+    if(strncmp(properties.metadata.album, data->data.album, MUSIC_DATA_STRING_LENGHT))
+        should_update = true;
+
+    // check song artist for mismatches
+    if(strncmp(properties.metadata.artist, data->data.artist, MUSIC_DATA_STRING_LENGHT))
+        should_update = true;
+
+    // check song title for mismatches
+    if(strncmp(properties.metadata.title, data->data.title, MUSIC_DATA_STRING_LENGHT))
+        should_update = true;
+
+    if(should_update) {
         xava_cairo_module_update_artwork(properties.metadata.art_url,
                 &data->data.cover, data->curl);
+
         strncpy(data->last_track_id, properties.metadata.track_id, TRACK_ID_LENGHT);
 
         strncpy(data->data.album, properties.metadata.album, MUSIC_DATA_STRING_LENGHT);
