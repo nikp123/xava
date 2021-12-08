@@ -42,7 +42,7 @@ jobs:
           sys: ubuntu
           arch: x86_64
           icon: '🟦'
-          cmake-args: -G "Unix Makefiles" -DBUILD_LEGACY_OUTPUTS:BOOL=ON -DCMAKE_INSTALL_PREFIX=/usr
+          cmake-args: -G "Unix Makefiles" -DBUILD_LEGACY_OUTPUTS:BOOL=ON
           build-args: --parallel
           env:
             CFLAGS: -Wdeclaration-after-statement -Werror
@@ -66,26 +66,67 @@ jobs:
         mkdir debug
         cd debug
         ${{ matrix.cmake-path }}cmake --version
-        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Debug -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug -Werror=dev ..
         ${{ matrix.cmake-path }}cmake --build . --config Debug ${{ matrix.build-args }}
+        sudo make install
 
     - name: Build in release mode
       env: ${{ matrix.env }}
       run: |
         mkdir release
         cd release
-        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
         ${{ matrix.cmake-path }}cmake --build . --config Release ${{ matrix.build-args }}
+        sudo make install
+
+    - name: Rebuild for AppImage packaging
+      env: ${{ matrix.env }}
+      run: |
+        mkdir appimage
+        cd appimage
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_INSTALL_PREFIX="\\./usr" -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake --build . --config Release ${{ matrix.build-args }}
+        make install DESTDIR=AppDir
+
+    - name: Build AppImage
+      env: ${{ matrix.env }}
+      run: |
+        cd appimage
+        sudo apt-get install wget -y
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+        env LD_LIBRARY_PATH=. ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage --icon-filename AppDir/usr/share/icons/hicolor/scalable/apps/xava.svg --desktop-file AppDir/usr/share/applications/xava.desktop
+
+    - name: Get Git info and share it globally
+      env: ${{ matrix.env }}
+      id: vars
+      run: |
+        cd appimage
+        echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+    - name: Set executable flag for AppImage
+      env: ${{ matrix.env }}
+      run:
+        chmod +x appimage/XAVA-${{ steps.vars.output.sha_short }}-x86_64.AppImage
+
+    - name: Upload AppImage artifact
+      uses: actions/upload-artifact@v2
+      with:
+        if-no-files-found: error
+        name: xava-${{ steps.vars.outputs.branch }}-x86_64.AppImage
+        path: appimage/XAVA-${{ steps.vars.outputs.sha_short }}-x86_64.AppImage
 
     - name: Extract version string
       env: ${{ matrix.env }}
       run: |
         cd release
-        cat xava.desktop | grep Version | cut -d'=' -f2 > version.txt
+        cat CMakeCache.txt | grep xava_VERSION | cut -d'=' -f2 > version.txt
 
     - name: Upload version artifact
       uses: actions/upload-artifact@v2
       with:
+        if-no-files-found: error
         name: version.txt
         path: release/version.txt
 
