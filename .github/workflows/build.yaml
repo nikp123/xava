@@ -77,11 +77,35 @@ jobs:
         ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
         ${{ matrix.cmake-path }}cmake --build . --config Release ${{ matrix.build-args }}
 
+    - name: Build AppImage
+      env: ${{ matrix.env }}
+      run: |
+        cd release
+        make install DESTDIR=AppDir
+        sudo apt-get install wget -y
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+        env LD_LIBRARY_PATH=. ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage --icon-filename AppDir/usr/share/icons/hicolor/scalable/apps/xava.svg --desktop-file AppDir/usr/share/applications/xava.desktop
+
+    - name: Get Git info and share it globally
+      env: ${{ matrix.env }}
+      id: vars
+      run: |
+        cd release
+        echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+    - name: Upload AppImage artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: XAVA-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.sha_short }}-x86_64.AppImage
+        path: release/XAVA-${{ steps.vars.outputs.sha_short }}-x86_64.AppImage
+
     - name: Extract version string
       env: ${{ matrix.env }}
       run: |
         cd release
-        cat xava.desktop | grep Version | cut -d'=' -f2 > version.txt
+        cat CMakeCache.txt | grep xava_VERSION | cut -d'=' -f2 > version.txt
 
     - name: Upload version artifact
       uses: actions/upload-artifact@v2

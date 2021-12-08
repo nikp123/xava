@@ -22,7 +22,7 @@ set(xava_VERSION_MAJOR 0)
 set(xava_VERSION_MINOR 7)
 set(xava_VERSION_PATCH 1)
 set(xava_VERSION_TWEAK 1)
-set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}")
+set(xava_VERSION "${xava_VERSION_MAJOR}.${xava_VERSION_MINOR}.${xava_VERSION_PATCH}.${xava_VERSION_TWEAK}" CACHE STRING "XAVA version")
 
 # Definitions
 add_definitions(-DPACKAGE="xava" -DVERSION="${xava_VERSION}")
