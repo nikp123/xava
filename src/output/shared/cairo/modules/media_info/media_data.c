@@ -37,6 +37,7 @@ void media_data_update
         strncpy(data->data.album, properties.metadata.album, MUSIC_DATA_STRING_LENGHT);
         strncpy(data->data.artist, properties.metadata.artist, MUSIC_DATA_STRING_LENGHT);
         strncpy(data->data.title, properties.metadata.title, MUSIC_DATA_STRING_LENGHT);
+        data->data.version++;
     }
 }
 
@@ -69,6 +70,7 @@ struct media_data_thread *
     MALLOC_SELF(value, 1);
 
     value->data.cover.ready = false;
+    value->data.version = 0;
 
     value->alive = true;
     pthread_create(&value->thread, NULL, media_data_thread_runner, value);

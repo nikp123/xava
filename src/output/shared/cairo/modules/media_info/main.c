@@ -29,7 +29,7 @@ struct artwork_geometry {
     float                x, y, size;
     artwork_display_mode display_mode;
     artwork_texture_mode texture_mode;
-} cover_geo;
+};
 
 typedef enum text_weight {
     TEXT_NORMAL,
@@ -47,7 +47,15 @@ struct text {
     struct color {
         float r, g, b, a;
     } color;
-} title, artist;
+};
+
+struct region {
+    int x, y, w, h;
+};
+
+cairo_surface_t *surface;
+struct region    surface_region;
+uint64_t last_version;
 
 // report version
 EXP_FUNC xava_version xava_cairo_module_version(void) {
@@ -62,33 +70,8 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
 EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* handle) {
     media_data_thread = xava_cairo_module_media_data_thread_create();
 
-    cover_geo.x = 0.05;
-    cover_geo.y = 0.05;
-    cover_geo.size = 0.2;
-    cover_geo.display_mode = ARTWORK_PRESERVE;
-    cover_geo.texture_mode = ARTWORK_NEAREST;
-
-    title.text = "";
-    title.font = "Gotham";
-    title.weight = TEXT_NORMAL;
-    title.x = 0.175;
-    title.y = 0.075;
-    title.size = 60;
-    title.color.r = 1.0;
-    title.color.g = 1.0;
-    title.color.b = 1.0;
-    title.color.a = 1.0;
-
-    artist.text = "";
-    artist.font = "Gotham Book";
-    artist.weight = TEXT_NORMAL;
-    artist.x = 0.175;
-    artist.y = 0.175;
-    artist.size = 48;
-    artist.color.r = 1.0;
-    artist.color.g = 1.0;
-    artist.color.b = 1.0;
-    artist.color.a = 1.0;
+    last_version = 0;
+    surface = NULL;
 }
 
 EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* handle) {
@@ -114,14 +97,14 @@ EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_hand
 EXP_FUNC void               xava_cairo_module_draw_safe  (xava_cairo_module_handle* handle) {
 }
 
-void xava_cairo_module_draw_artwork(
+struct region xava_cairo_module_draw_artwork(
         cairo_t                 *cr,
         XAVA                    *xava,
         struct artwork          *artwork,
         struct artwork_geometry *geometry) {
     // avoid unsafety
     if(artwork->ready == false)
-        return;
+        return (struct region){ 0 };
 
     float actual_scale_x = (float)xava->outer.w / artwork->w;
     float actual_scale_y = (float)xava->outer.h / artwork->h;
@@ -179,9 +162,16 @@ void xava_cairo_module_draw_artwork(
 
     // restore old scale
     cairo_scale(cr, ps_x, ps_y);
+
+    return (struct region) {
+        .w = artwork->w*scale_x,
+        .h = artwork->h*scale_y,
+        .x = offset_x*scale_x,
+        .y = offset_y*scale_x,
+    };
 }
 
-void xava_cairo_module_draw_text(
+struct region xava_cairo_module_draw_text(
         cairo_t     *cr,
         XAVA        *xava,
         struct text *text) {
@@ -222,6 +212,102 @@ void xava_cairo_module_draw_text(
     // draw text
     cairo_move_to(cr, offset_x, offset_y);
     cairo_show_text(cr, text->text);
+
+    const int hacky_x_add_because_cairo = 20;
+
+    return (struct region) {
+        .w = extents.width+hacky_x_add_because_cairo,
+        .h = extents.height,
+        .x = offset_x,
+        .y = offset_y-extents.height,
+    };
+}
+
+cairo_surface_t *xava_cairo_module_draw_new_media_screen(
+        xava_cairo_module_handle *handle,
+        struct media_data        *data,
+        struct region            *new_region) {
+
+    XAVA *xava = handle->xava;
+
+    struct artwork_geometry cover_geo;
+    struct text             title, artist;
+
+    cover_geo.x = 0.05;
+    cover_geo.y = 0.05;
+    cover_geo.size = 0.2;
+    cover_geo.display_mode = ARTWORK_PRESERVE;
+    cover_geo.texture_mode = ARTWORK_NEAREST;
+
+    title.font = "Gotham";
+    title.weight = TEXT_NORMAL;
+    title.x = 0.175;
+    title.y = 0.075;
+    title.size = 60;
+    title.color.r = 1.0;
+    title.color.g = 1.0;
+    title.color.b = 1.0;
+    title.color.a = 1.0;
+
+    artist.font = "Gotham Book";
+    artist.weight = TEXT_NORMAL;
+    artist.x = 0.175;
+    artist.y = 0.175;
+    artist.size = 48;
+    artist.color.r = 1.0;
+    artist.color.g = 1.0;
+    artist.color.b = 1.0;
+    artist.color.a = 1.0;
+
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, xava->outer.w, xava->outer.h);
+    cairo_t *new_context = cairo_create(surface);
+
+    cairo_set_source_rgba(new_context, 0.0, 0.0, 0.0, 0.0);
+
+    cairo_set_operator(new_context, CAIRO_OPERATOR_SOURCE);
+    cairo_set_antialias(new_context, CAIRO_ANTIALIAS_BEST);
+    cairo_paint(new_context);
+
+    const int region_count = 3;
+    struct region regions[region_count];
+
+    regions[0] = xava_cairo_module_draw_artwork(
+            new_context, handle->xava, &data->cover, &cover_geo);
+
+    title.text = data->title;
+    regions[1] = xava_cairo_module_draw_text(
+            new_context, handle->xava, &title);
+
+    artist.text = data->artist;
+    regions[2] = xava_cairo_module_draw_text(
+            new_context, handle->xava, &artist);
+
+    int min_x = xava->outer.w,
+        min_y = xava->outer.h,
+        max_x = 0, max_y = 0;
+
+    // region bound dark magic
+    for(int i = 0; i < region_count; i++) {
+        if(min_x > regions[i].x)
+           min_x = regions[i].x;
+        if(min_y > regions[i].y)
+           min_y = regions[i].y;
+        if(max_x < regions[i].x+regions[i].w)
+           max_x = regions[i].x+regions[i].w;
+        if(max_y < regions[i].y+regions[i].h)
+           max_y = regions[i].y+regions[i].h;
+    }
+
+    cairo_destroy(new_context);
+
+    xavaLog("Artwork draw %d", data->version);
+
+    new_region->x = min_x;
+    new_region->y = min_y;
+    new_region->w = max_x - min_x;
+    new_region->h = max_y - min_y;
+
+    return surface;
 }
 
 // assume that the entire screen's being overwritten
@@ -230,19 +316,43 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     struct media_data *data;
     data = xava_cairo_module_media_data_thread_data(media_data_thread);
 
-    struct artwork *cover = &data->cover;
-    xava_cairo_module_draw_artwork(handle->cr, handle->xava,
-                                    cover, &cover_geo);
+    // artwork has been updated, draw the new one
+    if(data->version != last_version) {
+        if(data->version > 1) {
+            cairo_surface_destroy(surface);
+        }
 
-    title.text = data->title;
-    xava_cairo_module_draw_text(handle->cr, handle->xava, &title);
- 
-    artist.text = data->artist;
-    xava_cairo_module_draw_text(handle->cr, handle->xava, &artist);
+        surface = xava_cairo_module_draw_new_media_screen(
+                handle, data, &surface_region);
+        last_version = data->version;
+    }
+
+    // skip drawing if no artwork is available
+    if(data->version == 0)
+        return;
+
+    cairo_set_operator(handle->cr, CAIRO_OPERATOR_OVER);
+
+    // set artwork as brush
+    cairo_set_source_surface(handle->cr, surface,
+            0, 0);
+
+    // overwrite dem pixels
+    cairo_rectangle(handle->cr,
+            surface_region.x, surface_region.y,
+            surface_region.w, surface_region.h);
+
+    // draw artwork
+    cairo_fill(handle->cr);
+
+    // revert old (default) pixel drawing mode
+    cairo_set_operator(handle->cr, CAIRO_OPERATOR_SOURCE);
 }
 
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
     xava_cairo_module_media_data_thread_destroy(media_data_thread);
+    if(last_version > 0)
+        cairo_surface_destroy(surface);
 }
 
 // ionotify fun

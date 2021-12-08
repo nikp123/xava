@@ -10,6 +10,8 @@ struct media_data {
     char           album [MUSIC_DATA_STRING_LENGHT];
     char           artist[MUSIC_DATA_STRING_LENGHT];
     char           title [MUSIC_DATA_STRING_LENGHT];
+
+    uint64_t       version;
 };
 
 struct media_data_thread;

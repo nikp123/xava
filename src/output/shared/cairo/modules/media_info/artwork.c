@@ -53,15 +53,19 @@ void xava_cairo_module_update_artwork(const char *url,
 
     res = curl_easy_perform(curl);
 
-    if(artwork->size == 0)
+    if(res != CURLE_OK) {
         xavaLog("Failed to download '%d'", url);
+        return;
+    }
 
-    UNUSED(res);
+    if(artwork->size == 0) {
+        xavaLog("Failed to download '%d'", url);
+        return;
+    }
 
     int w, h, c;
     artwork->image_data = stbi_load_from_memory(
             artwork->file_data, artwork->size, &w, &h, &c, 4);
-    xavaLog("%d %d %d", w, h, c);
 
     // update size and color info
     artwork->w = w;
