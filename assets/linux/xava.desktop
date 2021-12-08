@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.1
+Name=XAVA
+GenericName=Graphical Audio Visualizer
+Comment=X11 Audio Visualizer for ALSA
+Exec=xava
+Icon=xava
+Terminal=false
+Categories=Audio;AudioVideo;Graphics
+

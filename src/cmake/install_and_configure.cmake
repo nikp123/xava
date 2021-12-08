@@ -24,6 +24,6 @@ find_and_copy_dlls(xava)
 include("src/cmake/copy_gl_shaders.cmake")
 
 if(UNIX AND NOT APPLE)
-    install (FILES ${CMAKE_BINARY_DIR}/xava.desktop DESTINATION share/applications)
+    install (FILES assets/linux/xava.desktop DESTINATION share/applications)
     install (FILES assets/linux/xava.svg DESTINATION share/icons/hicolor/scalable/apps)
 endif()
