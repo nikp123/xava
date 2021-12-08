@@ -84,6 +84,15 @@ EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* 
 
 // event handler
 EXP_FUNC void               xava_cairo_module_event      (xava_cairo_module_handle* handle) {
+    XAVA *xava = handle->xava;
+
+    // check if the visualizer bounds were changed
+    if((xava->inner.w != xava->bar_space.w) ||
+       (xava->inner.h != xava->bar_space.h)) {
+        xava->bar_space.w = xava->inner.w;
+        xava->bar_space.h = xava->inner.h;
+        pushXAVAEventStack(handle->events, XAVA_RESIZE);
+    }
 }
 
 // placeholder, as it literally does nothing atm
