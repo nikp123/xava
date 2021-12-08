@@ -7,3 +7,9 @@
 [submodule "thirdparty/mingw-bundledlls"]
 	path = thirdparty/mingw-bundledlls
 	url = https://github.com/mpreisler/mingw-bundledlls
+[submodule "lib/kiss-mpris-properties"]
+	path = lib/kiss-mpris-properties
+	url = https://github.com/nikp123/kiss-mpris-properties
+[submodule "lib/stb"]
+	path = lib/stb
+	url = https://github.com/nothings/stb.git
