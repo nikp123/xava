@@ -112,7 +112,7 @@ No OpenGL, because Apple likes to be Apple.
 ### Linux
 
 I recommend grabbing the AppImage, as it deals with all dependency issues upfront
-and you **really** need to to is just download and run it.
+and all you **really** need to to is just download and run it.
 
 You can grab it from the Releases page or get the
 [unstable](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-x86_64.AppImage.zip)
