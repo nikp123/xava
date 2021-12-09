@@ -9,107 +9,64 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    name: 🚧🟦 windows (x86)
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+        - system: windows
+          arch: i686
+          icon: '⬛'
+        - system: windows
+          arch: x86_64
+          icon: '🟦'
+        - system: archlinux
+          arch: x86_64
+          icon: '🟦'
+
+    name: 🚧${{ matrix.icon }} ${{ matrix.system }} (${{ matrix.arch }})
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: true
 
     - name: Run container
+      if: contains(matrix.system, 'windows')
       uses: ./.github/actions/windows
+      with:
+        architecture: ${{ matrix.arch }}
 
-    - name: Uploading artifact for i686
+    - name: Run container
+      if: contains(matrix.system, 'archlinux')
+      uses: ./.github/actions/archlinux
+
+    - name: Uploading artifact for ${{ matrix.system }}-${{ matrix.arch }}
+      if: contains(matrix.system, 'windows')
       uses: actions/upload-artifact@v2
       with:
-        name: xava-unstable-installer-i686.exe
-        path: xava-win-installer-i686.exe
-
-    - name: Uploading artifact for x86_64
-      uses: actions/upload-artifact@v2
-      with:
-        name: xava-unstable-installer-x86_64.exe
-        path: xava-win-installer-x86_64.exe
-
-  build-ubuntu:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        include:
-        - os: ubuntu-latest
-          sys: ubuntu
-          arch: x86_64
-          icon: '🟦'
-          cmake-args: -G "Unix Makefiles" -DBUILD_LEGACY_OUTPUTS:BOOL=ON -DCMAKE_INSTALL_PREFIX=/usr
-          build-args: --parallel
-          env:
-            CFLAGS: -Wdeclaration-after-statement -Werror
-            CXXFLAGS: -Werror
-
-    name: 🚧${{ matrix.icon }} ${{ matrix.sys }} (${{ matrix.arch }})
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-
-    - name: Prepare Linux
-      if: contains(matrix.os, 'ubuntu')
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install pkg-config cmake libcairo2-dev libfftw3-dev portaudio19-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libglew-dev libportaudio2 wayland-protocols libpipewire-0.2-dev -y
-
-    - name: Build in debug mode
-      env: ${{ matrix.env }}
-      run: |
-        mkdir debug
-        cd debug
-        ${{ matrix.cmake-path }}cmake --version
-        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Debug -Werror=dev ..
-        ${{ matrix.cmake-path }}cmake --build . --config Debug ${{ matrix.build-args }}
-
-    - name: Build in release mode
-      env: ${{ matrix.env }}
-      run: |
-        mkdir release
-        cd release
-        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
-        ${{ matrix.cmake-path }}cmake --build . --config Release ${{ matrix.build-args }}
-
-    - name: Build AppImage
-      env: ${{ matrix.env }}
-      run: |
-        cd release
-        make install DESTDIR=AppDir
-        sudo apt-get install wget -y
-        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-        chmod +x linuxdeploy-x86_64.AppImage
-        env LD_LIBRARY_PATH=. ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage --icon-filename AppDir/usr/share/icons/hicolor/scalable/apps/xava.svg --desktop-file AppDir/usr/share/applications/xava.desktop
+        name: xava-unstable-installer-${{ matrix.arch }}.exe
+        path: xava-win-installer-${{ matrix.arch }}.exe
 
     - name: Get Git info and share it globally
-      env: ${{ matrix.env }}
+      if: contains(matrix.system, 'archlinux')
       id: vars
       run: |
-        cd release
+        cd build
         echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
 
     - name: Upload AppImage artifact
+      if: contains(matrix.system, 'archlinux')
       uses: actions/upload-artifact@v2
       with:
-        name: XAVA-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.sha_short }}-x86_64.AppImage
-        path: release/XAVA-${{ steps.vars.outputs.sha_short }}-x86_64.AppImage
-
-    - name: Extract version string
-      env: ${{ matrix.env }}
-      run: |
-        cd release
-        cat CMakeCache.txt | grep xava_VERSION | cut -d'=' -f2 > version.txt
+        if-no-files-found: error
+        name: xava-${{ steps.vars.outputs.branch }}-x86_64.AppImage
+        path: build/xava-${{ steps.vars.outputs.branch }}-x86_64.AppImage
 
     - name: Upload version artifact
+      if: contains(matrix.system, 'archlinux')
       uses: actions/upload-artifact@v2
       with:
+        if-no-files-found: error
         name: version.txt
-        path: release/version.txt
+        path: build/version.txt
 
