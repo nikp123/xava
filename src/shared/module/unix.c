@@ -30,29 +30,23 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
         char *prefix = PREFIX;
     #endif
 
+    // make this static size :)
+    char new_name[MAX_PATH];
+
     // Security check
     for(int i=0; i<strlen(name); i++) {
         // Disallow directory injections
         if(name[i] == '/') return NULL;
     }
 
-    // Typically /usr/local/lib/xava/
-    size_t new_size = strlen(name) + sizeof(prefix) +sizeof("/lib/xava/")
-        + strlen(LIBRARY_EXTENSION);
-    new_size *= sizeof(char);
-
-    // allocate enough for the system module size instead
-    // because it's bigger, duh...
-    char *new_name = malloc(new_size);
-
     // regardless, try the local module first, as it has priority
     // over normal ones
-    sprintf(new_name, "./%s%s", name, LIBRARY_EXTENSION);
+    snprintf(new_name, MAX_PATH, "./%s%s", name, LIBRARY_EXTENSION);
 
     // check if the thing even exists
     FILE *fp = fopen(new_name, "r");
     if(fp == NULL) {
-        sprintf(new_name, "%s/lib/xava/%s%s",
+        snprintf(new_name, MAX_PATH, "%s/lib/xava/%s%s",
                 prefix, name, LIBRARY_EXTENSION);
 
         // lower the name, because users
@@ -67,7 +61,6 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
 
     // don't ask, this is unexplainable C garbage at work again
     module->path = strdup(new_name);
-    free(new_name);
 
     xavaLog("Module loaded '%s' loaded at %p",
         module->name, module->moduleHandle);
