@@ -16,12 +16,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Windows](#windows)
   - [macOS](#macos)
   - [Linux](#linux)
-    - [Arch](#arch)
-    - [Void](#void)
   - [Installing manually](#installing-manually)
-    - [Build requirements](#build-requirements)
-    - [Compilation](#compilation)
-    - [Uninstalling](#uninstalling)
 - [Updating](#updating)
 - [Usage](#usage)
   - [Controls](#controls)
@@ -41,21 +36,22 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
     - [sndio](#sndio)
     - [squeezelite](#squeezelite)
   - [Output modes](#output-modes)
+  - [Configuring OpenGL](#configuring-opengl)
+    - [Programming OpenGL shaders](#programming-opengl-shaders)
+  - [Configuring Cairo](#configuring-cairo)
   - [Basic window options](#basic-window-options)
   - [Window position](#window-position)
   - [Advanced window options](#advanced-window-options)
     - [Transparency](#transparency)
     - [Advanced window behaviour](#advanced-window-behaviour)
     - [Fullscreening the visualizer without changing the viewport](#fullscreening-the-visualizer-without-changing-the-viewport)
-  - [OpenGL](#opengl)
-    - [Shaderpacks](#shaderpacks)
-    - [Resolution scaling](#resolution-scaling)
   - [Vsync](#vsync)
   - [Bars](#bars)
   - [Colors and gradients](#colors-and-gradients)
   - [Accent colors](#accent-colors)
   - [Additional options](#additional-options)
 - [Contribution](#contribution)
+
 
 
 What it is
@@ -112,108 +108,51 @@ methods.
 
 ### Linux
 
-#### Arch
+I recommend grabbing the AppImage, as it deals with all dependency issues upfront
+and you **really** need to to is just download and run it.
 
-XAVA is availble in [AUR](https://aur.archlinux.org/packages/xava-git/).
-
-    pacaur -S xava-git
-
-#### Void
-
-XAVA is available in the Void repos:
-
-    xbps-install xava
+You can grab it from the Releases page or get the
+[unstable](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-x86_64.AppImage.zip)
+version.
 
 
 ### Installing manually
 
-#### Build requirements
+Since there's an AppImage there's no point to this, but essentially you're
+supposed to use CMake and some basic binutils, like so:
 
-Only FFTW is actually required for XAVA to compile. However, other features may
-or may not depend on other dependencies. As such, they have to be installed in
-order for those same features to be enabled.
-
-The following represents installing dependencies for all possible features on
-major Linux distributions or package managers:
-
-Debian/Raspbian:
-
-    apt-get install make libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio-dev cmake git wayland-protocols
-
-On Ubuntu 20.04+:
-
-    apt-get install make libfftw3-dev libasound2-dev libpulse-dev libx11-dev libsdl2-dev libportaudio2 cmake git wayland-protocols
-
-Meanwhile on previous Ubuntu releases swap ``libportaudio2`` with ``libportaudio-dev``
-
-ArchLinux:
-
-    pacman -S make base-devel fftw alsa-lib pulseaudio libx11 sdl2 portaudio cmake git wayland-protocols
-
-openSUSE:
-
-    zypper install make alsa-devel fftw3-devel libX11-devel libSDL2-devel portaudio-devel cmake git wayland-protocols
-
-Fedora:
-
-    dnf install make alsa-lib-devel fftw3-devel xorg-x11-devel SDL2-devel pulseaudio-libs-devel portaudio-devel cmake git wayland-protocols
-
-MSYS2 (Windows):
-
-    pacman -S make mingw-w64-i686-gcc mingw-w64-i686-fftw mingw-w64-i686-SDL2 mingw-w64-i686-portaudio cmake git pkg-config
-
-Brew (macOS):
-
-    brew install make portaudio fftw cmake gcc git pkg-config sdl2
-
-For compilation you can (interchangably) use either clang or GCC.
-
-
-#### Compliation
-
-    mkdir build (if it doesn't already exist)
-    cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Release ( or Debug if you're that type ;) )
-    make -j$(nproc) (or whatever number)
-
-Windows users, just download the installer from the Releases page
- on this repository.
-
-Install `xava` to default `/usr`:
-
-    sudo make install
-
-Or you can change `$PREFIX`, for example:
 ```
-    cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/usr -G"Unix Makefiles"
+git clone https://github.com/nikp123/xava
+cd xava
+mkdir build
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+make
+sudo make install
 ```
-NOTE: Changing ``$PREFIX`` will probably break the system linker, **use with
- caution**.
 
-If you're building from source and installing via ``make install``, please do
-**not** delete the build files as you won't be able to uninstall xava if you do
-(CMake limitation).
-
-#### Uninstalling
-
-    cd $where_is_xava_located/build
-    xargs rm < install_manifest.txt
-
-All installers/distro specific installation sources might be out of date.
-
+And uninstalling with:
+```
+cat install_manifest.txt | xargs sudo rm -
+```
 
 Updating
 --------
 
 If you happen to be updating this program, just keep in mind that breaking
-changes DO occur sometimes. In most cases, errors that show up might look like
-[issue #43](https://github.com/nikp123/xava/issues/43).
-In most cases, these can be fixed with a simple config reset.
+changes DO occur sometimes. 
 
-To do that just copy the new shader and config files from ```example_files```
-dir in this repository. Sorry if this has inconvenienced you, my code can be
-quite experimental sometimes....
+In most cases, errors that show up might look like
+[issue #43](https://github.com/nikp123/xava/issues/43)
+which (likely) can be fixed with a simple config reset.
 
+In order to fix it I recommend just resetting your config by deleting:
+
+* ``%APPDATA%\xava`` on Windows
+* ``$HOME/.config/xava`` on Linux
+
+You will lose your modifications if you do this, so I'd recommend making a
+backup first.
 
 Usage
 -----
@@ -512,24 +451,87 @@ Note: squeezelite must be started with the `-v` flag to enable visualizer suppor
 
 ### Output modes
 
-Since 0.7.0.0, there has been a lot of changes to the output system. Namely, by
-default all "supported" modes use OpenGL (or EGL) by default. This means, that
-for the visualizer to run properly your system must provide these (if you have
-a graphics card, you're most likely fine). In case your system does NOT have GL
-support, you can still use "unsupported" modes that don't have the full "feature
-set". This is enabled by adding an additional ``-DBUILD_LEGACY_OUTPUTS:BOOL=ON``.
+Since 0.7.1.1 the output methods have been sorted into three categories:
+ * OpenGL output methods
+ * Cairo output methods
+ * Unsupported output methods (basically those that don't have **good** support)
 
-By default, the "supported" modes are: ``x11``, ``x11_egl`` (the difference being
-that the ``x11`` is just plain desktop OpenGL), ``sdl2`` (uses desktop OpenGL),
-``wayland`` (which uses EGL) and finally ``win`` which uses OpenGL on Windows.
+In the ``[output]`` section of the config there's an parameter named ``method``.
+This "method" determines what backend system you will like XAVA to use for it's
+visualizations.
 
-And the "unsupported" ones are: ``x11_sw``, ``x11_sw_stars``, ``sdl2_sw``,
-``wayland_sw``, ``ncurses``. However, beware that some feature might not work as
-intended or at all with these modes, **hence the name**.
+For example:
+ * Windows uses ``win``
+ * Linux uses either ``x11`` or ``wayland``
+ * Any other operating system is going to use ``sdl2``
+ * And unsupported modes such as ``ncurses`` (which is a terminal display)
 
-In order to change this mode you'll have to open the visualizer configuration and
-within the ``[output]`` section, change the ``method`` to one which you desire.
+The philosophy is that you'd most likely want your CPU cycles spared, so you'd
+use OpenGL by default. This means when you choose ``win`` (for example) that it
+will use OpenGL for rendering it's graphics. 
 
+However, if you wish to out-out, there's the CPU-drawn ``cairo`` mode. In order
+to use it, you just need to append ``_cairo`` at the end of the output method's
+name, like so: ``win_cairo``.
+
+Both Cairo and OpenGL use what I call "modules" that you can mix and match to
+display whatever you want in the visualizer. These can be adjusted by going into
+their respective categories within the config file:
+ * For OpenGL there's the ``[gl]`` category
+ * For Cairo there's the ``[cairo]`` category
+
+### Configuring OpenGL
+
+In OpenGL you can pick ONLY ONE module to run at a time, and it changes (mostly)
+how the audio data is represented to you. Do you want ``bars`` or ``bars_circle``
+..etc.?
+
+You can (optionally) apply a post-processing effect to said module via the
+``post_shader`` option. Currently packed-in shaders are:
+ * ``default`` - does nothing special basically
+ * ``shadow`` - adds simple 2D shadows
+ * ``kinetic`` - changes background opacity based on the intensity of music
+
+#### Programming OpenGL shaders
+
+You are free to add more if you'd like, though it requires programming knowledge.
+The files are located in your config's directory > gl > shaders > the shader's
+name. There you must add three files:
+ * ``config.ini`` - You can figure this one out by looking at how other shaders do it.
+ * ``fragment.glsl``
+ * ``vertex.glsl``
+
+And optionally:
+ * ``geometry.glsl``
+
+### Configuring Cairo
+
+Cairo, as opposed to OpenGL, is much simpler, but that comes with graphical
+effects limitations (and sometimes) bad performance. But unlike OpenGL, it is
+*more* flexible. One example of it's flexibility is it's ability to add as many
+modules as you'd like in any order that you'd like.
+
+By going into the ``[cairo]`` section of the config you can add modules by
+appending (or changing) the line/option:
+``module_$indexnumber = module's name``
+Where ``$indexnumber`` represents the order at which something is drawn and
+it **must** start from 1 and increment accordingly ``2, 3`` and so forth.
+
+Currently, there are 4 available modules you can choose from:
+ * ``bars`` - draws horizontal bars as it regularely would
+ * ``stars`` - draws stars on the screen that move based on the intensity of
+ music
+ * ``kinetic`` - changes the background opacity based on the intensity of must,
+ be absolutely sure that it's at the lowest "layer" (aka 0) otherwise it WILL
+ overwrite everything on the screen
+ * ``media_info`` (Linux-only) - Displays song artist, title and artwork in the
+ top left part of the screen.
+
+Mix and match these for optimum effect, however, be sure to not do too much as
+you can easily overwhelm your system by using this since it's CPU-based graphics.
+
+If you want the lightest possible setup, I recommend just sticking with the default
+``bars`` module.
 
 ### Basic window options
 
@@ -610,49 +612,13 @@ options from [window position](#window-position) to change how the visualizer is
 places within the window.
 
 
-### OpenGL
-
-The ``opengl = true/false`` is **deprecated** as of 0.7.0.0.
-
-If you're running a "supported" mode, you're already using OpenGL. No need to
-worry.
-
-#### Shaderpacks
-
-Shader packs have been introduced since ``0.7.0.0`` and allow for the user to
-customize the visualizer to their liking (provided they know how to write GLSL
-shaders). This funcionality works similarly to how it's implemented in Minecraft
-Optifine hence the name.
-
-In the ``[gl]`` section of the config file, you'll find that there are two
-"shaderpack" options: ``pre_shaderpack`` and ``post_shaderpack``. As the name
-suggests, the ``pre`` shaderpack is run before the visualizer is rendered and
-the ``post`` shaderpack is additional effects that are applied **after** the
-visualizer has been rendered. This customizability allows for the visualizer to
-be significantly modified to look unique. By default, you can look which
-"shaderpacks" are include by going in the ``example_files/gl/shaders`` then
-``pre`` or ``post`` and seeing which folders are in those directories.
-
-If you think you can write shaders on your own, you can write your own by
-creating a folder at ``config directory/gl/shaders/(pre or post)/your_shader_name``
-and looking at the shaders in the ``example_files`` folder for reference.
-
-#### Resolution scaling
-
-In case that some of the shaders create aliasing effects [as seen here](https://www.definition.net/define/anti-aliasing)
-you can additionally enable resolution scaling to render more pixels on screen
-then that of which are visible. The option is accessible at ``resolution_scale``
-in the ``[gl]`` section of the config file and also **only works on "supported"
-modes**.
-
-
 ### VSync
 
-VSync is enabled by default on XAVA.
+VSync is enabled by default on XAVA and works ONLY if you use OpenGL.
 
-You can change it's behaviour or just outright disable it.
+You can change its behavior or just outright disable it.
 
-To do that open the configuration file and in the ``general`` section you will
+To do that open the configuration file and in the ``[general]`` section you will
 find:
 
 	vsync = 1 (1 means its enabled)
