@@ -42,7 +42,7 @@ jobs:
           sys: ubuntu
           arch: x86_64
           icon: '🟦'
-          cmake-args: -G "Unix Makefiles" -DBUILD_LEGACY_OUTPUTS:BOOL=ON
+          cmake-args: -G "Unix Makefiles" -DBUILD_LEGACY_OUTPUTS:BOOL=ON -DCMAKE_INSTALL_PREFIX=/usr
           build-args: --parallel
           env:
             CFLAGS: -Wdeclaration-after-statement -Werror
@@ -66,7 +66,7 @@ jobs:
         mkdir debug
         cd debug
         ${{ matrix.cmake-path }}cmake --version
-        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Debug -Werror=dev ..
         ${{ matrix.cmake-path }}cmake --build . --config Debug ${{ matrix.build-args }}
         sudo make install
 
@@ -75,7 +75,7 @@ jobs:
       run: |
         mkdir release
         cd release
-        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
         ${{ matrix.cmake-path }}cmake --build . --config Release ${{ matrix.build-args }}
         sudo make install
 
@@ -84,7 +84,7 @@ jobs:
       run: |
         mkdir appimage
         cd appimage
-        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_INSTALL_PREFIX="\\./usr" -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
+        ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DUNIX_INDEPENDENT_PATHS=ON -DCMAKE_BUILD_TYPE=Release -Werror=dev ..
         ${{ matrix.cmake-path }}cmake --build . --config Release ${{ matrix.build-args }}
         make install DESTDIR=AppDir
 
@@ -108,7 +108,7 @@ jobs:
     - name: Set executable flag for AppImage
       env: ${{ matrix.env }}
       run:
-        chmod +x appimage/XAVA-${{ steps.vars.output.sha_short }}-x86_64.AppImage
+        chmod +x appimage/XAVA-${{ steps.vars.outputs.sha_short }}-x86_64.AppImage
 
     - name: Upload AppImage artifact
       uses: actions/upload-artifact@v2
