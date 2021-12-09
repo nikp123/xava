@@ -31,7 +31,7 @@ xava_config_source *config_file;
 XAVAIONOTIFY       file_notifications;
 
 // ionotify fun
-void         xava_cairo_module_ionotify_callback
+EXP_FUNC void xava_cairo_module_ionotify_callback
                 (XAVA_IONOTIFY_EVENT event,
                 const char* filename,
                 int id,
