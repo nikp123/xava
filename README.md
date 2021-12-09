@@ -225,10 +225,8 @@ On Windows create a shortcut of the ``xava.exe``
 (which is in the install directory) and copy it to
 ``C:\Users\you\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\``
 
-On Linux/BSD (or any X11 compatible OS) just copy the
- ``assets/linux/xava.desktop`` file to ``~/.config/autostart/``. 
-Unless you're on a tiling WM, in which case why are you
- even reading this.
+To-do Linux instructions: But basically just make sure that the ``xava``
+executable or the AppImage one runs at startup.
 
 
 Configuration
