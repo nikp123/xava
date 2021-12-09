@@ -245,7 +245,9 @@ void __internal_xava_output_cairo_clear(xava_cairo_handle *handle) {
 void __internal_xava_output_cairo_cleanup(xava_cairo_handle *handle) {
     for(size_t i = 0; i < arr_count(handle->modules); i++) {
         handle->modules[i].func.cleanup(&handle->modules[i].config);
+        xava_module_free(handle->modules[i].handle);
     }
+
     arr_free(handle->modules);
     free(handle);
 }
