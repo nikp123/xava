@@ -5,6 +5,7 @@
 #include <dlfcn.h>
 
 #include "../../shared.h"
+#include "../io/unix.h"
 
 typedef struct xavamodule {
     char *name;
@@ -23,6 +24,12 @@ EXP_FUNC void xava_module_free(XAVAMODULE *module) {
 }
 
 EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
+    #ifdef UNIX_INDEPENDENT_PATHS
+        char *prefix = find_prefix();
+    #else
+        char *prefix = PREFIX;
+    #endif
+
     // Security check
     for(int i=0; i<strlen(name); i++) {
         // Disallow directory injections
@@ -30,7 +37,7 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
     }
 
     // Typically /usr/local/lib/xava/
-    size_t new_size = strlen(name) + sizeof(PREFIX"/lib/xava/")
+    size_t new_size = strlen(name) + sizeof(prefix) +sizeof("/lib/xava/")
         + strlen(LIBRARY_EXTENSION);
     new_size *= sizeof(char);
 
@@ -45,11 +52,12 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
     // check if the thing even exists
     FILE *fp = fopen(new_name, "r");
     if(fp == NULL) {
-        sprintf(new_name, PREFIX"/lib/xava/%s%s", name,
-            LIBRARY_EXTENSION);
+        sprintf(new_name, "%s/lib/xava/%s%s",
+                prefix, name, LIBRARY_EXTENSION);
 
         // lower the name, because users
-        for(int i=strlen(PREFIX"/lib/xava/"); i<strlen(new_name); i++)
+        int str_len = strlen(prefix) + strlen("/lib/xava/");
+        for(int i=str_len; i<strlen(new_name); i++)
             new_name[i] = tolower(new_name[i]);
     } else fclose(fp);
 
@@ -61,8 +69,12 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
     module->path = strdup(new_name);
     free(new_name);
 
-    xavaLog("Module loaded '%s' loaded at %p", 
+    xavaLog("Module loaded '%s' loaded at %p",
         module->name, module->moduleHandle);
+
+    #ifdef UNIX_INDEPENDENT_PATHS
+        //free(prefix);
+    #endif
 
     return module;
 }
@@ -88,7 +100,7 @@ EXP_FUNC XAVAMODULE *xava_module_path_load(char *path) {
     module->name = strdup(new_name);
     module->path = strdup(full_path);
 
-    xavaLog("Module loaded '%s' loaded at %p", 
+    xavaLog("Module loaded '%s' loaded at %p",
         module->name, module->moduleHandle);
 
     return module;
@@ -112,7 +124,7 @@ EXP_FUNC void *xava_module_symbol_address_get(XAVAMODULE *module, char *symbol) 
 }
 
 EXP_FUNC bool xava_module_valid(XAVAMODULE *module) {
-    if(module->moduleHandle) 
+    if(module->moduleHandle)
         return 1;
     else
         return 0;

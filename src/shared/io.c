@@ -16,6 +16,10 @@
 #include <windows.h>
 #endif
 
+#ifdef __unix__
+#include "io/unix.h"
+#endif
+
 EXP_FUNC int xavaMkdir(const char *dir) {
     /* Stolen from: https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950 */
     /* Adapted from http://stackoverflow.com/a/2336245/119527 */
@@ -263,7 +267,14 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
             #if defined(__APPLE__)||defined(__unix__)
                 // TODO: Support non-installed configurations
                 char *path = malloc(MAX_PATH);
-                strcpy(path, PREFIX"/share/"PACKAGE"/");
+                #ifdef UNIX_INDEPENDENT_PATHS
+                    char *ptr;
+                    strcpy(path, ptr=find_prefix());
+                    strcat(path, "/share/"PACKAGE"/");
+                    //free(ptr);
+                #else
+                    strcpy(path, PREFIX"/share/"PACKAGE"/");
+                #endif
                 (*actualPath) = path;
             #elif defined(__WIN32__)
                 // Windows uses widechars internally
