@@ -168,6 +168,15 @@
 ; module_2 = stars
 ; ...
 
+#
+# If you'd like, you can also adjust options (if the module supports it)
+# by going into your config directory > cairo > modules > module_name >
+# config.ini file
+#
+# There you will find a configuration similar to this one where you can
+# adjust the module's parameters.
+#
+
 [input]
 
 # Audio capturing method. Possible methods are the ones listed below.
