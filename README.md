@@ -86,6 +86,7 @@ Technical info/notes:
 Please use minGW for compilation. I haven't tested MSVC, however the code has a
 bit of GNU specific features so it may not work.
 
+
 ### macOS
 
 You have to compile this yourself, get the dependencies installed via brew (look
@@ -103,8 +104,10 @@ source = "Background Music"
 And now, within "Background Music" change the audio source of
  XAVA to the speaker output that you want recorded.
 
-You are free to use either ``ncurses``, ``x11_sw`` or ``sdl2_sw`` as the output
-methods.
+You are free to use either ``ncurses`` or ``x11_cairo`` output methods.
+
+No OpenGL, because Apple likes to be Apple.
+
 
 ### Linux
 
