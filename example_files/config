@@ -99,7 +99,7 @@
 
 [wayland]
 
-# Hacks and options related to the Wayland output mode
+# Hacks and options related to the Wayland output modes
 
 # Run the visualizer at "wallpaper"-level
 # This makes sure that the visualizer stays behind every window.
@@ -143,7 +143,7 @@
 ; module = bars
 
 # Specify which post-render shader the visualizer will uses
-# This is used to style the visualizer in the same fashion 
+# This is used to style the visualizer in the same fashion
 # as in Minecraft shaderpacks while using Optifine. Basically
 # it's the same idea. Use "none" to disable, this does break
 # "resolution_scale" so beware.
@@ -153,6 +153,20 @@
 # Works similarly to "render resolution scalers" in modern AAA game engines
 ; resolution_scale = 1.0
 
+
+[cairo]
+
+# Options related to the *_cairo output methods
+#
+# Here you can specify what modules you'd like to use and in what order,
+# however they must start with 1 and increment by 1. The lowest numbers
+# get drawn the first, so you might be accidentally overwriting the screen
+# if you put a module that draws the entire screen over some other.
+#
+# Refer to the README for further details.
+  module_1 = bars
+; module_2 = stars
+; ...
 
 [input]
 
@@ -217,14 +231,11 @@
 
 [output]
 
-# Output method. Can be any of the following (if enabled):
-# Renderers are split into two categories 'supported' (aka. supports OpenGL and
-# all features) and 'un-supported' (aka. custom software renderer some or many
-# features)
+# Refer to https://github.com/nikp123/xava/tree/unstable#output-modes for
+# further detail
 #
-# Supported renderers are: 'sdl2', 'x11', 'win', 'wayland', 'x11_egl'
-# "Un-supported" renderers (*_sw denotes software rendering) are: 'sdl2_sw',
-# 'wayland_sw', 'x11_sw', 'x11_sw_stars', 'ncurses'
+# (Possible) available modes are: x11, x11_cairo, wayland, wayland_cairo,
+#   win, win_cairo, sdl2 and the "unsupported" ncurses mode
 ; method = x11
 
 # Visual channels. Can be 'stereo' or 'mono'.
@@ -260,21 +271,6 @@
 ; gradient_count = 0
 ; gradient_color_1 = '#0099ff'
 ; gradient_color_2 = '#ff3399'
-
-
-[stars]
-
-# For stars to work, you need a speical output mode that supports it
-# One such mode is "x11_sw_stars"
-
-# Controls the number of stars on screen
-; count = 100
-
-# Controls how reactive the stars are to changess in sound (exponential)
-; sensitivity = 1.2
-
-# Linearly multiples the resulting star velocity
-; velocity = 1.0
 
 
 [filter]
