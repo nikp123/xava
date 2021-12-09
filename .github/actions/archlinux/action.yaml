@@ -1,0 +1,5 @@
+runs:
+  using: docker
+  image: docker://ghcr.io/nikp123/xava:linux-archlinux-appimage
+
+  entrypoint: './.github/actions/archlinux/build.sh'

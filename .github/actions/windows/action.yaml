@@ -1,5 +1,13 @@
+inputs:
+  architecture:
+    description: 'CPU architecture'
+    required: true
+    default: 'x86_64'
+
 runs:
   using: docker
   image: docker://ghcr.io/nikp123/xava:windows-archlinux-mingw64-ownstuff
 
   entrypoint: './.github/actions/windows/build.sh'
+  args:
+    - ${{ inputs.architecture }}
