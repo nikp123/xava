@@ -72,8 +72,8 @@ Getting started
 There should be an installer in the Releases page of this repository. Just
  download, install and run it. Non-release builds are unstable, so expect
  breakage.
- 
-Alternatively, you can download the latest "unstable" release from:
+
+Here's where you can get them:
 
 [Here for 32-bit x86 Windows](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-installer-i686.exe.zip)
 
@@ -81,11 +81,9 @@ Alternatively, you can download the latest "unstable" release from:
 
 The configuration file is located in ``%appdata%\xava\config.cfg``
 
-Technical info/notes:
+Technical notes:
 
-Please use minGW for compilation. I haven't tested MSVC, however the code has a
-bit of GNU specific features so it may not work.
-
+> It is NOT possible to compile under Windows nor do I recommend doing it.
 
 ### macOS
 
