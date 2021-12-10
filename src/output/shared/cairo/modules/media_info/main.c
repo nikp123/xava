@@ -314,7 +314,6 @@ struct region xava_cairo_module_draw_artwork(
 
     // draw artwork
     cairo_fill(cr);
-    cairo_paint(cr);
 
     // restore old scale
     cairo_scale(cr, ps_x, ps_y);
