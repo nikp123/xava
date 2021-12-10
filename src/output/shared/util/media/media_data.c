@@ -57,9 +57,6 @@ void media_data_update
         strncpy(data->data.artist, properties.metadata.artist, MUSIC_DATA_STRING_LENGHT);
         strncpy(data->data.title, properties.metadata.title, MUSIC_DATA_STRING_LENGHT);
 
-        while(data->data.cover.ready == false) {
-            xavaSleep(50, 0);
-        }
         data->data.version++;
     }
 }
