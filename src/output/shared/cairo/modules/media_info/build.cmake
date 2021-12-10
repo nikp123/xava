@@ -7,8 +7,8 @@ if(CAIRO_MODULES)
         add_subdirectory(lib/kiss-mpris-properties)
 
         add_library(cairo_media_info SHARED "${XAVA_MODULE_DIR}/main.c"
-                                    "${XAVA_MODULE_DIR}/artwork.c"
-                                    "${XAVA_MODULE_DIR}/media_data.c"
+                                    "src/output/shared/util/media/artwork.c"
+                                    "src/output/shared/util/media/media_data.c"
                                     "${GLOBAL_FUNCTION_SOURCES}")
                                 #"${XAVA_MODULE_DIR}/../../"
 

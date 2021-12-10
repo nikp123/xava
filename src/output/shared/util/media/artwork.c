@@ -5,11 +5,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include "../../../../../shared.h"
+#include "../../../../shared.h"
 
 #include "artwork.h"
 
-size_t xava_cairo_module_download_artwork(void *ptr, size_t size, size_t nmemb,
+size_t xava_util_download_artwork(void *ptr, size_t size, size_t nmemb,
         struct artwork *artwork) {
     if(artwork->file_data == NULL) {
         artwork->file_data = malloc(size*nmemb);
@@ -25,7 +25,7 @@ size_t xava_cairo_module_download_artwork(void *ptr, size_t size, size_t nmemb,
     return nmemb*size;
 }
 
-void xava_cairo_module_destroy_artwork(struct artwork *artwork) {
+void xava_util_artwork_destroy(struct artwork *artwork) {
     // reset artwork if already allocated
     if(artwork->ready) {
         // needs to be set early because stupid computers
@@ -39,16 +39,16 @@ void xava_cairo_module_destroy_artwork(struct artwork *artwork) {
     artwork->file_data = NULL;
 }
 
-void xava_cairo_module_update_artwork(const char *url,
+void xava_util_artwork_update(const char *url,
         struct artwork *artwork, CURL *curl) {
     CURLcode res;
 
-    xava_cairo_module_destroy_artwork(artwork);
+    xava_util_artwork_destroy(artwork);
 
     curl_easy_setopt(curl, CURLOPT_URL,           url);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA,     artwork);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
-            xava_cairo_module_download_artwork);
+            xava_util_download_artwork);
 
     res = curl_easy_perform(curl);
 

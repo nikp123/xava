@@ -1,12 +1,15 @@
 #include <math.h>
 #include <cairo/cairo.h>
 
-#include "../../util/module.h"
-#include "../../util/array.h"
 #include "../../../graphical.h"
 #include "../../../../../shared.h"
 
-#include "media_data.h"
+// cairo-only utils
+#include "../../util/module.h"
+#include "../../util/array.h"
+
+// shared utils
+#include "../../../util/media/media_data.h"
 
 struct media_data_thread *media_data_thread;
 
@@ -68,7 +71,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* handle) {
-    media_data_thread = xava_cairo_module_media_data_thread_create();
+    media_data_thread = xava_util_media_data_thread_create();
 
     last_version = 0;
     surface = NULL;
@@ -331,7 +334,7 @@ cairo_surface_t *xava_cairo_module_draw_new_media_screen(
 EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_handle* handle) {
 
     struct media_data *data;
-    data = xava_cairo_module_media_data_thread_data(media_data_thread);
+    data = xava_util_media_data_thread_data(media_data_thread);
 
     // artwork has been updated, draw the new one
     if(data->version != last_version) {
@@ -367,7 +370,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
-    xava_cairo_module_media_data_thread_destroy(media_data_thread);
+    xava_util_media_data_thread_destroy(media_data_thread);
     if(last_version > 0)
         cairo_surface_destroy(surface);
 }

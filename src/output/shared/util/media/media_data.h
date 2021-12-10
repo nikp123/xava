@@ -1,5 +1,5 @@
-#ifndef XAVA_CAIRO_MODULE_MEDIA_INFO_MEDIA_DATA
-#define XAVA_CAIRO_MODULE_MEDIA_INFO_MEDIA_DATA
+#ifndef XAVA_UTIL_MEDIA_INFO_MEDIA_DATA
+#define XAVA_UTIL_MEDIA_INFO_MEDIA_DATA
 
 #include "artwork.h"
 
@@ -17,11 +17,11 @@ struct media_data {
 struct media_data_thread;
 
 struct media_data *
-xava_cairo_module_media_data_thread_data(struct media_data_thread *thread);
+xava_util_media_data_thread_data(struct media_data_thread *thread);
 struct media_data_thread *
-xava_cairo_module_media_data_thread_create(void);
+xava_util_media_data_thread_create(void);
 void
-xava_cairo_module_media_data_thread_destroy(struct media_data_thread *data);
+xava_util_media_data_thread_destroy(struct media_data_thread *data);
 
 #endif
 

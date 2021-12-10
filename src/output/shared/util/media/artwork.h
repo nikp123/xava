@@ -1,5 +1,5 @@
-#ifndef XAVA_CAIRO_MODULE_MEDIA_INFO_ARTWORK_H
-#define XAVA_CAIRO_MODULE_MEDIA_INFO_ARTWORK_H
+#ifndef XAVA_UTIL_MEDIA_INFO_ARTWORK_H
+#define XAVA_UTIL_MEDIA_INFO_ARTWORK_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -13,8 +13,8 @@ struct            artwork {
     int              w, h, c;
 };
 
-void xava_cairo_module_destroy_artwork(struct artwork *artwork);
-void xava_cairo_module_update_artwork(const char *url,
+void xava_util_artwork_destroy(struct artwork *artwork);
+void xava_util_artwork_update(const char *url,
         struct artwork *artwork, CURL *curl);
 
 #endif
