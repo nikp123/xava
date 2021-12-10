@@ -51,6 +51,8 @@ typedef struct text {
     // same logic as for artwork except size controls the font size
     float        x, y, size;
 
+    float        max_x;
+
     struct color {
         float r, g, b, a;
     } color;
@@ -85,6 +87,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
     options.title.font = "Noto Sans";
     options.title.weight = TEXT_BOLD;
     options.title.x = 0.175;
+    options.title.max_x = 0.8;
     options.title.y = 0.100;
     options.title.size = 40;
     options.title.color.r = 1.0;
@@ -95,6 +98,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
     options.artist.font = "Noto Sans";
     options.artist.weight = TEXT_NORMAL;
     options.artist.x = 0.175;
+    options.artist.max_x = 0.8;
     options.artist.y = 0.160;
     options.artist.size = 28;
     options.artist.color.r = 1.0;
@@ -276,7 +280,7 @@ xava_cairo_module_resize_font:
     cairo_text_extents(cr, text->text, &extents);
 
     // shrink the text if it's too big
-    if(extents.width > xava->outer.w*(0.95-text->x)) {
+    if(extents.width > xava->outer.w*text->max_x) {
         font_size--;
         goto xava_cairo_module_resize_font;
     }
