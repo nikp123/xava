@@ -78,6 +78,8 @@ EXP_FUNC xava_version xava_cairo_module_version(void) {
 
 // load all the necessary config data and report supported drawing modes
 EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_handle* handle) {
+    options.cover.image = NULL; // because C
+
     options.cover.x = 0.05;
     options.cover.y = 0.05;
     options.cover.size = 0.2;
@@ -459,6 +461,9 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     }
 
     // skip drawing if no artwork is available
+    if(options.cover.image == NULL)
+        return;
+
     if(options.cover.image->ready == false)
         return;
 
