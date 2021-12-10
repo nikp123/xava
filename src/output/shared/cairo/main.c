@@ -105,6 +105,7 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
 
             if(module->features & XAVA_CAIRO_FEATURE_DRAW_REGION) {
                 LOAD_FUNC_POINTER(draw_region);
+                LOAD_FUNC_POINTER(clear);
             }
 
             if(module->features & XAVA_CAIRO_FEATURE_DRAW_REGION_SAFE) {
@@ -232,6 +233,12 @@ void __internal_xava_output_cairo_clear(xava_cairo_handle *handle) {
     // precious CPU cycles
     if(handle->feature_level == XAVA_CAIRO_FEATURE_FULL_DRAW)
         return;
+
+    // yes we're calling the modules even if the screen gets redrawn anyway
+    // because we need to inform them of the redraw
+    for(size_t i = 0; i < arr_count(handle->modules); i++) {
+        handle->modules[i].func.clear(&handle->modules[i].config);
+    }
 
     cairo_set_source_rgba(handle->cr,
         ARGB_R_32(handle->xava->conf.bgcol)/255.0,

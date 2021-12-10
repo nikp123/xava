@@ -40,7 +40,7 @@ typedef struct xava_cairo_module {
         void               (*event)      (xava_cairo_module_handle*);
 
         // placeholder
-        //void             (*clear)      (xava_cairo_module_handle*);
+        void               (*clear)      (xava_cairo_module_handle*);
 
         // only used with draw_region
         void               (*draw_region)(xava_cairo_module_handle*);
