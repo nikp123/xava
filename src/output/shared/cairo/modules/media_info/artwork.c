@@ -30,9 +30,8 @@ void xava_cairo_module_destroy_artwork(struct artwork *artwork) {
     if(artwork->ready) {
         // needs to be set early because stupid computers
         artwork->ready = false;
-        //free(artwork->file_data); freed by the loader
+        free(artwork->file_data);
         free(artwork->image_data);
-        cairo_surface_destroy(artwork->surface);
     }
     artwork->ready = false;
     artwork->size = 0;
@@ -80,12 +79,6 @@ void xava_cairo_module_update_artwork(const char *url,
         ptr[0] ^= ptr[2];
     }
 
-    artwork->surface = cairo_image_surface_create_for_data(
-            artwork->image_data,
-            CAIRO_FORMAT_RGB24, w, h,
-            cairo_format_stride_for_width(CAIRO_FORMAT_RGB24, w));
-
     artwork->ready = true;
-    free(artwork->file_data);
 }
 

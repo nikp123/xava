@@ -115,6 +115,11 @@ struct region xava_cairo_module_draw_artwork(
     if(artwork->ready == false)
         return (struct region){ 0 };
 
+    cairo_surface_t *surface = cairo_image_surface_create_for_data(
+            artwork->image_data,
+            CAIRO_FORMAT_RGB24, artwork->w, artwork->h,
+            cairo_format_stride_for_width(CAIRO_FORMAT_RGB24, artwork->w));
+
     float actual_scale_x = (float)xava->outer.w / artwork->w;
     float actual_scale_y = (float)xava->outer.h / artwork->h;
 
@@ -159,7 +164,7 @@ struct region xava_cairo_module_draw_artwork(
     float offset_y = (xava->outer.h/scale_y - artwork->h)*geometry->y;
 
     // set artwork as brush
-    cairo_set_source_surface(cr, artwork->surface, offset_x, offset_y);
+    cairo_set_source_surface(cr, surface, offset_x, offset_y);
 
     // overwrite dem pixels
     cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
@@ -171,6 +176,9 @@ struct region xava_cairo_module_draw_artwork(
 
     // restore old scale
     cairo_scale(cr, ps_x, ps_y);
+
+    // free artwork surface
+    cairo_surface_destroy(surface);
 
     return (struct region) {
         .w = artwork->w*scale_x,
