@@ -492,6 +492,9 @@ EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_hand
     struct media_data *data;
     data = xava_util_media_data_thread_data(media_data_thread);
 
+    if(data->version != last_version)
+        redraw_everything = true;
+
     // break if nothing changes
     if(redraw_everything == false)
         return;
