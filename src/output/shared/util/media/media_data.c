@@ -24,7 +24,7 @@ void media_data_update
     mpris_properties  properties;
 
     options.player_count = 0;
-    options.status       = MPRIS_PLAYER_ANY;
+    options.status       = MPRIS_PLAYER_ANY_PLAYING;
     properties           = get_mpris_player_status(&options);
 
     data->last_timestamp = xavaGetTime();
