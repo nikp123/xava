@@ -9,6 +9,16 @@
 
 #include "artwork.h"
 
+typedef enum uri_type {
+    URI_TYPE_DOWNLOAD,
+    URI_TYPE_FILE
+} uri_type;
+
+// probably never used but kept in case they eventually are
+#define URI_HEADER_FILE  "file://"
+#define URI_HEADER_HTTPS "https://"
+#define URI_HEADER_HTTP  "http://"
+
 size_t xava_util_download_artwork(void *ptr, size_t size, size_t nmemb,
         struct artwork *artwork) {
     if(artwork->file_data == NULL) {
@@ -39,11 +49,9 @@ void xava_util_artwork_destroy(struct artwork *artwork) {
     artwork->file_data = NULL;
 }
 
-void xava_util_artwork_update(const char *url,
+bool xava_util_artwork_update_by_download(const char *url,
         struct artwork *artwork, CURL *curl) {
     CURLcode res;
-
-    xava_util_artwork_destroy(artwork);
 
     curl_easy_setopt(curl, CURLOPT_URL,           url);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA,     artwork);
@@ -54,11 +62,54 @@ void xava_util_artwork_update(const char *url,
 
     if(res != CURLE_OK) {
         xavaLog("Failed to download '%s'", url);
-        return;
+        return true;
     }
 
+    return false;
+}
+
+bool xava_util_artwork_update_by_file(const char *url, struct artwork *artwork) {
+    const char *filename = &url[strlen(URI_HEADER_FILE)];
+    FILE *fp = fopen(filename, "rb");
+
+    xavaReturnWarnCondition(fp == NULL, true, "Failed to open '%s'", filename);
+
+    fseek(fp, 0, SEEK_END);
+    size_t size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    artwork->file_data = malloc(size);
+    fread(artwork->file_data, size, 1, fp);
+    artwork->size = size;
+
+    fclose(fp);
+
+    return false;
+}
+
+void xava_util_artwork_update(const char *url,
+        struct artwork *artwork, CURL *curl) {
+    xava_util_artwork_destroy(artwork);
+
+    uri_type type = URI_TYPE_DOWNLOAD;
+
+    if(strncmp(url, URI_HEADER_FILE, strlen(URI_HEADER_FILE)) == 0)
+        type = URI_TYPE_FILE;
+
+    bool fail;
+    switch(type) {
+        case URI_TYPE_FILE:
+            fail = xava_util_artwork_update_by_file(url, artwork);
+            break;
+        case URI_TYPE_DOWNLOAD:
+            fail = xava_util_artwork_update_by_download(url, artwork, curl);
+            break;
+    }
+    if(fail)
+        return;
+
     if(artwork->size == 0) {
-        xavaLog("Failed to download '%s'", url);
+        xavaLog("Failed to load '%s'", url);
         return;
     }
 
