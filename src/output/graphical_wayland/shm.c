@@ -50,7 +50,7 @@ struct wl_buffer *wl_create_framebuffer(struct waydata *wd) {
 void update_frame(struct waydata *wd) {
     //XAVA_CONFIG     *p    = &wd->s->conf;
 
-    // Update frame and inform wayland 
+    // Update frame and inform wayland
     struct wl_buffer *buffer = wl_create_framebuffer(wd);
     wl_surface_attach(wd->surface, buffer, 0, 0);
     //wl_surface_damage_buffer(xavaWLSurface, 0, 0, INT32_MAX, INT32_MAX);
@@ -75,7 +75,7 @@ void reallocSHM(struct waydata *wd) {
     wd->shm.dim.h      = hand->outer.h;
     wd->shm.dim.stride = hand->outer.w*sizeof(uint32_t);
 
-    wd->shm.buffer = mmap(NULL, 
+    wd->shm.buffer = mmap(NULL,
             wd->shm.max_size,
             PROT_READ | PROT_WRITE,
             MAP_SHARED,
@@ -88,7 +88,7 @@ void reallocSHM(struct waydata *wd) {
     wl_surface_commit(wd->surface);
 }
 
-void closeSHM(struct waydata *wd) { 
+void closeSHM(struct waydata *wd) {
     close(wd->shm.fd);
     munmap(wd->shm.buffer, wd->shm.dim.stride*wd->shm.dim.h);
 
