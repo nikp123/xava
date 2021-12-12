@@ -7,11 +7,11 @@
 
 #include "media_data.h"
 
-#define TRACK_ID_LENGHT 1024
+#define TRACK_ID_LENGTH 1024
 
 struct media_data_thread {
     CURL             *curl;
-    char              last_track_id[TRACK_ID_LENGHT];
+    char              last_track_id[TRACK_ID_LENGTH];
     long int          last_timestamp;
     pthread_t         thread;
     bool              alive;
@@ -32,30 +32,41 @@ void media_data_update
     bool should_update = false;
 
     // check track ID for mismatches
-    if(strncmp(properties.metadata.track_id, data->last_track_id, TRACK_ID_LENGHT))
+    if(strncmp(properties.metadata.track_id, data->last_track_id, TRACK_ID_LENGTH))
         should_update = true;
 
     // check album name for mismatches
-    if(strncmp(properties.metadata.album, data->data.album, MUSIC_DATA_STRING_LENGHT))
+    if(strncmp(properties.metadata.album, data->data.album, MUSIC_DATA_STRING_LENGTH))
         should_update = true;
 
     // check song artist for mismatches
-    if(strncmp(properties.metadata.artist, data->data.artist, MUSIC_DATA_STRING_LENGHT))
+    if(strncmp(properties.metadata.artist, data->data.artist, MUSIC_DATA_STRING_LENGTH))
         should_update = true;
 
     // check song title for mismatches
-    if(strncmp(properties.metadata.title, data->data.title, MUSIC_DATA_STRING_LENGHT))
+    if(strncmp(properties.metadata.title, data->data.title, MUSIC_DATA_STRING_LENGTH))
         should_update = true;
 
     if(should_update) {
+        // this complicated mess turns empty art_url's with a file attached to said file
+        if(strlen(properties.metadata.art_url) == 0 &&
+            strncmp(properties.metadata.url, URI_HEADER_FILE,
+                strlen(URI_HEADER_FILE)) == 0) {
+            strncpy(properties.metadata.art_url,
+                    URI_HEADER_MUSIC, MUSIC_DATA_STRING_LENGTH);
+            strncat(properties.metadata.art_url,
+                    &properties.metadata.url[strlen(URI_HEADER_FILE)],
+                    MUSIC_DATA_STRING_LENGTH);
+        }
+
         xava_util_artwork_update(properties.metadata.art_url,
                 &data->data.cover, data->curl);
 
-        strncpy(data->last_track_id, properties.metadata.track_id, TRACK_ID_LENGHT);
+        strncpy(data->last_track_id, properties.metadata.track_id, TRACK_ID_LENGTH);
 
-        strncpy(data->data.album, properties.metadata.album, MUSIC_DATA_STRING_LENGHT);
-        strncpy(data->data.artist, properties.metadata.artist, MUSIC_DATA_STRING_LENGHT);
-        strncpy(data->data.title, properties.metadata.title, MUSIC_DATA_STRING_LENGHT);
+        strncpy(data->data.album, properties.metadata.album, MUSIC_DATA_STRING_LENGTH);
+        strncpy(data->data.artist, properties.metadata.artist, MUSIC_DATA_STRING_LENGTH);
+        strncpy(data->data.title, properties.metadata.title, MUSIC_DATA_STRING_LENGTH);
 
         data->data.version++;
     }

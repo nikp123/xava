@@ -13,9 +13,18 @@ struct            artwork {
     int              w, h, c;
 };
 
+// probably never used but kept in case they eventually are
+#define URI_HEADER_FILE  "file://"
+#define URI_HEADER_HTTPS "https://"
+#define URI_HEADER_HTTP  "http://"
+#define URI_HEADER_MUSIC "music-file://"
+
 void xava_util_artwork_destroy(struct artwork *artwork);
 void xava_util_artwork_update(const char *url,
         struct artwork *artwork, CURL *curl);
 
+// for internal use ONLY
+bool xava_util_artwork_update_by_audio_file(const char *url,
+        struct artwork *artwork);
 #endif
 

@@ -3,13 +3,13 @@
 
 #include "artwork.h"
 
-#define MUSIC_DATA_STRING_LENGHT 1024
+#define MUSIC_DATA_STRING_LENGTH 1024
 
 struct media_data {
     struct artwork cover;
-    char           album [MUSIC_DATA_STRING_LENGHT];
-    char           artist[MUSIC_DATA_STRING_LENGHT];
-    char           title [MUSIC_DATA_STRING_LENGHT];
+    char           album [MUSIC_DATA_STRING_LENGTH];
+    char           artist[MUSIC_DATA_STRING_LENGTH];
+    char           title [MUSIC_DATA_STRING_LENGTH];
 
     uint64_t       version;
 };

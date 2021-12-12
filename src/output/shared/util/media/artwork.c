@@ -11,13 +11,9 @@
 
 typedef enum uri_type {
     URI_TYPE_DOWNLOAD,
-    URI_TYPE_FILE
+    URI_TYPE_FILE,
+    URI_TYPE_AUDIO_FILE
 } uri_type;
-
-// probably never used but kept in case they eventually are
-#define URI_HEADER_FILE  "file://"
-#define URI_HEADER_HTTPS "https://"
-#define URI_HEADER_HTTP  "http://"
 
 size_t xava_util_download_artwork(void *ptr, size_t size, size_t nmemb,
         struct artwork *artwork) {
@@ -96,6 +92,9 @@ void xava_util_artwork_update(const char *url,
     if(strncmp(url, URI_HEADER_FILE, strlen(URI_HEADER_FILE)) == 0)
         type = URI_TYPE_FILE;
 
+    if(strncmp(url, URI_HEADER_MUSIC, strlen(URI_HEADER_MUSIC)) == 0)
+        type = URI_TYPE_AUDIO_FILE;
+
     bool fail;
     switch(type) {
         case URI_TYPE_FILE:
@@ -103,6 +102,9 @@ void xava_util_artwork_update(const char *url,
             break;
         case URI_TYPE_DOWNLOAD:
             fail = xava_util_artwork_update_by_download(url, artwork, curl);
+            break;
+        case URI_TYPE_AUDIO_FILE:
+            fail = xava_util_artwork_update_by_audio_file(url, artwork);
             break;
     }
     if(fail)
