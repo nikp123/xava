@@ -53,12 +53,12 @@ void xava_util_artwork_update(const char *url,
     res = curl_easy_perform(curl);
 
     if(res != CURLE_OK) {
-        xavaLog("Failed to download '%d'", url);
+        xavaLog("Failed to download '%s'", url);
         return;
     }
 
     if(artwork->size == 0) {
-        xavaLog("Failed to download '%d'", url);
+        xavaLog("Failed to download '%s'", url);
         return;
     }
 
