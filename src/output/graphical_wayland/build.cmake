@@ -77,7 +77,7 @@ if(WAYLAND)
 
     pkg_check_modules(WAYLAND_EGL QUIET egl wayland-egl)
     if(WAYLAND_FOUND AND WAYLAND_EGL_FOUND)
-        add_library(out_wayland SHARED
+        add_library(out_wayland_opengl SHARED
             "${XAVA_MODULE_DIR}/main.c"
             "${XAVA_MODULE_DIR}/wl_output.c"
             "${XAVA_MODULE_DIR}/registry.c"
@@ -92,16 +92,16 @@ if(WAYLAND)
             "${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c"
             "${XAVA_MODULE_DIR}/gen/wlr-layer-shell-unstable-v1-client-protocol.c"
             "${GLOBAL_FUNCTION_SOURCES}")
-        target_link_libraries(out_wayland xava-shared
+        target_link_libraries(out_wayland_opengl xava-shared
             ${WAYLAND_LIBRARIES} ${WAYLAND_EGL_LIBRARIES} OpenGL
             GL wayland-egl GLEW)
-        target_include_directories(out_wayland PRIVATE
+        target_include_directories(out_wayland_opengl PRIVATE
             ${WAYLAND_INCLUDE_DIRS} ${WAYLAND_EGL_INCLUDE_DIRS})
-        target_link_directories(out_wayland PRIVATE
+        target_link_directories(out_wayland_opengl PRIVATE
             ${WAYLAND_LIBRARY_DIRS} ${WAYLAND_EGL_LIBRARY_DIRS})
-        set_target_properties(out_wayland PROPERTIES PREFIX "")
-        install(TARGETS out_wayland DESTINATION lib/xava)
-        target_compile_definitions(out_wayland PUBLIC -DWAYLAND -DEGL)
+        set_target_properties(out_wayland_opengl PROPERTIES PREFIX "")
+        install(TARGETS out_wayland_opengl DESTINATION lib/xava)
+        target_compile_definitions(out_wayland_opengl PUBLIC -DWAYLAND -DEGL)
     else()
         message(WARNING "Wayland EGL libraries not found, \"wayland\" won't build")
     endif()

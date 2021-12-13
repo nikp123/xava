@@ -247,8 +247,8 @@
 # opengl or cairo - the visualizer will figure out the rest.
 #
 # In case you still need to fiddle with your backend (possible) modes,
-# they are the following: x11, x11_cairo, wayland, wayland_cairo,
-#   win, win_cairo, sdl2 and the "unsupported" ncurses mode
+# they are the following: x11_opengl, x11_cairo, wayland_opengl, wayland_cairo,
+#   win_opengl, win_cairo, sdl2_opengl and the "unsupported" ncurses mode
 ; method = opengl
 
 # Visual channels. Can be 'stereo' or 'mono'.

@@ -18,20 +18,20 @@ if(X11)
             # OpenGL/GLX
             pkg_check_modules(GLX QUIET gl xrender glew)
             if(GLX_FOUND)
-                add_library(out_x11 SHARED "${XAVA_MODULE_DIR}/main.c"
+                add_library(out_x11_opengl SHARED "${XAVA_MODULE_DIR}/main.c"
                                             "src/output/shared/graphical.c"
                                             "src/output/shared/gl/glew.c"
                                             "src/output/shared/gl/main.c"
                                             "${GLOBAL_FUNCTION_SOURCES}")
-                target_link_directories(out_x11 PRIVATE
+                target_link_directories(out_x11_opengl PRIVATE
                     "${GLX_LIBRARY_DIRS}" "${X11_LIBRARY_DIRS}")
-                target_include_directories(out_x11 PRIVATE
+                target_include_directories(out_x11_opengl PRIVATE
                     "${GLX_INCLUDE_DIRS}" "${X11_INCLUDE_DIRS}")
-                target_link_libraries(out_x11 xava-shared
+                target_link_libraries(out_x11_opengl xava-shared
                     "${GLX_LIBRARIES}" "${X11_LIBRARIES}")
-                target_compile_definitions(out_x11 PUBLIC -DGL)
-                set_target_properties(out_x11 PROPERTIES PREFIX "")
-                install(TARGETS out_x11 DESTINATION lib/xava)
+                target_compile_definitions(out_x11_opengl PUBLIC -DGL)
+                set_target_properties(out_x11_opengl PROPERTIES PREFIX "")
+                install(TARGETS out_x11_opengl DESTINATION lib/xava)
 
                 # Maybe GL license?
             else()

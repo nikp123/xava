@@ -22,23 +22,23 @@ if(SDL2)
         list(APPEND DEFAULT_OUTPUT_INCDIR  "${SDL2_INCLUDE_DIRS}")
         list(APPEND DEFAULT_OUTPUT_DEF     "-DSDL2")
 
-        add_library(out_sdl2 SHARED
+        add_library(out_sdl2_opengl SHARED
             "${XAVA_MODULE_DIR}/main.c"
             "src/output/shared/graphical.c"
             "src/output/shared/gl/main.c"
             "src/output/shared/gl/glew.c"
             "${GLOBAL_FUNCTION_SOURCES}")
-        target_link_libraries(out_sdl2 xava-shared 
+        target_link_libraries(out_sdl2_opengl xava-shared
             ${SDL2_LIBRARIES} ${GLEW_LIBRARIES})
-        target_include_directories(out_sdl2 PRIVATE
+        target_include_directories(out_sdl2_opengl PRIVATE
             ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
-        target_link_directories(out_sdl2 PRIVATE
+        target_link_directories(out_sdl2_opengl PRIVATE
             ${SDL2_LIBRARY_DIRS} ${GLEW_LIBRARY_DIRS})
-        set_target_properties(out_sdl2 PROPERTIES PREFIX "")
-        target_compile_definitions(out_sdl2 PUBLIC -DSDL -DGL)
-        install(TARGETS out_sdl2 DESTINATION lib/xava)
+        set_target_properties(out_sdl2_opengl PROPERTIES PREFIX "")
+        target_compile_definitions(out_sdl2_opengl PUBLIC -DSDL -DGL)
+        install(TARGETS out_sdl2_opengl DESTINATION lib/xava)
 
-        find_and_copy_dlls(out_sdl2)
+        find_and_copy_dlls(out_sdl2_opengl)
 
         # Add legal disclaimer
         file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_sdl2.txt"

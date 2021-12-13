@@ -26,17 +26,17 @@ if(WINAPI)
                 list(APPEND DEFAULT_OUTPUT_DEF     "-DWINDOWS")
 
                 if(WGL_LIB AND GLEW)
-                    add_library(out_win SHARED "${XAVA_MODULE_DIR}/main.c"
+                    add_library(out_win_opengl SHARED "${XAVA_MODULE_DIR}/main.c"
                         "src/output/shared/graphical.c"
                         "src/output/shared/gl/glew.c"
                         "src/output/shared/gl/main.c"
                         "${GLOBAL_FUNCTION_SOURCES}")
-                    target_link_libraries(out_win xava-shared
+                    target_link_libraries(out_win_opengl xava-shared
                         "-lglew32 -lgdi32 -lwinmm -lopengl32 -ldwmapi")
-                    target_compile_definitions(out_win PUBLIC -DWIN -DGL)
-                    set_target_properties(out_win PROPERTIES PREFIX "")
+                    target_compile_definitions(out_win_opengl PUBLIC -DWIN -DGL)
+                    set_target_properties(out_win_opengl PROPERTIES PREFIX "")
 
-                    find_and_copy_dlls(out_win)
+                    find_and_copy_dlls(out_win_opengl)
                 else()
                     message(WARNING "OpenGL or GLEW library not found; 'out_win' app won't build")
                 endif()

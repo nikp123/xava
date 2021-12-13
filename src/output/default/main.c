@@ -32,16 +32,16 @@ typedef struct system {
 
 sys systems[] = {
 #ifdef WAYLAND
-    { .test_func = am_i_wayland, .cairo = "wayland_cairo", .opengl = "wayland" },
+    { .test_func = am_i_wayland, .cairo = "wayland_cairo", .opengl = "wayland_opengl" },
 #endif
 #ifdef WINDOWS
-    { .test_func = am_i_win32, .cairo = "win_cairo", .opengl = "win" },
+    { .test_func = am_i_win32, .cairo = "win_cairo", .opengl = "win_opengl" },
 #endif
 #ifdef X11
-    { .test_func = am_i_x11, .cairo = "x11_cairo", .opengl = "x11" },
+    { .test_func = am_i_x11, .cairo = "x11_cairo", .opengl = "x11_opengl" },
 #endif
 #ifdef SDL2
-    { .test_func = am_i_sdl2, .cairo = NULL, .opengl = "sdl2" },
+    { .test_func = am_i_sdl2, .cairo = NULL, .opengl = "sdl2_opengl" },
 #endif
 };
 
