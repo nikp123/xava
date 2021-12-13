@@ -5,7 +5,7 @@
         #define XAVA_DEFAULT_INPUT "pulseaudio"
     #endif
     #ifndef XAVA_DEFAULT_OUTPUT
-        #define XAVA_DEFAULT_OUTPUT "x11"
+        #define XAVA_DEFAULT_OUTPUT "opengl"
     #endif
     #ifndef XAVA_DEFAULT_FILTER
         #define XAVA_DEFAULT_FILTER "default"

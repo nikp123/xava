@@ -18,6 +18,13 @@ if(WINAPI)
                 # This is the only way it works under Windows+CMake for some reason
                 find_library(GLEW glew32)
 
+                # add winapi test
+                list(APPEND DEFAULT_OUTPUT_SOURCES "${XAVA_MODULE_DIR}/test.c")
+                #list(APPEND DEFAULT_OUTPUT_LINKDIR "${WIN_LIBRARY_DIRS}")
+                #list(APPEND DEFAULT_OUTPUT_LINKLIB "${WIN_LIBRARIES}")
+                #list(APPEND DEFAULT_OUTPUT_INCDIR  "${WIN_INCLUDE_DIRS}")
+                list(APPEND DEFAULT_OUTPUT_DEF     "-DWINDOWS")
+
                 if(WGL_LIB AND GLEW)
                     add_library(out_win SHARED "${XAVA_MODULE_DIR}/main.c"
                         "src/output/shared/graphical.c"

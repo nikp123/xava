@@ -456,8 +456,15 @@ Since 0.7.1.1 the output methods have been sorted into three categories:
  * Unsupported output methods (basically those that don't have **good** support)
 
 In the ``[output]`` section of the config there's an parameter named ``method``.
-This "method" determines what backend system you will like XAVA to use for it's
-visualizations.
+This "method" determines what drawing system you will like XAVA to use for it's
+visualizations. That can be either ``cairo`` or ``opengl``.
+
+ * ``opengl`` uses your GPU for accelerated graphics (but can be demanding on
+ the system)
+ * ``cairo`` doesn't use your GPU, but can be CPU-heavy if too much is enabled
+
+Selecting any of those would automatically load the appropriate window backend
+for you. But in case you don't like that, you can specify the backend before it:
 
 For example:
  * Windows uses ``win``
@@ -465,13 +472,9 @@ For example:
  * Any other operating system is going to use ``sdl2``
  * And unsupported modes such as ``ncurses`` (which is a terminal display)
 
-The philosophy is that you'd most likely want your CPU cycles spared, so you'd
-use OpenGL by default. This means when you choose ``win`` (for example) that it
-will use OpenGL for rendering it's graphics. 
-
-However, if you wish to out-out, there's the CPU-drawn ``cairo`` mode. In order
-to use it, you just need to append ``_cairo`` at the end of the output method's
-name, like so: ``win_cairo``.
+To select whether you'd use ``opengl`` or ``cairo`` with any of the
+aforementioned window backends, you just type ``_thing``  after the backend
+name. Like so: ``win_cairo`` or ``x11_opengl``
 
 Both Cairo and OpenGL use what I call "modules" that you can mix and match to
 display whatever you want in the visualizer. These can be adjusted by going into

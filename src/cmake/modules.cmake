@@ -22,9 +22,17 @@ endforeach()
 # Build output modules
 file(GLOB outputs "src/output/*/build.cmake" )
 foreach(dir ${outputs})
+    # Exclude the default module
+    if("${dir}" STREQUAL "${CMAKE_SOURCE_DIR}/src/output/default/build.cmake")
+        continue()
+    endif()
+
     get_filename_component(XAVA_MODULE_DIR ${dir} DIRECTORY)
     include(${dir})
 endforeach()
+# This is so that the default module gets build AFTER everything else
+get_filename_component(XAVA_MODULE_DIR "src/output/default/build.cmake" DIRECTORY)
+include("src/output/default/build.cmake")
 
 # Build unsupported output modules
 if(BUILD_LEGACY_OUTPUTS)

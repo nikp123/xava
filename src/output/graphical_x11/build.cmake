@@ -8,6 +8,13 @@ if(X11)
     else()
         pkg_check_modules(X11 QUIET x11 xfixes xrandr)
         if(X11_FOUND)
+            # add winapi test
+            list(APPEND DEFAULT_OUTPUT_SOURCES "${XAVA_MODULE_DIR}/test.c")
+            list(APPEND DEFAULT_OUTPUT_LINKDIR "${X11_LIBRARY_DIRS}")
+            list(APPEND DEFAULT_OUTPUT_LINKLIB "${X11_LIBRARIES}")
+            list(APPEND DEFAULT_OUTPUT_INCDIR  "${X11_INCLUDE_DIRS}")
+            list(APPEND DEFAULT_OUTPUT_DEF     "-DX11")
+
             # OpenGL/GLX
             pkg_check_modules(GLX QUIET gl xrender glew)
             if(GLX_FOUND)

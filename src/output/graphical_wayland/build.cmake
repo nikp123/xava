@@ -62,6 +62,13 @@ if(WAYLAND)
             "${XAVA_MODULE_DIR}/protocols/wlr-output-management-unstable-v1.xml"
             "wlr-output-managment-unstable-v1.c")
 
+        # add winapi test
+        list(APPEND DEFAULT_OUTPUT_SOURCES "${XAVA_MODULE_DIR}/test.c")
+        list(APPEND DEFAULT_OUTPUT_LINKDIR "${WAYLAND_LIBRARY_DIRS}")
+        list(APPEND DEFAULT_OUTPUT_LINKLIB "${WAYLAND_LIBRARIES}")
+        list(APPEND DEFAULT_OUTPUT_INCDIR  "${WAYLAND_INCLUDE_DIRS}")
+        list(APPEND DEFAULT_OUTPUT_DEF     "-DWAYLAND")
+
         # Wayland is such a fucking mess that I won't even bother adding license disclaimers
         # Only if someone complains, then I might
     else()

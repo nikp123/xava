@@ -1,7 +1,7 @@
 # Windows-y things
 if(MINGW)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
-    add_definitions(-DXAVA_DEFAULT_INPUT="wasapi" -DXAVA_DEFAULT_OUTPUT="win")
+    add_definitions(-DXAVA_DEFAULT_INPUT="wasapi")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         message(STATUS "Since release build, console is being disabled")

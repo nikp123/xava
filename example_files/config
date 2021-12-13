@@ -243,9 +243,13 @@
 # Refer to https://github.com/nikp123/xava/tree/unstable#output-modes for
 # further detail
 #
-# (Possible) available modes are: x11, x11_cairo, wayland, wayland_cairo,
+# If you don't care about your windowing system, you can just use:
+# opengl or cairo - the visualizer will figure out the rest.
+#
+# In case you still need to fiddle with your backend (possible) modes,
+# they are the following: x11, x11_cairo, wayland, wayland_cairo,
 #   win, win_cairo, sdl2 and the "unsupported" ncurses mode
-; method = x11
+; method = opengl
 
 # Visual channels. Can be 'stereo' or 'mono'.
 # 'stereo' mirrors both channels with low frequencies in center.
