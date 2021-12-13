@@ -237,7 +237,9 @@ void __internal_xava_output_cairo_clear(xava_cairo_handle *handle) {
     // yes we're calling the modules even if the screen gets redrawn anyway
     // because we need to inform them of the redraw
     for(size_t i = 0; i < arr_count(handle->modules); i++) {
-        handle->modules[i].func.clear(&handle->modules[i].config);
+        struct xava_cairo_module *module = &handle->modules[i];
+        if(XAVA_CAIRO_FEATURE_DRAW_REGION & module->features)
+            module->func.clear(&module->config);
     }
 
     cairo_set_source_rgba(handle->cr,
