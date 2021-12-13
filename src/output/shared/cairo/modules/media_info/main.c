@@ -213,9 +213,22 @@ struct xava_cairo_region xava_cairo_module_calculate_text_region(
 
 // report drawn regions
 EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* handle) {
+    XAVA *xava = handle->xava;
     struct xava_cairo_region *regions;
 
     arr_init_n(regions, region_count);
+
+    float scale = (float)xava->outer.w/xava->outer.h;
+    if(scale > 1.0) {
+        scale = 1.0 / scale;
+    }
+
+    options.artist.x = options.cover.x + options.cover.size + 0.05;
+    options.title.x  = options.cover.x + options.cover.size + 0.05;
+    options.artist.max_x = 1.0 - options.artist.x - 0.05;
+    options.title.max_x  = 1.0 - options.title.x - 0.05;
+    options.artist.x *= scale;
+    options.title.x  *= scale;
 
     arr_add(regions, xava_cairo_module_calculate_artwork_region(handle, &options.cover));
     arr_add(regions, xava_cairo_module_calculate_text_region(handle, &options.artist));
@@ -335,8 +348,6 @@ struct region xava_cairo_module_draw_text(
         cairo_t     *cr,
         XAVA        *xava,
         struct text *text) {
-    XAVA_CONFIG *conf = &xava->conf;
-
     // colors
     cairo_set_source_rgba(cr, text->color.r,
             text->color.g, text->color.b, text->color.a);
