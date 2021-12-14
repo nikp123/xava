@@ -159,8 +159,13 @@ void __internal_xava_output_cairo_apply(xava_cairo_handle *handle) {
             // do not overwrite as it's used as a reference
             //module->features = handle->feature_level;
             module->config.use_feature = handle->feature_level;
-            module->func.apply(&module->config);
         }
+    }
+
+    // run apply functions for the modules
+    for(size_t i = 0; i < arr_count(handle->modules); i++) {
+        xava_cairo_module *module = &handle->modules[i];
+        module->func.apply(&module->config);
     }
 }
 

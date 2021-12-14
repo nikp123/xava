@@ -71,6 +71,8 @@ cairo_surface_t *surface;
 struct region    surface_region;
 int64_t last_version;
 
+int old_w, old_h;
+
 // report version
 EXP_FUNC xava_version xava_cairo_module_version(void) {
     return xava_version_host_get();
@@ -121,12 +123,21 @@ EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* han
     media_data_thread = xava_util_media_data_thread_create();
 
     last_version = 0;
-    redraw_everything = true;
+    old_w = 0;
+    old_h = 0;
+    redraw_everything = false;
     surface = NULL;
 }
 
 EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* handle) {
-    if(handle->use_feature == XAVA_CAIRO_FEATURE_DRAW_REGION) {
+    XAVA *xava = handle->xava;
+
+    // redraw everything if the size is wrong
+    if(old_w != xava->outer.w || old_h != xava->outer.h) {
+        redraw_everything = true;
+        old_w = xava->outer.w;
+        old_h = xava->outer.h;
+        xava_util_media_data_thread_data(media_data_thread)->version++;
     }
 }
 
