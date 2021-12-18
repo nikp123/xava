@@ -23,6 +23,7 @@ if(CAIRO_MODULES)
         #find_and_copy_dlls(cairo_bars)
 
         set_target_properties(cairo_bars PROPERTIES OUTPUT_NAME "cairo/module/bars/module")
+        install(FILES "${CMAKE_BINARY_DIR}/cairo/module/bars/config.ini" RENAME config.ini.example DESTINATION share/xava/cairo/module/bars/)
         install(TARGETS cairo_bars RENAME module DESTINATION share/xava/cairo/module/bars/)
     else()
         message(WARNING "CAIRO library not found; \"cairo_bars\" won't build")
