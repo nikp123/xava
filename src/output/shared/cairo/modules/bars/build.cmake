@@ -5,8 +5,8 @@ if(CAIRO_MODULES)
     pkg_check_modules(CAIRO QUIET cairo)
     if(CAIRO_FOUND)
         add_library(cairo_bars SHARED "${XAVA_MODULE_DIR}/main.c"
+                                    "${XAVA_MODULE_DIR}/../shared/config.c"
                                     "${GLOBAL_FUNCTION_SOURCES}")
-                                #"${XAVA_MODULE_DIR}/../../"
 
         target_link_directories(cairo_bars PRIVATE
             "${CAIRO_LIBRARY_DIRS}")
