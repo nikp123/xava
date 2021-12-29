@@ -10,6 +10,7 @@ struct media_data {
     char           album [MUSIC_DATA_STRING_LENGTH];
     char           artist[MUSIC_DATA_STRING_LENGTH];
     char           title [MUSIC_DATA_STRING_LENGTH];
+    char           genre [MUSIC_DATA_STRING_LENGTH];
 
     uint64_t       version;
 };

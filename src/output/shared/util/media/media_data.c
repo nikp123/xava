@@ -47,6 +47,10 @@ void media_data_update
     if(strncmp(properties.metadata.title, data->data.title, MUSIC_DATA_STRING_LENGTH))
         should_update = true;
 
+    // check song genre for mismatches
+    if(strncmp(properties.metadata.genre, data->data.genre, MUSIC_DATA_STRING_LENGTH))
+        should_update = true;
+
     if(should_update) {
         // this complicated mess turns empty art_url's with a file attached to said file
         if(strlen(properties.metadata.art_url) == 0 &&
@@ -64,9 +68,10 @@ void media_data_update
 
         strncpy(data->last_track_id, properties.metadata.track_id, TRACK_ID_LENGTH);
 
-        strncpy(data->data.album, properties.metadata.album, MUSIC_DATA_STRING_LENGTH);
+        strncpy(data->data.album,  properties.metadata.album, MUSIC_DATA_STRING_LENGTH);
         strncpy(data->data.artist, properties.metadata.artist, MUSIC_DATA_STRING_LENGTH);
-        strncpy(data->data.title, properties.metadata.title, MUSIC_DATA_STRING_LENGTH);
+        strncpy(data->data.title,  properties.metadata.title, MUSIC_DATA_STRING_LENGTH);
+        strncpy(data->data.genre,  properties.metadata.genre, MUSIC_DATA_STRING_LENGTH);
 
         data->data.version++;
     }
