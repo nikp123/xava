@@ -1,9 +1,9 @@
 #include <math.h>
 #include <cairo/cairo.h>
-#include "../../util/module.h"
-#include "../../util/array.h"
-#include "../../../graphical.h"
-#include "../../../../../shared.h"
+#include "output/shared/cairo/util/module.h"
+#include "output/shared/cairo/util/array.h"
+#include "output/shared/graphical.h"
+#include "shared.h"
 
 // report version
 EXP_FUNC xava_version xava_cairo_module_version(void) {

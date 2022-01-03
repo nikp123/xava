@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-#include "../../../shared.h"
+#include "shared.h"
 
 
 void     GLConfigLoad(XAVA *xava);

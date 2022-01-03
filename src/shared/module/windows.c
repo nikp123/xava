@@ -5,7 +5,7 @@
 
 #include <windows.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 typedef struct xavamodule {
     char *name;

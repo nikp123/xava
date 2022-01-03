@@ -4,11 +4,10 @@
 #include <SDL_opengl.h>
 #define GL_ALREADY_DEFINED
 
-#include "../shared/gl/glew.h"
+#include "output/shared/gl/glew.h"
 
-#include "../shared/graphical.h"
-#include "../../config.h"
-#include "../../shared.h"
+#include "output/shared/graphical.h"
+#include "shared.h"
 
 SDL_Window *xavaSDLWindow;
 SDL_Surface *xavaSDLWindowSurface;

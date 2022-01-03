@@ -6,8 +6,8 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-#include "../shared/graphical.h"
-#include "../../shared.h"
+#include "output/shared/graphical.h"
+#include "shared.h"
 
 #include "main.h"
 #include "wl_output.h"
@@ -18,14 +18,14 @@
     #include <wayland-egl.h>
     #include <wayland-egl-core.h>
     #include "egl.h"
-    #include "../shared/gl/egl.h"
+    #include "output/shared/gl/egl.h"
 #endif
 #ifdef SHM
     #include "shm.h"
 #endif
 #ifdef CAIRO
     #include "cairo.h"
-    #include "../shared/cairo/main.h"
+    #include "output/shared/cairo/main.h"
 #endif
 
 /* Globals */

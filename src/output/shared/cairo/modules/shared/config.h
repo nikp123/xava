@@ -1,7 +1,7 @@
 #ifndef __XAVA_OUTPUT_CAIRO_MODULE_UTIL_CONFIG
 #define __XAVA_OUTPUT_CAIRO_MODULE_UTIL_CONFIG
 
-#include "../../util/module.h"
+#include "output/shared/cairo/util/module.h"
 
 typedef enum xava_cairo_file_type {
     XAVA_CAIRO_FILE_CONFIG,               // for loading xava_config_source-es

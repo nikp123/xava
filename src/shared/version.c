@@ -1,4 +1,4 @@
-#include "../shared.h"
+#include "shared.h"
 
 EXP_FUNC xava_version xava_version_host_get(void) {
     xava_version v;

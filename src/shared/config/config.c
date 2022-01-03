@@ -3,9 +3,8 @@
 
 #include <iniparser.h>
 
-#include "../../shared.h"
-
-#include "../config.h"
+#include "shared.h"
+#include "shared/config.h"
 
 struct xava_config {
     dictionary *ini;

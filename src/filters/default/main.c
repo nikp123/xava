@@ -4,7 +4,7 @@
 
 #include <fftw3.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 #ifndef max
     #define max(a,b) \

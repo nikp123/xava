@@ -3,7 +3,7 @@
 #include <string.h>
 #include <portaudio.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 #define SAMPLE_SILENCE 32768
 #define PA_SAMPLE_TYPE paInt16
@@ -113,7 +113,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
             if(!strcmp(audio->source, deviceInfo->name)) {
                 deviceNum=i;
                 break;
-            } 
+            }
         }
         xavaBailCondition(deviceNum==-1,
                 "No such device '%s'", audio->source);
@@ -166,7 +166,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
     Pa_Terminate();
     free(data.recordedSamples);
     return 0;
-} 
+}
 
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
     XAVA_AUDIO *audio = &xava->audio;

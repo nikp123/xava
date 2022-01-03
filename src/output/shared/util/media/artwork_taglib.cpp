@@ -18,7 +18,7 @@
 extern "C" {
 static const char *taglib_id_picture = "APIC";
 
-#include "../../../../shared.h"
+#include "shared.h"
 
 #include "artwork.h"
 

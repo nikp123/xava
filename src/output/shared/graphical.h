@@ -1,7 +1,7 @@
 #ifndef H_GRAPHICAL
 #define H_GRAPHICAL
 
-#include "../../shared.h"
+#include "shared.h"
 
 // updates geometry as well as position data
 void calculate_win_pos(XAVA *xava, uint32_t scrW, uint32_t scrH,

@@ -2,7 +2,7 @@
 
 #include "post.h"
 #include "util.h"
-#include "../../../graphical.h"
+#include "output/shared/graphical.h"
 
 // postVertices
 static const GLfloat post_vertices[16] = {

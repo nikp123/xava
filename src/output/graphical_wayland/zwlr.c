@@ -1,7 +1,7 @@
 #include <string.h>
 
-#include "../../shared.h"
-#include "../shared/graphical.h"
+#include "shared.h"
+#include "output/shared/graphical.h"
 
 #include "gen/wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "zwlr.h"

@@ -9,15 +9,15 @@
 
 #include <unistd.h>
 
-#include "log.h"
-#include "../shared.h"
+#include "shared/log.h"
+#include "shared.h"
 
 #ifdef __WIN32__
 #include <windows.h>
 #endif
 
 #ifdef __unix__
-#include "io/unix.h"
+#include "shared/io/unix.h"
 #endif
 
 EXP_FUNC int xavaMkdir(const char *dir) {

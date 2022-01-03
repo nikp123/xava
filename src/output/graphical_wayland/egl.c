@@ -4,8 +4,8 @@
 #include <wayland-egl.h>
 #include <wayland-egl-core.h>
 
-#include "../shared/graphical.h"
-#include "../shared/gl/egl.h"
+#include "output/shared/graphical.h"
+#include "output/shared/gl/egl.h"
 
 #include "egl.h"
 #include "main.h"

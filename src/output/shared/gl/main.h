@@ -16,7 +16,7 @@
     #include <GL/glew.h>
 #endif
 
-#include "../../../shared.h"
+#include "shared.h"
 
 typedef struct XAVAGLModuleOptions {
     GLdouble            resolution_scale;

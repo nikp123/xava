@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 typedef unsigned int u32_t;
 typedef short s16_t;

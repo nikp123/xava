@@ -1,12 +1,12 @@
 #include <math.h>
 #include <cairo/cairo.h>
 
-#include "../shared/config.h"
+#include "output/shared/cairo/modules/shared/config.h"
 
-#include "../../util/module.h"
-#include "../../util/array.h"
-#include "../../../graphical.h"
-#include "../../../../../shared.h"
+#include "output/shared/cairo/util/module.h"
+#include "output/shared/cairo/util/array.h"
+#include "output/shared/graphical.h"
+#include "shared.h"
 
 struct options {
     // noop
@@ -78,7 +78,7 @@ EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* han
 
     // potentially set if no other modules require it
     //conf->skipFilterF = true;
-    
+
     xavaWarn("Just a heads up: THIS IS GOING TO LAG! Blame cairo.");
 }
 
@@ -150,7 +150,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     double x1, y1, x2, y2;
     x1 = scale_x * audio->audio_out_l[0] + trans_x;
     y1 = scale_y * audio->audio_out_r[0] + trans_y;
- 
+
     for(size_t i = 1; i < audio->inputsize; i++) {
         x2 = scale_x * audio->audio_out_l[i] + trans_x;
         y2 = scale_y * audio->audio_out_r[i] + trans_y;

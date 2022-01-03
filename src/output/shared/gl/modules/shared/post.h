@@ -1,7 +1,7 @@
 #ifndef __GL_MODULE_SHARED_POST_H
 #define __GL_MODULE_SHARED_POST_H
 
-#include "../../main.h"
+#include "output/shared/gl/main.h"
 #include "shader.h"
 
 typedef enum gl_module_post_render_features {

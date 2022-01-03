@@ -4,8 +4,8 @@
 #include <ctype.h>
 #include <dlfcn.h>
 
-#include "../../shared.h"
-#include "../io/unix.h"
+#include "shared.h"
+#include "shared/io/unix.h"
 
 typedef struct xavamodule {
     char *name;

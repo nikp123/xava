@@ -1,8 +1,8 @@
 
 #include "egl.h"
 
-#include "../../../shared.h"
-#include "../graphical.h"
+#include "shared.h"
+#include "output/shared/graphical.h"
 
 
 void EGLConfigLoad(XAVA *xava) {

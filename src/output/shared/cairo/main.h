@@ -2,7 +2,7 @@
 #define __XAVA_OUTPUT_SHARED_CAIRO_H
 
 #include <cairo/cairo.h>
-#include "../../../shared.h"
+#include "shared.h"
 #include "util/feature_compat.h"
 #include "util/module.h"
 

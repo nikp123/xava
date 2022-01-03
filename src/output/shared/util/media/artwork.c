@@ -5,7 +5,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include "../../../../shared.h"
+#include "shared.h"
 
 #include "artwork.h"
 

@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <cairo/cairo.h>
-#include "../../../../shared.h"
+#include "shared.h"
 #include "feature_compat.h"
 #include "region.h"
 

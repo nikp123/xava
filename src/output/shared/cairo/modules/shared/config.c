@@ -4,14 +4,14 @@
 
 #include <cairo/cairo.h>
 
-#include "../../../../../shared.h"
+#include "shared.h"
 
-#include "../../main.h"
+#include "output/shared/cairo/main.h"
 
-#include "../../util/array.h"
-#include "../../util/feature_compat.h"
-#include "../../util/module.h"
-#include "../../util/region.h"
+#include "output/shared/cairo/util/array.h"
+#include "output/shared/cairo/util/feature_compat.h"
+#include "output/shared/cairo/util/module.h"
+#include "output/shared/cairo/util/region.h"
 
 #include "config.h"
 

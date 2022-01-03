@@ -1,7 +1,7 @@
 #include <x-watcher.h>
 
-#include "ionotify.h"
-#include "../shared.h"
+#include "shared/ionotify.h"
+#include "shared.h"
 
 // cringe but bare with me k
 struct hax {

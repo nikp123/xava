@@ -10,7 +10,7 @@
 #include "main.h"
 
 extern "C" {
-    #include "../../shared.h"
+    #include "shared.h"
 }
 
 // This variable is read by the main executable

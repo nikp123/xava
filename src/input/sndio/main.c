@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 EXP_FUNC void* xavaInput(void* data)
 {

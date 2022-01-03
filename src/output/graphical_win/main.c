@@ -9,18 +9,18 @@
 
 // it must be in this OCD breaking order or it will fail to compile ;(
 #ifdef GL
-    #include "../shared/gl/glew.h"
+    #include "output/shared/gl/glew.h"
     #include <GL/wglext.h>
 #endif
 
 #ifdef CAIRO
     #include <cairo/cairo.h>
     #include <cairo/cairo-win32.h>
-    #include "../shared/cairo/main.h"
+    #include "output/shared/cairo/main.h"
 #endif
 
-#include "../shared/graphical.h"
-#include "../../shared.h"
+#include "output/shared/graphical.h"
+#include "shared.h"
 
 #include "main.h"
 

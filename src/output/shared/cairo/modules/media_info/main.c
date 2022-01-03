@@ -1,15 +1,15 @@
 #include <math.h>
 #include <cairo/cairo.h>
 
-#include "../../../graphical.h"
-#include "../../../../../shared.h"
+#include "output/shared/graphical.h"
+#include "shared.h"
 
 // cairo-only utils
-#include "../../util/module.h"
-#include "../../util/array.h"
+#include "output/shared/cairo/util/module.h"
+#include "output/shared/cairo/util/array.h"
 
 // shared utils
-#include "../../../util/media/media_data.h"
+#include "output/shared/util/media/media_data.h"
 
 bool redraw_everything;
 static const int region_count = 3;

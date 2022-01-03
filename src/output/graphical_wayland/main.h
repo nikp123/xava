@@ -3,17 +3,17 @@
 
 #ifdef EGL
     #include <stdint.h>
-    #include "../shared/gl/egl.h"
+    #include "output/shared/gl/egl.h"
 #endif
 
 #ifdef CAIRO
     #include <cairo/cairo.h>
-    #include "../shared/cairo/main.h"
+    #include "output/shared/cairo/main.h"
 #endif
 
 #include <wayland-client.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 struct waydata {
     struct wl_surface    *surface;

@@ -9,7 +9,7 @@
 #endif
 
 #include "main.h"
-#include "../shared/cairo/main.h"
+#include "output/shared/cairo/main.h"
 
 void xava_output_wayland_cairo_init(struct waydata *wd) {
     wd->cairo_surface = cairo_image_surface_create_for_data(wd->shm.buffer,

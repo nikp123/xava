@@ -2,8 +2,8 @@
 #include <string.h>
 
 #include "shader.h"
-#include "../../../../../shared.h"
-#include "../../../graphical.h"
+#include "shared.h"
+#include "output/shared/graphical.h"
 
 void xava_gl_module_shader_load(
         xava_gl_module_program *program,

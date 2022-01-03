@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 // input: ALSA
 

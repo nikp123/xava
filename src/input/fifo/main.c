@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <time.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 int rc;
 
@@ -50,7 +50,7 @@ EXP_FUNC void* xavaInput(void* data)
 
                 // prevents filling a invalid buffer whilst in mono mode
                 if (audio->channels == 2) {
-                    for (i = 0; i < audio->inputsize; i++) 
+                    for (i = 0; i < audio->inputsize; i++)
                         audio->audio_out_r[i] = 0;
                 }
                 close(fd);
@@ -87,7 +87,7 @@ EXP_FUNC void* xavaInput(void* data)
 EXP_FUNC void xavaInputLoadConfig(XAVA *xava) {
     XAVA_AUDIO *audio = &xava->audio;
     xava_config_source config = xava->default_config.config;
-    xavaWarnCondition(audio->rate != 44100, 
+    xavaWarnCondition(audio->rate != 44100,
             "Changing the audio rate won't do much as that depends on your MPD "
             "settings. Go check those instead!");
     audio->source = (char*)xavaConfigGetString(config, "input", "source", "/tmp/mpd.fifo");

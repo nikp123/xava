@@ -10,7 +10,7 @@
 #include <spa/debug/buffer.h>
 #include <spa/debug/mem.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 static int n = 0;
 

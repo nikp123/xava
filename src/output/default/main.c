@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 #ifdef WAYLAND
 bool am_i_wayland(void);

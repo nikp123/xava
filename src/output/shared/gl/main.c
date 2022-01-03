@@ -2,7 +2,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "../../../shared.h"
+#include "shared.h"
 
 #include "main.h"
 

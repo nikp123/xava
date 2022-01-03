@@ -3,8 +3,8 @@
 #include <string.h>
 #include <wchar.h>
 
-#include "../../shared/graphical.h"
-#include "../../../shared.h"
+#include "output/shared/graphical.h"
+#include "shared.h"
 
 int gradient_size = 64;
 

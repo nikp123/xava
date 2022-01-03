@@ -5,8 +5,8 @@
 #endif
 #include "glew.h"
 
-#include "../../../shared.h"
-#include "../graphical.h"
+#include "shared.h"
+#include "output/shared/graphical.h"
 
 
 void GLConfigLoad(XAVA *xava) {

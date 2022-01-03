@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <kiss-mpris.h>
 
-#include "../../../../shared.h"
+#include "shared.h"
 
 #include "media_data.h"
 

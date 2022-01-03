@@ -14,20 +14,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "../shared/graphical.h"
-#include "../../config.h"
-#include "../../shared.h"
+#include "output/shared/graphical.h"
+#include "shared.h"
 
 #ifdef GL
-    #include "../shared/gl/glew.h"
+    #include "output/shared/gl/glew.h"
     #include <X11/extensions/Xrender.h>
     #include <GL/glx.h>
 #endif
 #ifdef EGL
-    #include "../shared/gl/egl.h"
+    #include "output/shared/gl/egl.h"
 #endif
 #ifdef CAIRO
-    #include "../shared/cairo/main.h"
+    #include "output/shared/cairo/main.h"
     #include <cairo/cairo.h>
     #include <cairo/cairo-xlib.h>
 #endif

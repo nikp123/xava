@@ -1,12 +1,12 @@
 #include <math.h>
 #include <cairo/cairo.h>
 
-#include "../shared/config.h"
+#include "output/shared/cairo/modules/shared/config.h"
 
-#include "../../util/module.h"
-#include "../../util/array.h"
-#include "../../../graphical.h"
-#include "../../../../../shared.h"
+#include "output/shared/cairo/util/module.h"
+#include "output/shared/cairo/util/array.h"
+#include "output/shared/graphical.h"
+#include "shared.h"
 
 struct options {
     bool mirror;

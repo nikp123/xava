@@ -7,7 +7,7 @@
 #include "util/module.h"
 #include "util/region.h"
 #include "util/array.h"
-#include "../graphical.h"
+#include "output/shared/graphical.h"
 
 #define LOAD_FUNC_POINTER(name) \
     module->func.name = xava_module_symbol_address_get(module->handle, "xava_cairo_module_" #name); \

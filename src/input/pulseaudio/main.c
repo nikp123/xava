@@ -7,7 +7,7 @@
 #include <pulse/pulseaudio.h>
 #include <pthread.h>
 
-#include "../../shared.h"
+#include "shared.h"
 
 pa_mainloop *m_pulseaudio_mainloop;
 

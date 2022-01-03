@@ -2,13 +2,13 @@
 #include <string.h>
 #include <math.h>
 
-#include "../shared/shader.h"
-#include "../shared/post.h"
-#include "../shared/util.h"
-#include "../../main.h"
+#include "output/shared/gl/modules/shared/shader.h"
+#include "output/shared/gl/modules/shared/post.h"
+#include "output/shared/gl/modules/shared/util.h"
+#include "output/shared/gl/main.h"
 
-#include "../../../../../shared.h"
-#include "../../../graphical.h"
+#include "shared.h"
+#include "output/shared/graphical.h"
 
 // functions needed by something else
 void xava_gl_module_clear(XAVAGLModuleOptions *options);

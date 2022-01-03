@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../shared.h"
-#include "internal.h"
+#include "shared.h"
+#include "shared/module/internal.h"
 
 #if defined(__WIN32__)
     #define DIR_BREAK '\\'

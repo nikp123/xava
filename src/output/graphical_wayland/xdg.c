@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <wayland-client-core.h>
 
-#include "../shared/graphical.h"
+#include "output/shared/graphical.h"
 
 #include "gen/xdg-shell-client-protocol.h"
 
