@@ -40,9 +40,10 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
             return;
 
         struct wlOutput *output = malloc(sizeof(struct wlOutput));
-        output->output = 
-            wl_registry_bind(xavaWLRegistry, name, &wl_output_interface, 3);
-        output->name = name;
+        output->output = wl_registry_bind(xavaWLRegistry, name,
+                &wl_output_interface, 3);
+        output->id     = name;
+
         wl_output_add_listener(output->output, &output_listener, output);
         wl_list_insert(&wd->outputs, &output->link);
 

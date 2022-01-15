@@ -39,9 +39,9 @@ void wl_output_cleanup(struct waydata *wd) {
     struct wlOutput *output, *tmp;
 
     wl_list_for_each_safe(output, tmp, &wd->outputs, link) {
-        xavaSpam("Destroying output %s", output->displayName);
+        xavaSpam("Destroying output %s", output->name);
         wl_list_remove(&output->link);
-        free(output->displayName);
+        free(output->name);
         free(output);
     }
 }
@@ -56,7 +56,7 @@ struct wlOutput *wl_output_get_desired(struct waydata *wd) {
     lastGood = NULL; // supress warnings by GCC
 
     wl_list_for_each_safe(output, tmp, &wd->outputs, link) {
-        if(!strcmp(output->displayName, monitorName)) {
+        if(!strcmp(output->name, monitorName)) {
             return output;
         } else lastGood = output;
     }
@@ -84,8 +84,8 @@ static void xdg_output_handle_logical_size(void *data,
 static void xdg_output_handle_name(void *data,
         struct zxdg_output_v1 *xdg_output, const char *name) {
     struct wlOutput *output = data;
-    xavaSpam("Output %s loaded", name);
-    output->displayName = strdup(name);
+    xavaSpam("Output %s loaded with id %d", name, output->id);
+    output->name = strdup(name);
 }
 
 static void xdg_output_handle_done(void *data,
