@@ -58,6 +58,8 @@ if(NOT THREAD_LIB)
 	message(FATAL_ERROR "pthread library not found")
 endif()
 
+include_directories(src)
+
 # Build shared library
 include("src/shared/build.cmake")
 
