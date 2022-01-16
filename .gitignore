@@ -5,6 +5,8 @@ build*/
 *.user
 *.config
 CMakeLists.txt.*
+compile_commands.json
+Debug/
 
 # Just some random patches I keep around
 # Usually some experiments gone wrong, I guess
