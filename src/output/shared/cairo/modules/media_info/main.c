@@ -93,7 +93,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
     options.title.slant  = CAIRO_FONT_SLANT_NORMAL;
     options.title.x = 0.175;
     options.title.max_x = 0.8;
-    options.title.y = 0.100;
+    options.title.y = 0.080;
     options.title.size = 40;
     options.title.color.r = 1.0;
     options.title.color.g = 1.0;
