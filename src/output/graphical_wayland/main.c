@@ -43,8 +43,17 @@ static void wl_surface_frame_done(void *data, struct wl_callback *cb,
 
     wl_callback_destroy(cb);
 
+    // more like fucking brain damage, amirite
+    wl_surface_damage_buffer(wd->surface, 0, 0, INT32_MAX, INT32_MAX);
+
     #ifdef SHM
         update_frame(wd);
+
+        // when using non-EGL wayland, the framerate is controlled by the wl_callbacks
+        cb = wl_surface_frame(wd->surface);
+        wl_callback_add_listener(cb, &wl_surface_frame_listener, wd);
+
+        wl_surface_commit(wd->surface);
     #endif
 }
 const struct wl_callback_listener wl_surface_frame_listener = {
@@ -141,6 +150,10 @@ EXP_FUNC int xavaInitOutput(XAVA *hand) {
     #ifdef CAIRO
         xava_output_wayland_cairo_init(&wd);
     #endif
+
+    struct wl_callback *cb = wl_surface_frame(wd.surface);
+    wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
+
     return EXIT_SUCCESS;
 }
 
@@ -206,19 +219,10 @@ EXP_FUNC void xavaOutputDraw(XAVA *hand) {
     #endif
     #ifdef CAIRO
         __internal_xava_output_cairo_draw(wd.cairo_handle);
-
-        // more like fucking brain damage, amirite
-        wl_surface_damage_buffer(wd.surface, 0, 0,
-                hand->outer.w, hand->outer.h);
     #endif
 
     #ifdef SHM
-        // when using non-EGL wayland, the framerate is controlled by the wl_callbacks
-        struct wl_callback *cb = wl_surface_frame(wd.surface);
-        wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
-
         // signal to wayland about it
-        wl_surface_commit(wd.surface);
         wl_display_roundtrip(wd.display);
     #endif
 

@@ -7,6 +7,7 @@ build*/
 CMakeLists.txt.*
 compile_commands.json
 Debug/
+.cache/
 
 # Just some random patches I keep around
 # Usually some experiments gone wrong, I guess
