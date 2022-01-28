@@ -57,7 +57,7 @@ struct functions {
 
 XAVAMODULE *module;
 
-void xavaOutputLoadConfig(XAVA *xava) {
+EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
     int supported_systems = sizeof(systems)/sizeof(sys);
 
     char *system = NULL;
