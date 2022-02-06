@@ -5,7 +5,7 @@ Name=XAVA
 GenericName=Graphical Audio Visualizer
 Comment=X11 Audio Visualizer for ALSA
 Exec=xava
-Icon=xava
+Icon=xava_visualizer
 Terminal=false
 Categories=Audio;AudioVideo
 
