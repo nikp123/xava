@@ -7,5 +7,5 @@ Comment=X11 Audio Visualizer for ALSA
 Exec=xava
 Icon=xava
 Terminal=false
-Categories=Audio;AudioVideo;Graphics
+Categories=Audio;AudioVideo
 
