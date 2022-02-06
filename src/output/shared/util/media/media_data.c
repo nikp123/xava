@@ -84,9 +84,9 @@ void* media_data_thread_runner(void* ptr) {
     while(data->alive) {
         media_data_update(data);
 
-        // sleep for 5 seconds but interruptable every 50ms
+        // sleep for 1 second but interruptable every 50ms
         for(int i = 0; i < 10 && data->alive; i++) {
-            xavaSleep(50, 0);
+            xavaSleep(100, 0);
         }
     }
 
