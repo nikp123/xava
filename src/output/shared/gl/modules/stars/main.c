@@ -145,11 +145,20 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glUseProgram(pre.program);
 
     // reallocate and attach verticies data
-    arr_resize(vertexData, star.count*12);
+    int32_t star_count;
+    if(star.count == 0) {
+        // very scientific, much wow
+        star_count = xava->outer.w*xava->outer.h*star.density;
+    } else {
+        star_count = star.count;
+    }
+
+    arr_resize(stars, star_count);
+    arr_resize(vertexData, star_count*12);
     glVertexAttribPointer(PRE_STARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
     // since most of this information remains untouched, let's precalculate
-    for(int i=0; i<xava->bars; i++) {
+    for(int i=0; i<star_count; i++) {
         vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);
         vertexData[i*12+1]  = 1.0f;
         vertexData[i*12+2]  = vertexData[i*12];
@@ -176,16 +185,6 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
 
     // update screen resoltion
     glUniform2f(PRE_RESOLUTION, xava->outer.w, xava->outer.h);
-
-    int32_t star_count;
-    if(star.count == 0) {
-        // very scientific, much wow
-        star_count = xava->outer.w*xava->outer.h*star.density;
-    } else {
-        star_count = star.count;
-    }
-
-    arr_resize(stars, star_count);
 
     for(int i = 0; i < star_count; i++) {
         // generate the stars with random angles
