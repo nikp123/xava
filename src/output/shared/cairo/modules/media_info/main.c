@@ -6,7 +6,6 @@
 
 // cairo-only utils
 #include "output/shared/cairo/util/module.h"
-#include "output/shared/cairo/util/array.h"
 
 // shared utils
 #include "output/shared/util/media/media_data.h"

@@ -8,7 +8,6 @@
 
 #include "output/shared/cairo/main.h"
 
-#include "output/shared/cairo/util/array.h"
 #include "output/shared/cairo/util/feature_compat.h"
 #include "output/shared/cairo/util/module.h"
 #include "output/shared/cairo/util/region.h"

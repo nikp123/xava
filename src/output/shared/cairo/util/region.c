@@ -1,4 +1,4 @@
-#include "array.h"
+#include "shared.h"
 #include "region.h"
 
 // returns false on pass

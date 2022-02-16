@@ -1,7 +1,6 @@
 #include <math.h>
 #include <cairo/cairo.h>
 #include "output/shared/cairo/util/module.h"
-#include "output/shared/cairo/util/array.h"
 #include "output/shared/graphical.h"
 #include "shared.h"
 

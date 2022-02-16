@@ -4,7 +4,6 @@
 #include "output/shared/cairo/modules/shared/config.h"
 
 #include "output/shared/cairo/util/module.h"
-#include "output/shared/cairo/util/array.h"
 #include "output/shared/graphical.h"
 #include "shared.h"
 

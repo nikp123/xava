@@ -1,7 +1,7 @@
 #include "module.h"
 #include "region.h"
 #include "feature_compat.h"
-#include "array.h"
+#include "shared.h"
 
 XAVA_CAIRO_FEATURE xava_cairo_module_check_compatibility(xava_cairo_module *modules) {
     XAVA_CAIRO_FEATURE lowest_common_denominator =

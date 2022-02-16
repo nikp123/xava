@@ -38,6 +38,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+// this array thing is so useful, let's just force it upon everything. thank liv
+#include "shared/array.h"
 #include "shared/module.h"
 #include "shared/log.h"
 #include "shared/ionotify.h"

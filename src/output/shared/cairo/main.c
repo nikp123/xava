@@ -6,7 +6,7 @@
 #include "util/feature_compat.h"
 #include "util/module.h"
 #include "util/region.h"
-#include "util/array.h"
+#include "shared.h"
 #include "output/shared/graphical.h"
 
 #define LOAD_FUNC_POINTER(name) \
