@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "util.h"
+#include "misc.h"
 
 float xava_gl_module_util_calculate_intensity(XAVA *xava) {
     XAVA_CONFIG *conf = &xava->conf;

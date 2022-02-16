@@ -1,8 +1,11 @@
 #include <string.h>
 
+#include "output/shared/gl/main.h"
 #include "post.h"
-#include "util.h"
+#include "output/shared/gl/util/misc.h"
 #include "output/shared/graphical.h"
+#include "util/shader.c"
+#include "util/misc.c"
 
 // postVertices
 static const GLfloat post_vertices[16] = {
@@ -15,32 +18,32 @@ static const GLfloat post_vertices[16] = {
     -1.0f,  1.0f,  // Position 3
      0.0f,  1.0f}; // TexCoord 3
 
-void xava_gl_module_post_update_intensity(gl_module_post_render *vars) {
+void xava_gl_module_post_update_intensity(XAVAGLHostOptions *vars) {
     // update intensity
-    float intensity = xava_gl_module_util_calculate_intensity(vars->options->xava);
+    float intensity = xava_gl_module_util_calculate_intensity(vars->xava);
     glUniform1f(vars->gl_vars.INTENSITY, intensity);
 }
 
-void xava_gl_module_post_update_time(gl_module_post_render *vars) {
+void xava_gl_module_post_update_time(XAVAGLHostOptions *vars) {
     float currentTime = xava_gl_module_util_obtain_time();
 
     // update time
     glUniform1f(vars->gl_vars.TIME, currentTime);
 }
 
-void xava_gl_module_post_update_colors(gl_module_post_render *vars) {
+void xava_gl_module_post_update_colors(XAVAGLHostOptions *vars) {
     float fgcol[4] = {
-        ARGB_R_32(vars->options->xava->conf.col)/255.0,
-        ARGB_G_32(vars->options->xava->conf.col)/255.0,
-        ARGB_B_32(vars->options->xava->conf.col)/255.0,
-        vars->options->xava->conf.foreground_opacity
+        ARGB_R_32(vars->xava->conf.col)/255.0,
+        ARGB_G_32(vars->xava->conf.col)/255.0,
+        ARGB_B_32(vars->xava->conf.col)/255.0,
+        vars->xava->conf.foreground_opacity
     };
 
     float bgcol[4] = {
-        ARGB_R_32(vars->options->xava->conf.bgcol)/255.0,
-        ARGB_G_32(vars->options->xava->conf.bgcol)/255.0,
-        ARGB_B_32(vars->options->xava->conf.bgcol)/255.0,
-        vars->options->xava->conf.background_opacity
+        ARGB_R_32(vars->xava->conf.bgcol)/255.0,
+        ARGB_G_32(vars->xava->conf.bgcol)/255.0,
+        ARGB_B_32(vars->xava->conf.bgcol)/255.0,
+        vars->xava->conf.background_opacity
     };
 
     // set and attach foreground color
@@ -50,19 +53,22 @@ void xava_gl_module_post_update_colors(gl_module_post_render *vars) {
     glUniform4f(vars->gl_vars.BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 }
 
-void xava_gl_module_post_config_load(gl_module_post_render *vars) {
-    XAVAGLModuleOptions *options = vars->options;
-    XAVA  *xava    = options->xava;
-    xava_config_source           config = xava->default_config.config;
+void xava_gl_module_post_config_load(XAVAGLHostOptions *vars) {
+    XAVA               *xava   = vars->xava;
+    xava_config_source  config = xava->default_config.config;
 
     char *shader;
 
     shader = xavaConfigGetString(config, "gl", "post_shader", "default");
     if(strcmp("none", shader)){
-        xava_gl_module_shader_load(&vars->post, SGL_POST, SGL_VERT, shader, options);
-        xava_gl_module_shader_load(&vars->post, SGL_POST, SGL_FRAG, shader, options);
-        xava_gl_module_shader_load(&vars->post, SGL_POST, SGL_CONFIG, shader, options);
-        vars->enabled = true;
+        // HACK: (ab)using the 1st modules inotify for the post shaders reload function
+        xava_gl_module_shader_load(&vars->post, SGL_POST, SGL_VERT, shader,
+                &vars->module[0], xava);
+        xava_gl_module_shader_load(&vars->post, SGL_POST, SGL_FRAG, shader,
+                &vars->module[0], xava);
+        xava_gl_module_shader_load(&vars->post, SGL_POST, SGL_CONFIG, shader,
+                &vars->module[0], xava);
+        vars->post_enabled = true;
 
         vars->features = 0;
         if(xavaConfigGetBool(vars->post.config, "features", "colors", false)) {
@@ -75,13 +81,13 @@ void xava_gl_module_post_config_load(gl_module_post_render *vars) {
             vars->features |= GL_MODULE_POST_INTENSITY;
         }
     } else {
-        vars->enabled = false;
+        vars->post_enabled = false;
     }
 
 }
 
-void xava_gl_module_post_init(gl_module_post_render *vars) {
-    if(!vars->enabled) return;
+void xava_gl_module_post_init(XAVAGLHostOptions *vars) {
+    if(!vars->post_enabled) return;
 
     struct gl_vars *gl = &vars->gl_vars;
     xava_gl_module_program *post = &vars->post;
@@ -106,12 +112,11 @@ void xava_gl_module_post_init(gl_module_post_render *vars) {
     }
 }
 
-void xava_gl_module_post_apply(gl_module_post_render *vars) {
-    if(!vars->enabled) return;
+void xava_gl_module_post_apply(XAVAGLHostOptions *vars) {
+    if(!vars->post_enabled) return;
 
-    XAVAGLModuleOptions *options = vars->options;
-    XAVA *xava = options->xava;
-    struct gl_vars *gl = &vars->gl_vars;
+    XAVA              *xava = vars->xava;
+    struct gl_vars    *gl   = &vars->gl_vars;
 
     glUseProgram(vars->post.program);
 
@@ -122,8 +127,8 @@ void xava_gl_module_post_apply(gl_module_post_render *vars) {
     glGenTextures(1,              &vars->FBO.final_texture);
     glBindTexture(GL_TEXTURE_2D,   vars->FBO.final_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-            xava->outer.w*options->resolution_scale,
-            xava->outer.h*options->resolution_scale,
+            xava->outer.w*vars->resolution_scale,
+            xava->outer.h*vars->resolution_scale,
             0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -134,8 +139,8 @@ void xava_gl_module_post_apply(gl_module_post_render *vars) {
     glGenTextures(1,             &vars->FBO.depth_texture);
     glBindTexture(GL_TEXTURE_2D,  vars->FBO.depth_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-            xava->outer.w*options->resolution_scale,
-            xava->outer.h*options->resolution_scale,
+            xava->outer.w*vars->resolution_scale,
+            xava->outer.h*vars->resolution_scale,
             0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -157,27 +162,25 @@ void xava_gl_module_post_apply(gl_module_post_render *vars) {
             status);
 }
 
-void xava_gl_module_post_pre_draw_setup(gl_module_post_render *vars) {
-    XAVAGLModuleOptions *options = vars->options;
-    XAVA  *xava    = options->xava;
+void xava_gl_module_post_pre_draw_setup(XAVAGLHostOptions *vars) {
+    XAVA              *xava = vars->xava;
 
-    if(vars->enabled) {
+    if(vars->post_enabled) {
         // bind render target to texture
         glBindFramebuffer(GL_FRAMEBUFFER, vars->FBO.framebuffer);
         glViewport(0, 0,
-                xava->outer.w*options->resolution_scale,
-                xava->outer.h*options->resolution_scale);
+                xava->outer.w*vars->resolution_scale,
+                xava->outer.h*vars->resolution_scale);
     } else {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, xava->outer.w, xava->outer.h);
     }
 }
 
-void xava_gl_module_post_draw(gl_module_post_render *vars) {
-    if(!vars->enabled) return;
+void xava_gl_module_post_draw(XAVAGLHostOptions *vars) {
+    if(!vars->post_enabled) return;
 
-    XAVAGLModuleOptions *options = vars->options;
-    XAVA *xava = options->xava;
+    XAVA              *xava = vars->xava;
 
     /**
      * Once the texture has been conpleted, we now activate a seperate pipeline
@@ -236,8 +239,8 @@ void xava_gl_module_post_draw(gl_module_post_render *vars) {
     glDisableVertexAttribArray(vars->gl_vars.TEXCOORD);
 }
 
-void xava_gl_module_post_cleanup(gl_module_post_render *vars) {
-    if(vars->enabled) return;
+void xava_gl_module_post_cleanup(XAVAGLHostOptions *vars) {
+    if(vars->post_enabled) return;
 
     xava_gl_module_program_destroy(&vars->post);
 }

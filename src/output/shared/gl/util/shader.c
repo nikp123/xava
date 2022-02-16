@@ -10,8 +10,8 @@ void xava_gl_module_shader_load(
         sgl_shader_type type,
         sgl_shader_stage stage,
         const char *name,
-        XAVAGLModuleOptions *options) {
-    XAVA *xava = options->xava;
+        XAVAGLModule *module,
+        XAVA *xava) {
     RawData *file;
     char *returned_path;
     char file_path[MAX_PATH];
@@ -20,7 +20,7 @@ void xava_gl_module_shader_load(
 
     switch(type) {
         case SGL_PRE:
-            strcpy(file_path, options->module_prefix);
+            strcpy(file_path, module->prefix);
             break;
         case SGL_POST:
             strcpy(file_path, "gl/shaders/");
@@ -101,7 +101,7 @@ void xava_gl_module_shader_load(
         a->id                 = 1; // dont really care tbh
         a->xava               = xava;
         a->ionotify           = xava->ionotify;
-        a->xava_ionotify_func = options->ionotify_callback;
+        a->xava_ionotify_func = module->func.ionotify_callback;
         xavaBailCondition(!xavaIONotifyAddWatch(a),
             "xavaIONotifyAddWatch failed!");
     } else {
@@ -115,7 +115,7 @@ void xava_gl_module_shader_load(
         a->id                 = 1; // dont really care tbh
         a->xava               = xava;
         a->ionotify           = xava->ionotify;
-        a->xava_ionotify_func = options->ionotify_callback;
+        a->xava_ionotify_func = module->func.ionotify_callback;
         xavaBailCondition(!xavaIONotifyAddWatch(a),
             "xavaIONotifyAddWatch failed!");
     }

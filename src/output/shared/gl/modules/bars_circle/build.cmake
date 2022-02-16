@@ -8,9 +8,8 @@ if(GL_MODULES)
     pkg_check_modules(GLEW QUIET glew)
     if(GLEW OR GLEW_FOUND)
         add_library(gl_bars_circle SHARED "${XAVA_MODULE_DIR}/main.c"
-                                    "${XAVA_MODULE_DIR}/../shared/shader.c"
-                                    "${XAVA_MODULE_DIR}/../shared/post.c"
-                                    "${XAVA_MODULE_DIR}/../shared/util.c"
+                                    "${XAVA_MODULE_DIR}/../../util/shader.c"
+                                    "${XAVA_MODULE_DIR}/../../util/misc.c"
                                     "${GLOBAL_FUNCTION_SOURCES}")
         target_link_directories(gl_bars_circle PRIVATE 
             "${GLEW_LIBRARY_DIRS}")

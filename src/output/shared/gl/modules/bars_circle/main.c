@@ -2,9 +2,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "output/shared/gl/modules/shared/shader.h"
-#include "output/shared/gl/modules/shared/post.h"
-#include "output/shared/gl/modules/shared/util.h"
+#include "output/shared/gl/util/shader.h"
+#include "output/shared/gl/util/misc.h"
 #include "output/shared/gl/main.h"
 
 #include "shared.h"
@@ -70,8 +69,6 @@ struct gl_renderer_options {
     } rotation;
 } gl_options;
 
-gl_module_post_render post;
-
 /**
  * This function is used for handling file change notifications.
  */
@@ -89,10 +86,10 @@ EXP_FUNC void xava_gl_module_ionotify_callback(XAVA_IONOTIFY_EVENT event,
     }
 }
 
-EXP_FUNC void xava_gl_module_config_load(XAVAGLModuleOptions *options) {
-    xava_gl_module_shader_load(&pre, SGL_PRE, SGL_VERT, "", options);
-    xava_gl_module_shader_load(&pre, SGL_PRE, SGL_FRAG, "", options);
-    xava_gl_module_shader_load(&pre, SGL_PRE, SGL_CONFIG, "", options);
+EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
+    xava_gl_module_shader_load(&pre, SGL_PRE, SGL_VERT, "",   module, xava);
+    xava_gl_module_shader_load(&pre, SGL_PRE, SGL_FRAG, "",   module, xava);
+    xava_gl_module_shader_load(&pre, SGL_PRE, SGL_CONFIG, "", module, xava);
 
     gl_options.bars.start_height =
         xavaConfigGetDouble(pre.config, "bars", "start_height", 0.2);
@@ -128,13 +125,10 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModuleOptions *options) {
     xavaBailCondition(gl_options.rotation.per_minute < 0.0,
             "You cannot time travel, sorry..");
 
-    xavaBailCondition(options->xava->conf.autobars == true,
+    xavaBailCondition(xava->conf.autobars == true,
             "Since \"bars_circle\" can't rely on window geometry for bars, "
             "you MUST specify the number of bars in [general]. Sorry about that.");
-    options->xava->conf.ignoreWindowSizeF = true;
-
-    post.options = options;
-    xava_gl_module_post_config_load(&post);
+    xava->conf.ignoreWindowSizeF = true;
 }
 
 EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
@@ -193,8 +187,6 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
         gradientColor[i*4+3] = conf->foreground_opacity;
     }
 
-    xava_gl_module_post_init(&post);
-
     shouldRestart = false;
 }
 
@@ -240,8 +232,6 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
 
     // "clear" the screen
     xava_gl_module_clear(options);
-
-    xava_gl_module_post_apply(&post);
 }
 
 EXP_FUNC XG_EVENT xava_gl_module_event(XAVAGLModuleOptions *options) {
@@ -291,8 +281,6 @@ EXP_FUNC void xava_gl_module_clear(XAVAGLModuleOptions *options) {
 
     glUniform4f(PRE_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
     glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
-
-    //glClearColor(bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 }
 
 #define xava_gl_module_draw_rotate_x(x, y, a) (x*cos(a)-y*sin(a))
@@ -362,17 +350,6 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
         vertexData[i*12+11] = xava_gl_module_draw_rotate_y(x1, y2, angle);
     }
 
-    // enable blending temporary so that the colors get properly calculated on
-    // the shader end of the pre stage
-    if(gl_options.color.blending) {
-        glEnable(GL_BLEND);
-        glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-        glBlendFuncSeparate(GL_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE, GL_ZERO);
-    }
-
-    // bind render target to texture
-    xava_gl_module_post_pre_draw_setup(&post);
-
     // switch to pre shaders
     glUseProgram(pre.program);
 
@@ -381,9 +358,6 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
 
     // update intensity
     glUniform1f(PRE_INTENSITY, intensity);
-
-    // clear the screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     // pointers get reset after each glUseProgram(), that's why this is done
     glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
@@ -398,15 +372,11 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
     // disable blending on the post stage as it produces
     // invalid colors on the window manager end
     glDisable(GL_BLEND);
-
-    // get out the draw function if post shaders aren't enabled
-    xava_gl_module_post_draw(&post);
 }
 
 EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
     // delete both pipelines
     xava_gl_module_program_destroy(&pre);
-    xava_gl_module_post_cleanup(&post);
 
     free(gradientColor);
     free(vertexData);
