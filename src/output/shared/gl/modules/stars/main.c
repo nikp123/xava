@@ -107,12 +107,6 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     XAVA *xava = options->xava;
     XAVA_CONFIG *conf = &xava->conf;
 
-    // automatically assign this so it isn't invalid during framebuffer creation
-    xava->outer.w = conf->w;
-    xava->outer.h = conf->h;
-    xava->inner.w = conf->w;
-    xava->inner.h = conf->h;
-
     // create programs
     xava_gl_module_program_create(&pre);
 
