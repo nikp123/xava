@@ -33,6 +33,7 @@ xava_gl_module_program pre;
 
 // shader buffers
 static GLfloat *vertexData;
+static GLfloat *colorData;
 
 // used to adjust the view
 static GLfloat projectionMatrix[16] =
@@ -42,11 +43,12 @@ static GLfloat projectionMatrix[16] =
      0.0,  0.0,  0.0,  1.0};
 
 // geometry information
-static GLuint PRE_STARS;
+static GLuint SHADER_POS;
 static GLuint PRE_RESOLUTION;
 static GLuint PRE_PROJMATRIX;
 
 // color information
+static GLuint SHADER_COLOR;
 static GLuint PRE_FGCOL;
 static GLuint PRE_BGCOL;
 
@@ -56,6 +58,14 @@ static GLuint PRE_INTENSITY;
 
 // this is hacked in, shut up
 static bool shouldRestart;
+
+typedef struct color4f {
+    GLfloat r, g, b, a;
+} color4f;
+
+typedef struct vec2f {
+    GLfloat x, y;
+} vec2f;
 
 // star functions
 float xava_generate_star_angle(void) {
@@ -104,9 +114,6 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
 }
 
 EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
-    XAVA *xava = options->xava;
-    XAVA_CONFIG *conf = &xava->conf;
-
     // create programs
     xava_gl_module_program_create(&pre);
 
@@ -119,14 +126,16 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     PRE_INTENSITY  = glGetUniformLocation(pre.program, "intensity");
 
     // geometry
-    PRE_STARS         = glGetAttribLocation( pre.program, "fft_bars");
-    PRE_RESOLUTION    = glGetUniformLocation(pre.program, "resolution");
-    PRE_PROJMATRIX    = glGetUniformLocation(pre.program, "projection_matrix");
+    SHADER_POS     = glGetAttribLocation( pre.program, "pos");
+    SHADER_COLOR   = glGetAttribLocation( pre.program, "color");
+    PRE_RESOLUTION = glGetUniformLocation(pre.program, "resolution");
+    PRE_PROJMATRIX = glGetUniformLocation(pre.program, "projection_matrix");
 
     glUseProgram(pre.program);
 
     // we just need working pointers so that realloc() works
     arr_init(vertexData);
+    arr_init(colorData);
     arr_init(stars);
 
     shouldRestart = false;
@@ -134,7 +143,6 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
 
 EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     XAVA *xava = options->xava;
-    XAVA_CONFIG *conf = &xava->conf;
 
     glUseProgram(pre.program);
 
@@ -145,48 +153,6 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
         star_count = xava->outer.w*xava->outer.h*star.density;
     } else {
         star_count = star.count;
-    }
-
-    arr_resize(stars, star_count);
-    arr_resize(vertexData, star_count*12);
-    glVertexAttribPointer(PRE_STARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
-
-    // since most of this information remains untouched, let's precalculate
-    for(int i=0; i<star_count; i++) {
-        vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);
-        vertexData[i*12+1]  = 1.0f;
-        vertexData[i*12+2]  = vertexData[i*12];
-        vertexData[i*12+3]  = 0.0f;
-        vertexData[i*12+4]  = vertexData[i*12]+conf->bw;
-        vertexData[i*12+5]  = 0.0f;
-        vertexData[i*12+6]  = vertexData[i*12+4];
-        vertexData[i*12+7]  = 1.0f;
-        vertexData[i*12+8]  = vertexData[i*12+4];
-        vertexData[i*12+9]  = 0.0f;
-        vertexData[i*12+10] = vertexData[i*12];
-        vertexData[i*12+11] = 1.0f;
-    }
-
-    // do image scaling
-    projectionMatrix[0] = 2.0/xava->outer.w;
-    projectionMatrix[5] = 2.0/xava->outer.h;
-
-    // do image translation
-    //projectionMatrix[3] = (float)xava->inner.x/xava->outer.w*2.0 - 1.0;
-    //projectionMatrix[7] = 1.0 - (float)(xava->inner.y+xava->inner.h)/xava->outer.h*2.0;
-
-    glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
-
-    // update screen resoltion
-    glUniform2f(PRE_RESOLUTION, xava->outer.w, xava->outer.h);
-
-    for(int i = 0; i < star_count; i++) {
-        // generate the stars with random angles
-        // but with a bias towards the right
-        stars[i].angle = xava_generate_star_angle();
-        stars[i].x     = fmod(rand(), xava->outer.w);
-        stars[i].y     = fmod(rand(), xava->outer.h);
-        stars[i].size  = xava_generate_star_size();
     }
 
     if(star.color_str == NULL) {
@@ -207,6 +173,61 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
 
         xavaBail("'%s' is not a valid color", star.color_str);
     } while(0);
+
+    arr_resize(stars, star_count);
+    arr_resize(vertexData, star_count*12);
+    arr_resize(colorData, star_count*4*6);
+    glVertexAttribPointer(SHADER_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+    glVertexAttribPointer(SHADER_COLOR, 4, GL_FLOAT, GL_FALSE, 0, colorData);
+
+    // since most of this information remains untouched, let's precalculate
+    for(int i=0; i<star_count; i++) {
+        float l = stars[i].x;
+        float r = l + stars[i].size;
+        float b = stars[i].y;
+        float t = b + stars[i].size;
+
+        // generate the stars with random angles
+        // but with a bias towards the right
+        stars[i].angle = xava_generate_star_angle();
+        stars[i].x     = fmod(rand(), xava->outer.w);
+        stars[i].y     = fmod(rand(), xava->outer.h);
+        stars[i].size  = xava_generate_star_size();
+
+        ((vec2f*)vertexData)[i*6+0] = (vec2f){l, t};
+        ((vec2f*)vertexData)[i*6+1] = (vec2f){l, b};
+        ((vec2f*)vertexData)[i*6+2] = (vec2f){r, b};
+        ((vec2f*)vertexData)[i*6+3] = (vec2f){r, t};
+        ((vec2f*)vertexData)[i*6+4] = (vec2f){r, b};
+        ((vec2f*)vertexData)[i*6+5] = (vec2f){l, t};
+
+        color4f color = {
+            ARGB_R_32(star.color)/255.0,
+            ARGB_G_32(star.color)/255.0,
+            ARGB_B_32(star.color)/255.0,
+            1.0 - ((GLfloat)stars[i].size-1)/star.max_size
+        };
+
+        ((color4f*)colorData)[i*6+0] = color;
+        ((color4f*)colorData)[i*6+1] = color;
+        ((color4f*)colorData)[i*6+2] = color;
+        ((color4f*)colorData)[i*6+3] = color;
+        ((color4f*)colorData)[i*6+4] = color;
+        ((color4f*)colorData)[i*6+5] = color;
+    }
+
+    // do image scaling
+    projectionMatrix[0] = 2.0/xava->outer.w;
+    projectionMatrix[5] = 2.0/xava->outer.h;
+
+    // do image translation
+    //projectionMatrix[3] = (float)xava->inner.x/xava->outer.w*2.0 - 1.0;
+    //projectionMatrix[7] = 1.0 - (float)(xava->inner.y+xava->inner.h)/xava->outer.h*2.0;
+
+    glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
+
+    // update screen resoltion
+    glUniform2f(PRE_RESOLUTION, xava->outer.w, xava->outer.h);
 
     // "clear" the screen
     xava_gl_module_clear(options);
@@ -267,6 +288,11 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
     float intensity = xava_gl_module_util_calculate_intensity(xava);
     float time      = xava_gl_module_util_obtain_time();
 
+    glEnable(GL_BLEND);
+
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
     /**
      * Here we start rendering to the texture
      **/
@@ -290,24 +316,17 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
             stars[i].angle = xava_generate_star_angle();
         }
 
-        // top left
-        vertexData[i*12]    = stars[i].x;
-        vertexData[i*12+1]  = stars[i].y+stars[i].size;
-        // bottom left
-        vertexData[i*12+2]  = vertexData[i*12];
-        vertexData[i*12+3]  = stars[i].y;
-        // bottom right
-        vertexData[i*12+4]  = vertexData[i*12]+stars[i].size;
-        vertexData[i*12+5]  = vertexData[i*12+3];
-        // top right
-        vertexData[i*12+6]  = vertexData[i*12+4];
-        vertexData[i*12+7]  = vertexData[i*12+1];
-        // bottom right
-        vertexData[i*12+8]  = vertexData[i*12+4];
-        vertexData[i*12+9]  = vertexData[i*12+3];
-        // top left
-        vertexData[i*12+10] = vertexData[i*12];
-        vertexData[i*12+11] = vertexData[i*12+1];
+        float l = stars[i].x;
+        float r = l + stars[i].size;
+        float b = stars[i].y;
+        float t = b + stars[i].size;
+
+        ((vec2f*)vertexData)[i*6+0] = (vec2f){l, t};
+        ((vec2f*)vertexData)[i*6+1] = (vec2f){l, b};
+        ((vec2f*)vertexData)[i*6+2] = (vec2f){r, b};
+        ((vec2f*)vertexData)[i*6+3] = (vec2f){r, t};
+        ((vec2f*)vertexData)[i*6+4] = (vec2f){r, b};
+        ((vec2f*)vertexData)[i*6+5] = (vec2f){l, t};
     }
 
     // switch to pre shaders
@@ -320,9 +339,11 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
     glUniform1f(PRE_INTENSITY, intensity);
 
     // pointers get reset after each glUseProgram(), that's why this is done
-    glVertexAttribPointer(PRE_STARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+    glVertexAttribPointer(SHADER_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+    glEnableVertexAttribArray(SHADER_POS);
 
-    glEnableVertexAttribArray(PRE_STARS);
+    glVertexAttribPointer(SHADER_COLOR, 4, GL_FLOAT, GL_FALSE, 0, colorData);
+    glEnableVertexAttribArray(SHADER_COLOR);
 
     if(star.depth_test == false)
         glDisable(GL_DEPTH_TEST);
@@ -334,7 +355,8 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
     // enable it for them
     glEnable(GL_DEPTH_TEST);
 
-    glDisableVertexAttribArray(PRE_STARS);
+    glDisableVertexAttribArray(SHADER_POS);
+    glDisableVertexAttribArray(SHADER_COLOR);
 
     // disable blending on the post stage as it produces
     // invalid colors on the window manager end
@@ -346,6 +368,7 @@ EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
     xava_gl_module_program_destroy(&pre);
 
     arr_free(vertexData);
+    arr_free(colorData);
     arr_free(stars);
 }
 

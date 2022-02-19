@@ -1,5 +1,3 @@
-#version 420 core
-
 // color passed from the host
 uniform vec4 foreground_color;
 
@@ -11,9 +9,9 @@ uniform vec2 resolution;
 
 uniform float intensity;
 
-layout(location=0) out vec4 FragColor;
+varying vec4 vcolor;
 
 void main() {
-	FragColor = foreground_color;
+	gl_FragColor = vcolor;
 }
 
