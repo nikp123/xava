@@ -13,7 +13,7 @@
 struct star {
     float x, y;
     float angle;
-    uint32_t size;
+    float size;
 } *stars;
 
 struct star_options {
@@ -74,10 +74,10 @@ float xava_generate_star_angle(void) {
     return 0.7 - pow(sin(r*M_PI), 0.5);
 }
 
-uint32_t xava_generate_star_size(void) {
+float xava_generate_star_size(void) {
     float r = (float)rand()/(float)RAND_MAX;
 
-    return floor((1.0-pow(r, 0.5))*star.max_size)+1;
+    return (1.0-powf(r, 0.5))*star.max_size+1.0;
 }
 
 /**
@@ -182,17 +182,17 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
 
     // since most of this information remains untouched, let's precalculate
     for(int i=0; i<star_count; i++) {
-        float l = stars[i].x;
-        float r = l + stars[i].size;
-        float b = stars[i].y;
-        float t = b + stars[i].size;
-
         // generate the stars with random angles
         // but with a bias towards the right
         stars[i].angle = xava_generate_star_angle();
         stars[i].x     = fmod(rand(), xava->outer.w);
         stars[i].y     = fmod(rand(), xava->outer.h);
         stars[i].size  = xava_generate_star_size();
+
+        float l = stars[i].x;
+        float r = l + floor(stars[i].size);
+        float b = stars[i].y;
+        float t = b + floor(stars[i].size);
 
         ((vec2f*)vertexData)[i*6+0] = (vec2f){l, t};
         ((vec2f*)vertexData)[i*6+1] = (vec2f){l, b};
@@ -205,7 +205,7 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
             ARGB_R_32(star.color)/255.0,
             ARGB_G_32(star.color)/255.0,
             ARGB_B_32(star.color)/255.0,
-            1.0 - ((GLfloat)stars[i].size-1)/star.max_size
+            1.0 - (stars[i].size-1.0)/star.max_size
         };
 
         ((color4f*)colorData)[i*6+0] = color;
