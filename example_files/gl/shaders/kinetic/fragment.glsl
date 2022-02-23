@@ -22,7 +22,6 @@ vec4 append_color_properly(vec4 source, vec4 target) {
 }
 
 void main() {
-	// test if infinite
 	FragColor = append_color_properly(
 		texture(color_texture, texCoord),
 		vec4(background_color.rgb, background_color.a*(1.0-intensity)));

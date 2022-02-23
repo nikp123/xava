@@ -20,11 +20,8 @@ vec4 append_color_properly(vec4 source, vec4 target) {
 }
 
 void main() {
-	// test if infinite
-	FragColor = background_color;
-	FragColor = append_color_properly(
-		texture(color_texture, texCoord),
-		FragColor);
+	// transfer background
+	FragColor = texture(color_texture, texCoord);
 
 	//FragColor = correctForAlphaBlend(FragColor);
 }

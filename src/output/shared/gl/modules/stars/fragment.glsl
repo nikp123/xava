@@ -12,6 +12,9 @@ uniform float intensity;
 varying vec4 vcolor;
 
 void main() {
-	gl_FragColor = vcolor;
+	gl_FragColor.rgb += vcolor.rgb   * vcolor.a;
+	gl_FragColor.rgb += gl_Color.rgb * gl_Color.a;
+	gl_FragColor.rgb /= vcolor.a     + gl_Color.a;
+	gl_FragColor.a    = max(vcolor.a, gl_Color.a);
 }
 

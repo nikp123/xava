@@ -362,10 +362,6 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
     glDrawArrays(GL_TRIANGLES, 0, xava->bars*6);
 
     glDisableVertexAttribArray(PRE_BARS);
-
-    // disable blending on the post stage as it produces
-    // invalid colors on the window manager end
-    glDisable(GL_BLEND);
 }
 
 EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {

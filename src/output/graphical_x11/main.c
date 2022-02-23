@@ -126,10 +126,6 @@ int XGLInit(XAVA_CONFIG *conf) {
     // we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
     xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
     glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
-    if(conf->transF) {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);

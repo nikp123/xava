@@ -288,11 +288,6 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
     float intensity = xava_gl_module_util_calculate_intensity(xava);
     float time      = xava_gl_module_util_obtain_time();
 
-    glEnable(GL_BLEND);
-
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
     /**
      * Here we start rendering to the texture
      **/
@@ -357,10 +352,6 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
 
     glDisableVertexAttribArray(SHADER_POS);
     glDisableVertexAttribArray(SHADER_COLOR);
-
-    // disable blending on the post stage as it produces
-    // invalid colors on the window manager end
-    glDisable(GL_BLEND);
 }
 
 EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
