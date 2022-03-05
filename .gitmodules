@@ -13,3 +13,6 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = https://github.com/nothings/stb.git
+[submodule "lib/cubeb"]
+	path = lib/cubeb
+	url = https://github.com/mozilla/cubeb
