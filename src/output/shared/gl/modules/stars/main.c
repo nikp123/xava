@@ -175,8 +175,8 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     } while(0);
 
     arr_resize(stars, star_count);
-    arr_resize(vertexData, star_count*12);
-    arr_resize(colorData, star_count*4*6);
+    arr_resize(vertexData, star_count*6*2);
+    arr_resize(colorData, star_count*6*4);
     glVertexAttribPointer(SHADER_POS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
     glVertexAttribPointer(SHADER_COLOR, 4, GL_FLOAT, GL_FALSE, 0, colorData);
 
