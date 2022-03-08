@@ -3,18 +3,20 @@ option(CUBEB "CUBEB" ON)
 
 # libcubeb-0.3
 if(CUBEB)
-    set(BUILD_SHARED_LIBS ON)
-    set(BUILD_TESTS       ON)
-    set(BUILD_RUST_LIBS   ON)
-    set(BUILD_TOOLS      OFF)
-    set(BUNDLE_SPEEX     OFF)
-    set(LAZY_LOAD_LIBS    ON)
-    set(USE_SANITIZERS   OFF)
+    set(BUILD_SHARED_LIBS OFF)
+    set(BUILD_TESTS       OFF)
+    set(BUILD_RUST_LIBS    ON)
+    set(BUILD_TOOLS       OFF)
+    set(BUNDLE_SPEEX      OFF)
+    set(LAZY_LOAD_LIBS     ON)
+    set(USE_SANITIZERS    OFF)
 
     execute_process(COMMAND git submodule update --init --recursive
-        WORKING_DIRECTORY lib/cubeb/)
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/cubeb
+        COMMAND_ERROR_IS_FATAL ANY)
 
     add_subdirectory(lib/cubeb)
+    set_target_properties(cubeb PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     add_definitions(-DCUBEB)
     add_library(in_cubeb SHARED "${XAVA_MODULE_DIR}/main.c"
@@ -22,7 +24,8 @@ if(CUBEB)
     target_link_libraries(in_cubeb xava-shared "cubeb")
     target_include_directories(in_cubeb PRIVATE
         "${CMAKE_CURRENT_BINARY_DIR}/exports" lib/cubeb/include)
-    set_target_properties(in_cubeb PROPERTIES PREFIX "")
+    set_target_properties(in_cubeb PROPERTIES PREFIX ""
+        POSITION_INDEPENDENT_CODE ON)
     install(TARGETS in_cubeb DESTINATION lib/xava)
 
     # Add legal disclaimer
