@@ -10,6 +10,10 @@ if(CUBEB)
     set(BUNDLE_SPEEX     OFF)
     set(LAZY_LOAD_LIBS    ON)
     set(USE_SANITIZERS   OFF)
+
+    execute_process(COMMAND git submodule update --init --recursive
+        WORKING_DIRECTORY lib/cubeb/)
+
     add_subdirectory(lib/cubeb)
 
     add_definitions(-DCUBEB)
