@@ -72,7 +72,7 @@ void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
         int id, XAVA *xava) {
     switch(event) {
         case XAVA_IONOTIFY_CHANGED:
-        case XAVA_IONOTIFY_DELETED:
+        //case XAVA_IONOTIFY_DELETED: // ignore because it is just broken
             should_reload = 1;
             break;
         case XAVA_IONOTIFY_ERROR:
