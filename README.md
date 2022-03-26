@@ -461,10 +461,10 @@ visualizations. That can be either ``cairo`` or ``opengl``.
 
  * ``opengl`` uses your GPU for accelerated graphics (but can be demanding on
  the system)
- * ``cairo`` doesn't use your GPU, but can be CPU-heavy if too much is enabled
+ * ``cairo`` doesn't use your GPU, but can be CPU-heavy if too many options/effects are used
 
 Selecting any of those would automatically load the appropriate window backend
-for you. But in case you don't like that, you can specify the backend before it:
+for you. But in case you don't like that, you can specify the backend manually:
 
 For example:
  * Windows uses ``win``
@@ -484,12 +484,25 @@ their respective categories within the config file:
 
 ### Configuring OpenGL
 
-In OpenGL you can pick ONLY ONE module to run at a time, and it changes (mostly)
-how the audio data is represented to you. Do you want ``bars`` or ``bars_circle``
-..etc.?
+Same as Cairo, you could set up OpenGL so that it uses "modules" which are just
+seperate plugins that allow further customization. They are enabled by adding
+options from module_1 to module_(however many you need) and are drawn in that
+order. That means that the module_1's pixels could get overwritten by module_2.
 
-You can (optionally) apply a post-processing effect to said module via the
-``post_shader`` option. Currently packed-in shaders are:
+Modules currently included in XAVA are:
+ * ``bars`` (default) - draws the usual horizontal bar layout
+ * ``stars`` - a pre-2016 Monstercat inspired star effect
+ * ``bars_circle`` - same as ``bars`` but drawn in a circle
+
+Each of these modules has it's seperate config file which can be found under:
+xava config directory > gl > module > *module's name* > config.ini
+
+If it's not there, it's most that configuration is likely NOT supported by said
+module.
+
+Additionally, you can (optionally) apply a *single* post-processing shader effect
+to the entire screen via the ``post_shader`` option. Currently, packed-in shaders
+are:
  * ``default`` - does nothing special basically
  * ``shadow`` - adds simple 2D shadows
  * ``kinetic`` - changes background opacity based on the intensity of music
@@ -499,18 +512,23 @@ You can (optionally) apply a post-processing effect to said module via the
 You are free to add more if you'd like, though it requires programming knowledge.
 The files are located in your config's directory > gl > shaders > the shader's
 name. There you must add three files:
- * ``config.ini`` - You can figure this one out by looking at how other shaders do it.
+ * ``config.ini`` - This configures the engine properties about which resources
+ it should generate for said shader. For users, no touchy this part (it **will**
+ be bad).
  * ``fragment.glsl``
  * ``vertex.glsl``
 
 And optionally:
  * ``geometry.glsl``
 
+NOTE: Variables are non-standard, so you'll HAVE to look into the code itself to
+figure those out (am sorry about this).
+
 ### Configuring Cairo
 
 Cairo, as opposed to OpenGL, is much simpler, but that comes with graphical
 effects limitations (and sometimes) bad performance. But unlike OpenGL, it is
-*more* flexible. One example of it's flexibility is it's ability to add as many
+*more* flexible. One example of its flexibility is its ability to add as many
 modules as you'd like in any order that you'd like.
 
 By going into the ``[cairo]`` section of the config you can add modules by
@@ -544,7 +562,7 @@ Window size:
 	width = *number of pixels*
 	height = *number of pixels*
 
-Toggle fullscreen:
+Toggle full-screen:
 
 	fullscreen = *true or false*
 
