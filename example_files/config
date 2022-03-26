@@ -137,10 +137,13 @@
 
 # Hacks and options related to the hardware-accelerated OpenGL modes
 
-# Specify which OpenGL renderer/module you'll use. This deremines
-# the supported features in the shader as well as what shape should
-# the visualizer would be (ie. for bars it will display bars)
-; module = bars
+# Pick and choose which modules to use for drawing the visualizer.
+# The order is ascending and starts from 1 and hence is drawn in that
+# order. Behaves exactly like Cairo modules do.
+# Refer to the README for further details.
+  module_1 = bars
+; module_2 = stars
+; ...
 
 # Specify which post-render shader the visualizer will uses
 # This is used to style the visualizer in the same fashion
