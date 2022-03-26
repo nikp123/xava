@@ -44,8 +44,8 @@ jobs:
       if: contains(matrix.system, 'windows')
       uses: actions/upload-artifact@v2
       with:
-        name: xava-unstable-installer-${{ matrix.arch }}.exe
-        path: xava-win-installer-${{ matrix.arch }}.exe
+        name: xava-installer-${{ matrix.arch }}.exe
+        path: xava-installer-${{ matrix.arch }}.exe
 
     - name: Get Git info and share it globally
       if: contains(matrix.system, 'archlinux')
@@ -59,8 +59,8 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         if-no-files-found: error
-        name: xava-${{ steps.vars.outputs.branch }}-x86_64.AppImage
-        path: build/xava-${{ steps.vars.outputs.branch }}-x86_64.AppImage
+        name: xava-x86_64.AppImage
+        path: build/xava-x86_64.AppImage
 
     - name: Upload version artifact
       if: contains(matrix.system, 'archlinux')

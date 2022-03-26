@@ -49,7 +49,8 @@ jobs:
       - name: Reorganize release files
         run: |
           ls -R
-          for i in "i686" "x86_64"; do mv xava-unstable-installer-$i.exe/xava-win-installer-$i.exe xava-win-installer-$i.exe; done
+          for i in "i686" "x86_64"; do mv xava-installer-$i.exe/xava-win-installer-$i.exe xava-win-installer-$i.exe; done
+          for i in "x86_64"; do mv xava-x86_64.AppImage/xava-x86_64.AppImage xava-x86_64.AppImage; done
 
       - name: Read version file
         run: |
@@ -66,4 +67,5 @@ jobs:
           files: |
             xava-win-installer-i686.exe
             xava-win-installer-x86_64.exe
+            xava-x86_64.AppImage
 
