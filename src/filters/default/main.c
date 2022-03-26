@@ -382,6 +382,7 @@ EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
         for (int sk = 0; sk < smcount; sk++) {
             smooth[sk] = xavaConfigGetDouble(config, "eq", keys[sk], 1);
         }
+        free(keys);
     } else {
         smcount = 64; //back to the default one
         MALLOC_SELF(smooth, smcount);
