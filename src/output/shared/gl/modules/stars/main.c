@@ -13,7 +13,7 @@
 struct star {
     float x, y;
     float angle;
-    float size;
+    int   size;
 } *stars;
 
 struct star_options {
@@ -189,10 +189,10 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
         stars[i].y     = fmod(rand(), xava->outer.h);
         stars[i].size  = xava_generate_star_size();
 
-        float l = stars[i].x;
-        float r = l + floor(stars[i].size);
-        float b = stars[i].y;
-        float t = b + floor(stars[i].size);
+        float l = floor(stars[i].x);
+        float r = l + stars[i].size;
+        float b = floor(stars[i].y);
+        float t = b + stars[i].size;
 
         ((vec2f*)vertexData)[i*6+0] = (vec2f){l, t};
         ((vec2f*)vertexData)[i*6+1] = (vec2f){l, b};
