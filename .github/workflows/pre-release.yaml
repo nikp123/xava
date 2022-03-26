@@ -11,19 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Invoke build workflow and wait for results
-        uses: convictional/trigger-workflow-and-wait@v1.3.0
-        with:
-          owner: nikp123
-          repo: xava
-          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-          workflow_file_name: build.yaml
-          ref: master
-          wait_interval: 10
-          propagate_failure: true
-          trigger_workflow: true
-          wait_workflow: true
-
       - name: Stupid servers being slow af
         run: sleep 15
 
