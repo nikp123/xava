@@ -203,11 +203,6 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
         if(xavaXOutputInfo->connection != SCREEN_CONNECTED)
             continue;
 
-        // If the current mode is above the number of modes supported, that means
-        // that THAT display is actually just disabled, so we ignore it
-        if(xavaXScreenResources->ncrtc > xavaXOutputInfo->ncrtc)
-            continue;
-
         xavaXCrtcInfo = XRRGetCrtcInfo(xavaXDisplay, xavaXScreenResources,
             xavaXOutputInfo->crtc);
 
