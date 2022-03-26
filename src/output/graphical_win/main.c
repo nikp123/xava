@@ -70,7 +70,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     switch(msg) {
         case WM_CREATE:
-            break;
+            return XAVA_RESIZE;
         case WM_KEYDOWN:
             switch(wParam) {
                 // should_reload = 1
@@ -187,7 +187,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     quit=FALSE;
 
     // never assume that memory is clean
-    oldX = 0; oldY = 0; oldW = 0; oldH = 0;
+    oldX = 0; oldY = 0; oldW = -1; oldH = -1;
 
     // get handle
     xavaWinModule = GetModuleHandle(NULL);
@@ -311,6 +311,20 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     timeEndPeriod(0);
     timeBeginPeriod(xavaPeriod.wPeriodMin);
 
+    /*
+     * HACK ALERT
+     * tl;dr this cursed hack should set the internal bar space width
+     * without relying on that XAVA_RESIZE event to pass through successfully
+     * (which it doesn't given the existence of this bug)
+     */
+    #ifdef GL
+        GLEvent(xava);
+    #endif
+
+    #ifdef CAIRO
+        __internal_xava_output_cairo_event(xavaCairoHandle);
+    #endif
+
     return 0;
 }
 
@@ -328,7 +342,7 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
             SetWindowLongPtr(xavaWinWindow, GWL_STYLE, Style);
 
             // dont overwrite old size on accident if already fullscreen
-            if(!(oldX||oldH||oldX||oldY)) {
+            if(oldW == -1 && oldH == -1) {
                 oldX = xava->outer.x; oldY = xava->outer.y;
                 oldW = xava->outer.w; oldH = xava->outer.h;
             }
@@ -340,13 +354,12 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
                 SWP_FRAMECHANGED | SWP_SHOWWINDOW);
         }
         // check if the window has been already resized
-    } else if(oldW||oldH||oldX||oldY) {
+    } else if(oldW != -1 && oldH != -1) {
         xava->outer.x = oldX; xava->outer.y = oldY;
         calculate_win_geo(xava, oldW, oldH);
 
-        // reset to default if restoring
-        oldX = 0; oldY = 0;
-        oldW = 0; oldH = 0;
+        oldW = -1;
+        oldH = -1;
 
         // restore window properties
         DWORD Style = WS_POPUP | WS_VISIBLE | (conf->borderF?WS_CAPTION:0);
@@ -401,8 +414,12 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
     }
 
     #ifdef GL
-        if(GLEvent(xava) == XAVA_RELOAD) {
-            return XAVA_RELOAD;
+        switch(GLEvent(xava)) {
+            case XAVA_RELOAD:
+                return XAVA_RELOAD; break;
+            case XAVA_RESIZE:
+                return XAVA_RESIZE; break;
+            default: break;
         }
     #endif
 
