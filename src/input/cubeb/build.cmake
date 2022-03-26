@@ -1,5 +1,5 @@
 # Project default
-option(CUBEB "CUBEB" ON)
+option(CUBEB "CUBEB" OFF)
 
 # libcubeb-0.3
 if(CUBEB)
