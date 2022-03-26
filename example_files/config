@@ -65,7 +65,7 @@
 # In Layman's terms: The visualizer holds the same size as you're resizing the
 # window
 #
-# NOTE: Works only on "supported" modes, aka non-software modes
+# NOTE: Works only on "supported" modes, aka cairo or OpenGL
 ; hold_size = false
 
 
