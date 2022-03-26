@@ -49,8 +49,10 @@ jobs:
       - name: Reorganize release files
         run: |
           ls -R
-          for i in "i686" "x86_64"; do mv xava-installer-$i.exe/xava-installer-$i.exe xava-installer-$i.exe; done
-          for i in "x86_64"; do mv xava-$i.AppImage/xava-$i.AppImage xava-$i.AppImage; done
+          rename ".exe" "-win" *
+          rename ".AppImage" "-lnx" *
+          for i in "i686" "x86_64"; do mv xava-installer-$i-win/xava-installer-$i.exe xava-installer-$i.exe; done
+          for i in "x86_64"; do mv xava-$i-lnx/xava-$i.AppImage xava-$i.AppImage; done
 
       - name: Read version file
         run: |
