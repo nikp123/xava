@@ -73,11 +73,8 @@ There should be an installer in the Releases page of this repository. Just
  download, install and run it. Non-release builds are unstable, so expect
  breakage.
 
-Here's where you can get them:
-
-[Here for 32-bit x86 Windows](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-installer-i686.exe.zip)
-
-[Here for 64-bit x86 Windows](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-installer-x86_64.exe.zip)
+You can get them at the [Releases](https://github.com/nikp123/xava/releases)
+page (labeled as "Development build").
 
 The configuration file is located in ``%appdata%\xava\config.cfg``
 
@@ -112,9 +109,8 @@ No OpenGL, because Apple likes to be Apple.
 I recommend grabbing the AppImage, as it deals with all dependency issues upfront
 and all you **really** need to to is just download and run it.
 
-You can grab it from the Releases page or get the
-[unstable](https://nightly.link/nikp123/xava/workflows/build.yaml/unstable/xava-unstable-x86_64.AppImage.zip)
-version.
+You can get it at the [Releases](https://github.com/nikp123/xava/releases)
+page (labeled as "Development build").
 
 
 ### Installing manually
