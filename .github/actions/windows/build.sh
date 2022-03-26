@@ -37,7 +37,7 @@ cd release
     # Make installer and move it to the last directory
     echo "Buidling installer for $arch"
     makensis xava.nsi
-    mv xava-installer.exe ../xava-installer-$arch.exe
+    mv xava-win-installer.exe ../xava-installer-$arch.exe
 cd ..
 rm -rf release
 
