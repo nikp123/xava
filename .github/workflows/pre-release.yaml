@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Stupid servers being slow af
+        run: sleep 15
+
       - name: Wait for XAVA to build...
         uses: tomchv/wait-my-workflow@v1.1.0
         id: wait-build
@@ -20,9 +23,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           intervalSeconds: 10
           timeoutSeconds: 100
-
-      - name: Stupid servers being slow af
-        run: sleep 15
 
       - name: Download artifact
         uses: dawidd6/action-download-artifact@v2
