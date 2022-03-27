@@ -11,18 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Stupid servers being slow af
-        run: sleep 15
-
       - name: Wait for XAVA to build...
-        uses: tomchv/wait-my-workflow@v1.1.0
-        id: wait-build
+        uses: willgarcia/workflow-wait-action@0.1.0
         with:
-          token: ${{ secrets.GH_ACCESS_TOKEN }}
-          checkName: Build
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          intervalSeconds: 10
-          timeoutSeconds: 100
+          access_token: ${{ secrets.GH_ACCESS_TOKEN }}
 
       - name: Download artifact
         uses: dawidd6/action-download-artifact@v2
