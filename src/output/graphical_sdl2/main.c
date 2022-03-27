@@ -40,8 +40,8 @@ EXP_FUNC int xavaInitOutput(XAVA *s)
 
     // creating a window
     Uint32 windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
-    if(p->fullF) windowFlags |= SDL_WINDOW_FULLSCREEN;
-    if(!p->borderF) windowFlags |= SDL_WINDOW_BORDERLESS;
+    if(p->flag.fullscreen) windowFlags |= SDL_WINDOW_FULLSCREEN;
+    if(!p->flag.border) windowFlags |= SDL_WINDOW_BORDERLESS;
     if(p->vsync) windowFlags |= SDL_RENDERER_PRESENTVSYNC;
     xavaSDLWindow = SDL_CreateWindow("XAVA", s->outer.x, s->outer.y,
             s->outer.w, s->outer.h, windowFlags);
@@ -62,7 +62,8 @@ EXP_FUNC int xavaOutputApply(XAVA *s) {
     XAVA_CONFIG *p = &s->conf;
 
     // toggle fullscreen
-    SDL_SetWindowFullscreen(xavaSDLWindow, SDL_WINDOW_FULLSCREEN & p->fullF);
+    SDL_SetWindowFullscreen(xavaSDLWindow, 
+            SDL_WINDOW_FULLSCREEN & p->flag.fullscreen);
 
     xavaSDLWindowSurface = SDL_GetWindowSurface(xavaSDLWindow);
     // Appearently SDL uses multithreading so this avoids invalid access
@@ -101,7 +102,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *s) {
                     case SDLK_ESCAPE:
                         return XAVA_QUIT;
                     case SDLK_f: // fullscreen
-                        p->fullF = !p->fullF;
+                        p->flag.fullscreen = !p->flag.fullscreen;
                         return XAVA_RESIZE;
                     case SDLK_UP: // key up
                         p->sens *= 1.05;

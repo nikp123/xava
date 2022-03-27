@@ -138,7 +138,7 @@ void zwlr_init(struct waydata *wd) {
 
     uint32_t width = p->w, height = p->h;
     struct zwlr_alignment_info align = handle_window_alignment(p);
-    if(p->fullF) {
+    if(p->flag.fullscreen) {
         width =  output->width;
         height = output->height;
         align.anchor = 0; // 0 resets the alignment properties... right?

@@ -247,7 +247,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
 
     // 32 bit color means alpha channel support
     #ifdef GL
-    if(conf->transF) {
+    if(conf->flag.transparency) {
         fbconfigs = glXChooseFBConfig(xavaXDisplay, xavaXScreenNumber, VisData, &numfbconfigs);
         fbconfig = 0;
         for(int i = 0; i<numfbconfigs; i++) {
@@ -264,9 +264,11 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
         }
     } else
     #endif
-        XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, conf->transF ? 32 : 24, TrueColor, &xavaVInfo);
+        XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, 
+                conf->flag.transparency ? 32 : 24, TrueColor, &xavaVInfo);
 
-    xavaAttr.colormap = XCreateColormap(xavaXDisplay, DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
+    xavaAttr.colormap = XCreateColormap(xavaXDisplay, 
+            DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
     xavaXColormap = xavaAttr.colormap;
     calculateColors(conf);
     xavaAttr.background_pixel = 0;
@@ -276,7 +278,8 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     // make it so that the window CANNOT be reordered by the WM
     xavaAttr.override_redirect = overrideRedirectEnabled;
 
-    int xavaWindowFlags = CWOverrideRedirect | CWBackingStore |  CWEventMask | CWColormap | CWBorderPixel | CWBackPixel;
+    int xavaWindowFlags = CWOverrideRedirect | CWBackingStore |  CWEventMask |
+        CWColormap | CWBorderPixel | CWBackPixel;
 
     xavaXWindow = XCreateWindow(xavaXDisplay,
         xavaXRoot,
@@ -299,9 +302,12 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     //xavaXWMHints.flags = InputHint | StateHint;
     //xavaXWMHints.initial_state = NormalState;
     xavaXClassHint.res_class = (char *)"XAVA";
-    XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, NULL, 0, NULL, &xavaXWMHints, &xavaXClassHint);
+    XmbSetWMProperties(xavaXDisplay, xavaXWindow, NULL, NULL, NULL, 0, NULL,
+            &xavaXWMHints, &xavaXClassHint);
 
-    XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask | VisibilityChangeMask | StructureNotifyMask | ExposureMask | KeyPressMask | KeymapNotify);
+    XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask |
+            VisibilityChangeMask | StructureNotifyMask | ExposureMask | 
+            KeyPressMask | KeymapNotify);
 
     #ifdef GL
         xavaBailCondition(XGLInit(conf), "Failed to load GLX extensions");
@@ -347,21 +353,26 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     xev.xclient.data.l[4] = 0;
 
     // keep window in bottom property
-    xev.xclient.data.l[0] = conf->bottomF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+    xev.xclient.data.l[0] = conf->flag.beneath ? 
+        _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
     xev.xclient.data.l[1] = wmStateBelow;
-    XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-    if(conf->bottomF) XLowerWindow(xavaXDisplay, xavaXWindow);
+    XSendEvent(xavaXDisplay, xavaXRoot, 0, 
+            SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    if(conf->flag.beneath) XLowerWindow(xavaXDisplay, xavaXWindow);
 
     // remove window from taskbar
-    xev.xclient.data.l[0] = conf->taskbarF ? _NET_WM_STATE_REMOVE : _NET_WM_STATE_ADD;
+    xev.xclient.data.l[0] = conf->flag.taskbar ?
+        _NET_WM_STATE_REMOVE : _NET_WM_STATE_ADD;
     xev.xclient.data.l[1] = taskbar;
-    XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    XSendEvent(xavaXDisplay, xavaXRoot, 0,
+            SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
     // Setting window options
     struct mwmHints hints;
     hints.flags = (1L << 1);
-    hints.decorations = conf->borderF;
-    XChangeProperty(xavaXDisplay, xavaXWindow, mwmHintsProperty, mwmHintsProperty, 32, PropModeReplace, (unsigned char *)&hints, 5);
+    hints.decorations = conf->flag.border;
+    XChangeProperty(xavaXDisplay, xavaXWindow, mwmHintsProperty, 
+            mwmHintsProperty, 32, PropModeReplace, (unsigned char *)&hints, 5);
 
     // move the window in case it didn't by default
     XWindowAttributes xwa;
@@ -439,14 +450,16 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
     xev.xclient.window = xavaXWindow;
     xev.xclient.message_type = wmState;
     xev.xclient.format = 32;
-    xev.xclient.data.l[0] = conf->fullF ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+    xev.xclient.data.l[0] = conf->flag.fullscreen ?
+        _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
     xev.xclient.data.l[1] = fullScreen;
     xev.xclient.data.l[2] = 0;
-    XSendEvent(xavaXDisplay, xavaXRoot, 0, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    XSendEvent(xavaXDisplay, xavaXRoot, 0, 
+            SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
     xavaOutputClear(xava);
 
-    if(!conf->interactF){
+    if(!conf->flag.interact) {
         XRectangle rect;
         XserverRegion region = XFixesCreateRegion(xavaXDisplay, &rect, 1);
         XFixesSetWindowShapeRegion(xavaXDisplay, xavaXWindow, ShapeInput, 0, 0, region);
@@ -492,7 +505,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
                         if(conf->bs > 0) conf->bs--;
                         return XAVA_RESIZE;
                     case XK_f: // fullscreen
-                        conf->fullF = !conf->fullF;
+                        conf->flag.fullscreen = !conf->flag.fullscreen;
                         return XAVA_RESIZE;
                     case XK_Up:
                         conf->sens *= 1.05;

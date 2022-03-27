@@ -65,7 +65,7 @@ void __internal_xava_graphical_calculate_win_pos_nokeep(XAVA *xava,
 }
 
 void calculate_win_geo(XAVA *xava, uint32_t winW, uint32_t winH) {
-    if(xava->conf.holdSizeF) {
+    if(xava->conf.flag.holdSize) {
         __internal_xava_graphical_calculate_win_pos_keep(xava, winW, winH);
     } else {
         xava->outer.w = winW;
@@ -85,21 +85,21 @@ void calculate_win_pos(XAVA *xava, uint32_t scrW, uint32_t scrH,
     xava->outer.x = 0;
     xava->outer.y = 0;
 
-    if(xava->conf.holdSizeF) {
-        if(xava->conf.fullF) {
+    if(xava->conf.flag.holdSize) {
+        if(xava->conf.flag.fullscreen) {
             __internal_xava_graphical_calculate_win_pos_keep(xava, scrW, scrH);
         } else {
             __internal_xava_graphical_calculate_win_pos_keep(xava, winW, winH);
         }
     } else {
-        if(xava->conf.fullF) {
+        if(xava->conf.flag.fullscreen) {
             __internal_xava_graphical_calculate_win_pos_nokeep(xava, scrW, scrH);
         } else {
             __internal_xava_graphical_calculate_win_pos_nokeep(xava, winW, winH);
         }
     }
 
-    if(xava->conf.fullF == false) {
+    if(xava->conf.flag.fullscreen == false) {
         if(!strcmp(conf->winA, "top")) {
             xava->outer.x = (int32_t)(scrW - winW) / 2 + conf->x;
         } else if(!strcmp(conf->winA, "bottom")) {

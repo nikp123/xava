@@ -83,7 +83,7 @@ LRESULT CALLBACK WindowFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     if(conf->bs > 0) conf->bs--;
                     return XAVA_RESIZE;
                 case 'F': // fullscreen
-                    conf->fullF = !conf->fullF;
+                    conf->flag.fullscreen = !conf->flag.fullscreen;
                     return XAVA_RESIZE;
                 case VK_UP:
                     conf->sens *= 1.05;
@@ -208,10 +208,10 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
 
     // extended and standard window styles
     DWORD dwExStyle=0, dwStyle=0;
-    if(conf->transF) dwExStyle|=WS_EX_TRANSPARENT;
-    if(!conf->interactF) dwExStyle|=WS_EX_LAYERED;
-    if(!conf->taskbarF) dwExStyle|=WS_EX_TOOLWINDOW;
-    if(conf->borderF) dwStyle|=WS_CAPTION;
+    if(conf->flag.transparency) dwExStyle|=WS_EX_TRANSPARENT;
+    if(!conf->flag.interact) dwExStyle|=WS_EX_LAYERED;
+    if(!conf->flag.taskbar) dwExStyle|=WS_EX_TOOLWINDOW;
+    if(conf->flag.border) dwStyle|=WS_CAPTION;
 
     // create window
     xavaWinWindow = CreateWindowEx(dwExStyle, szAppName, wcWndName,
@@ -221,9 +221,9 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     xavaBailCondition(!xavaWinWindow, "CreateWindowEx failed");
 
     // transparency fix
-    if(conf->transF) SetLayeredWindowAttributes(xavaWinWindow, 0x00FFFFFF,
-            255, LWA_ALPHA | LWA_COLORKEY);
-    SetWindowPos(xavaWinWindow, conf->bottomF ? HWND_BOTTOM : HWND_NOTOPMOST,
+    if(conf->flag.transparency) SetLayeredWindowAttributes(xavaWinWindow, 
+            0x00FFFFFF, 255, LWA_ALPHA | LWA_COLORKEY);
+    SetWindowPos(xavaWinWindow, conf->flag.bottom ? HWND_BOTTOM : HWND_NOTOPMOST,
             xava->outer.x, xava->outer.y,
             xava->outer.w, xava->outer.h,
             SWP_SHOWWINDOW);
@@ -233,7 +233,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     HRGN hRgn = CreateRectRgn(0, 0, -1, -1);
     bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
     bb.hRgnBlur = hRgn;
-    bb.fEnable = conf->transF;
+    bb.fEnable = conf->flag.transparency;
     bb.fTransitionOnMaximized = true;
     DwmEnableBlurBehindWindow(xavaWinWindow, &bb);
 
@@ -333,7 +333,7 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
 
     //ReleaseDC(xavaWinWindow, xavaWinFrame);
 
-    if(conf->fullF) {
+    if(conf->flag.fullscreen) {
         POINT Point = {0};
         HMONITOR Monitor = MonitorFromPoint(Point, MONITOR_DEFAULTTONEAREST);
         MONITORINFO MonitorInfo = { sizeof(MonitorInfo) };
@@ -362,7 +362,7 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
         oldH = -1;
 
         // restore window properties
-        DWORD Style = WS_POPUP | WS_VISIBLE | (conf->borderF?WS_CAPTION:0);
+        DWORD Style = WS_POPUP | WS_VISIBLE | (conf->flag.border? WS_CAPTION:0);
         SetWindowLongPtr(xavaWinWindow, GWL_STYLE, Style);
 
         SetWindowPos(xavaWinWindow, 0,

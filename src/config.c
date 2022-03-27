@@ -133,8 +133,8 @@ void validate_config(XAVA *hand, xava_config_source config) {
             " the form '#xxxxxx'");
 
     // validate: gradient colors
-    for(unsigned int i = 0; i < p->gradients; i++){
-        xavaBailCondition(!validate_color(p->gradient_colors[i]),
+    for(unsigned int i = 0; i < arr_count(p->gradients); i++){
+        xavaBailCondition(!validate_color(p->gradients[i]),
             "The gradient color %d is invalid!\n"
             "It can only be a HTML color of the form '#xxxxxx'", i+1);
     }
@@ -161,7 +161,7 @@ void validate_config(XAVA *hand, xava_config_source config) {
     }
 
     // MUST be set by the output module instead as it is QUITE memory unsafe
-    p->ignoreWindowSizeF = false;
+    p->flag.ignoreWindowSize = false;
 
     xavaBailCondition(!foundAlignment, "Alignment '%s' is invalid!\n",
             p->winA);
@@ -209,19 +209,18 @@ char *load_config(char *configPath, XAVA *hand) {
     p->foreground_opacity = xavaConfigGetDouble(hand->default_config.config, "color", "foreground_opacity", 1.0);
     p->background_opacity = xavaConfigGetDouble(hand->default_config.config, "color", "background_opacity", 0.0);
 
-    p->gradients = xavaConfigGetInt(hand->default_config.config, "color", "gradient_count", 0);
-    if(p->gradients) {
-        xavaBailCondition(p->gradients < 2,
+    arr_init_n(p->gradients, xavaConfigGetInt(hand->default_config.config, "color", "gradient_count", 0));
+    if(arr_count(p->gradients) > 0) {
+        xavaBailCondition(arr_count(p->gradients) < 2,
                 "At least two colors must be given as gradient!\n");
-        xavaBailCondition(p->gradients > 8,
+        xavaBailCondition(arr_count(p->gradients) > 8,
                 "Maximum 8 colors can be specified as gradient!\n");
 
-        p->gradient_colors = (char **)malloc(sizeof(char*) * p->gradients);
-        for(uint32_t i = 0; i < p->gradients; i++) {
+        for(uint32_t i = 0; i < arr_count(p->gradients); i++) {
             char ini_config[33];
             sprintf(ini_config, "gradient_color_%d", (i+1));
-            p->gradient_colors[i] = (char *)xavaConfigGetString(hand->default_config.config, "color", ini_config, NULL);
-            xavaBailCondition(!p->gradient_colors[i],
+            p->gradients[i] = (char *)xavaConfigGetString(hand->default_config.config, "color", ini_config, NULL);
+            xavaBailCondition(!p->gradients[i],
                     "'gradient_color_%d' is not specified!\n", i+1);
         }
     }
@@ -242,13 +241,13 @@ char *load_config(char *configPath, XAVA *hand) {
     p->winA = (char *)xavaConfigGetString(hand->default_config.config, "window", "alignment", "none");
     p->x    = xavaConfigGetInt(hand->default_config.config, "window", "x_padding", 0);
     p->y    = xavaConfigGetInt(hand->default_config.config, "window", "y_padding", 0);
-    p->fullF = xavaConfigGetBool(hand->default_config.config, "window", "fullscreen", 0);
-    p->transF = xavaConfigGetBool(hand->default_config.config, "window", "transparency", 1);
-    p->borderF = xavaConfigGetBool(hand->default_config.config, "window", "border", 0);
-    p->bottomF = xavaConfigGetBool(hand->default_config.config, "window", "keep_below", 1);
-    p->interactF = xavaConfigGetBool(hand->default_config.config, "window", "interactable", 1);
-    p->taskbarF = xavaConfigGetBool(hand->default_config.config, "window", "taskbar_icon", 1);
-    p->holdSizeF = xavaConfigGetBool(hand->default_config.config, "window", "hold_size", false);
+    p->flag.fullscreen   = xavaConfigGetBool(hand->default_config.config, "window", "fullscreen", 0);
+    p->flag.transparency = xavaConfigGetBool(hand->default_config.config, "window", "transparency", 1);
+    p->flag.border       = xavaConfigGetBool(hand->default_config.config, "window", "border", 0);
+    p->flag.beneath      = xavaConfigGetBool(hand->default_config.config, "window", "keep_below", 1);
+    p->flag.interact     = xavaConfigGetBool(hand->default_config.config, "window", "interactable", 1);
+    p->flag.taskbar      = xavaConfigGetBool(hand->default_config.config, "window", "taskbar_icon", 1);
+    p->flag.holdSize     = xavaConfigGetBool(hand->default_config.config, "window", "hold_size", false);
 
     // config: filter
     filterMethod = (char *)xavaConfigGetString(hand->default_config.config, "filter", "name", XAVA_DEFAULT_FILTER);

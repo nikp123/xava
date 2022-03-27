@@ -120,12 +120,12 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     vertexData = malloc(1);
 
     // gradients
-    if(conf->gradients)
-        gradientColor = malloc(4*sizeof(GLfloat)*conf->gradients);
+    if(arr_count(conf->gradients) > 0)
+        gradientColor = malloc(4*sizeof(GLfloat)*arr_count(conf->gradients));
 
-    for(uint32_t i=0; i<conf->gradients; i++) {
+    for(uint32_t i=0; i<arr_count(conf->gradients); i++) {
         uint32_t grad_col;
-        sscanf(conf->gradient_colors[i], "#%x", &grad_col);
+        sscanf(conf->gradients[i], "#%x", &grad_col);
         gradientColor[i*4+0] = ARGB_R_32(grad_col) / 255.0;
         gradientColor[i*4+1] = ARGB_G_32(grad_col) / 255.0;
         gradientColor[i*4+2] = ARGB_B_32(grad_col) / 255.0;
@@ -182,8 +182,9 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glUniform1f(PRE_BAR_COUNT,   (float)xava->bars);
     glUniform1f(PRE_AUDIO_RATE,  (float)conf->inputsize);
 
-    glUniform1f(PRE_GRAD_SECT_COUNT, conf->gradients ? conf->gradients-1 : 0);
-    glUniform4fv(PRE_GRADIENTS, conf->gradients, gradientColor);
+    u32 gradient_count = arr_count(conf->gradients);
+    glUniform1f(PRE_GRAD_SECT_COUNT, gradient_count ? gradient_count-1 : 0);
+    glUniform4fv(PRE_GRADIENTS, gradient_count, gradientColor);
 
     // "clear" the screen
     xava_gl_module_clear(options);

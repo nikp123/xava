@@ -47,6 +47,20 @@
 #include "shared/io.h"
 #include "shared/version.h"
 
+#define XAVA_CONFIG_OPTION(T, name) \
+   T name; bool name##_is_set_from_file
+
+#define u8  uint8_t
+#define u16 uint16_t
+#define u32 uint32_t
+#define u64 uint64_t
+#define i8  int8_t
+#define i16 int16_t
+#define i32 int32_t
+#define i64 int64_t
+#define f32 float
+#define f64 double
+
 // Shared audio data sturct
 typedef struct XAVA_AUDIO {
     float        *audio_out_r;
@@ -64,58 +78,74 @@ typedef struct XAVA_AUDIO {
 // configuration parameters
 typedef struct XAVA_CONFIG {
     // for internal use only
-    double sens;
-    int32_t fixedbars;
-    bool autobars, stereo, autosens;
-    XAVAMODULE *inputModule, *outputModule, *filterModule;
-    uint32_t fftsize;
+    XAVA_CONFIG_OPTION(f64,  sens);
+    XAVA_CONFIG_OPTION(i32,  fixedbars);
+    XAVA_CONFIG_OPTION(bool, autobars);
+    XAVA_CONFIG_OPTION(bool, stereo);
+    XAVA_CONFIG_OPTION(bool, autosens);
+
+    XAVA_CONFIG_OPTION(XAVAMODULE*, inputModule);
+    XAVA_CONFIG_OPTION(XAVAMODULE*, outputModule);
+    XAVA_CONFIG_OPTION(XAVAMODULE*, filterModule);
+
+    XAVA_CONFIG_OPTION(u32, fftsize);
 
     // input/output related options
 
     // 1 - colors
-    char*  color, *bcolor;            // pointer to color string
-    char** gradient_colors;                            // array of pointers to color string
-    uint32_t col, bgcol;                            // ARGB 32-bit value
-    double foreground_opacity, background_opacity;    // range 0.0-1.0
+    XAVA_CONFIG_OPTION(char*, color);
+    XAVA_CONFIG_OPTION(char*, bcolor);           // pointer to color string
+    // col = foreground color, bgcol = background color
+    XAVA_CONFIG_OPTION(u32, col);
+    XAVA_CONFIG_OPTION(u32, bgcol);                 // ARGB 32-bit value
+    XAVA_CONFIG_OPTION(f64, foreground_opacity);
+    XAVA_CONFIG_OPTION(f64, background_opacity);    // range 0.0-1.0
 
     // 2 - gradients
-    // col = foreground color, bgcol = background color
-    uint32_t gradients;                                // 0 for none, subsequent values increase
+    XAVA_CONFIG_OPTION(char**, gradients); // array of pointers to color string
 
     // 3 - timing
-    int32_t framerate;                                // limit xava to a specific framerate
-                                                    // (can be changed mid-run)
-    int32_t vsync;                                    // 0 = disabled, while enabled, XAVA
-                                                    // will rely upon the timer function
-                                                    // provided by your Vsync call
-                                                    // (PLEASE DESIGN YOUR IMPLEMENTATION
-                                                    // LIKE THIS)
-                                                    // Positive values = divisors for your
-                                                    // monitors real refresh-rate
-                                                    // -1 = Adaptive Vsync
+    XAVA_CONFIG_OPTION(i32, framerate); // limit xava to a specific framerate
+                                        // (can be changed mid-run)
+    XAVA_CONFIG_OPTION(i32, vsync);     // 0 = disabled, while enabled, XAVA
+                                        // will rely upon the timer function
+                                        // provided by your Vsync call
+                                        // (PLEASE DESIGN YOUR IMPLEMENTATION
+                                        // LIKE THIS)
+                                        // Positive values = divisors for your
+                                        // monitors real refresh-rate
+                                        // -1 = Adaptive Vsync
 
     // 4 - geometry
-    uint32_t bw, bs;                                // bar width and spacing
-    uint32_t w, h;                                  // configured window width and height
-    int32_t  x, y;                                  // x and y padding
+    XAVA_CONFIG_OPTION(u32, bw);
+    XAVA_CONFIG_OPTION(u32, bs);        // bar width and spacing
+    XAVA_CONFIG_OPTION(u32, w);
+    XAVA_CONFIG_OPTION(u32, h);         // configured window width and height
+    XAVA_CONFIG_OPTION(i32, x);
+    XAVA_CONFIG_OPTION(i32, y);         // x and y padding
 
-    char *winA;                                     // pointer to a string of alignment
+    XAVA_CONFIG_OPTION(char*, winA);    // pointer to a string of alignment
 
     // 5 - audio
-    uint32_t inputsize;                                // size of the input audio buffer
+    XAVA_CONFIG_OPTION(u32, inputsize); // size of the input audio buffer
                                                     // must be a power of 2
-    uint32_t samplerate;                            // the rate at which the audio is sampled
-    uint32_t samplelatency;                            // input will try to keep to copy chunks of this size
+    XAVA_CONFIG_OPTION(u32, samplerate);    // the rate at which the audio is sampled
+    XAVA_CONFIG_OPTION(u32, samplelatency); // input will try to keep to copy chunks of this size
 
     // 6 - special flags
-    bool fullF, transF, borderF, bottomF, interactF, taskbarF, holdSizeF;
-    bool skipFilterF, ignoreWindowSizeF;
-    // fullF = fullscreen toggle, transF = transparency toggle,
-    // borderF = window border toggle, interactF = interaction
-    // toggle, taskbarF = taskbar icon toggle
-    // skipFilterF = literally just skips the filter stage
-    // ignoreWindowSizeF = forces the engine to ignore window geometry for bar
-    //      calculation
+    struct {
+        XAVA_CONFIG_OPTION(bool, fullscreen);
+        XAVA_CONFIG_OPTION(bool, transparency);
+        XAVA_CONFIG_OPTION(bool, border);
+        XAVA_CONFIG_OPTION(bool, beneath);
+        XAVA_CONFIG_OPTION(bool, interact);
+        XAVA_CONFIG_OPTION(bool, taskbar);
+        XAVA_CONFIG_OPTION(bool, holdSize);
+
+        // not real config options, soom to be moved to the XAVA handle
+        XAVA_CONFIG_OPTION(bool, skipFilter);
+        XAVA_CONFIG_OPTION(bool, ignoreWindowSize);
+    } flag;
 } XAVA_CONFIG;
 
 // XAVA handle

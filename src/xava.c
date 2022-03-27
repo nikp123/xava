@@ -108,7 +108,7 @@ void cleanup(void) {
     pthread_join(p_thread, NULL);
 
     xavaOutputCleanup(&xava);
-    if(!p->skipFilterF)
+    if(!p->flag.skipFilter)
         xavaFilterCleanup(&xava);
 
     // destroy modules
@@ -117,7 +117,7 @@ void cleanup(void) {
     xava_module_free(p->filterModule);
 
     // color information
-    free(p->gradient_colors);
+    arr_free(p->gradients);
 
     // config file path
     //free(configPath); don't free as the string is ONLY allocated during bootup
@@ -253,7 +253,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         xavaOutputCleanup     = xava_module_symbol_address_get(p->outputModule, "xavaOutputCleanup");
         xavaOutputLoadConfig  = xava_module_symbol_address_get(p->outputModule, "xavaOutputLoadConfig");
 
-        if(!p->skipFilterF) {
+        if(!p->flag.skipFilter) {
             xavaFilterInit       = xava_module_symbol_address_get(p->filterModule, "xavaFilterInit");
             xavaFilterApply      = xava_module_symbol_address_get(p->filterModule, "xavaFilterApply");
             xavaFilterLoop       = xava_module_symbol_address_get(p->filterModule, "xavaFilterLoop");
@@ -280,7 +280,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         xavaInputLoadConfig(&xava);
 
         // load filter config
-        if(!p->skipFilterF)
+        if(!p->flag.skipFilter)
             xavaFilterLoadConfig(&xava);
 
         // setup audio garbo
@@ -299,7 +299,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
         bool reloadConf = false;
 
-        if(!p->skipFilterF)
+        if(!p->flag.skipFilter)
             xavaBailCondition(xavaFilterInit(&xava),
                     "Failed to initialize filter! Bailing...");
 
@@ -309,7 +309,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         xavaIONotifyStart(xava.ionotify);
 
         while(!reloadConf) { //jumbing back to this loop means that you resized the screen
-            if(p->ignoreWindowSizeF == false) {
+            if(p->flag.ignoreWindowSize == false) {
                 // handle for user setting too many bars
                 if (p->fixedbars) {
                     p->autobars = 0;
@@ -334,7 +334,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                 xava.bars = p->fixedbars;
             }
 
-            if(!p->skipFilterF)
+            if(!p->flag.skipFilter)
                 xavaFilterApply(&xava);
 
             xavaOutputApply(&xava);
@@ -413,7 +413,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                 }
 
                 // Calculate the result through filters
-                if(!p->skipFilterF) {
+                if(!p->flag.skipFilter) {
                     xavaFilterLoop(&xava);
 
                     // zero values causes divided by zero segfault
@@ -431,7 +431,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                     xavaOutputClear(&xava);
 
                     // audio output is unallocated without the filter
-                    if(!p->skipFilterF)
+                    if(!p->flag.skipFilter)
                         memset(xava.fl, 0x00, sizeof(int)*xava.bars);
 
                     redrawWindow = FALSE;
@@ -442,7 +442,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                     oldTime = xavaSleep(oldTime, p->framerate);
 
                 // save previous bar values
-                if(!p->skipFilterF)
+                if(!p->flag.skipFilter)
                     memcpy(xava.fl, xava.f, sizeof(int)*xava.bars);
 
                 if(kys) {

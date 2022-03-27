@@ -68,7 +68,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
 
     // input MUST be stereo
     conf->stereo = true;
-    conf->skipFilterF = true;
+    conf->flag.skipFilter = true;
 
     return XAVA_CAIRO_FEATURE_FULL_DRAW;
 }

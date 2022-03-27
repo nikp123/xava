@@ -25,7 +25,7 @@ EGLBoolean EGLCreateContext(XAVA *xava, struct _escontext *ESContext) {
         EGL_RED_SIZE,        8,
         EGL_GREEN_SIZE,      8,
         EGL_BLUE_SIZE,       8,
-        EGL_ALPHA_SIZE,      conf->transF ? 8 : 0,
+        EGL_ALPHA_SIZE,      conf->flag.transparency ? 8 : 0,
         EGL_NONE
     };
     EGLint contextAttribs[] = { EGL_CONTEXT_MAJOR_VERSION, 2,
