@@ -90,6 +90,10 @@ if(WAYLAND)
             "${XAVA_MODULE_DIR}/gen/xdg-output-unstable-v1-client-protocol.c"
             "${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.c"
             "${XAVA_MODULE_DIR}/gen/wlr-layer-shell-unstable-v1-client-protocol.c"
+            "${XAVA_MODULE_DIR}/gen/xdg-shell-client-protocol.h"
+            "${XAVA_MODULE_DIR}/gen/xdg-output-unstable-v1-client-protocol.h"
+            "${XAVA_MODULE_DIR}/gen/wlr-output-managment-unstable-v1.h"
+            "${XAVA_MODULE_DIR}/gen/wlr-layer-shell-unstable-v1-client-protocol.h"
             "${GLOBAL_FUNCTION_SOURCES}")
         target_link_libraries(out_wayland_opengl xava-shared
             ${WAYLAND_LIBRARIES} ${WAYLAND_EGL_LIBRARIES} OpenGL
