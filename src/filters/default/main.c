@@ -294,6 +294,7 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
             } else  {
                 fpeak[i] = f[i];
                 fall[i] = 0;
+                flast[i] = f[i];
             }
         }
     }
