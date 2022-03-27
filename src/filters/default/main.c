@@ -15,7 +15,8 @@
 
 // i wont even bother deciphering this mess
 static float    *fc, *fre, *fpeak, *k, g;
-static uint32_t *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;
+static uint32_t *f, *lcf, *hcf, *fl, *fr, *fmem, *flastd, *fall;
+static int32_t  *flast; // if you change this to uint32_t you die >:(
 static float    *smooth, gravity, integral, eqBalance, logScale, ignore;
 static float    monstercat, *peak, smh;
 static bool     oddoneout;
@@ -275,14 +276,25 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
     // process [smoothing]: falloff
     if (g > 0) {
         for (uint32_t i = 0; i < xava->bars; i++) {
-            if (f[i] < flast[i]) {
-                f[i] = MIN((int32_t)fpeak[i] - (g * fall[i] * fall[i]), 0);
+            if ((int32_t)f[i] < flast[i]) {
+                /**
+                 * Big explaination here, because if you touch this IT'LL break
+                 *
+                 * Basically the trick is that since this equation can yield a
+                 * negative value it also world overflow the f[] and thats NO
+                 * good!
+                 *
+                 * But the negative value is useful indeed because it smooths
+                 * the integral output and hence provides a better visualization
+                 * experience.
+                 **/
+                flast[i] = fpeak[i] - (g * fall[i] * fall[i]);
+                f[i] = MIN(0, flast[i]);
                 fall[i]++;
             } else  {
                 fpeak[i] = f[i];
                 fall[i] = 0;
             }
-            flast[i] = f[i];
         }
     }
 
