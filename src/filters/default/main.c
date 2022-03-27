@@ -124,6 +124,8 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     XAVA_CONFIG *p  = &xava->conf;
 
     // if fc is not cleared that means that the variables are not initialized
+    if(xava->bars == 0)
+        xava->bars = 1;
     REALLOC_SELF(fc,xava->bars);
     REALLOC_SELF(fre,xava->bars);
     REALLOC_SELF(fpeak,xava->bars);
@@ -209,7 +211,8 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
             hcf[n-1] = lcf[n];
         }
     }
-    hcf[n-1] = highcf*audio->fftsize/audio->rate;
+    if(calcbars > 1)
+        hcf[n-1] = highcf*audio->fftsize/audio->rate;
 
     // process: weigh signal to frequencies height and EQ
     for (n = 0; n < calcbars; n++) {
