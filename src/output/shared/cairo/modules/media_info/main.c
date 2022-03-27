@@ -276,8 +276,8 @@ struct region xava_cairo_module_draw_artwork(
     float actual_scale_x = (float)xava->outer.w / artwork->image->w;
     float actual_scale_y = (float)xava->outer.h / artwork->image->h;
 
-    float scale_x;
-    float scale_y;
+    float scale_x = 1.0;
+    float scale_y = 1.0;
 
     float crop_x = 0.0, crop_y = 0.0;
 

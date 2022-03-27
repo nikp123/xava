@@ -60,7 +60,7 @@ void media_data_update
                     URI_HEADER_MUSIC, MUSIC_DATA_STRING_LENGTH);
             strncat(properties.metadata.art_url,
                     &properties.metadata.url[strlen(URI_HEADER_FILE)],
-                    MUSIC_DATA_STRING_LENGTH);
+                    MUSIC_DATA_STRING_LENGTH-1);
         }
 
         xava_util_artwork_update(properties.metadata.art_url,
