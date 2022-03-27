@@ -95,7 +95,7 @@ void getPulseDefaultSink(void* data) {
 EXP_FUNC void* xavaInput(void* data)
 {
     XAVA_AUDIO *audio = (XAVA_AUDIO *)data;
-    int i, n;
+    uint32_t n;
     int16_t buf[audio->inputsize];
 
     // get default audio source if there is none
@@ -138,7 +138,7 @@ EXP_FUNC void* xavaInput(void* data)
         }
 
         //sorting out channels
-        for (i = 0; i < audio->inputsize; i += 2) {
+        for (uint32_t i = 0; i < audio->inputsize; i += 2) {
             if (audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
 
             //stereo storing channels in buffer

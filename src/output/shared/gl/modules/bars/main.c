@@ -65,6 +65,9 @@ EXP_FUNC void xava_gl_module_ionotify_callback(XAVA_IONOTIFY_EVENT event,
                                 const char *filename,
                                 int id,
                                 XAVA* xava) {
+    UNUSED(filename);
+    UNUSED(id);
+    UNUSED(xava);
     switch(event) {
         case XAVA_IONOTIFY_CHANGED:
             shouldRestart = true;
@@ -120,7 +123,7 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     if(conf->gradients)
         gradientColor = malloc(4*sizeof(GLfloat)*conf->gradients);
 
-    for(int i=0; i<conf->gradients; i++) {
+    for(uint32_t i=0; i<conf->gradients; i++) {
         uint32_t grad_col;
         sscanf(conf->gradient_colors[i], "#%x", &grad_col);
         gradientColor[i*4+0] = ARGB_R_32(grad_col) / 255.0;
@@ -144,7 +147,7 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
     // since most of this information remains untouched, let's precalculate
-    for(int i=0; i<xava->bars; i++) {
+    for(uint32_t i=0; i<xava->bars; i++) {
         vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);
         vertexData[i*12+1]  = 1.0f;
         vertexData[i*12+2]  = vertexData[i*12];
@@ -248,7 +251,7 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
      **/
 
     register GLfloat *d = vertexData;
-    for(register int i=0; i<xava->bars; i++) {
+    for(register uint32_t i=0; i<xava->bars; i++) {
         // the speed part
         *(++d)  = xava->f[i];
         *(d+=6) = xava->f[i];
@@ -277,6 +280,8 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
 }
 
 EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
+    UNUSED(options);
+
     // delete both pipelines
     xava_gl_module_program_destroy(&pre);
 

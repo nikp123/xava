@@ -11,9 +11,9 @@
 #include "output/shared/graphical.h"
 
 struct star {
-    float x, y;
-    float angle;
-    int   size;
+    float     x, y;
+    float    angle;
+    uint32_t size;
 } *stars;
 
 struct star_options {
@@ -87,6 +87,9 @@ EXP_FUNC void xava_gl_module_ionotify_callback(XAVA_IONOTIFY_EVENT event,
                                 const char *filename,
                                 int id,
                                 XAVA* xava) {
+    UNUSED(filename);
+    UNUSED(id);
+    UNUSED(xava);
     switch(event) {
         case XAVA_IONOTIFY_CHANGED:
             shouldRestart = true;
@@ -114,6 +117,8 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
 }
 
 EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
+    UNUSED(options);
+
     // create programs
     xava_gl_module_program_create(&pre);
 
@@ -147,7 +152,7 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glUseProgram(pre.program);
 
     // reallocate and attach verticies data
-    int32_t star_count;
+    uint32_t star_count;
     if(star.count == 0) {
         // very scientific, much wow
         star_count = xava->outer.w*xava->outer.h*star.density;
@@ -181,7 +186,7 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glVertexAttribPointer(SHADER_COLOR, 4, GL_FLOAT, GL_FALSE, 0, colorData);
 
     // since most of this information remains untouched, let's precalculate
-    for(int i=0; i<star_count; i++) {
+    for(uint32_t i=0; i<star_count; i++) {
         // generate the stars with random angles
         // but with a bias towards the right
         stars[i].angle = xava_generate_star_angle();
@@ -291,7 +296,7 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
     /**
      * Here we start rendering to the texture
      **/
-    for(register int i=0; i<arr_count(stars); i++) {
+    for(register uint32_t i=0; i<arr_count(stars); i++) {
         stars[i].x += stars[i].size*cos(stars[i].angle)*intensity;
         stars[i].y += stars[i].size*sin(stars[i].angle)*intensity;
 
@@ -355,6 +360,8 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
 }
 
 EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
+    UNUSED(options);
+
     // delete both pipelines
     xava_gl_module_program_destroy(&pre);
 

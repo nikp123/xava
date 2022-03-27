@@ -15,6 +15,8 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
         uint32_t name, const char *interface, uint32_t version) {
     struct waydata *wd = data;
 
+    UNUSED(version);
+
     #ifdef SHM
         if (strcmp(interface, wl_shm_interface.name) == 0) {
             wd->shm.ref = wl_registry_bind(
@@ -56,6 +58,9 @@ static void xava_wl_registry_global_listener(void *data, struct wl_registry *wl_
 
 static void xava_wl_registry_global_remove(void *data, struct wl_registry *wl_registry,
         uint32_t name) {
+    UNUSED(wl_registry);
+    UNUSED(name);
+
     struct waydata           *wd   = data;
 
     // This sometimes happens when displays get reconfigured

@@ -62,14 +62,14 @@ EXP_FUNC int xavaConfigGetKeyNumber(xava_config_source config, const char *secti
 
 EXP_FUNC char **xavaConfigGetKeys(xava_config_source config, const char *section) {
     size_t size = xavaConfigGetKeyNumber(config, section);
-    
+
     char **returned_section_keys = calloc(size, sizeof(char*));
     iniparser_getseckeys(config->ini, section, (const char**)returned_section_keys);
 
     char **translated_section_keys;
     MALLOC_SELF(translated_section_keys, size);
     size_t skip = strlen(section)+1;
-    for(int i=0; i<size; i++) {
+    for(size_t i=0; i<size; i++) {
         translated_section_keys[i] = &returned_section_keys[i][skip];
     }
 

@@ -67,6 +67,7 @@ unsigned int parse_color(char *colorStr, int defaultColor) {
 
 void validate_config(XAVA *hand, xava_config_source config) {
     XAVA_CONFIG *p = &hand->conf;
+    UNUSED(config);
 
     // validate: input method
     p->inputModule = xava_module_input_load(inputMethod);
@@ -216,7 +217,7 @@ char *load_config(char *configPath, XAVA *hand) {
                 "Maximum 8 colors can be specified as gradient!\n");
 
         p->gradient_colors = (char **)malloc(sizeof(char*) * p->gradients);
-        for(int i = 0;i < p->gradients;i++){
+        for(uint32_t i = 0; i < p->gradients; i++) {
             char ini_config[33];
             sprintf(ini_config, "gradient_color_%d", (i+1));
             p->gradient_colors[i] = (char *)xavaConfigGetString(hand->default_config.config, "color", ini_config, NULL);

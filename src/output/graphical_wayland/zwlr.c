@@ -61,6 +61,8 @@ static void layer_surface_configure(void *data,
 
 static void layer_surface_closed(void *data,
         struct zwlr_layer_surface_v1 *surface) {
+    UNUSED(data);
+    UNUSED(surface);
     //destroy_swaybg_output(output);
     xavaLog("zwlr_layer_surface lost");
 }
@@ -159,6 +161,7 @@ void zwlr_init(struct waydata *wd) {
 }
 
 void zwlr_cleanup(struct waydata *wd) {
+    UNUSED(wd);
     zwlr_layer_surface_v1_destroy(xavaWLRLayerSurface);
     zwlr_layer_shell_v1_destroy(xavaWLRLayerShell);
 }

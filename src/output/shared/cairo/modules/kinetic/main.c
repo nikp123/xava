@@ -11,17 +11,21 @@ EXP_FUNC xava_version xava_cairo_module_version(void) {
 
 // load all the necessary config data and report supported drawing modes
 EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     return XAVA_CAIRO_FEATURE_FULL_DRAW;
 }
 
 EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // report drawn regions
 EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     return NULL;
 }
 
@@ -40,13 +44,16 @@ EXP_FUNC void               xava_cairo_module_event      (xava_cairo_module_hand
 
 // placeholder, as it literally does nothing atm
 EXP_FUNC void               xava_cairo_module_clear      (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // no matter what condition, this ensures a safe write
 EXP_FUNC void               xava_cairo_module_draw_safe  (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // assume that the entire screen's being overwritten
@@ -62,7 +69,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 
     float intensity = 0.0;
 
-    for(register int i=0; i<xava->bars; i++) {
+    for(register uint32_t i=0; i<xava->bars; i++) {
         // the not so, speed part
         // intensity has a low-freq bias as they are more "physical"
         float bar_percentage = (float)(xava->f[i]-1)/(float)conf->h;
@@ -86,6 +93,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // ionotify fun
@@ -94,4 +102,8 @@ EXP_FUNC void         xava_cairo_module_ionotify_callback
                 const char* filename,
                 int id,
                 XAVA* xava) {
+    UNUSED(event);
+    UNUSED(filename);
+    UNUSED(id);
+    UNUSED(xava);
 }

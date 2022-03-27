@@ -83,7 +83,7 @@ EXP_FUNC bool xava_version_breaking_check(xava_version target)
         {0, 7, 1, 1},
     };
 
-    for(int i = 0; i < sizeof(breaking_versions)/sizeof(xava_version); i++) {
+    for(size_t i = 0; i < sizeof(breaking_versions)/sizeof(xava_version); i++) {
         if(xava_version_less(breaking_versions[i], target)) {
             return true;
         }

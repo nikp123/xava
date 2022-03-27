@@ -51,14 +51,14 @@
 typedef struct XAVA_AUDIO {
     float        *audio_out_r;
     float        *audio_out_l;
-    int            format;
-    uint32_t    rate;
-    char        *source;                // alsa device, fifo path or pulse source
-    int            channels;
-    bool        terminate;                // shared variable used to terminate audio thread
-    char        error_message[1024];
-    int            inputsize, fftsize;        // inputsize and fftsize
-    uint32_t    latency;                // try to keep (this) latency in samples
+    int32_t      format;
+    uint32_t     rate;
+    char         *source;               // alsa device, fifo path or pulse source
+    uint32_t     channels;
+    bool         terminate;             // shared variable used to terminate audio thread
+    char         error_message[1024];
+    uint32_t     inputsize, fftsize;    // inputsize and fftsize
+    uint32_t     latency;               // try to keep (this) latency in samples
 } XAVA_AUDIO;
 
 // configuration parameters
@@ -123,7 +123,7 @@ typedef struct XAVA {
     // variables that XAVA outputs
     uint32_t bars;        // number of output bars
     uint32_t rest;        // number of screen units until first bar
-    int *f, *fl;    // array to bar data (f = current, fl = last frame)
+    uint32_t *f, *fl;    // array to bar data (f = current, fl = last frame)
 
     // signals to the renderer thread to safely stop rendering (if needed)
     bool pauseRendering;

@@ -16,7 +16,7 @@ typedef struct {
 } paTestData;
 
 static XAVA_AUDIO *audio;
-static int n = 0;
+static uint32_t n = 0;
 
 static int recordCallback(const void *inputBuffer, void *outputBuffer,
     unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,

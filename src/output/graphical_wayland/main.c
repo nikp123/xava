@@ -38,6 +38,8 @@ uint32_t fgcol,bgcol;
 
 static void wl_surface_frame_done(void *data, struct wl_callback *cb,
         uint32_t time) {
+    UNUSED(time);
+
     struct waydata *wd = data;
     UNUSED(wd);
 
@@ -61,6 +63,8 @@ const struct wl_callback_listener wl_surface_frame_listener = {
 };
 
 EXP_FUNC void xavaOutputCleanup(void *v) {
+    UNUSED(v);
+
     #ifdef EGL
         EGLCleanup(wd.hand, &wd.ESContext);
         wl_egl_window_destroy((struct wl_egl_window*)
@@ -158,6 +162,7 @@ EXP_FUNC int xavaInitOutput(XAVA *hand) {
 }
 
 EXP_FUNC void xavaOutputClear(XAVA *hand) {
+    UNUSED(hand);
     #ifdef CAIRO
         __internal_xava_output_cairo_clear(wd.cairo_handle);
     #endif
@@ -184,6 +189,7 @@ EXP_FUNC int xavaOutputApply(XAVA *hand) {
 }
 
 EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
+    UNUSED(hand);
     //XAVA_CONFIG     *p    = &s->conf;
 
     XG_EVENT event = XAVA_IGNORE;
@@ -213,6 +219,8 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
 
 // super optimized, because cpus are shit at graphics
 EXP_FUNC void xavaOutputDraw(XAVA *hand) {
+    UNUSED(hand);
+
     #ifdef EGL
         EGLDraw(hand);
         eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface);

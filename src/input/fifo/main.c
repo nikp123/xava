@@ -20,10 +20,9 @@ EXP_FUNC void* xavaInput(void* data)
 {
     XAVA_AUDIO *audio = (XAVA_AUDIO *)data;
     int fd;
-    int n = 0;
+    uint32_t n = 0;
     //signed char buf[1024];
     //int tempr, templ, lo, q;
-    int i;
     int t = 0;
     //int size = 1024;
     ssize_t bytes = 0;
@@ -45,12 +44,12 @@ EXP_FUNC void* xavaInput(void* data)
             nanosleep (&req, NULL);
             t++;
             if (t > 10) {
-                for (i = 0; i < audio->inputsize; i++)
+                for (uint32_t i = 0; i < audio->inputsize; i++)
                     audio->audio_out_l[i] = 0;
 
                 // prevents filling a invalid buffer whilst in mono mode
                 if (audio->channels == 2) {
-                    for (i = 0; i < audio->inputsize; i++)
+                    for (uint32_t i = 0; i < audio->inputsize; i++)
                         audio->audio_out_r[i] = 0;
                 }
                 close(fd);
@@ -62,7 +61,7 @@ EXP_FUNC void* xavaInput(void* data)
 
             // assuming samples are 16bit (as per example)
             // also reading more than the retrieved buffer is considered memory corruption
-            for (i = 0; i < bytes/2; i += 2) {
+            for (uint32_t i = 0; i < bytes/2; i += 2) {
                 if (audio->channels == 1) audio->audio_out_l[n] = (float)(buf[i] + buf[i + 1]) / (float)2.0;
 
                 //stereo storing channels in buffer

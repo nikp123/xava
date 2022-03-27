@@ -35,6 +35,9 @@ EXP_FUNC void xava_cairo_module_ionotify_callback
                 const char* filename,
                 int id,
                 XAVA* xava) {
+    UNUSED(filename);
+    UNUSED(id);
+
     xava_cairo_module_handle *handle = (xava_cairo_module_handle*)xava;
     switch(event) {
         case XAVA_IONOTIFY_CHANGED:
@@ -87,6 +90,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     arr_init(stars);
 }
 
@@ -105,7 +109,7 @@ uint32_t xava_generate_star_size(void) {
 EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* handle) {
     XAVA *xava = handle->xava;
 
-    int32_t star_count;
+    uint32_t star_count;
     if(options.star.count == 0) {
         // very scientific, much wow
         star_count = xava->outer.w*xava->outer.h*options.star.density;
@@ -115,7 +119,7 @@ EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* ha
 
     arr_resize(stars, star_count);
 
-    for(int i = 0; i < star_count; i++) {
+    for(uint32_t i = 0; i < star_count; i++) {
         // generate the stars with random angles
         // but with a bias towards the right
         stars[i].angle = xava_generate_star_angle();
@@ -146,6 +150,7 @@ EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* ha
 
 // report drawn regions
 EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     return NULL;
 }
 
@@ -164,13 +169,16 @@ EXP_FUNC void               xava_cairo_module_event      (xava_cairo_module_hand
 
 // placeholder, as it literally does nothing atm
 EXP_FUNC void               xava_cairo_module_clear      (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // no matter what condition, this ensures a safe write
 EXP_FUNC void               xava_cairo_module_draw_safe  (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // assume that the entire screen's being overwritten
@@ -180,7 +188,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 
     float intensity = 0.0;
 
-    for(register int i=0; i<xava->bars; i++) {
+    for(register uint32_t i=0; i<xava->bars; i++) {
         // the not so, speed part
         // intensity has a low-freq bias as they are more "physical"
         float bar_percentage = (float)(xava->f[i]-1)/(float)conf->h;
@@ -195,7 +203,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     intensity /= xava->bars;
 
     // batching per color because that's fast in cairo
-    for(register int j=1; j<=options.star.max_size; j++) {
+    for(register uint32_t j=1; j<=options.star.max_size; j++) {
         float alpha = (float)(1+options.star.max_size-j)/options.star.max_size;
 
         cairo_set_source_rgba(handle->cr,
@@ -203,7 +211,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
                 ARGB_G_32(options.star.color)/255.0,
                 ARGB_B_32(options.star.color)/255.0,
                 ARGB_A_32(options.star.color)/255.0*alpha);
-        for(register int i=0; i<arr_count(stars); i++) {
+        for(register uint32_t i=0; i<arr_count(stars); i++) {
             // we're drawing per star
             if(stars[i].size != j)
                 continue;
@@ -237,6 +245,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     arr_free(stars);
 
     xavaIONotifyKill(file_notifications);

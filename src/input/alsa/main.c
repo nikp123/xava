@@ -133,7 +133,7 @@ EXP_FUNC void* xavaInput(void* data) {
     // frames * bits/8 * channels
     //const int size = frames * (audio->format / 8) * audio->channels;
     signed char* buffer = malloc(period_size);
-    int n = 0;
+    uint32_t n = 0;
 
     while (1) {
         switch (audio->format) {
@@ -141,13 +141,13 @@ EXP_FUNC void* xavaInput(void* data) {
                 err = snd_pcm_readi(handle, buf, frames);
 
                 if(audio->channels == 1) {
-                    for(int i = 0; i < frames; i++) {
+                    for(snd_pcm_uframes_t i = 0; i < frames; i++) {
                         audio->audio_out_l[n] = buf[i];
                         n++;
                         if(n == audio->inputsize - 1) n = 0;
                     }
                 } else if(audio->channels == 2) {
-                    for(int i = 0; i < frames * 2; i += 2) {
+                    for(uint32_t i = 0; i < frames * 2; i += 2) {
                         //stereo storing channels in buffer
                         audio->audio_out_l[n] = buf[i];
                         audio->audio_out_r[n] = buf[i + 1];

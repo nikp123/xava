@@ -7,7 +7,7 @@ float xava_gl_module_util_calculate_intensity(XAVA *xava) {
 
     float intensity = 0.0;
 
-    for(register int i=0; i<xava->bars; i++) {
+    for(register uint32_t i=0; i<xava->bars; i++) {
         // the not so, speed part
         // intensity has a low-freq bias as they are more "physical"
         float bar_percentage = (float)(xava->f[i]-1)/(float)conf->h;

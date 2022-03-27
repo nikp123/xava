@@ -316,10 +316,10 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
     size_t last_dir_offset = 0;
     size_t path_size = strlen((*actualPath)); // DO NOT USE THIS LATER ON IN THE CODE
     const char *new_filename = filename;
-    for(int i=0; i<strlen(filename); i++) {
+    for(size_t i=0; i<strlen(filename); i++) {
         // caught a directory
         if(filename[i] == '/' || filename[i] == '\\') { // Using UNIX-like directories inside codebase, FYI
-            for(int j=last_dir_offset; j<i; j++) {
+            for(size_t j=last_dir_offset; j<i; j++) {
                 (*actualPath)[path_size+j] = filename[j];
             }
 

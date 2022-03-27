@@ -37,10 +37,10 @@ include(src/cmake/os-prerequisites.cmake)
 
 # Set appropriate C flags
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_FLAGS "-Wall ${BUILD_FLAGS}")
+set(CMAKE_C_FLAGS "-Wall -Wextra ${BUILD_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG ${BUILD_DEBUG_FLAGS}")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -fvisibility='internal'")
-set(CMAKE_CXX_FLAGS "-Wall ${BUILD_FLAGS}")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra ${BUILD_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG ${BUILD_DEBUG_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fvisibility='internal' ")
 

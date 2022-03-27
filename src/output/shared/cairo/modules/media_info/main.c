@@ -68,9 +68,9 @@ struct options {
 
 cairo_surface_t *surface;
 struct region    surface_region;
-int64_t last_version;
+uint64_t last_version;
 
-int old_w, old_h;
+uint32_t old_w, old_h;
 
 // report version
 EXP_FUNC xava_version xava_cairo_module_version(void) {
@@ -79,6 +79,8 @@ EXP_FUNC xava_version xava_cairo_module_version(void) {
 
 // load all the necessary config data and report supported drawing modes
 EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
+
     options.cover.image = NULL; // because C
 
     options.cover.x = 0.05;
@@ -119,6 +121,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     media_data_thread = xava_util_media_data_thread_create();
 
     last_version = 0;
@@ -510,6 +513,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 
 // informs the thread that it should redraw
 EXP_FUNC void               xava_cairo_module_clear      (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     redraw_everything = true;
 }
 
@@ -532,7 +536,7 @@ EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_hand
         max_x = 0, max_y = 0;
 
     // region bound dark magic
-    for(int i = 0; i < arr_count(regions); i++) {
+    for(uint32_t i = 0; i < arr_count(regions); i++) {
         if(min_x > regions[i].x)
            min_x = regions[i].x;
         if(min_y > regions[i].y)
@@ -563,6 +567,7 @@ EXP_FUNC void               xava_cairo_module_draw_safe  (xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     xava_util_media_data_thread_destroy(media_data_thread);
     if(last_version > 0)
         cairo_surface_destroy(surface);
@@ -574,4 +579,8 @@ EXP_FUNC void         xava_cairo_module_ionotify_callback
                 const char* filename,
                 int id,
                 XAVA* xava) {
+    UNUSED(event);
+    UNUSED(filename);
+    UNUSED(id);
+    UNUSED(xava);
 }

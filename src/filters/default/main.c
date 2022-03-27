@@ -14,11 +14,11 @@
 #endif
 
 // i wont even bother deciphering this mess
-static float *fc, *fre, *fpeak, *k, g;
-static int *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;
-static float* smooth, gravity, integral, eqBalance, logScale, ignore;
-static float monstercat, *peak, smh;
-static bool oddoneout;
+static float    *fc, *fre, *fpeak, *k, g;
+static uint32_t *f, *lcf, *hcf, *fmem, *flast, *flastd, *fall, *fl, *fr;
+static float    *smooth, gravity, integral, eqBalance, logScale, ignore;
+static float    monstercat, *peak, smh;
+static bool     oddoneout;
 static uint32_t smcount, highcf, lowcf, waves, overshoot, calcbars;
 
 static fftwf_plan pl, pr;
@@ -26,8 +26,9 @@ fftwf_complex *outl, *outr;
 
 bool senseLow;
 
-void separate_freq_bands(fftwf_complex *out, int bars, int channel, double sens, double ignore, int fftsize) {
-    int o,i;
+void separate_freq_bands(fftwf_complex *out, uint32_t bars, uint32_t channel,
+        double sens, double ignore, uint32_t fftsize) {
+    uint32_t o, i;
     double y[fftsize / 2 + 1];
     double temp;
 
@@ -51,7 +52,7 @@ void separate_freq_bands(fftwf_complex *out, int bars, int channel, double sens,
 }
 
 
-void monstercat_filter(int bars, int waves, double monstercat, int *data) {
+void monstercat_filter(int bars, int waves, double monstercat, uint32_t *data) {
     int z;
 
     // process [smoothing]: monstercat-style "average"
@@ -148,7 +149,7 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     xava->f  = f;
     xava->fl = flastd;
 
-    for (int i = 0; i < xava->bars; i++) {
+    for (uint32_t i = 0; i < xava->bars; i++) {
         flast[i] = 0;
         flastd[i] = 0;
         fall[i] = 0;
@@ -187,7 +188,7 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     //freqconst = -2;
 
     // process: calculate cutoff frequencies
-    int n;
+    uint32_t n;
     for (n=0; n < calcbars; n++) {
         fc[n] = pow(powf(n, (logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0),
                          freqconst)+lowcf;
@@ -224,7 +225,6 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
 EXP_FUNC void xavaFilterLoop(XAVA *xava) {
     XAVA_AUDIO *audio = &xava->audio;
     XAVA_CONFIG *p  = &xava->conf;
-    int i;
 
     // process: execute FFT and sort frequency bands
     if (p->stereo) {
@@ -256,7 +256,7 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
     }
 
     //preperaing signal for drawing
-    for (i=0; i<xava->bars; i++) {
+    for (uint32_t i=0; i<xava->bars; i++) {
         if (p->stereo) {
             if (i < xava->bars / 2) {
                 f[i] = fl[xava->bars / 2 - i - 1];
@@ -271,9 +271,9 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
 
     // process [smoothing]: falloff
     if (g > 0) {
-        for (i = 0; i < xava->bars; i++) {
+        for (uint32_t i = 0; i < xava->bars; i++) {
             if (f[i] < flast[i]) {
-                f[i] = fpeak[i] - (g * fall[i] * fall[i]);
+                f[i] = MIN((int32_t)fpeak[i] - (g * fall[i] * fall[i]), 0);
                 fall[i]++;
             } else  {
                 fpeak[i] = f[i];
@@ -285,7 +285,7 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
 
     // process [smoothing]: integral
     if (integral > 0) {
-        for (i=0; i<xava->bars; i++) {
+        for (uint32_t i=0; i<xava->bars; i++) {
             f[i] = fmem[i] * integral + f[i];
             fmem[i] = f[i];
 
@@ -299,11 +299,11 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
 
     // process [oddoneout]
     if(oddoneout) {
-        for(i=1; i<xava->bars-1; i+=2) {
-            f[i] = f[i+1]/2 + f[i-1]/2;
+        for(int32_t i=1; i<(int32_t)xava->bars-1; i+=2) {
+            f[i] = (f[i+1] + f[i-1])/2;
         }
-        for(i=xava->bars-3; i>1; i-=2) {
-            int sum = f[i+1]/2 + f[i-1]/2;
+        for(int32_t i=(int32_t)xava->bars-3; i>1; i-=2) {
+            uint32_t sum = (f[i+1] + f[i-1])/2;
             if(sum>f[i]) f[i] = sum;
         }
     }
@@ -314,8 +314,8 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
     if (p->autosens&&(!xava->pauseRendering)) {
         // don't adjust on complete silence
         // as when switching tracks for example
-        for (i=0; i<xava->bars; i++) {
-            if (f[i] > (int)((xava->inner.h-1)*(100+overshoot)/100) ) {
+        for (uint32_t i=0; i<xava->bars; i++) {
+            if (f[i] > ((xava->inner.h-1)*(100+overshoot)/100) ) {
                 senseLow = false;
                 p->sens *= 0.985;
                 break;
@@ -328,6 +328,8 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
 }
 
 EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
+    UNUSED(xava);
+
     free(outl);
     free(outr);
     fftwf_destroy_plan(pl);
@@ -379,7 +381,7 @@ EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
     if (smcount > 0) {
         MALLOC_SELF(smooth, smcount);
         char **keys = xavaConfigGetKeys(config, "eq");
-        for (int sk = 0; sk < smcount; sk++) {
+        for (uint32_t sk = 0; sk < smcount; sk++) {
             smooth[sk] = xavaConfigGetDouble(config, "eq", keys[sk], 1);
         }
         free(keys);

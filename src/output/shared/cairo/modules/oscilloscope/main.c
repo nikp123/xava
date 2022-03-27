@@ -20,6 +20,8 @@ EXP_FUNC void xava_cairo_module_ionotify_callback
                 const char* filename,
                 int id,
                 XAVA* xava) {
+    UNUSED(filename);
+    UNUSED(id);
     xava_cairo_module_handle *handle = (xava_cairo_module_handle*)xava;
     switch(event) {
         case XAVA_IONOTIFY_CHANGED:
@@ -72,6 +74,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     //XAVA *xava = handle->xava;
     //XAVA_CONFIG *conf = &xava->conf;
 
@@ -82,6 +85,7 @@ EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* han
 }
 
 EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // report drawn regions
@@ -103,17 +107,21 @@ EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* 
 
 // event handler
 EXP_FUNC void               xava_cairo_module_event      (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // placeholder, as it literally does nothing atm
 EXP_FUNC void               xava_cairo_module_clear      (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // no matter what condition, this ensures a safe write
 EXP_FUNC void               xava_cairo_module_draw_safe  (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
 }
 
 // assume that the entire screen's being overwritten
@@ -150,7 +158,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     x1 = scale_x * audio->audio_out_l[0] + trans_x;
     y1 = scale_y * audio->audio_out_r[0] + trans_y;
 
-    for(size_t i = 1; i < audio->inputsize; i++) {
+    for(size_t i = 1; i < (size_t)audio->inputsize; i++) {
         x2 = scale_x * audio->audio_out_l[i] + trans_x;
         y2 = scale_y * audio->audio_out_r[i] + trans_y;
 
@@ -172,6 +180,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
+    UNUSED(handle);
     xavaIONotifyKill(file_notifications);
 
     xavaConfigClose(*config_file);

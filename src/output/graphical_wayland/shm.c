@@ -18,7 +18,8 @@ uint32_t wayland_color_blend(uint32_t color, uint8_t alpha) {
 }
 
 void wl_buffer_release(void *data, struct wl_buffer *wl_buffer) {
-    //struct waydata *wd = data;
+    UNUSED(data);
+
     /* Sent by the compositor when it's no longer using this buffer */
     wl_buffer_destroy(wl_buffer);
 }
@@ -62,7 +63,7 @@ void reallocSHM(struct waydata *wd) {
 
     munmap(wd->shm.buffer, wd->shm.max_size);
 
-    int size = hand->outer.w *
+    uint32_t size = hand->outer.w *
                hand->outer.h *
                sizeof(uint32_t);
     if(size > wd->shm.max_size) {

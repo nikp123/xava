@@ -123,6 +123,8 @@ enum {
 
 #ifdef GL
 int XGLInit(XAVA_CONFIG *conf) {
+    UNUSED(conf);
+
     // we will use the existing VisualInfo for this, because I'm not messing around with FBConfigs
     xavaGLXContext = glXCreateContext(xavaXDisplay, &xavaVInfo, NULL, 1);
     glXMakeCurrent(xavaXDisplay, xavaXWindow, xavaGLXContext);
@@ -407,6 +409,9 @@ EXP_FUNC void xavaOutputClear(XAVA *xava) {
         GLClear(xava);
     #elif defined(CAIRO)
         __internal_xava_output_cairo_clear(xavaCairoHandle);
+        UNUSED(xava);
+    #else
+        UNUSED(xava);
     #endif
 }
 
@@ -611,6 +616,9 @@ EXP_FUNC void xavaOutputDraw(XAVA *xava) {
         glXWaitGL();
     #elif defined(CAIRO)
         __internal_xava_output_cairo_draw(xavaCairoHandle);
+        UNUSED(xava);
+    #else
+        UNUSED(xava);
     #endif
 
     return;
@@ -631,6 +639,9 @@ EXP_FUNC void xavaOutputCleanup(XAVA *xava) {
         GLCleanup(xava);
     #elif defined(CAIRO)
         __internal_xava_output_cairo_cleanup(xavaCairoHandle);
+        UNUSED(xava);
+    #else
+        UNUSED(xava);
     #endif
 
     XFreeGC(xavaXDisplay, xavaXGraphics);

@@ -76,6 +76,9 @@ EXP_FUNC void xava_gl_module_ionotify_callback(XAVA_IONOTIFY_EVENT event,
                                 const char *filename,
                                 int id,
                                 XAVA* xava) {
+    UNUSED(filename);
+    UNUSED(id);
+    UNUSED(xava);
     switch(event) {
         case XAVA_IONOTIFY_CHANGED:
             shouldRestart = true;
@@ -171,7 +174,7 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     if(conf->gradients)
         gradientColor = malloc(4*sizeof(GLfloat)*conf->gradients);
 
-    for(int i=0; i<conf->gradients; i++) {
+    for(uint32_t i=0; i<conf->gradients; i++) {
         uint32_t grad_col;
         sscanf(conf->gradient_colors[i], "#%x", &grad_col);
         gradientColor[i*4+0] = ARGB_R_32(grad_col) / 255.0;
@@ -309,7 +312,7 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
         additional_angle = fmod(additional_angle, 2*M_PI);
     }
 
-    for(register int i=0; i<xava->bars; i++) {
+    for(register uint32_t i=0; i<xava->bars; i++) {
         float angle = i*2.0*M_PI/xava->bars;
         float x1 = -1.0/xava->bars*bar_width;
         float y1 = start_height;
@@ -365,6 +368,8 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
 }
 
 EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
+    UNUSED(options);
+
     // delete both pipelines
     xava_gl_module_program_destroy(&pre);
 

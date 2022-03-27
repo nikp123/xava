@@ -70,6 +70,9 @@ static pthread_t p_thread;
 
 void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
         int id, XAVA *xava) {
+    UNUSED(id);
+    UNUSED(xava);
+    UNUSED(filename);
     switch(event) {
         case XAVA_IONOTIFY_CHANGED:
         //case XAVA_IONOTIFY_DELETED: // ignore because it is just broken
@@ -158,7 +161,7 @@ int main(int argc, char **argv)
     //int thr_id;
 
     int sleep = 0;
-    int i, c, silence;
+    int c, silence;
     char *usage = "\n\
 Usage : " PACKAGE " [options]\n\
 Visualize audio input in a window. \n\
@@ -179,7 +182,7 @@ Keys:\n\
 \n\
 as of 0.4.0 all options are specified in config file, see in '/home/username/.config/xava/' \n";
 
-    unsigned long oldTime = 0;
+    uint64_t oldTime = 0;
 
     setlocale(LC_ALL, "C");
     setbuf(stdout,NULL);
@@ -285,11 +288,11 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         if(p->stereo)
             MALLOC_SELF(audio->audio_out_r, p->fftsize+1);
         if(p->stereo) {
-            for (i = 0; i < audio->fftsize; i++) {
+            for (uint32_t i = 0; i < audio->fftsize; i++) {
                 audio->audio_out_l[i] = 0;
                 audio->audio_out_r[i] = 0;
             }
-        } else for(i=0; i < audio->fftsize; i++) audio->audio_out_l[i] = 0;
+        } else for(uint32_t i=0; i < audio->fftsize; i++) audio->audio_out_l[i] = 0;
 
         // thr_id = below
         pthread_create(&p_thread, NULL, xavaInput, (void*)audio);
@@ -369,7 +372,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                 // process: populate input buffer and check if input is present
                 silence = 1;
 
-                for (i = 0; i < audio->fftsize; i++) {
+                for (uint32_t i = 0; i < audio->fftsize; i++) {
                     if(audio->audio_out_l[i]) {
                         silence = 0;
                         break;
@@ -377,7 +380,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                 }
 
                 if(p->stereo) {
-                    for (i = 0; i < audio->fftsize; i++) {
+                    for (uint32_t i = 0; i < audio->fftsize; i++) {
                         if(audio->audio_out_r[i]) {
                             silence = 0;
                             break;
@@ -415,7 +418,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
                     // zero values causes divided by zero segfault
                     // and set max height
-                    for (i = 0; i < xava.bars; i++) {
+                    for (uint32_t i = 0; i < xava.bars; i++) {
                         if(xava.f[i] < 1)
                             xava.f[i] = 1;
                         else if(xava.f[i] > xava.bar_space.h)

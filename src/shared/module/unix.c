@@ -34,7 +34,7 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
     char new_name[MAX_PATH];
 
     // Security check
-    for(int i=0; i<strlen(name); i++) {
+    for(size_t i=0; i<strlen(name); i++) {
         // Disallow directory injections
         if(name[i] == '/') return NULL;
     }
@@ -50,8 +50,8 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
                 prefix, name, LIBRARY_EXTENSION);
 
         // lower the name, because users
-        int str_len = strlen(prefix) + strlen("/lib/xava/");
-        for(int i=str_len; i<strlen(new_name); i++)
+        size_t str_len = strlen(prefix) + strlen("/lib/xava/");
+        for(size_t i=str_len; i<strlen(new_name); i++)
             new_name[i] = tolower(new_name[i]);
     } else fclose(fp);
 
@@ -100,6 +100,7 @@ EXP_FUNC XAVAMODULE *xava_module_path_load(char *path) {
 }
 
 EXP_FUNC char *xava_module_error_get(XAVAMODULE *module) {
+    UNUSED(module);
     return dlerror();
 }
 

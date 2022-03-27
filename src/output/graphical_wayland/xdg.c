@@ -25,6 +25,7 @@ struct xdg_wm_base *xavaXDGWMBase;
 
 static void xdg_wm_base_ping(void *data, struct xdg_wm_base *xdg_wm_base,
         uint32_t serial) {
+    UNUSED(data);
     xdg_wm_base_pong(xdg_wm_base, serial);
 }
 
@@ -35,13 +36,16 @@ const struct xdg_wm_base_listener xdg_wm_base_listener = {
 static void xdg_toplevel_handle_configure(void *data,
         struct xdg_toplevel *xdg_toplevel, int32_t w, int32_t h,
         struct wl_array *states) {
+    UNUSED(xdg_toplevel);
+    UNUSED(states);
+
     struct waydata       *wd   = data;
     XAVA   *xava = wd->hand;
     XAVA_CONFIG *conf = &xava->conf;
 
     if(w == 0 && h == 0) return;
 
-    if(conf->w != w && conf->h != h) {
+    if(conf->w != (uint32_t)w && conf->h != (uint32_t)h) {
         // fixme when i get proper monitor support on XDG
         calculate_win_geo(xava, w, h);
 
@@ -70,6 +74,8 @@ static void xdg_toplevel_handle_close(void *data,
         struct xdg_toplevel *xdg_toplevel) {
     struct waydata           *wd   = data;
 
+    UNUSED(xdg_toplevel);
+
     pushXAVAEventStack(wd->events, XAVA_QUIT);
 }
 
@@ -80,6 +86,8 @@ struct xdg_toplevel_listener xdg_toplevel_listener = {
 
 static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surface,
         uint32_t serial) {
+    UNUSED(data);
+
     // confirm that you exist to the compositor
     xdg_surface_ack_configure(xdg_surface, serial);
 }

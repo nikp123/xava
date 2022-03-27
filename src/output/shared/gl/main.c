@@ -122,7 +122,7 @@ void SGLConfigLoad(XAVA *xava) {
 }
 
 void SGLInit(XAVA *xava) {
-    for(int i = 0; i < arr_count(host.module); i++) {
+    for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
 
         module->options.xava = xava;
@@ -133,7 +133,7 @@ void SGLInit(XAVA *xava) {
 }
 
 void SGLApply(XAVA *xava){
-    for(int i = 0; i < arr_count(host.module); i++) {
+    for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
 
         module->options.xava = xava;
@@ -145,7 +145,7 @@ void SGLApply(XAVA *xava){
 
 XG_EVENT SGLEvent(XAVA *xava) {
     XG_EVENT event = XAVA_IGNORE;
-    for(int i = 0; i < arr_count(host.module); i++) {
+    for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
 
         module->options.xava = xava;
@@ -170,7 +170,7 @@ XG_EVENT SGLEvent(XAVA *xava) {
 }
 
 void SGLClear(XAVA *xava) {
-    for(int i = 0; i < arr_count(host.module); i++) {
+    for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
 
         module->options.xava = xava;
@@ -189,7 +189,7 @@ void SGLDraw(XAVA *xava) {
     // clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    for(int i = 0; i < arr_count(host.module); i++) {
+    for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
 
         module->options.xava = xava;
@@ -201,7 +201,7 @@ void SGLDraw(XAVA *xava) {
 }
 
 void SGLCleanup(XAVA *xava) {
-    for(int i = 0; i < arr_count(host.module); i++) {
+    for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
 
         module->options.xava = xava;
