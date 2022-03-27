@@ -7,18 +7,17 @@ option(WAYLAND "WAYLAND" ON)
 function(generate_wayland_source input output)
     get_filename_component(FILE_EXT "${output}" LAST_EXT)
     if(FILE_EXT MATCHES ".c")
-        add_custom_command(PRE_BUILD OUTPUT
-            "${XAVA_MODULE_DIR}/gen/${output}"
+        add_custom_command(OUTPUT "${XAVA_MODULE_DIR}/gen/${output}"
             COMMAND wayland-scanner private-code
             "${input}"
-            "${XAVA_MODULE_DIR}/gen/${output}")
+            "${XAVA_MODULE_DIR}/gen/${output}"
+            VERBATIM)
     elseif(FILE_EXT MATCHES ".h")
-        execute_process(
+        add_custom_command(OUTPUT "${XAVA_MODULE_DIR}/gen/${output}"
             COMMAND wayland-scanner client-header
             "${input}"
             "${XAVA_MODULE_DIR}/gen/${output}"
-            RESULT_VARIABLE _EXIT_CODE
-            OUTPUT_FILE "${XAVA_MODULE_DIR}/gen/${output}")
+            VERBATIM)
 
         if(_EXIT_CODE)
             message(FATAL_ERROR "An error occured while processing ${input}")
