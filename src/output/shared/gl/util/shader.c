@@ -31,7 +31,7 @@ void xava_gl_module_shader_load(
             break;
     }
 
-    struct shader* shader;
+    struct shader* shader = NULL;
     switch(stage) {
         case SGL_VERT: {
             strcat(file_path, "/vertex.glsl");
