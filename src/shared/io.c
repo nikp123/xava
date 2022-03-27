@@ -303,7 +303,9 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
         }
         case XAVA_FILE_TYPE_CUSTOM_WRITE:
             writeCheck = true;
+            goto yeet;
         case XAVA_FILE_TYPE_CUSTOM_READ:
+        yeet:
             CALLOC_SELF((*actualPath), MAX_PATH);
             break;
         default:

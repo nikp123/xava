@@ -68,7 +68,6 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
     options.star.color_str = xavaConfigGetString(*config_file, "stars", "color", NULL);
 
     xavaBailCondition(options.star.max_size < 1, "max_size cannot be below 1");
-    xavaBailCondition(options.star.count < 0, "star count cannot be negative");
 
     // setup file notifications
     file_notifications = xavaIONotifySetup();

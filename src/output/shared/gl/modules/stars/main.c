@@ -112,8 +112,6 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
     star.depth_test = xavaConfigGetBool(pre.config, "stars", "depth_test", false);
 
     xavaBailCondition(star.max_size < 1, "max_size cannot be below 1");
-    xavaBailCondition(star.count < 0, "star count cannot be negative");
-
 }
 
 EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {

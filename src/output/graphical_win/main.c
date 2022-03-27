@@ -36,7 +36,7 @@ TIMECAPS xavaPeriod;
 
 // These hold the size and position of the window if you're switching to fullscreen mode
 // because Windows (or rather WIN32) doesn't do it internally
-DWORD oldX, oldY, oldW, oldH;
+i32 oldX, oldY, oldW, oldH;
 
 #ifdef GL
     BOOL WINAPI wglSwapIntervalEXT (int interval);
@@ -143,6 +143,7 @@ EXP_FUNC void xavaOutputClear(XAVA *xava) {
         GLClear(xava);
     #endif
     #ifdef CAIRO
+        UNUSED(xava);
         __internal_xava_output_cairo_clear(xavaCairoHandle);
     #endif
 }
@@ -221,9 +222,9 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     xavaBailCondition(!xavaWinWindow, "CreateWindowEx failed");
 
     // transparency fix
-    if(conf->flag.transparency) SetLayeredWindowAttributes(xavaWinWindow, 
+    if(conf->flag.transparency) SetLayeredWindowAttributes(xavaWinWindow,
             0x00FFFFFF, 255, LWA_ALPHA | LWA_COLORKEY);
-    SetWindowPos(xavaWinWindow, conf->flag.bottom ? HWND_BOTTOM : HWND_NOTOPMOST,
+    SetWindowPos(xavaWinWindow, conf->flag.beneath ? HWND_BOTTOM : HWND_NOTOPMOST,
             xava->outer.x, xava->outer.y,
             xava->outer.w, xava->outer.h,
             SWP_SHOWWINDOW);
@@ -336,7 +337,7 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
     if(conf->flag.fullscreen) {
         POINT Point = {0};
         HMONITOR Monitor = MonitorFromPoint(Point, MONITOR_DEFAULTTONEAREST);
-        MONITORINFO MonitorInfo = { sizeof(MonitorInfo) };
+        MONITORINFO MonitorInfo = { 0 };
         if (GetMonitorInfo(Monitor, &MonitorInfo)) {
             DWORD Style = WS_POPUP | WS_VISIBLE;
             SetWindowLongPtr(xavaWinWindow, GWL_STYLE, Style);
@@ -376,7 +377,7 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
     // WGL stuff
     #ifdef GL
         GLApply(xava);
-        PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+        PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)(void*)wglGetProcAddress("wglSwapIntervalEXT");
         wglSwapIntervalEXT(conf->vsync);
     #endif
     #ifdef CAIRO
@@ -445,6 +446,7 @@ EXP_FUNC void xavaOutputDraw(XAVA *xava) {
     #endif
 
     #ifdef CAIRO
+        UNUSED(xava);
         __internal_xava_output_cairo_draw(xavaCairoHandle);
         SwapBuffers(xavaWinFrame);
     #endif
@@ -458,6 +460,7 @@ EXP_FUNC void xavaOutputCleanup(XAVA *xava) {
     #endif
 
     #ifdef CAIRO
+        UNUSED(xava);
         __internal_xava_output_cairo_cleanup(xavaCairoHandle);
     #endif
 

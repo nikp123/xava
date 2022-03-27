@@ -123,13 +123,10 @@ void cleanup(void) {
     //free(configPath); don't free as the string is ONLY allocated during bootup
 
     // cleanup remaining FFT buffers (abusing C here)
-    switch(audio->channels) {
-        case 2:
-            free(audio->audio_out_r);
-        default:
-            free(audio->audio_out_l);
-            break;
-    }
+    if(audio->channels == 2)
+        free(audio->audio_out_r);
+
+    free(audio->audio_out_l);
 
     // clean the config
     xavaConfigClose(xava.default_config.config);

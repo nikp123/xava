@@ -62,7 +62,7 @@ EXP_FUNC void *xava_module_symbol_address_get(XAVAMODULE *module, char *symbol) 
 
 EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
     // hacker prevention system 9000
-    for(int i=0; i<strlen(name); i++) {
+    for(u32 i=0; i<strlen(name); i++) {
         // Disallow directory injections
         if(name[i] == '\\') return NULL;
     }
@@ -128,7 +128,7 @@ EXP_FUNC XAVAMODULE *xava_module_path_load(char *path) {
     module->name         = strdup(new_name);
     module->path         = strdup(full_path);
 
-    xavaLog("Module loaded '%s' loaded at %p", 
+    xavaLog("Module loaded '%s' loaded at %p",
         module->name, module->moduleHandle);
 
     return module;

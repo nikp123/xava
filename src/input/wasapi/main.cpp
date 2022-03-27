@@ -24,7 +24,7 @@ const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 
 static XAVA_AUDIO *audio;
-static int n;
+static u32 n;
 
 HRESULT sinkSetFormat(WAVEFORMATEX * pWF) {
     // For the time being, just return OK.

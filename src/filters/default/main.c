@@ -174,9 +174,7 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     g = gravity * ((float)(xava->inner.h-1) / 2160);
 
     // checks if there is stil extra room, will use this to center
-    xava->rest = (xava->inner.w - xava->bars * p->bw - xava->bars * p->bs + p->bs) / 2;
-    if(xava->rest < 0)
-        xava->rest = 0;
+    xava->rest = MIN(0, (int32_t)(xava->inner.w - xava->bars * p->bw - xava->bars * p->bs + p->bs) / 2);
 
     if (p->stereo) xava->bars = xava->bars / 2; // in stereo onle half number of bars per channel
 
