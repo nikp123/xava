@@ -11,6 +11,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Wait for XAVA to build...
+        uses: tomchv/wait-my-workflow@v1.1.0
+        id: wait-build
+        with:
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          checkName: Build
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          intervalSeconds: 10
+          timeoutSeconds: 100
+
       - name: Stupid servers being slow af
         run: sleep 15
 
