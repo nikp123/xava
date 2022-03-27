@@ -15,7 +15,8 @@
 
 // i wont even bother deciphering this mess
 static float    *fc, *fre, *fpeak, *k, g;
-static uint32_t *f, *lcf, *hcf, *fl, *fr, *fmem, *flastd, *fall;
+static uint32_t *f, *lcf, *hcf, *fl, *fr, *fmem, *flastd;
+static uint64_t *fall;
 static int32_t  *flast; // if you change this to uint32_t you die >:(
 static float    *smooth, gravity, integral, eqBalance, logScale, ignore;
 static float    monstercat, *peak, smh;
@@ -170,7 +171,7 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     }
 
     // process [smoothing]: calculate gravity
-    g = gravity * ((float)(xava->inner.h-1) / 2160) * (60 / (float)p->framerate);
+    g = gravity * ((float)(xava->inner.h-1) / 2160);
 
     // checks if there is stil extra room, will use this to center
     xava->rest = (xava->inner.w - xava->bars * p->bw - xava->bars * p->bs + p->bs) / 2;
@@ -277,6 +278,9 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
     if (g > 0) {
         for (uint32_t i = 0; i < xava->bars; i++) {
             if ((int32_t)f[i] < flast[i]) {
+                if(fall[i] == 0)
+                    fall[i] = xavaGetTime();
+
                 /**
                  * Big explaination here, because if you touch this IT'LL break
                  *
@@ -288,13 +292,14 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
                  * the integral output and hence provides a better visualization
                  * experience.
                  **/
-                flast[i] = fpeak[i] - (g * fall[i] * fall[i]);
+                float time_diff = (xavaGetTime() - fall[i]) / 16.0f;
+
+                flast[i] = fpeak[i] - (g * time_diff * time_diff);
                 f[i] = MIN(0, flast[i]);
                 fall[i]++;
             } else  {
                 fpeak[i] = f[i];
                 fall[i] = 0;
-                flast[i] = f[i];
             }
         }
     }
