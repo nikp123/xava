@@ -36,8 +36,7 @@
     #define EXP_FUNC __attribute__ ((visibility ("default")))
 #endif
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "shared/types.h"
 // this array thing is so useful, let's just force it upon everything. thank liv
 #include "shared/array.h"
 #include "shared/module.h"
@@ -47,19 +46,6 @@
 #include "shared/io.h"
 #include "shared/version.h"
 
-#define XAVA_CONFIG_OPTION(T, name) \
-   T name; bool name##_is_set_from_file
-
-#define u8  uint8_t
-#define u16 uint16_t
-#define u32 uint32_t
-#define u64 uint64_t
-#define i8  int8_t
-#define i16 int16_t
-#define i32 int32_t
-#define i64 int64_t
-#define f32 float
-#define f64 double
 
 // Shared audio data sturct
 typedef struct XAVA_AUDIO {

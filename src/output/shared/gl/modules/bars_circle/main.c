@@ -95,11 +95,11 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
     xava_gl_module_shader_load(&pre, SGL_PRE, SGL_CONFIG, "", module, xava);
 
     gl_options.bars.start_height =
-        xavaConfigGetDouble(pre.config, "bars", "start_height", 0.2);
+        xavaConfigGetF64(pre.config, "bars", "start_height", 0.2);
     gl_options.bars.min_height =
-        xavaConfigGetDouble(pre.config, "bars", "minimum_height", 0.01);
+        xavaConfigGetF64(pre.config, "bars", "minimum_height", 0.01);
     gl_options.bars.width =
-        xavaConfigGetDouble(pre.config, "bars", "width", 0.5);
+        xavaConfigGetF64(pre.config, "bars", "width", 0.5);
     gl_options.bars.invert =
         xavaConfigGetBool(pre.config, "bars", "invert", false);
 
@@ -116,13 +116,13 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
             "bar \"width\" cannot be wider than 1.0 or smaller than/equal to 0.0");
 
     gl_options.rotation.per_minute =
-        xavaConfigGetDouble(pre.config, "rotation", "per_minute", 1.0);
+        xavaConfigGetF64(pre.config, "rotation", "per_minute", 1.0);
     gl_options.rotation.using_intensity =
         xavaConfigGetBool(pre.config, "rotation", "using_intensity", false);
     gl_options.rotation.invert =
         xavaConfigGetBool(pre.config, "rotation", "invert", false);
     gl_options.rotation.intensity_scale =
-        xavaConfigGetDouble(pre.config, "rotation", "intensity_scale", 1.0);
+        xavaConfigGetF64(pre.config, "rotation", "intensity_scale", 1.0);
 
     // a little easter egg hehe
     xavaBailCondition(gl_options.rotation.per_minute < 0.0,

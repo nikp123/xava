@@ -9,11 +9,15 @@
 #include "output/shared/graphical.h"
 #include "config.h"
 #include "shared.h"
+#include "shared/log.h"
 
 static const char *colorStrings[8] = {"black", "red", "green", "yellow",
                                         "blue", "magenta", "cyan", "white"};
 
-static char *inputMethod, *outputMethod, *filterMethod, *channels;
+XAVA_CONFIG_OPTION(char*, inputMethod);
+XAVA_CONFIG_OPTION(char*, outputMethod);
+XAVA_CONFIG_OPTION(char*, filterMethod);
+XAVA_CONFIG_OPTION(char*, channels);
 
 int validate_color(char *checkColor)
 {
@@ -107,18 +111,11 @@ void validate_config(XAVA *hand, xava_config_source config) {
             "Cannot have stereo AND an odd number of bars!");
 
     // validate: bars
-    p->autobars = 1;
-    if (p->fixedbars > 0) p->autobars = 0;
-    if (p->fixedbars > 200) p->fixedbars = 200;
-    if (p->bw > 200) p->bw = 200;
+    p->autobars = !p->fixedbars_is_set_from_file;
     if (p->bw < 1) p->bw = 1;
 
     // validate: framerate
     xavaBailCondition(p->framerate < 1, "Framerate cannot be below 1!");
-
-    // validate: framerate
-    xavaBailCondition(p->vsync < -1, "VSync cannot be below -1! "
-            "No such VSync mode exists!\n");
 
     // validate: color
     xavaBailCondition(!validate_color(p->color),
@@ -195,21 +192,26 @@ char *load_config(char *configPath, XAVA *hand) {
     xavaBailCondition(!hand->default_config.config, "Failed to open default XAVA config at '%s'", configPath);
 
     // config: input
-    inputMethod = (char *)xavaConfigGetString(hand->default_config.config, "input", "method", XAVA_DEFAULT_INPUT);
-    p->inputsize = (int)exp2((float)xavaConfigGetInt(hand->default_config.config, "input", "size", 12));
-    p->samplerate = xavaConfigGetInt(hand->default_config.config, "input", "rate", 44100);
-    p->samplelatency = xavaConfigGetInt(hand->default_config.config, "input", "latency", 128);
+    XAVA_CONFIG_GET_STRING(hand->default_config.config, "input", "method", XAVA_DEFAULT_INPUT, inputMethod);
+    XAVA_CONFIG_GET_U32(hand->default_config.config, "input", "size", 12, p->inputsize);
+    // correct the value to whatever the engine actually needs
+    p->inputsize = (int)exp2((double)p->inputsize);
+    XAVA_CONFIG_GET_U32(hand->default_config.config, "input", "rate", 44100, p->samplerate);
+    XAVA_CONFIG_GET_U32(hand->default_config.config, "input", "latency", 128, p->samplelatency);
 
     // config: output
-    outputMethod = (char *)xavaConfigGetString(hand->default_config.config, "output", "method", XAVA_DEFAULT_OUTPUT);
-    channels =  (char *)xavaConfigGetString(hand->default_config.config, "output", "channels", "mono");
+    XAVA_CONFIG_GET_STRING(hand->default_config.config, "output", "method", XAVA_DEFAULT_OUTPUT, outputMethod);
+    XAVA_CONFIG_GET_STRING(hand->default_config.config, "output", "channels", "mono", channels);
 
-    p->color = (char *)xavaConfigGetString(hand->default_config.config, "color", "foreground", "default");
-    p->bcolor = (char *)xavaConfigGetString(hand->default_config.config, "color", "background", "default");
-    p->foreground_opacity = xavaConfigGetDouble(hand->default_config.config, "color", "foreground_opacity", 1.0);
-    p->background_opacity = xavaConfigGetDouble(hand->default_config.config, "color", "background_opacity", 0.0);
+    XAVA_CONFIG_GET_STRING(hand->default_config.config, "color", "foreground", "default", p->color);
+    XAVA_CONFIG_GET_STRING(hand->default_config.config, "color", "background", "default", p->bcolor);
+    XAVA_CONFIG_GET_F64(hand->default_config.config, "color", "foreground_opacity", 0.0, p->foreground_opacity);
+    XAVA_CONFIG_GET_F64(hand->default_config.config, "color", "background_opacity", 0.0, p->background_opacity);
 
-    arr_init_n(p->gradients, xavaConfigGetInt(hand->default_config.config, "color", "gradient_count", 0));
+    XAVA_CONFIG_OPTION(u32, gradient_count);
+    XAVA_CONFIG_GET_U32(hand->default_config.config, "color", "gradient_count", 0, gradient_count);
+    p->gradients_is_set_from_file = gradient_count_is_set_from_file;
+    arr_init_n(p->gradients, gradient_count);
     if(arr_count(p->gradients) > 0) {
         xavaBailCondition(arr_count(p->gradients) < 2,
                 "At least two colors must be given as gradient!\n");
@@ -217,41 +219,43 @@ char *load_config(char *configPath, XAVA *hand) {
                 "Maximum 8 colors can be specified as gradient!\n");
 
         for(uint32_t i = 0; i < arr_count(p->gradients); i++) {
+            XAVA_CONFIG_OPTION(char*, name);
             char ini_config[33];
             sprintf(ini_config, "gradient_color_%d", (i+1));
-            p->gradients[i] = (char *)xavaConfigGetString(hand->default_config.config, "color", ini_config, NULL);
-            xavaBailCondition(!p->gradients[i],
-                    "'gradient_color_%d' is not specified!\n", i+1);
+            XAVA_CONFIG_GET_STRING(hand->default_config.config, "color", ini_config, NULL, name);
+
+            xavaBailCondition(name_is_set_from_file == false,
+                    "'%s' wasn't set properly. Check your config!", ini_config);
+            p->gradients[i] = name;
         }
     }
 
     // config: default
-    p->fixedbars = xavaConfigGetInt(hand->default_config.config, "general", "bars", 0);
-    p->bw = xavaConfigGetInt(hand->default_config.config, "general", "bar_width", 13);
-    p->bs = xavaConfigGetInt(hand->default_config.config, "general", "bar_spacing", 5);
-    p->framerate = xavaConfigGetInt(hand->default_config.config, "general", "framerate", 60);
-    p->vsync = xavaConfigGetBool(hand->default_config.config, "general", "vsync", 1);
+    XAVA_CONFIG_GET_I32(hand->default_config.config, "general", "bars", 0, p->fixedbars);
+    XAVA_CONFIG_GET_U32(hand->default_config.config, "general", "bar_width", 13, p->bw);
+    XAVA_CONFIG_GET_U32(hand->default_config.config, "general", "bar_spacing", 5, p->bs);
+    XAVA_CONFIG_GET_I32(hand->default_config.config, "general", "framerate", 60, p->framerate);
+    XAVA_CONFIG_GET_I32(hand->default_config.config, "general", "vsync", 1, p->vsync); // ideally is bool, but it's not
 
     // config: window
-    p->w = xavaConfigGetInt(hand->default_config.config, "window", "width", 1180);
-    p->h = xavaConfigGetInt(hand->default_config.config, "window", "height", 300);
+    XAVA_CONFIG_GET_U32(hand->default_config.config, "window", "width", 1180, p->w);
+    XAVA_CONFIG_GET_U32(hand->default_config.config, "window", "height", 300, p->h);
 
-    //p->monitor_num = xavaConfigGetInt(hand->default_config.config, "window", "monitor", 0);
-
-    p->winA = (char *)xavaConfigGetString(hand->default_config.config, "window", "alignment", "none");
-    p->x    = xavaConfigGetInt(hand->default_config.config, "window", "x_padding", 0);
-    p->y    = xavaConfigGetInt(hand->default_config.config, "window", "y_padding", 0);
-    p->flag.fullscreen   = xavaConfigGetBool(hand->default_config.config, "window", "fullscreen", 0);
-    p->flag.transparency = xavaConfigGetBool(hand->default_config.config, "window", "transparency", 1);
-    p->flag.border       = xavaConfigGetBool(hand->default_config.config, "window", "border", 0);
-    p->flag.beneath      = xavaConfigGetBool(hand->default_config.config, "window", "keep_below", 1);
-    p->flag.interact     = xavaConfigGetBool(hand->default_config.config, "window", "interactable", 1);
-    p->flag.taskbar      = xavaConfigGetBool(hand->default_config.config, "window", "taskbar_icon", 1);
-    p->flag.holdSize     = xavaConfigGetBool(hand->default_config.config, "window", "hold_size", false);
+    XAVA_CONFIG_GET_STRING(hand->default_config.config, "window", "alignment", "none", p->winA);
+    XAVA_CONFIG_GET_I32(hand->default_config.config, "window", "x_padding", 0, p->x);
+    XAVA_CONFIG_GET_I32(hand->default_config.config, "window", "y_padding", 0, p->y);
+    XAVA_CONFIG_GET_BOOL(hand->default_config.config, "window", "fullscreen",   false, p->flag.fullscreen  );
+    XAVA_CONFIG_GET_BOOL(hand->default_config.config, "window", "transparency", true,  p->flag.transparency);
+    XAVA_CONFIG_GET_BOOL(hand->default_config.config, "window", "border",       false, p->flag.border      );
+    XAVA_CONFIG_GET_BOOL(hand->default_config.config, "window", "keep_below",   true,  p->flag.beneath     );
+    XAVA_CONFIG_GET_BOOL(hand->default_config.config, "window", "interactable", true,  p->flag.interact    );
+    XAVA_CONFIG_GET_BOOL(hand->default_config.config, "window", "taskbar_icon", true,  p->flag.taskbar     );
+    XAVA_CONFIG_GET_BOOL(hand->default_config.config, "window", "hold_size",    false, p->flag.holdSize    );
 
     // config: filter
-    filterMethod = (char *)xavaConfigGetString(hand->default_config.config, "filter", "name", XAVA_DEFAULT_FILTER);
-    p->fftsize = (int)exp2((float)xavaConfigGetInt(hand->default_config.config, "filter", "fft_size", 14));
+    XAVA_CONFIG_GET_STRING(hand->default_config.config, "filter", "name", XAVA_DEFAULT_FILTER, filterMethod);
+    XAVA_CONFIG_GET_U32(hand->default_config.config, "filter", "fft_size", 14, p->fftsize);
+    p->fftsize = (int)exp2((double)p->fftsize);
 
     validate_config(hand, hand->default_config.config);
 

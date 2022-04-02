@@ -379,21 +379,21 @@ EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
     XAVA_CONFIG *p = &xava->conf;
     xava_config_source config = xava->default_config.config;
 
-    p->sens     = xavaConfigGetDouble(config, "filter", "sensitivity", 100.0) *
-        XAVA_PREDEFINED_SENS_VALUE; // check shared.h for details
-    p->autosens = xavaConfigGetBool  (config, "filter", "autosens", 1);
-    overshoot   = xavaConfigGetInt   (config, "filter", "overshoot", 0);
-    lowcf       = xavaConfigGetInt   (config, "filter", "lower_cutoff_freq", 26);
-    highcf      = xavaConfigGetInt   (config, "filter", "higher_cutoff_freq", 15000);
+    XAVA_CONFIG_GET_F64(config, "filter", "sensitivity", 100.0, p->sens);
+    p->sens *= XAVA_PREDEFINED_SENS_VALUE; // check shared.h for details
+    XAVA_CONFIG_GET_BOOL(config, "filter", "autosens", true, p->autosens);
+    overshoot   = xavaConfigGetI32(config, "filter", "overshoot", 0);
+    lowcf       = xavaConfigGetI32(config, "filter", "lower_cutoff_freq", 26);
+    highcf      = xavaConfigGetI32(config, "filter", "higher_cutoff_freq", 15000);
 
-    monstercat = xavaConfigGetDouble(config, "filter", "monstercat", 0.0) * 1.5;
-    waves      = xavaConfigGetInt   (config, "filter", "waves", 0);
-    integral   = xavaConfigGetDouble(config, "filter", "integral", 85);
-    gravity    = xavaConfigGetDouble(config, "filter", "gravity", 100) * 50.0;
-    ignore     = xavaConfigGetDouble(config, "filter", "ignore", 0);
-    logScale   = xavaConfigGetDouble(config, "filter", "log", 1.55);
-    oddoneout  = xavaConfigGetBool  (config, "filter", "oddoneout", 1);
-    eqBalance  = xavaConfigGetDouble(config, "filter", "eq_balance", 0.67);
+    monstercat = xavaConfigGetF64(config, "filter", "monstercat", 0.0) * 1.5;
+    waves      = xavaConfigGetI32(config, "filter", "waves", 0);
+    integral   = xavaConfigGetF64(config, "filter", "integral", 85);
+    gravity    = xavaConfigGetF64(config, "filter", "gravity", 100) * 50.0;
+    ignore     = xavaConfigGetF64(config, "filter", "ignore", 0);
+    logScale   = xavaConfigGetF64(config, "filter", "log", 1.55);
+    oddoneout  = xavaConfigGetBool(config, "filter", "oddoneout", 1);
+    eqBalance  = xavaConfigGetF64(config, "filter", "eq_balance", 0.67);
 
     // read & validate: eq
     smcount = xavaConfigGetKeyNumber(config, "eq");
@@ -401,7 +401,7 @@ EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
         MALLOC_SELF(smooth, smcount);
         char **keys = xavaConfigGetKeys(config, "eq");
         for (uint32_t sk = 0; sk < smcount; sk++) {
-            smooth[sk] = xavaConfigGetDouble(config, "eq", keys[sk], 1);
+            smooth[sk] = xavaConfigGetF64(config, "eq", keys[sk], 1);
         }
         free(keys);
     } else {

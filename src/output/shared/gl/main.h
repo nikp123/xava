@@ -78,7 +78,7 @@ struct XAVAGLModule {
 
 typedef struct XAVAGLHostOptions {
     XAVAGLModule         *module;
-    GLdouble              resolution_scale;
+    XAVA_CONFIG_OPTION(f64, resolution_scale);
     XG_EVENT_STACK       *events;
     XAVA                 *xava;
 

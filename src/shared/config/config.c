@@ -27,6 +27,123 @@ EXP_FUNC void xavaConfigClose(xava_config_source config) {
     free(config);
 }
 
+void __internal_xavaConfigGetString(
+        xava_config_source config,
+        const char* section,
+        const char* key,
+        const char* default_value,
+        char **value,
+        bool *value_is_set) {
+
+    char ini_key[64];
+    snprintf(ini_key, 64, "%s:%s", section, key);
+
+    const char *result = iniparser_getstring(config->ini, ini_key, NULL);
+
+    if(result == NULL) {
+        *value = (char*)default_value;
+        *value_is_set = false;
+        return;
+    }
+
+    *value = (char*)result;
+    *value_is_set = true;
+    return;
+}
+
+
+void __internal_xavaConfigGetBool(
+        xava_config_source config,
+        const char* section,
+        const char* key,
+        bool default_value,
+        bool *value,
+        bool *value_is_set) {
+
+    char ini_key[64];
+    snprintf(ini_key, 64, "%s:%s", section, key);
+
+    bool exists = iniparser_find_entry(config->ini, ini_key);
+
+    if(!exists) {
+        *value = default_value;
+        *value_is_set = false;
+        return;
+    }
+
+    *value = iniparser_getboolean(config->ini, ini_key, default_value);
+    *value_is_set = true;
+    return;
+}
+
+void __internal_xavaConfigGetI32(
+        xava_config_source config,
+        const char* section,
+        const char* key,
+        i32 default_value,
+        i32 *value,
+        bool *value_is_set) {
+
+    char ini_key[64];
+    snprintf(ini_key, 64, "%s:%s", section, key);
+
+    bool exists = iniparser_find_entry(config->ini, ini_key);
+
+    if(!exists) {
+        *value = default_value;
+        *value_is_set = false;
+        return;
+    }
+
+    *value = iniparser_getint(config->ini, ini_key, default_value);
+    *value_is_set = true;
+    return;
+}
+
+void __internal_xavaConfigGetU32(
+        xava_config_source config,
+        const char* section,
+        const char* key,
+        u32 default_value,
+        u32 *value,
+        bool *value_is_set) {
+    i32 new_default_value = (i32)default_value;
+    i32 new_value;
+
+    __internal_xavaConfigGetI32(config, section, key, 
+            new_default_value, &new_value, value_is_set);
+
+    if(*value_is_set == true) {
+        *value = new_value;
+    } else {
+        *value = default_value;
+    }
+}
+
+void __internal_xavaConfigGetF64(
+        xava_config_source config,
+        const char* section,
+        const char* key,
+        f64 default_value,
+        f64 *value,
+        bool *value_is_set) {
+
+    char ini_key[64];
+    snprintf(ini_key, 64, "%s:%s", section, key);
+
+    bool exists = iniparser_find_entry(config->ini, ini_key);
+
+    if(!exists) {
+        *value = default_value;
+        *value_is_set = false;
+        return;
+    }
+
+    *value = iniparser_getdouble(config->ini, ini_key, default_value);
+    *value_is_set = true;
+    return;
+}
+
 // This shouldn't exist, but yet here we are
 EXP_FUNC bool xavaConfigGetBool  (xava_config_source config, const char *section, const char *key,
         bool default_value) {
@@ -35,15 +152,15 @@ EXP_FUNC bool xavaConfigGetBool  (xava_config_source config, const char *section
     return iniparser_getboolean(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC int xavaConfigGetInt(xava_config_source config, const char *section, const char *key,
-        int default_value) {
+EXP_FUNC i32 xavaConfigGetI32(xava_config_source config, const char *section, const char *key,
+        i32 default_value) {
     char ini_key[64]; // i cannot be fucked to do this shit anymore
     snprintf(ini_key, 64, "%s:%s", section, key);
     return iniparser_getint(config->ini, ini_key, default_value);
 }
 
-EXP_FUNC double xavaConfigGetDouble(xava_config_source config, const char *section, const char *key,
-        double default_value) {
+EXP_FUNC f64 xavaConfigGetF64(xava_config_source config, const char *section, const char *key,
+        f64 default_value) {
     char ini_key[64]; // i cannot be fucked to do this shit anymore
     snprintf(ini_key, 64, "%s:%s", section, key);
     return iniparser_getdouble(config->ini, ini_key, default_value);

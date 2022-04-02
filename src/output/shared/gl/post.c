@@ -57,9 +57,9 @@ void xava_gl_module_post_config_load(XAVAGLHostOptions *vars) {
     XAVA               *xava   = vars->xava;
     xava_config_source  config = xava->default_config.config;
 
-    char *shader;
+    XAVA_CONFIG_OPTION(char*, shader);
 
-    shader = xavaConfigGetString(config, "gl", "post_shader", "default");
+    XAVA_CONFIG_GET_STRING(config, "gl", "post_shader", "default", shader);
     if(strcmp("none", shader)){
         // HACK: (ab)using the 1st modules inotify for the post shaders reload function
         xava_gl_module_shader_load(&vars->post, SGL_POST, SGL_VERT, shader,

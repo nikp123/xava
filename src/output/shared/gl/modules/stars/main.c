@@ -105,9 +105,9 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
     xava_gl_module_shader_load(&pre, SGL_PRE, SGL_FRAG, "", module, xava);
     xava_gl_module_shader_load(&pre, SGL_PRE, SGL_CONFIG, "", module, xava);
 
-    star.count     = xavaConfigGetInt(pre.config, "stars", "count", 0);
-    star.density   = 0.0001 * xavaConfigGetDouble(pre.config, "stars", "density", 1.0);
-    star.max_size  = xavaConfigGetInt(pre.config, "stars", "max_size", 5);
+    star.count     = xavaConfigGetI32(pre.config, "stars", "count", 0);
+    star.density   = 0.0001 * xavaConfigGetF64(pre.config, "stars", "density", 1.0);
+    star.max_size  = xavaConfigGetI32(pre.config, "stars", "max_size", 5);
     star.color_str = xavaConfigGetString(pre.config, "stars", "color", NULL);
     star.depth_test = xavaConfigGetBool(pre.config, "stars", "depth_test", false);
 

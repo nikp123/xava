@@ -61,10 +61,10 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
     config_file = xava_cairo_module_file_load(
             XAVA_CAIRO_FILE_CONFIG, handle, "config.ini", config_file_path);
 
-    options.star.count     = xavaConfigGetInt(*config_file, "stars", "count", 0);
+    options.star.count     = xavaConfigGetI32(*config_file, "stars", "count", 0);
     options.star.density   = 0.0001 *
-        xavaConfigGetDouble(*config_file, "stars", "density", 1.0);
-    options.star.max_size  = xavaConfigGetInt(*config_file, "stars", "max_size", 5);
+        xavaConfigGetF64(*config_file, "stars", "density", 1.0);
+    options.star.max_size  = xavaConfigGetI32(*config_file, "stars", "max_size", 5);
     options.star.color_str = xavaConfigGetString(*config_file, "stars", "color", NULL);
 
     xavaBailCondition(options.star.max_size < 1, "max_size cannot be below 1");

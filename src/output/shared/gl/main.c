@@ -19,8 +19,7 @@ static XAVAGLHostOptions host;
 
 void SGLConfigLoad(XAVA *xava) {
     xava_config_source config = xava->default_config.config;
-    host.resolution_scale =
-        xavaConfigGetDouble(config, "gl", "resolution_scale", 1.0f);
+    XAVA_CONFIG_GET_F64(config, "gl", "resolution_scale", 1.0f, (&host)->resolution_scale);
 
     xavaBailCondition(host.resolution_scale <= 0.0f,
         "Resolution scale cannot be under or equal to 0.0");
@@ -35,11 +34,14 @@ void SGLConfigLoad(XAVA *xava) {
     uint32_t key_number = 1;
     do {
         snprintf(key_name, 128, "module_%u", key_number);
-        char *module_name = xavaConfigGetString(config, "gl", key_name, NULL);
+        XAVA_CONFIG_OPTION(char*, module_name);
+        XAVA_CONFIG_GET_STRING(config, "gl", key_name, NULL, module_name);
 
         // module invalid, probably means that all desired modules are loaded
-        if(module_name == NULL)
+        if(!module_name_is_set_from_file) {
+            xavaLog("'%s' has not been set properly!", module_name);
             break;
+        }
 
         // add module name
         XAVAGLModule module;
