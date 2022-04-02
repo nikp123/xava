@@ -88,8 +88,8 @@ If you want the "full" experience, consider using this on a Linux machine.
 
 ### macOS
 
-> VERY likely that it's broken. I don't recommend trying
-unless you are completely sure you know what are you doing.
+> VERY likely that it's broken. I don't recommend trying this unless you are
+completely sure that you know what you're doing.
 
 You have to compile this yourself, get the dependencies installed via brew (look
  below) and compile it using the method described above.
