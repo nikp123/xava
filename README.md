@@ -83,7 +83,13 @@ Technical notes:
 
 > It is NOT possible to compile under Windows nor do I recommend doing it.
 
+> Windows version lacks features compared to Linux version as that's my target.
+If you want the "full" experience, consider using this on a Linux machine.
+
 ### macOS
+
+> VERY likely that it's broken. I don't recommend trying
+unless you are completely sure you know what are you doing.
 
 You have to compile this yourself, get the dependencies installed via brew (look
  below) and compile it using the method described above.
