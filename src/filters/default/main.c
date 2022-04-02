@@ -20,7 +20,7 @@ static uint64_t *fall;
 static int32_t  *flast; // if you change this to uint32_t you die >:(
 static float    *smooth, gravity, integral, eqBalance, logScale, ignore;
 static float    monstercat, *peak, smh;
-static bool     oddoneout;
+XAVA_CONFIG_OPTION(bool, oddoneout);
 static uint32_t smcount, highcf, lowcf, waves, overshoot, calcbars;
 
 static fftwf_plan pl, pr;
@@ -377,6 +377,7 @@ EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
 
 EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
     XAVA_CONFIG *p = &xava->conf;
+    XAVA_AUDIO  *a = &xava->audio;
     xava_config_source config = xava->default_config.config;
 
     XAVA_CONFIG_GET_F64(config, "filter", "sensitivity", 100.0, p->sens);
@@ -392,7 +393,7 @@ EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
     gravity    = xavaConfigGetF64(config, "filter", "gravity", 100) * 50.0;
     ignore     = xavaConfigGetF64(config, "filter", "ignore", 0);
     logScale   = xavaConfigGetF64(config, "filter", "log", 1.55);
-    oddoneout  = xavaConfigGetBool(config, "filter", "oddoneout", 1);
+    XAVA_CONFIG_GET_BOOL(config, "filter", "oddoneout", true, oddoneout);
     eqBalance  = xavaConfigGetF64(config, "filter", "eq_balance", 0.67);
 
     // read & validate: eq
@@ -418,8 +419,20 @@ EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
     }
 
     // validate: oddoneout
-    xavaBailCondition((p->stereo&&oddoneout),
-            "'oddoneout' and stereo channels do not work together!");
+    if(oddoneout && p->stereo) { // incompatible hence must be processed
+        xavaBailCondition(oddoneout_is_set_from_file && p->stereo_is_set_from_file,
+            "Cannot have oddoneout and stereo enabled AT THE SAME TIME!");
+
+        // fix config in both cases
+        if(oddoneout_is_set_from_file) {
+            p->stereo = false;
+            a->channels = 1;
+        } else if(p->stereo_is_set_from_file) {
+            oddoneout = false;
+        } else {
+            xavaBail("[BUG] Tell nik to fix those stupid defaults!");
+        }
+    }
 
     // validate: integral
     integral = integral / 100;

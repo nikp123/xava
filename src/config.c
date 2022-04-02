@@ -102,6 +102,7 @@ void validate_config(XAVA *hand, xava_config_source config) {
 
     // validate: input
     p->stereo = stereo ? 1 : 0; // makes the C compilers happy
+    p->stereo_is_set_from_file = channels_is_set_from_file;
     xavaBailCondition(!p->samplerate, "samplerate CANNOT BE 0!");
     xavaBailCondition(p->samplelatency > p->inputsize, "Sample latency cannot be larger than the audio buffer itself!");
     xavaWarnCondition(p->samplelatency*p->framerate > p->samplerate, "Sample latency might be too large, expect audio lags!");
