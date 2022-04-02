@@ -24,30 +24,57 @@ static void __internal_xavaMsgHnd(enum XAVA_MESSAGE_TYPE mes, const char *fmt,
     FILE *output = stdout;
 
     bool stack_trace = false;
+    bool debug_details = false;
+    bool ignore_spam = true;
+    char *indicator = "[BUG!FIXTHISRIGHTTHEFUCKNOW]"; // ideally never shown
+
+    if(getenv("XAVA_DEBUG"))
+        debug_details = true;
+
+    if(getenv("XAVA_TRACE"))
+        stack_trace = true;
+
+    if(getenv("XAVA_SPAMMY"))
+        ignore_spam = false;
+
+    if(getenv("XAVA_SCREAM")) {
+        debug_details = true;
+        stack_trace = true;
+        ignore_spam = false;
+    }
+
+    bool should_trace = false;
 
     // process message headers
     switch(mes) {
         case XAVA_LOG_ERROR:
-            snprintf(newFmt, 511, "[ERROR] %s at %s:%d - %s\n", func, file, line, fmt);
             output = stderr;
-            stack_trace = true;
+            should_trace = true;
+            indicator = "[ERROR]";
             break;
         case XAVA_LOG_WARN:
-            snprintf(newFmt, 511, "[WARN] %s at %s:%d - %s\n", func, file, line, fmt);
-            stack_trace = true;
+            should_trace = true;
+            indicator = "[WARN]";
             break;
         case XAVA_LOG_NORM:
-            snprintf(newFmt, 511, "[INFO] %s at %s:%d - %s\n", func, file, line, fmt);
+            if(ignore_spam) return;
+            indicator = "[INFO]";
             break;
         case XAVA_LOG_SPAM:
-            snprintf(newFmt, 511, "[SPAM] %s at %s:%d - %s\n", func, file, line, fmt);
+            if(ignore_spam) return;
+            indicator = "[SPAM]";
             break;
     }
+
+    if(debug_details)
+        snprintf(newFmt, 511, "%s %s at %s:%d - %s\n", indicator, func, file, line, fmt);
+    else
+        snprintf(newFmt, 511, "%s\n", fmt);
 
     vfprintf(output, newFmt, list);
 
     // add stack traces for better debugging
-    if(stack_trace) {
+    if(stack_trace && should_trace) {
     #ifdef __linux__
         void *stack_pointers[12];
         int stack_lenght = 12;
