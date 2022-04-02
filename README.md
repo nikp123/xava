@@ -713,7 +713,7 @@ Because XAVA has a pretty outdated design paradigm, its error messages may appea
 out of place and convoluting. If that's the case you may file an issue where you
 explain your confusion and I try fixing said issue.
 
-Otherwise, if the issue is of the program itself performs, (i.e. an actual bug) be
-SURE that you attach the full log by running XAVA **with** ``XAVA_SCREAM=1`` set
-in your environment.
+Otherwise, if the issue is of how the program itself performs, (i.e. an actual
+bug) be SURE that you attach the full log by running XAVA **with** 
+``XAVA_SCREAM=1`` set in your environment.
 
