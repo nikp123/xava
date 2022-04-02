@@ -27,7 +27,7 @@ EXP_FUNC void xavaConfigClose(xava_config_source config) {
     free(config);
 }
 
-void __internal_xavaConfigGetString(
+EXP_FUNC void __internal_xavaConfigGetString(
         xava_config_source config,
         const char* section,
         const char* key,
@@ -52,7 +52,7 @@ void __internal_xavaConfigGetString(
 }
 
 
-void __internal_xavaConfigGetBool(
+EXP_FUNC void __internal_xavaConfigGetBool(
         xava_config_source config,
         const char* section,
         const char* key,
@@ -76,7 +76,7 @@ void __internal_xavaConfigGetBool(
     return;
 }
 
-void __internal_xavaConfigGetI32(
+EXP_FUNC void __internal_xavaConfigGetI32(
         xava_config_source config,
         const char* section,
         const char* key,
@@ -100,7 +100,7 @@ void __internal_xavaConfigGetI32(
     return;
 }
 
-void __internal_xavaConfigGetU32(
+EXP_FUNC void __internal_xavaConfigGetU32(
         xava_config_source config,
         const char* section,
         const char* key,
@@ -120,7 +120,7 @@ void __internal_xavaConfigGetU32(
     }
 }
 
-void __internal_xavaConfigGetF64(
+EXP_FUNC void __internal_xavaConfigGetF64(
         xava_config_source config,
         const char* section,
         const char* key,

@@ -45,7 +45,7 @@ extern void __internal_xavaConfigGetI32(
         i32 *value,
         bool *value_is_set);
 
-void __internal_xavaConfigGetU32(
+extern void __internal_xavaConfigGetU32(
         xava_config_source config,
         const char* section,
         const char* key,
