@@ -1,7 +1,7 @@
 #ifndef __XAVA_SHARED_CONFIG_H
 #define __XAVA_SHARED_CONFIG_H
 
-#include "shared/types.h"
+#include "shared/util/types.h"
 
 // config entry macro (cursed)
 #define XAVA_CONFIG_OPTION(T, name) \

@@ -36,15 +36,15 @@
     #define EXP_FUNC __attribute__ ((visibility ("default")))
 #endif
 
-#include "shared/types.h"
+#include "shared/util/types.h"
 // this array thing is so useful, let's just force it upon everything. thank liv
-#include "shared/array.h"
-#include "shared/module.h"
+#include "shared/util/array.h"
+#include "shared/module/module.h"
 #include "shared/log.h"
 #include "shared/ionotify.h"
-#include "shared/config.h"
-#include "shared/io.h"
-#include "shared/version.h"
+#include "shared/config/config.h"
+#include "shared/io/io.h"
+#include "shared/util/version.h"
 
 
 // Shared audio data sturct

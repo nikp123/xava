@@ -4,7 +4,7 @@
 #include <iniparser.h>
 
 #include "shared.h"
-#include "shared/config.h"
+#include "shared/config/config.h"
 
 struct xava_config {
     dictionary *ini;
@@ -110,7 +110,7 @@ void __internal_xavaConfigGetU32(
     i32 new_default_value = (i32)default_value;
     i32 new_value;
 
-    __internal_xavaConfigGetI32(config, section, key, 
+    __internal_xavaConfigGetI32(config, section, key,
             new_default_value, &new_value, value_is_set);
 
     if(*value_is_set == true) {
