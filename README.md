@@ -51,6 +51,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Accent colors](#accent-colors)
   - [Additional options](#additional-options)
 - [Contribution](#contribution)
+  - [Reporting issues](#reporting-issues)
 
 
 
@@ -115,9 +116,15 @@ page (labeled as "Development build").
 
 ### Installing manually
 
-Since there's an AppImage there's no point to this, but essentially you're
-supposed to use CMake and some basic binutils, like so:
+NOTE: I **strongly** advise you use the AppImage as it'll sort out everything.
+But if you want to build this, you're going to be on your own when it comes to
+build errors and messages.
 
+However, issues related to AUR packages are to be forwarded here (since I
+maintain them).
+
+After grabbing your basic build tools such as CMake, GCC and others you're
+supposed to follow this sequence of commands:
 ```
 git clone https://github.com/nikp123/xava
 cd xava
@@ -699,4 +706,14 @@ Thanks to:
 * [dpayne](https://github.com/dpayne)
 
 for major contributions in the early development of this project.
+
+### Reporting issues
+
+Because XAVA has a pretty outdated design paradigm, its error messages may appear
+out of place and convoluting. If that's the case you may file an issue where you
+explain your confusion and I try fixing said issue.
+
+Otherwise, if the issue is of the program itself performs, (i.e. an actual bug) be
+SURE that you attach the full log by running XAVA **with** ``XAVA_SCREAM=1`` set
+in your environment.
 
