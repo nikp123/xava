@@ -202,7 +202,10 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
         xavaXOutputInfo = XRRGetOutputInfo(xavaXDisplay, xavaXScreenResources,
             xavaXScreenResources->outputs[i]);
 
-        if(xavaXOutputInfo->connection != SCREEN_CONNECTED)
+        if(xavaXOutputInfo->connection != SCREEN_CONNECTED) // display is not connected
+            continue;
+
+        if(xavaXOutputInfo->crtc == 0) // display doesnt have a mode enabled
             continue;
 
         xavaXCrtcInfo = XRRGetCrtcInfo(xavaXDisplay, xavaXScreenResources,
@@ -264,10 +267,10 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
         }
     } else
     #endif
-        XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber, 
+        XMatchVisualInfo(xavaXDisplay, xavaXScreenNumber,
                 conf->flag.transparency ? 32 : 24, TrueColor, &xavaVInfo);
 
-    xavaAttr.colormap = XCreateColormap(xavaXDisplay, 
+    xavaAttr.colormap = XCreateColormap(xavaXDisplay,
             DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
     xavaXColormap = xavaAttr.colormap;
     calculateColors(conf);
@@ -306,7 +309,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
             &xavaXWMHints, &xavaXClassHint);
 
     XSelectInput(xavaXDisplay, xavaXWindow, RRScreenChangeNotifyMask |
-            VisibilityChangeMask | StructureNotifyMask | ExposureMask | 
+            VisibilityChangeMask | StructureNotifyMask | ExposureMask |
             KeyPressMask | KeymapNotify);
 
     #ifdef GL
@@ -353,10 +356,10 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     xev.xclient.data.l[4] = 0;
 
     // keep window in bottom property
-    xev.xclient.data.l[0] = conf->flag.beneath ? 
+    xev.xclient.data.l[0] = conf->flag.beneath ?
         _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
     xev.xclient.data.l[1] = wmStateBelow;
-    XSendEvent(xavaXDisplay, xavaXRoot, 0, 
+    XSendEvent(xavaXDisplay, xavaXRoot, 0,
             SubstructureRedirectMask | SubstructureNotifyMask, &xev);
     if(conf->flag.beneath) XLowerWindow(xavaXDisplay, xavaXWindow);
 
@@ -371,7 +374,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     struct mwmHints hints;
     hints.flags = (1L << 1);
     hints.decorations = conf->flag.border;
-    XChangeProperty(xavaXDisplay, xavaXWindow, mwmHintsProperty, 
+    XChangeProperty(xavaXDisplay, xavaXWindow, mwmHintsProperty,
             mwmHintsProperty, 32, PropModeReplace, (unsigned char *)&hints, 5);
 
     // move the window in case it didn't by default
@@ -454,7 +457,7 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
         _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
     xev.xclient.data.l[1] = fullScreen;
     xev.xclient.data.l[2] = 0;
-    XSendEvent(xavaXDisplay, xavaXRoot, 0, 
+    XSendEvent(xavaXDisplay, xavaXRoot, 0,
             SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 
     xavaOutputClear(xava);
