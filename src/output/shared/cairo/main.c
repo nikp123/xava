@@ -196,8 +196,6 @@ XG_EVENT __internal_xava_output_cairo_event(xava_cairo_handle *handle) {
 
 void __internal_xava_output_cairo_draw(xava_cairo_handle *handle) {
     if(handle->feature_level == XAVA_CAIRO_FEATURE_FULL_DRAW) {
-        cairo_push_group(handle->cr);
-
         cairo_set_source_rgba(handle->cr,
                 ARGB_R_32(handle->xava->conf.bgcol)/255.0,
                 ARGB_G_32(handle->xava->conf.bgcol)/255.0,
@@ -205,6 +203,7 @@ void __internal_xava_output_cairo_draw(xava_cairo_handle *handle) {
                 handle->xava->conf.background_opacity);
         cairo_set_operator(handle->cr, CAIRO_OPERATOR_SOURCE);
         cairo_paint(handle->cr);
+        cairo_push_group(handle->cr);
     }
 
     for(size_t i = 0; i < arr_count(handle->modules); i++) {
