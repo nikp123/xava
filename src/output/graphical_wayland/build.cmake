@@ -74,7 +74,7 @@ if(WAYLAND)
         message(WARNING "Wayland libraries not found, Wayland won't build")
     endif()
 
-    pkg_check_modules(WAYLAND_EGL QUIET egl wayland-egl)
+    pkg_check_modules(WAYLAND_EGL QUIET glew egl wayland-egl)
     if(WAYLAND_FOUND AND WAYLAND_EGL_FOUND)
         add_library(out_wayland_opengl SHARED
             "${XAVA_MODULE_DIR}/main.c"
@@ -106,7 +106,7 @@ if(WAYLAND)
         install(TARGETS out_wayland_opengl DESTINATION lib/xava)
         target_compile_definitions(out_wayland_opengl PUBLIC -DWAYLAND -DEGL)
     else()
-        message(WARNING "Wayland EGL libraries not found, \"wayland\" won't build")
+        message(WARNING "Wayland EGL or GLEW libraries not found, \"wayland\" won't build")
     endif()
 
     pkg_check_modules(CAIRO QUIET cairo)
