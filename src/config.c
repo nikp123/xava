@@ -206,7 +206,7 @@ char *load_config(char *configPath, XAVA *hand) {
 
     XAVA_CONFIG_GET_STRING(hand->default_config.config, "color", "foreground", "default", p->color);
     XAVA_CONFIG_GET_STRING(hand->default_config.config, "color", "background", "default", p->bcolor);
-    XAVA_CONFIG_GET_F64(hand->default_config.config, "color", "foreground_opacity", 0.0, p->foreground_opacity);
+    XAVA_CONFIG_GET_F64(hand->default_config.config, "color", "foreground_opacity", 1.0, p->foreground_opacity);
     XAVA_CONFIG_GET_F64(hand->default_config.config, "color", "background_opacity", 0.0, p->background_opacity);
 
     XAVA_CONFIG_OPTION(u32, gradient_count);
