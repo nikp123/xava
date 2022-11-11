@@ -1,5 +1,6 @@
 # Wayland protocols default directory
-set(WL_PROT_DIR "/usr/share/wayland-protocols")
+pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+pkg_get_variable(WL_PROT_DIR wayland-protocols pkgdatadir)
 
 # Project default
 option(WAYLAND "WAYLAND" ON)
