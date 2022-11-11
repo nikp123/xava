@@ -10,6 +10,8 @@ if(CUBEB)
     set(BUNDLE_SPEEX      OFF)
     set(LAZY_LOAD_LIBS    OFF)
     set(USE_SANITIZERS    OFF)
+    set(USE_PULSE          ON)
+    set(USE_PULSE_RUST     ON)
 
     execute_process(COMMAND git submodule update --init --recursive
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/cubeb
