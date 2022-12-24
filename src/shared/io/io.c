@@ -201,8 +201,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
                 char *configHome = getenv("XDG_CONFIG_HOME");
 
                 if(configHome == NULL) {
-                    xavaWarn("The current system does not support XDG_CONFIG_HOME.\n"
-                            "There is a high likelyhood that something may be broken");
+                    xavaLog("XDG_CONFIG_HOME is not set. Assuming it's in the default path per XDG-spec.");
 
                     char *homeDir;
                     xavaErrorCondition((homeDir = getenv("HOME")) == NULL,
@@ -210,22 +209,14 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 
                     // fuck strings, REEEEEEEEEEEEEEEEEEe
                     configHome = malloc(MAX_PATH);
-
-                    if(configHome == NULL) {
-                        xavaError("Allocation failed");
-                        return false;
-                    }
+                    assert(configHome == NULL);
 
                     // filename is added in post
                     sprintf(configHome, "%s/.config/%s/", homeDir, PACKAGE);
                     (*actualPath) = configHome;
                 } else {
                     (*actualPath) = malloc((strlen(configHome)+strlen(PACKAGE)+strlen(filename)+3)*sizeof(char));
-
-                    if((*actualPath) == NULL) {
-                        xavaError("Allocation failed");
-                        return false;
-                    }
+                    assert((*actualPath) == NULL);
 
                     sprintf((*actualPath), "%s/%s/", configHome, PACKAGE);
                 }
