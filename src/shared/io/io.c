@@ -208,16 +208,15 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
                     xavaErrorCondition((homeDir = getenv("HOME")) == NULL,
                             "This system is $HOME-less. Aborting execution...");
 
-                    // fuck strings, REEEEEEEEEEEEEEEEEEe
                     configHome = malloc(MAX_PATH);
-                    assert(configHome == NULL);
+                    assert(configHome != NULL);
 
                     // filename is added in post
                     sprintf(configHome, "%s/.config/%s/", homeDir, PACKAGE);
                     (*actualPath) = configHome;
                 } else {
                     (*actualPath) = malloc((strlen(configHome)+strlen(PACKAGE)+strlen(filename)+3)*sizeof(char));
-                    assert((*actualPath) == NULL);
+                    assert((*actualPath) != NULL);
 
                     sprintf((*actualPath), "%s/%s/", configHome, PACKAGE);
                 }
