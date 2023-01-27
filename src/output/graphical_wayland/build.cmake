@@ -1,32 +1,37 @@
 # Wayland protocols default directory
-pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+pkg_check_modules(WAYLAND_PROTOCOLS wayland-protocols)
 pkg_get_variable(WL_PROT_DIR wayland-protocols pkgdatadir)
 
 # Project default
 option(WAYLAND "WAYLAND" ON)
 
-function(generate_wayland_source input output)
-    get_filename_component(FILE_EXT "${output}" LAST_EXT)
-    if(FILE_EXT MATCHES ".c")
-        add_custom_command(OUTPUT "${XAVA_MODULE_DIR}/gen/${output}"
-            COMMAND wayland-scanner private-code
-            "${input}"
-            "${XAVA_MODULE_DIR}/gen/${output}"
-            VERBATIM)
-    elseif(FILE_EXT MATCHES ".h")
-        add_custom_command(OUTPUT "${XAVA_MODULE_DIR}/gen/${output}"
-            COMMAND wayland-scanner client-header
-            "${input}"
-            "${XAVA_MODULE_DIR}/gen/${output}"
-            VERBATIM)
+IF(WAYLAND_PROTOCOLS_FOUND)
+    function(generate_wayland_source input output)
+        get_filename_component(FILE_EXT "${output}" LAST_EXT)
+        if(FILE_EXT MATCHES ".c")
+            add_custom_command(OUTPUT "${XAVA_MODULE_DIR}/gen/${output}"
+                COMMAND wayland-scanner private-code
+                "${input}"
+                "${XAVA_MODULE_DIR}/gen/${output}"
+                VERBATIM)
+        elseif(FILE_EXT MATCHES ".h")
+            add_custom_command(OUTPUT "${XAVA_MODULE_DIR}/gen/${output}"
+                COMMAND wayland-scanner client-header
+                "${input}"
+                "${XAVA_MODULE_DIR}/gen/${output}"
+                VERBATIM)
 
-        if(_EXIT_CODE)
-            message(FATAL_ERROR "An error occured while processing ${input}")
+            if(_EXIT_CODE)
+                message(FATAL_ERROR "An error occured while processing ${input}")
+            endif()
+        else()
+            message(FATAL_ERROR "Invalid file extension: ${extension} of file ${output}")
         endif()
-    else()
-        message(FATAL_ERROR "Invalid file extension: ${extension} of file ${output}")
-    endif()
-endfunction()
+    endfunction()
+else()
+    message(STATUS "Wayland protocol not found, will avoid building!")
+    set(WAYLAND OFF)
+endif()
 
 
 # Wayland
