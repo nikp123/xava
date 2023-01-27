@@ -128,7 +128,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
 
     // append target if non-default
     if(strcmp(pwdata.audio->source, "default")) {
-        pw_properties_set(props, PW_KEY_NODE_TARGET, pwdata.audio->source);
+        pw_properties_set(props, PW_KEY_TARGET_OBJECT, pwdata.audio->source);
     }
 
     if(pwdata.autoconnect == false)
