@@ -1,0 +1,29 @@
+inputs:
+  system:
+    description: 'Target operating system'
+    required: true
+    default: 'archlinux'
+  arch:
+    description: 'Target architecture'
+    required: true
+    default: 'x86_64'
+
+#
+# Let's play a game.
+# Can you spot the dumb GH Actions design here?
+#
+
+runs:
+  using: 'composite'
+  steps:
+  - uses: ./.github/docker/archlinux/send
+    if: contains(inputs.system, 'archlinux')
+    with:
+      system: ${{ inputs.system }}
+      arch:   ${{ inputs.arch   }}
+  - uses: ./.github/docker/windows/send
+    if: contains(inputs.system, 'windows')
+    with:
+      system: ${{ inputs.system }}
+      arch:   ${{ inputs.arch   }}
+

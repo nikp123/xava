@@ -1,0 +1,16 @@
+inputs:
+  system:
+    description: 'Target operating system'
+    required: true
+    default: 'archlinux'
+  arch:
+    description: 'Target architecture'
+    required: true
+    default: 'x86_64'
+
+runs:
+  using: docker
+  image: docker://xava-build-archlinux:latest
+  entrypoint: './.github/docker/archlinux/build.sh'
+  args:
+    - ${{ inputs.arch }}

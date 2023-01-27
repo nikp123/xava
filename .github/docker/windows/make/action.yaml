@@ -1,0 +1,16 @@
+inputs:
+  system:
+    description: 'Target operating system'
+    required: true
+    default: 'windows'
+  arch:
+    description: 'Target architecture'
+    required: true
+    default: 'x86_64'
+
+runs:
+  using: docker
+  image: docker://xava-build-windows:latest
+  entrypoint: './.github/docker/windows/build.sh'
+  args:
+    - ${{ inputs.arch }}

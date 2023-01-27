@@ -1,0 +1,25 @@
+inputs:
+  system:
+    description: 'Target operating system'
+    required: true
+    default: 'archlinux'
+  arch:
+    description: 'Target architecture'
+    required: true
+    default: 'x86_64'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: docker/setup-buildx-action@v1
+      with:
+        driver: docker
+    - name: Prepare image
+      uses: docker/build-push-action@v2
+      with:
+        file: '.github/docker/${{ inputs.system }}/Dockerfile'
+        context: .github/docker/${{ inputs.system }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        tags: xava-build-${{ inputs.system }}:latest
+

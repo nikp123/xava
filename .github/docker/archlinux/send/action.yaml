@@ -1,0 +1,33 @@
+inputs:
+  system:
+    description: 'Target operating system'
+    required: true
+    default: 'archlinux'
+  arch:
+    description: 'Target architecture'
+    required: true
+    default: 'x86_64'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get Git info and share it globally
+      id: vars
+      run: |
+        cd build
+        echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+
+    - name: Upload AppImage artifact
+      uses: actions/upload-artifact@v2
+      with:
+        if-no-files-found: error
+        name: xava-x86_64.AppImage
+        path: build/xava-x86_64.AppImage
+
+    - name: Upload version artifact
+      uses: actions/upload-artifact@v2
+      with:
+        if-no-files-found: error
+        name: version.txt
+        path: build/version.txt
+

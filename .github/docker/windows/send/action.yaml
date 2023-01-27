@@ -1,0 +1,19 @@
+inputs:
+  system:
+    description: 'Target operating system'
+    required: true
+    default: 'windows'
+  arch:
+    description: 'Target architecture'
+    required: true
+    default: 'x86_64'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Uploading artifact for ${{ matrix.system }}-${{ matrix.arch }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: xava-installer-${{ matrix.arch }}.exe
+        path: xava-installer-${{ matrix.arch }}.exe
+

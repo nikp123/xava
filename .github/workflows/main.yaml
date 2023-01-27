@@ -1,0 +1,47 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+        - system: archlinux
+          arch: x86_64
+          icon: '🟦'
+        - system: windows
+          arch: i686
+          icon: '⬛'
+        - system: windows
+          arch: x86_64
+          icon: '🟦'
+
+    name: 🚧${{ matrix.icon }} ${{ matrix.system }} (${{ matrix.arch }})
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - uses: ./.github/actions/prepare
+      with:
+        system: ${{ matrix.system }}
+        arch:   ${{ matrix.arch   }}
+
+    - uses: ./.github/actions/compile
+      with:
+        system: ${{ matrix.system }}
+        arch:   ${{ matrix.arch   }}
+
+    - uses: ./.github/actions/upload
+      if: ${{ !env.ACT }}
+      with:
+        system: ${{ matrix.system }}
+        arch:   ${{ matrix.arch   }}
+
