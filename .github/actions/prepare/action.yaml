@@ -11,15 +11,19 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - uses: docker/setup-buildx-action@v1
-      with:
-        driver: docker
-    - name: Prepare image
-      uses: docker/build-push-action@v2
-      with:
-        file: '.github/docker/${{ inputs.system }}/Dockerfile'
-        context: .github/docker/${{ inputs.system }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        tags: xava-build-${{ inputs.system }}:latest
+    # Differentiate between ACT and actual GitHub Actions
+  - uses: docker/setup-buildx-action@v1
+    if: ${{ env.ACT }}
+    with:
+      driver: docker
+  - uses: docker/setup-buildx-action@v1
+    if: ${{ !env.ACT }}
+  - name: Prepare image
+    uses: docker/build-push-action@v2
+    with:
+      file: '.github/docker/${{ inputs.system }}/Dockerfile'
+      context: .github/docker/${{ inputs.system }}
+      cache-from: type=gha
+      cache-to: type=gha,mode=max
+      tags: xava-build-${{ inputs.system }}:latest
 
