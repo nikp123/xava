@@ -1,7 +1,7 @@
 X.A.V.A.
 ====================
 
-[![Build](https://github.com/nikp123/xava/actions/workflows/build.yaml/badge.svg)](https://github.com/nikp123/xava/actions/workflows/build.yaml)
+[![Build status](https://github.com/nikp123/xava/actions/workflows/main.yaml/badge.svg)](https://github.com/nikp123/xava/actions/workflows/main.yaml)
 
 **X**11 **A**udio **V**isualizer for **A**LSA
 
