@@ -1,0 +1,60 @@
+name: Pre-release
+
+# Only trigger, when the build workflow succeeded
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wait for XAVA to build...
+        uses: willgarcia/workflow-wait-action@0.1.0
+        with:
+          access_token: ${{ secrets.GH_ACCESS_TOKEN }}
+
+      - name: Download artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          # Optional, GitHub token, a Personal Access Token with `public_repo` scope if needed
+          # Required, if artifact is from a different repo
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          # Required, workflow file name or ID
+          workflow: build.yaml
+          # Optional, the status or conclusion of a completed workflow to search for
+          # Can be one of a workflow conclusion:
+          #   "failure", "success", "neutral", "cancelled", "skipped", "timed_out", "action_required"
+          # Or a workflow status:
+          #   "completed", "in_progress", "queued"
+          workflow_conclusion: success
+          # Optional, will use the branch
+          branch: master
+          # Optional, defaults to all types
+          event: workflow_dispatch
+
+      - name: Reorganize release files
+        run: |
+          ls -R
+          for i in "i686" "x86_64"; do mv xava-installer-$i.exe xava-installer-$i-win; mv xava-installer-$i-win/xava-installer-$i.exe xava-installer-$i.exe; done
+          for i in "x86_64"; do mv xava-$i.AppImage xava-$i-lnx; mv xava-$i-lnx/xava-$i.AppImage xava-$i.AppImage; done
+
+      - name: Read version file
+        run: |
+          cat version.txt/version.txt
+          VER=$(cat version.txt/version.txt)
+          echo "VERSION=$VER" >> $GITHUB_ENV
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GH_ACCESS_TOKEN }}"
+          automatic_release_tag: ${{ env.VERSION }}
+          prerelease: true
+          title: "Development Build"
+          files: |
+            xava-installer-i686.exe
+            xava-installer-x86_64.exe
+            xava-x86_64.AppImage
+
