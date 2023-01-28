@@ -13,6 +13,7 @@ runs:
   steps:
     - name: Get Git info and share it globally
       id: vars
+      shell: bash
       run: |
         cd build
         echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
