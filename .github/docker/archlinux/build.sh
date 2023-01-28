@@ -23,6 +23,9 @@ env LD_LIBRARY_PATH=. linuxdeploy \
 	--desktop-file AppDir/usr/share/applications/xava.desktop \
 	-llibxava-shared.so
 
+# Fix build issue from Actions
+git config --global --add safe.directory /github/workspace
+
 # Fix the filename
 commit_branch="$(echo ${GITHUB_REF#refs/heads/})"
 commit_sha="$(git rev-parse --short HEAD)"
