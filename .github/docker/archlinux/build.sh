@@ -3,8 +3,12 @@
 rm -rf build
 
 set -e
-mkdir build
 
+# Fix build issue from Actions
+git config --global --add safe.directory /github/workspace
+
+# Build dir
+mkdir build
 cd build
 
 # Build AppImage version of XAVA
@@ -23,9 +27,6 @@ env LD_LIBRARY_PATH=. linuxdeploy \
 	--desktop-file AppDir/usr/share/applications/xava.desktop \
 	-llibxava-shared.so
 
-# Fix build issue from Actions
-git config --global --add safe.directory /github/workspace
-
 # Fix the filename
 commit_branch="$(echo ${GITHUB_REF#refs/heads/})"
 commit_sha="$(git rev-parse --short HEAD)"
@@ -35,4 +36,7 @@ chmod +x xava-x86_64.AppImage
 
 # Extract version info
 cat CMakeCache.txt | grep xava_VERSION | cut -d'=' -f2 > version.txt
+
+# Leave directory
+cd ..
 
