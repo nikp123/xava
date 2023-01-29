@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: rm -rf *
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
 
       - name: Reorganize release files
         run: |
