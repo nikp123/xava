@@ -11,13 +11,6 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Get Git info and share it globally
-      id: vars
-      shell: bash
-      run: |
-        cd build
-        echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-
     - name: Upload version artifact
       uses: actions/upload-artifact@v3
       with:
