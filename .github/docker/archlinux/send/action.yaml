@@ -18,15 +18,15 @@ runs:
         cd build
         echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-    - name: Upload AppImage artifact
-      uses: actions/upload-artifact@v2
+    - name: Upload version artifact
+      uses: actions/upload-artifact@v3
       with:
         if-no-files-found: error
         name: xava-x86_64.AppImage
         path: build/xava-x86_64.AppImage
 
     - name: Upload version artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         if-no-files-found: error
         name: version.txt
