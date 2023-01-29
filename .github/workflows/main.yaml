@@ -50,18 +50,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Wait for XAVA to build...
-        uses: willgarcia/workflow-wait-action@0.1.0
-        with:
-          access_token: ${{ secrets.GH_ACCESS_TOKEN }}
-
       - name: Download artifact
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-          workflow: ${{ github.event.workflow_run.workflow_id }}
-          workflow_conclusion: success
-          branch: master
+          commit: ${{github.event.pull_request.head.sha}}
 
       - name: Reorganize release files
         run: |
