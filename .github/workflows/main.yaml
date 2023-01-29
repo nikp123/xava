@@ -46,6 +46,7 @@ jobs:
         arch:   ${{ matrix.arch   }}
 
   create-release:
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
