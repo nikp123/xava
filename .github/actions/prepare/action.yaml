@@ -24,7 +24,7 @@ runs:
       load: true
       file: '.github/docker/${{ inputs.system }}/Dockerfile'
       context: .github/docker/${{ inputs.system }}
-      cache-from: type=gha
-      cache-to: type=gha,mode=max
+      cache-from: type=gha,scope=buildkit-${{ inputs.system }}-${{ inputs.arch }}
+      cache-to:   type=gha,mode=min,scope=buildkit-${{ inputs.system }}-${{ inputs.arch }}
       tags: xava-build-${{ inputs.system }}:latest
 
