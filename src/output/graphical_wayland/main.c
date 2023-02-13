@@ -106,7 +106,7 @@ EXP_FUNC int xavaInitOutput(XAVA *hand) {
     xavaBailCondition(!xavaXDGWMBase, "Your compositor doesn't support xdg_wm_base, failing...");
 
     if(xavaWLRLayerShell == NULL || xavaXDGOutputManager == NULL) {
-        xavaWarn("Your compositor doesn't support any of the following:\n"
+        xavaWarn("Your compositor doesn't support some or any of the following:\n"
                 "zwlr_layer_shell_v1 and/or zwlr_output_manager_v1\n"
                 "This will DISABLE the ability to use the background layer for"
                 "safety reasons!");
@@ -137,6 +137,8 @@ EXP_FUNC int xavaInitOutput(XAVA *hand) {
         xavaBailCondition(EGLCreateContext(wd.hand, &wd.ESContext) == EGL_FALSE,
                 "Failed to create EGL context");
 
+        calculate_win_geo(hand, hand->conf.w, hand->conf.h);
+
         EGLInit(hand);
     #endif
     #ifdef SHM
@@ -155,16 +157,22 @@ EXP_FUNC int xavaInitOutput(XAVA *hand) {
         xava_output_wayland_cairo_init(&wd);
     #endif
 
-    struct wl_callback *cb = wl_surface_frame(wd.surface);
-    wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
+    #ifdef SHM
+        struct wl_callback *cb = wl_surface_frame(wd.surface);
+        wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
+    #endif
 
     return EXIT_SUCCESS;
 }
 
 EXP_FUNC void xavaOutputClear(XAVA *hand) {
-    UNUSED(hand);
     #ifdef CAIRO
+        UNUSED(hand);
         __internal_xava_output_cairo_clear(wd.cairo_handle);
+    #elif defined(EGL)
+        EGLClear(hand);
+    #else
+        UNUSED(hand);
     #endif
 }
 
@@ -208,7 +216,9 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
     }
 
     #ifdef EGL
-        event = EGLEvent(wd.hand);
+        if(EGLEvent(hand) == XAVA_RELOAD) {
+            event = XAVA_RELOAD;
+        }
     #endif
     #ifdef CAIRO
         event = __internal_xava_output_cairo_event(wd.cairo_handle);
@@ -217,7 +227,6 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
     return event;
 }
 
-// super optimized, because cpus are shit at graphics
 EXP_FUNC void xavaOutputDraw(XAVA *hand) {
     UNUSED(hand);
 
