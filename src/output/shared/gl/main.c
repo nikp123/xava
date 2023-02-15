@@ -144,8 +144,7 @@ void SGLApply(XAVA *xava){
     xava_gl_module_post_apply(&host);
 }
 
-XG_EVENT SGLEvent(XAVA *xava) {
-    XG_EVENT event = XAVA_IGNORE;
+XG_EVENT_STACK *SGLEvent(XAVA *xava) {
     for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
 
@@ -153,21 +152,7 @@ XG_EVENT SGLEvent(XAVA *xava) {
         module->func.event(&module->options);
     }
 
-    // process new events (if any)
-    while(pendingXAVAEventStack(host.events)) {
-        event = popXAVAEventStack(host.events);
-
-        switch(event) {
-            case XAVA_RESIZE:
-                return XAVA_RESIZE;
-            case XAVA_QUIT:
-                return XAVA_QUIT;
-            default:
-                break;
-        }
-    }
-
-    return event;
+    return host.events;
 }
 
 void SGLClear(XAVA *xava) {

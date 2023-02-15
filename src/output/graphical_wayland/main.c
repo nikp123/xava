@@ -36,32 +36,6 @@ static _Bool backgroundLayer;
 
 uint32_t fgcol,bgcol;
 
-static void wl_surface_frame_done(void *data, struct wl_callback *cb,
-        uint32_t time) {
-    UNUSED(time);
-
-    struct waydata *wd = data;
-    UNUSED(wd);
-
-    wl_callback_destroy(cb);
-
-    // more like fucking brain damage, amirite
-    wl_surface_damage_buffer(wd->surface, 0, 0, INT32_MAX, INT32_MAX);
-
-    #ifdef SHM
-        update_frame(wd);
-
-        // when using non-EGL wayland, the framerate is controlled by the wl_callbacks
-        cb = wl_surface_frame(wd->surface);
-        wl_callback_add_listener(cb, &wl_surface_frame_listener, wd);
-
-        wl_surface_commit(wd->surface);
-    #endif
-}
-const struct wl_callback_listener wl_surface_frame_listener = {
-    .done = wl_surface_frame_done,
-};
-
 EXP_FUNC void xavaOutputCleanup(void *v) {
     UNUSED(v);
 
@@ -161,6 +135,7 @@ EXP_FUNC int xavaInitOutput(XAVA *hand) {
         struct wl_callback *cb = wl_surface_frame(wd.surface);
         wl_callback_add_listener(cb, &wl_surface_frame_listener, &wd);
     #endif
+    
 
     return EXIT_SUCCESS;
 }
@@ -174,13 +149,15 @@ EXP_FUNC void xavaOutputClear(XAVA *hand) {
     #else
         UNUSED(hand);
     #endif
+    
+
 }
 
 EXP_FUNC int xavaOutputApply(XAVA *hand) {
     // TODO: Fullscreen support
     //if(p->fullF) xdg_toplevel_set_fullscreen(xavaWLSurface, NULL);
     //else        xdg_toplevel_unset_fullscreen(xavaWLSurface);
-
+    
     // process new size
     wl_display_roundtrip(wd.display);
 
@@ -214,14 +191,18 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
                 break;
         }
     }
-
-    #ifdef EGL
-        if(EGLEvent(hand) == XAVA_RELOAD) {
-            event = XAVA_RELOAD;
-        }
-    #endif
+    
     #ifdef CAIRO
         event = __internal_xava_output_cairo_event(wd.cairo_handle);
+    #endif
+
+    #ifdef EGL
+        XG_EVENT_STACK *glEventStack = EGLEvent(hand);
+        while(pendingXAVAEventStack(glEventStack)) {
+            XG_EVENT event = popXAVAEventStack(glEventStack);
+            if(event != XAVA_IGNORE)
+                return event;
+        }
     #endif
 
     return event;
@@ -233,6 +214,8 @@ EXP_FUNC void xavaOutputDraw(XAVA *hand) {
     #ifdef EGL
         EGLDraw(hand);
         eglSwapBuffers(wd.ESContext.display, wd.ESContext.surface);
+        wl_surface_damage_buffer(wd.surface, 0, 0, INT32_MAX, INT32_MAX);
+        wl_surface_commit(wd.surface);
     #endif
     #ifdef CAIRO
         __internal_xava_output_cairo_draw(wd.cairo_handle);

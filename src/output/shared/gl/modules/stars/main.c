@@ -236,23 +236,19 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     xava_gl_module_clear(options);
 }
 
-EXP_FUNC XG_EVENT xava_gl_module_event(XAVAGLModuleOptions *options) {
+EXP_FUNC void xava_gl_module_event(XAVAGLModuleOptions *options) {
     XAVA *xava = options->xava;
-
-    if(shouldRestart) {
-        shouldRestart = false;
-        return XAVA_RELOAD;
-    }
 
     // check if the visualizer bounds were changed
     if((xava->inner.w != xava->bar_space.w) ||
        (xava->inner.h != xava->bar_space.h)) {
         xava->bar_space.w = xava->inner.w;
         xava->bar_space.h = xava->inner.h;
-        return XAVA_RESIZE;
+        pushXAVAEventStack(options->events, XAVA_RESIZE);
+        return; // prority
     }
 
-    return XAVA_IGNORE;
+    return;
 }
 
 // The original intention of this was to be called when the screen buffer was "unsafe" or "dirty"

@@ -415,12 +415,11 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
     }
 
     #ifdef GL
-        switch(GLEvent(xava)) {
-            case XAVA_RELOAD:
-                return XAVA_RELOAD; break;
-            case XAVA_RESIZE:
-                return XAVA_RESIZE; break;
-            default: break;
+        XG_EVENT_STACK *glEventStack = GLEvent(xava);
+        while(pendingXAVAEventStack(glEventStack)) {
+            XG_EVENT event = popXAVAEventStack(glEventStack);
+            if(event != XAVA_IGNORE)
+                return event;
         }
     #endif
 

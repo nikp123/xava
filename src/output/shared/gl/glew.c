@@ -23,7 +23,7 @@ void GLApply(XAVA *xava) {
     SGLApply(xava);
 }
 
-XG_EVENT GLEvent(XAVA *xava) {
+XG_EVENT_STACK *GLEvent(XAVA *xava) {
     return SGLEvent(xava);
 }
 

@@ -27,7 +27,7 @@ typedef struct XAVAGLModuleOptions {
                         const char* filename,
                         int id,
                         XAVA*);
-    
+
     char           *prefix;
     XG_EVENT_STACK *events;
 } XAVAGLModuleOptions;
@@ -62,7 +62,10 @@ struct XAVAGLModule {
         void         (*config_load)(XAVAGLModule*,XAVA*);
         void         (*init)(XAVAGLModuleOptions*);
         void         (*apply)(XAVAGLModuleOptions*);
-        XG_EVENT     (*event)(XAVAGLModuleOptions*);
+        void         (*event)(XAVAGLModuleOptions*);
+        /**
+         * events are returned through the options->events thingy
+         **/
         void         (*clear)(XAVAGLModuleOptions*);
         void         (*draw)(XAVAGLModuleOptions*);
         void         (*cleanup)(XAVAGLModuleOptions*);
@@ -114,13 +117,13 @@ typedef struct XAVAGLHostOptions {
     bool post_enabled;
 } XAVAGLHostOptions;
 
-void     SGLConfigLoad(XAVA *xava);
-void     SGLInit(XAVA *xava);
-void     SGLApply(XAVA *xava);
-XG_EVENT SGLEvent(XAVA *xava);
-void     SGLClear(XAVA *xava);
-void     SGLDraw(XAVA *xava);
-void     SGLCleanup(XAVA *xava);
+void           SGLConfigLoad(XAVA *xava);
+void           SGLInit(XAVA *xava);
+void           SGLApply(XAVA *xava);
+XG_EVENT_STACK *SGLEvent(XAVA *xava);
+void           SGLClear(XAVA *xava);
+void           SGLDraw(XAVA *xava);
+void           SGLCleanup(XAVA *xava);
 
 #endif
 

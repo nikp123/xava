@@ -10,6 +10,32 @@
 #include "shm.h"
 #include "main.h"
 
+const struct wl_callback_listener wl_surface_frame_listener = {
+    .done = wl_surface_frame_done,
+};
+
+void wl_surface_frame_done(void *data, struct wl_callback *cb,
+        uint32_t time) {
+    UNUSED(time);
+
+    struct waydata *wd = data;
+    UNUSED(wd);
+
+    wl_callback_destroy(cb);
+
+    wl_surface_damage_buffer(wd->surface, 0, 0, INT32_MAX, INT32_MAX);
+
+    #ifdef SHM
+        update_frame(wd);
+
+        // when using non-EGL wayland, the framerate is controlled by the wl_callbacks
+        cb = wl_surface_frame(wd->surface);
+        wl_callback_add_listener(cb, &wl_surface_frame_listener, wd);
+
+    #endif
+    wl_surface_commit(wd->surface);
+}
+
 uint32_t wayland_color_blend(uint32_t color, uint8_t alpha) {
     uint8_t red =   ((color >> 16 & 0xff) | (color >> 8 & 0xff00)) * alpha / 0xff;
     uint8_t green = ((color >>  8 & 0xff) | (color >> 0 & 0xff00)) * alpha / 0xff;

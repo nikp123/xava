@@ -104,7 +104,7 @@ void EGLApply(XAVA *xava) {
     SGLApply(xava);
 }
 
-XG_EVENT EGLEvent(XAVA *xava) {
+XG_EVENT_STACK *EGLEvent(XAVA *xava) {
     return SGLEvent(xava);
 }
 

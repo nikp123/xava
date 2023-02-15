@@ -582,16 +582,21 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
         }
     }
 
-    #ifdef EGL
-    if(EGLEvent(xava) == XAVA_RELOAD) {
-        action = XAVA_RELOAD;
+    // yes this is violent C macro (ab)-use, live with it
+    #if   defined(EGL)
+    XG_EVENT_STACK *glEventStack = EGLEvent(xava);
+    #elif defined(GL)
+    XG_EVENT_STACK *glEventStack = GLEvent(xava);
+    #endif
+
+    #if defined(EGL)||defined(GL)
+    while(pendingXAVAEventStack(glEventStack)) {
+        XG_EVENT event = popXAVAEventStack(glEventStack);
+        if(event != XAVA_IGNORE)
+            return event;
     }
     #endif
-    #ifdef GL
-    if(GLEvent(xava) == XAVA_RELOAD) {
-        action = XAVA_RELOAD;
-    }
-    #endif
+
     #ifdef CAIRO
     switch(__internal_xava_output_cairo_event(xavaCairoHandle)) {
         case XAVA_RELOAD:

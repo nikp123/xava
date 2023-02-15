@@ -62,7 +62,7 @@ EXP_FUNC int xavaOutputApply(XAVA *s) {
     XAVA_CONFIG *p = &s->conf;
 
     // toggle fullscreen
-    SDL_SetWindowFullscreen(xavaSDLWindow, 
+    SDL_SetWindowFullscreen(xavaSDLWindow,
             SDL_WINDOW_FULLSCREEN & p->flag.fullscreen);
 
     xavaSDLWindowSurface = SDL_GetWindowSurface(xavaSDLWindow);
@@ -149,8 +149,12 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *s) {
         }
     }
 
-    if(GLEvent(s) == XAVA_RELOAD)
-        return XAVA_RELOAD;
+    XG_EVENT_STACK *glEventStack = GLEvent(s);
+    while(pendingXAVAEventStack(glEventStack)) {
+        XG_EVENT event = popXAVAEventStack(glEventStack);
+        if(event != XAVA_IGNORE)
+            return event;
+    }
 
     return XAVA_IGNORE;
 }
