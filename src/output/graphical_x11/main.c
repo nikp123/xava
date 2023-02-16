@@ -583,46 +583,20 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
     }
 
     // yes this is violent C macro (ab)-use, live with it
-    #if   defined(EGL)
-    XG_EVENT_STACK *glEventStack = EGLEvent(xava);
+    XG_EVENT_STACK *eventStack = 
+    #if defined(CAIRO)
+        __internal_xava_output_cairo_event(xavaCairoHandle);
+    #elif defined(EGL)
+        EGLEvent(xava);
     #elif defined(GL)
-    XG_EVENT_STACK *glEventStack = GLEvent(xava);
+        GLEvent(xava);
     #endif
 
-    #if defined(EGL)||defined(GL)
-    while(pendingXAVAEventStack(glEventStack)) {
-        XG_EVENT event = popXAVAEventStack(glEventStack);
+    while(pendingXAVAEventStack(eventStack)) {
+        XG_EVENT event = popXAVAEventStack(eventStack);
         if(event != XAVA_IGNORE)
             return event;
     }
-    #endif
-
-    #ifdef CAIRO
-    switch(__internal_xava_output_cairo_event(xavaCairoHandle)) {
-        case XAVA_RELOAD:
-            action = XAVA_RELOAD;
-            break;
-        case XAVA_QUIT:
-            action = XAVA_QUIT;
-            break;
-        case XAVA_RESIZE:
-            // check if there aren't any higher priority events
-            if((action != XAVA_QUIT) && (action != XAVA_RELOAD)) {
-                action = XAVA_RESIZE;
-            }
-            break;
-        case XAVA_REDRAW:
-            // check if there aren't any higher priority events
-            if((action != XAVA_QUIT) && (action != XAVA_RELOAD) &&
-               (action != XAVA_RESIZE)) {
-                action = XAVA_REDRAW;
-            }
-            break;
-        case XAVA_IGNORE:
-            // otherwise just ignore
-            break;
-    }
-    #endif
 
     return action;
 }

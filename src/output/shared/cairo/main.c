@@ -169,29 +169,13 @@ void __internal_xava_output_cairo_apply(xava_cairo_handle *handle) {
     }
 }
 
-XG_EVENT __internal_xava_output_cairo_event(xava_cairo_handle *handle) {
-    XG_EVENT event = XAVA_IGNORE;
-
+XG_EVENT_STACK *__internal_xava_output_cairo_event(xava_cairo_handle *handle) {
     // run the module's event handlers
     for(size_t i = 0; i < arr_count(handle->modules); i++) {
         handle->modules[i].func.event(&handle->modules[i].config);
     }
 
-    // process new events (if any)
-    while(pendingXAVAEventStack(handle->events)) {
-        event = popXAVAEventStack(handle->events);
-
-        switch(event) {
-            case XAVA_RESIZE:
-                return XAVA_RESIZE;
-            case XAVA_QUIT:
-                return XAVA_QUIT;
-            default:
-                break;
-        }
-    }
-
-    return event;
+    return handle->events;
 }
 
 void __internal_xava_output_cairo_draw(xava_cairo_handle *handle) {

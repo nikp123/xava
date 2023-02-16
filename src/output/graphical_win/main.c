@@ -312,20 +312,6 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     timeEndPeriod(0);
     timeBeginPeriod(xavaPeriod.wPeriodMin);
 
-    /*
-     * HACK ALERT
-     * tl;dr this cursed hack should set the internal bar space width
-     * without relying on that XAVA_RESIZE event to pass through successfully
-     * (which it doesn't given the existence of this bug)
-     */
-    #ifdef GL
-        GLEvent(xava);
-    #endif
-
-    #ifdef CAIRO
-        __internal_xava_output_cairo_event(xavaCairoHandle);
-    #endif
-
     return 0;
 }
 
@@ -414,25 +400,18 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
             return r;
     }
 
-    #ifdef GL
-        XG_EVENT_STACK *glEventStack = GLEvent(xava);
-        while(pendingXAVAEventStack(glEventStack)) {
-            XG_EVENT event = popXAVAEventStack(glEventStack);
-            if(event != XAVA_IGNORE)
-                return event;
-        }
+    XG_EVENT_STACK *eventStack = 
+    #if defined(CAIRO)
+        __internal_xava_output_cairo_event(xavaCairoHandle);
+    #elif defined(GL)
+        GLEvent(xava);
     #endif
 
-    #ifdef CAIRO
-        XG_EVENT event = __internal_xava_output_cairo_event(xavaCairoHandle);
-        switch(event) {
-            case XAVA_IGNORE:
-                // noop
-                break;
-            default:
-                return event;
-        }
-    #endif
+    while(pendingXAVAEventStack(eventStack)) {
+        XG_EVENT event = popXAVAEventStack(eventStack);
+        if(event != XAVA_IGNORE)
+            return event;
+    }
 
     return XAVA_IGNORE;
 }

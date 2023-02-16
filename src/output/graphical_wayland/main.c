@@ -191,19 +191,19 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
                 break;
         }
     }
-    
-    #ifdef CAIRO
-        event = __internal_xava_output_cairo_event(wd.cairo_handle);
+
+    XG_EVENT_STACK *eventStack = 
+    #if defined(CAIRO)
+        __internal_xava_output_cairo_event(wd.cairo_handle);
+    #elif defined(EGL)
+        EGLEvent(hand);
     #endif
 
-    #ifdef EGL
-        XG_EVENT_STACK *glEventStack = EGLEvent(hand);
-        while(pendingXAVAEventStack(glEventStack)) {
-            XG_EVENT event = popXAVAEventStack(glEventStack);
-            if(event != XAVA_IGNORE)
-                return event;
-        }
-    #endif
+    while(pendingXAVAEventStack(eventStack)) {
+        XG_EVENT event = popXAVAEventStack(eventStack);
+        if(event != XAVA_IGNORE)
+            return event;
+    }
 
     return event;
 }
