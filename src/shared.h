@@ -47,20 +47,6 @@
 #include "shared/util/version.h"
 
 
-// Shared audio data sturct
-typedef struct XAVA_AUDIO {
-    float        *audio_out_r;
-    float        *audio_out_l;
-    int32_t      format;
-    uint32_t     rate;
-    char         *source;               // alsa device, fifo path or pulse source
-    uint32_t     channels;
-    bool         terminate;             // shared variable used to terminate audio thread
-    char         error_message[1024];
-    uint32_t     inputsize, fftsize;    // inputsize and fftsize
-    uint32_t     latency;               // try to keep (this) latency in samples
-} XAVA_AUDIO;
-
 // configuration parameters
 typedef struct XAVA_CONFIG {
     // for internal use only
@@ -69,10 +55,6 @@ typedef struct XAVA_CONFIG {
     XAVA_CONFIG_OPTION(bool, autobars);
     XAVA_CONFIG_OPTION(bool, stereo);
     XAVA_CONFIG_OPTION(bool, autosens);
-
-    XAVA_CONFIG_OPTION(XAVAMODULE*, inputModule);
-    XAVA_CONFIG_OPTION(XAVAMODULE*, outputModule);
-    XAVA_CONFIG_OPTION(XAVAMODULE*, filterModule);
 
     XAVA_CONFIG_OPTION(u32, fftsize);
 
@@ -134,6 +116,58 @@ typedef struct XAVA_CONFIG {
     } flag;
 } XAVA_CONFIG;
 
+typedef struct XAVA_FILTER {
+    struct {
+        void (*load_config) (XAVA*);
+        int  (*init)        (XAVA*);
+        int  (*apply)       (XAVA*);
+        int  (*loop)        (XAVA*);
+        int  (*cleanup)     (XAVA*);
+    } func;
+
+    XAVAMODULE *module;
+    // i know void pointers are footguns but consider that this
+    // pointer type is GURANTEED to be mutable
+    void       *data;
+} XAVA_FILTER;
+
+typedef struct XAVA_OUTPUT {
+    struct {
+        void     (*load_config)  (XAVA*);
+        int      (*init)         (XAVA*);
+        void     (*clear)        (XAVA*);
+        int      (*apply)        (XAVA*);
+        XG_EVENT (*handle_input) (XAVA*);
+        void     (*draw)         (XAVA*);
+        void     (*cleanup)      (XAVA*);
+    } func;
+
+    XAVAMODULE *module;
+    void       *data;
+} XAVA_OUTPUT;
+
+// Shared audio data sturct
+typedef struct XAVA_AUDIO {
+    struct {
+        void     (*load_config) (XAVA*);
+        void*    (*loop)        (void*);
+    } func;
+
+    XAVAMODULE *module;
+    void       *data;
+
+    float        *audio_out_r;
+    float        *audio_out_l;
+    int32_t      format;
+    uint32_t     rate;
+    char         *source;               // alsa device, fifo path or pulse source
+    uint32_t     channels;
+    bool         terminate;             // shared variable used to terminate audio thread
+    char         error_message[1024];
+    uint32_t     inputsize, fftsize;    // inputsize and fftsize
+    uint32_t     latency;               // try to keep (this) latency in samples
+} XAVA_AUDIO;
+
 // XAVA handle
 typedef struct XAVA {
     // variables that XAVA outputs
@@ -145,7 +179,10 @@ typedef struct XAVA {
     bool pauseRendering;
 
     // handles to both config variables and the audio state
-    XAVA_AUDIO audio;
+    XAVA_AUDIO  audio;   // TODO: rename to input when brave enough
+    XAVA_FILTER filter;
+    XAVA_OUTPUT output;
+
     XAVA_CONFIG conf;
 
     struct config {

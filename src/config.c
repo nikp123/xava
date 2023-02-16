@@ -74,24 +74,25 @@ void validate_config(XAVA *hand, xava_config_source config) {
     UNUSED(config);
 
     // validate: input method
-    p->inputModule = xava_module_input_load(inputMethod);
-    xavaBailCondition(!xava_module_valid(p->inputModule),
+    hand->audio.module = xava_module_input_load(inputMethod);
+    xavaBailCondition(!xava_module_valid(hand->audio.module),
             "Input method '%s' at '%s' could not load.\nReason: %s",
-            inputMethod, xava_module_path_get(p->inputModule),
-                xava_module_error_get(p->inputModule));
+            inputMethod, xava_module_path_get(hand->audio.module),
+            xava_module_error_get(hand->audio.module));
 
     // validate: output method
-    p->outputModule = xava_module_output_load(outputMethod);
-    xavaBailCondition(!xava_module_valid(p->outputModule),
+    hand->output.module = xava_module_output_load(outputMethod);
+    xavaBailCondition(!xava_module_valid(hand->output.module),
             "Output method '%s' at '%s' could not load.\nReason: %s",
-            outputMethod, xava_module_path_get(p->outputModule), xava_module_error_get(p->outputModule));
+            outputMethod, xava_module_path_get(hand->output.module),
+            xava_module_error_get(hand->output.module));
 
     // validate: filter method
-    p->filterModule = xava_module_filter_load(filterMethod);
-    xavaBailCondition(!xava_module_valid(p->filterModule),
+    hand->filter.module = xava_module_filter_load(filterMethod);
+    xavaBailCondition(!xava_module_valid(hand->filter.module),
             "Filter method '%s' could not load.\nReason: %s",
-            filterMethod, xava_module_path_get(p->filterModule),
-            xava_module_error_get(p->filterModule));
+            filterMethod, xava_module_path_get(hand->filter.module),
+            xava_module_error_get(hand->filter.module));
 
     // validate: output channels
     int stereo = -1;
