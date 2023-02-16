@@ -14,12 +14,15 @@
 #endif
 
 // i wont even bother deciphering this mess
-static float    *fc, *fre, *fpeak, *k, g;
-static uint32_t *f, *lcf, *hcf, *fl, *fr, *fmem, *flastd;
+static float    *fpeak, *k, g;
+
+static uint32_t *f, *flastd;  // current and last bars
+                              //
+static uint32_t *lcf, *hcf, *fl, *fr, *fmem;
 static uint64_t *fall;
 static int32_t  *flast; // if you change this to uint32_t you die >:(
 static float    *smooth, gravity, integral, eqBalance, logScale, ignore;
-static float    monstercat, *peak, smh;
+static float    monstercat, smh;
 XAVA_CONFIG_OPTION(bool, oddoneout);
 static uint32_t smcount, highcf, lowcf, waves, overshoot, calcbars;
 
@@ -36,17 +39,17 @@ void separate_freq_bands(fftwf_complex *out, uint32_t bars, uint32_t channel,
 
     // process: separate frequency bands
     for (o = 0; o < bars; o++) {
-        peak[o] = 0;
+        float peak = 0;
 
         // process: get peaks
         for (i = lcf[o]; i <= hcf[o]; i++) {
             //getting r of compex
             y[i] = hypot(out[i][0], out[i][1]);
-            peak[o] += y[i]; //adding upp band
+            peak += y[i]; //adding upp band
         }
 
-        peak[o] = peak[o] / (hcf[o]-lcf[o] + 1); //getting average
-        temp = peak[o] * sens * k[o] / 800000; //multiplying with k and sens
+        peak = peak / (hcf[o]-lcf[o] + 1); //getting average
+        temp = peak * sens * k[o] / 800000; //multiplying with k and sens
         if (temp <= ignore) temp = 0;
         if (channel == 1) fl[o] = temp;
         else fr[o] = temp;
@@ -103,8 +106,6 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
     xavaBailCondition(highcf > audio->rate / 2,
             "Higher cutoff cannot be higher than the sample rate / 2");
 
-    MALLOC_SELF(fc, xava->bars);
-    MALLOC_SELF(fre, xava->bars);
     MALLOC_SELF(fpeak, xava->bars);
     MALLOC_SELF(k, xava->bars);
     MALLOC_SELF(f, xava->bars);
@@ -116,7 +117,6 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
     MALLOC_SELF(fall, xava->bars);
     MALLOC_SELF(fl, xava->bars);
     MALLOC_SELF(fr, xava->bars);
-    MALLOC_SELF(peak, xava->bars);
 
     return 0;
 }
@@ -125,11 +125,9 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     XAVA_AUDIO *audio = &xava->audio;
     XAVA_CONFIG *p  = &xava->conf;
 
-    // if fc is not cleared that means that the variables are not initialized
+    // if fpeak is not cleared that means that the variables are not initialized
     if(xava->bars == 0)
         xava->bars = 1;
-    REALLOC_SELF(fc,xava->bars);
-    REALLOC_SELF(fre,xava->bars);
     REALLOC_SELF(fpeak,xava->bars);
     REALLOC_SELF(k,xava->bars);
     REALLOC_SELF(f,xava->bars);
@@ -141,7 +139,6 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     REALLOC_SELF(fall,xava->bars);
     REALLOC_SELF(fl,xava->bars);
     REALLOC_SELF(fr,xava->bars);
-    REALLOC_SELF(peak,xava->bars+1);
 
     // oddoneout only works if the number of bars is odd, go figure
     if(oddoneout) {
@@ -164,9 +161,6 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
         hcf[i] = 0;
         fl[i] = 0;
         fr[i] = 0;
-        fc[i] = .0;
-        fre[i] = .0;
-        fpeak[i] = .0;
         k[i] = .0;
     }
 
@@ -192,15 +186,15 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     // process: calculate cutoff frequencies
     uint32_t n;
     for (n=0; n < calcbars; n++) {
-        fc[n] = pow(powf(n, (logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0),
+        float fc = pow(powf(n, (logScale-1.0)*((double)n+1.0)/((double)calcbars)+1.0),
                          freqconst)+lowcf;
-        fre[n] = fc[n] / (audio->rate / 2.0);
+        float fre = fc / (audio->rate / 2.0);
         // Remember nyquist!, pr my calculations this should be rate/2
         // and  nyquist freq in M/2 but testing shows it is not...
         // or maybe the nq freq is in M/4
 
         //lfc stores the lower cut frequency foo each bar in the fft out buffer
-        lcf[n] = floor(fre[n] * (audio->fftsize/2.0));
+        lcf[n] = floor(fre * (audio->fftsize/2.0));
 
         if (n != 0) {
             //hfc holds the high cut frequency for each bar
@@ -210,16 +204,14 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
             // I did reverse the "next_bar_lcf-1" change
             hcf[n-1] = lcf[n];
         }
-    }
-    if(calcbars > 1)
-        hcf[n-1] = highcf*audio->fftsize/audio->rate;
 
-    // process: weigh signal to frequencies height and EQ
-    for (n = 0; n < calcbars; n++) {
-        k[n] = pow(fc[n], eqBalance);
+        // process: weigh signal to frequencies height and EQ
+        k[n] = pow(fc, eqBalance);
         k[n] *= (float)(xava->inner.h-1) / 100;
         k[n] *= smooth[(int)floor(((double)n) * smh)];
     }
+    if(calcbars > 1)
+        hcf[n-1] = highcf*audio->fftsize/audio->rate;
 
     if (p->stereo)
         xava->bars = xava->bars * 2;
@@ -359,8 +351,6 @@ EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
 
     // honestly even I don't know what these mean
     // but for the meantime, they are moved here and I won't touch 'em
-    free(fc);
-    free(fre);
     free(fpeak);
     free(k);
     free(f);
@@ -372,7 +362,6 @@ EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
     free(fall);
     free(fl);
     free(fr);
-    free(peak);
 }
 
 EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
