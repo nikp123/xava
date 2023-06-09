@@ -1,5 +1,5 @@
 #include <math.h>
-#include <cairo/cairo.h>
+#include <cairo.h>
 
 #include "output/shared/cairo/modules/shared/config.h"
 

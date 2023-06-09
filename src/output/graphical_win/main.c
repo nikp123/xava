@@ -14,8 +14,8 @@
 #endif
 
 #ifdef CAIRO
-    #include <cairo/cairo.h>
-    #include <cairo/cairo-win32.h>
+    #include <cairo.h>
+    #include <cairo-win32.h>
     #include "output/shared/cairo/main.h"
 #endif
 

@@ -7,7 +7,7 @@
 #endif
 
 #ifdef CAIRO
-    #include <cairo/cairo.h>
+    #include <cairo.h>
     #include "output/shared/cairo/main.h"
 #endif
 

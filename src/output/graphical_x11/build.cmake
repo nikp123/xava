@@ -6,7 +6,7 @@ if(X11)
     if(APPLE)
         message(WARNING "Mate, you Apples need to use the legacy thing now.")
     else()
-        pkg_check_modules(X11 QUIET x11 xfixes xrandr)
+        pkg_check_modules(X11 x11 xfixes xrender xrandr xext)
         if(X11_FOUND)
             # add winapi test
             list(APPEND DEFAULT_OUTPUT_SOURCES "${XAVA_MODULE_DIR}/test.c")
@@ -16,7 +16,7 @@ if(X11)
             list(APPEND DEFAULT_OUTPUT_DEF     "-DX11")
 
             # OpenGL/GLX
-            pkg_check_modules(GLX QUIET gl xrender glew)
+            pkg_check_modules(GLX QUIET gl glew)
             if(GLX_FOUND)
                 add_library(out_x11_opengl SHARED "${XAVA_MODULE_DIR}/main.c"
                                             "src/output/shared/graphical.c"
@@ -35,11 +35,11 @@ if(X11)
 
                 # Maybe GL license?
             else()
-                message(WARNING "GLEW, OpenGL and or Xrender library not found; \"x11_gl\" won't build")
+                message(WARNING "GLEW and/or OpenGL library not found; \"x11_gl\" won't build")
             endif()
 
             # EGL
-            pkg_check_modules(EGL QUIET egl glesv2)
+            pkg_check_modules(EGL QUIET egl glesv2 glew)
             if(EGL_FOUND)
                 add_library(out_x11_egl SHARED "${XAVA_MODULE_DIR}/main.c"
                                             "src/output/shared/graphical.c"
@@ -58,7 +58,7 @@ if(X11)
 
                 # Maybe EGL license?
             else()
-                message(WARNING "EGL and or GLESv2 library not found; \"x11_egl\" won't build")
+              message(WARNING "GLEW EGL and/or GLESv2 library not found; \"x11_egl\" won't build")
             endif()
 
             pkg_check_modules(CAIRO QUIET cairo)
@@ -89,7 +89,7 @@ if(X11)
             file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_x11.txt"
                 "X11 license can be obtained at: https://raw.githubusercontent.com/mirror/libX11/master/COPYING\n")
         else()
-            message(WARNING "X11, Xrandr and/or Xfixes library not found; X11 won't build")
+            message(WARNING "x11, xfixes, xrender, xrandr and/or xext libraries missing; X11 won't build")
         endif()
     endif()
 endif()

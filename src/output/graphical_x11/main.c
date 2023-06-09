@@ -27,8 +27,8 @@
 #endif
 #ifdef CAIRO
     #include "output/shared/cairo/main.h"
-    #include <cairo/cairo.h>
-    #include <cairo/cairo-xlib.h>
+    #include <cairo.h>
+    #include <cairo-xlib.h>
 #endif
 
 // random magic values go here

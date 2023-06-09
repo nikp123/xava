@@ -1,4 +1,4 @@
-#include <cairo/cairo.h>
+#include <cairo.h>
 
 #ifndef CAIRO
     #define CAIRO

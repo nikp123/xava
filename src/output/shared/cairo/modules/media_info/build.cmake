@@ -2,7 +2,7 @@
 option(CAIRO_MODULES "CAIRO_MODULES" ON)
 
 if(CAIRO_MODULES)
-    pkg_check_modules(CAIRO QUIET cairo libcurl taglib)
+    pkg_check_modules(CAIRO QUIET cairo libcurl taglib zlib dbus-1)
     if(CAIRO_FOUND)
         add_subdirectory(lib/kiss-mpris-properties)
 
@@ -32,6 +32,6 @@ if(CAIRO_MODULES)
         set_target_properties(cairo_media_info PROPERTIES OUTPUT_NAME "cairo/module/media_info/module")
         install(TARGETS cairo_media_info RENAME module DESTINATION share/xava/cairo/module/media_info/)
     else()
-        message(WARNING "CAIRO, TagLib and/or CURL library not found; \"cairo_media_info\" won't build")
+        message(WARNING "CAIRO, TagLib, Zlib, DBus-1 and/or CURL library not found; \"cairo_media_info\" won't build")
     endif()
 endif()
