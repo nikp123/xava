@@ -15,6 +15,9 @@ cmake_args='-DCMAKE_INSTALL_PREFIX=/usr'
 # toolchain prefixes because C
 tool_prefix="$arch-w64-mingw32"
 
+# Fix build issue from Actions
+git config --global --add safe.directory /github/workspace
+
 echo "Testing CMake on $arch"
 $tool_prefix-cmake --version
 
