@@ -31,7 +31,7 @@ env LD_LIBRARY_PATH=. linuxdeploy \
 commit_branch="$(echo ${GITHUB_REF#refs/heads/})"
 commit_sha="$(git rev-parse --short HEAD)"
 
-#mv XAVA-$commit_sha-x86_64.AppImage xava-x86_64.AppImage
+mv XAVA-x86_64.AppImage xava-x86_64.AppImage
 chmod +x xava-x86_64.AppImage
 
 # Extract version info
