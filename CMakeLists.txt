@@ -1,5 +1,6 @@
-project(xava C CXX)
 cmake_minimum_required(VERSION 3.13)
+
+project(xava C CXX)
 
 # Include common funnctions
 include(src/cmake/utilities.cmake)
