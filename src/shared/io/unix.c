@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <linux/limits.h>
 
+#include "shared.h"
+
 #ifndef SSIZE_MAX
 #define SSIZE_MAX ((ssize_t)(SIZE_MAX>>1))
 #endif
@@ -85,7 +87,7 @@ static char *find_exe(void)
 	 * running in Valgrind 2.2. Read from /proc/self/maps as fallback. */
 
 	buf_size = PATH_MAX + 128;
-	line = (char *) realloc (path, buf_size);
+	line = (char *) realloc (path, MAX(1, buf_size));
 	if (line == NULL) {
 		/* Cannot allocate memory. */
 		free (path);

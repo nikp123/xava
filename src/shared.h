@@ -27,8 +27,16 @@
 
 #define CALLOC_SELF(x, y) (x)=calloc((y), sizeof(*x))
 #define MALLOC_SELF(x, y)  (x)=malloc(sizeof(*x)*(y))
-#define REALLOC_SELF(x, y) { void (*z)=realloc((x), sizeof(*x)*(y)); \
-    xavaBailCondition(!(z), "Failed to reallocate memory"); (x)=(z); }
+#define REALLOC_SAFE(x, size){\
+   void (*z) = realloc((x), MAX(1, size)); \
+   xavaBailCondition(!(z), "Failed to reallocate memory"); \
+   (x) = (z); \
+}
+#define REALLOC_SELF(x, y) {\
+    void (*z) = realloc((x), sizeof(*x)*MAX(1, y)); \
+    xavaBailCondition(!(z), "Failed to reallocate memory"); \
+    (x) = (z); \
+}
 
 #ifdef __WIN32__
     #define EXP_FUNC __declspec(dllexport) __attribute__ ((visibility ("default")))

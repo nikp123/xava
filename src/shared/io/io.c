@@ -129,14 +129,12 @@ EXP_FUNC void pushXAVAEventStack(XG_EVENT_STACK *stack, XG_EVENT event) {
 
     stack->pendingEvents++;
 
-    XG_EVENT *newStack = realloc(stack->events, stack->pendingEvents*sizeof(XG_EVENT));
-    stack->events = newStack;
+    REALLOC_SELF(stack->events, stack->pendingEvents);
 
     stack->events[stack->pendingEvents-1] = event;
 }
 
 EXP_FUNC XG_EVENT popXAVAEventStack(XG_EVENT_STACK *stack) {
-    XG_EVENT *newStack;
     XG_EVENT event = stack->events[0];
 
     stack->pendingEvents--;
@@ -144,8 +142,7 @@ EXP_FUNC XG_EVENT popXAVAEventStack(XG_EVENT_STACK *stack) {
         stack->events[i] = stack->events[i+1];
     }
 
-    newStack = realloc(stack->events, MIN(stack->pendingEvents, 1)*sizeof(XG_EVENT));
-    stack->events = newStack;
+    REALLOC_SELF(stack->events, stack->pendingEvents);
 
     xavaSpam("XAVA event %d destroyed (id=%d)", stack->pendingEvents, event);
 

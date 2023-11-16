@@ -22,8 +22,7 @@ size_t xava_util_download_artwork(void *ptr, size_t size, size_t nmemb,
         artwork->size = size*nmemb;
         memcpy(artwork->file_data, ptr, nmemb*size);
     } else {
-        void *new = realloc(artwork->file_data, artwork->size+nmemb*size);
-        artwork->file_data = new;
+        REALLOC_SAFE(artwork->file_data, artwork->size+nmemb*size);
         memcpy(&artwork->file_data[artwork->size], ptr, nmemb*size);
         artwork->size += size*nmemb;
     }

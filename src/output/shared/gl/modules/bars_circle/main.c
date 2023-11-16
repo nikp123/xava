@@ -194,7 +194,7 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glUseProgram(pre.program);
 
     // reallocate and attach verticies data
-    vertexData = realloc(vertexData, sizeof(GLfloat)*xava->bars*12);
+    REALLOC_SELF(vertexData, xava->bars*12);
     glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
     // do image scaling
