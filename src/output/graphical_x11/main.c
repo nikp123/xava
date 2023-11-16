@@ -378,7 +378,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
             mwmHintsProperty, 32, PropModeReplace, (unsigned char *)&hints, 5);
 
     // move the window in case it didn't by default
-    XWindowAttributes xwa;
+    XWindowAttributes xwa = { 0 };
     XGetWindowAttributes(xavaXDisplay, xavaXWindow, &xwa);
     if(strcmp(conf->winA, "none"))
         XMoveWindow(xavaXDisplay, xavaXWindow, xava->outer.x, xava->outer.y);

@@ -12,9 +12,10 @@
 
 static XAVAGLHostOptions host;
 
-#define LOAD_FUNC_POINTER(name) \
+#define LOAD_FUNC_POINTER(name) { \
     module->func.name = xava_module_symbol_address_get(module->handle, "xava_gl_module_" #name); \
-    xavaBailCondition(module->func.name == NULL, "xava_gl_module_" #name " not found!");
+    xavaBailCondition(module->func.name == NULL, "xava_gl_module_" #name " not found!"); \
+}
 
 void SGLConfigLoad(XAVA *xava) {
     xava_config_source config = xava->default_config.config;
