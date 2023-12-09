@@ -52,6 +52,8 @@ EXP_FUNC bool xavaIONotifyAddWatch(XAVAIONOTIFYWATCHSETUP setup) {
 
     // workaround in progress
     hax[hax_count].original_data      = setup->xava;
+    xavaBailCondition(!setup->xava_ionotify_func,
+        "BUG: IONotify function is NULL");
     hax[hax_count].xava_ionotify_func = setup->xava_ionotify_func;
 
     reference.callback_func   = __internal_xavaIONotifyWorkAroundDumbDecisions;
