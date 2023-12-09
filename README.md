@@ -717,7 +717,7 @@ for major contributions in the early development of this project.
 
 Because XAVA has a pretty outdated design paradigm, its error messages may appear
 out of place and convoluting. If that's the case you may file an issue where you
-explain your confusion and I try fixing said issue.
+explain your confusion and I will try fixing said issue.
 
 Otherwise, if the issue is of how the program itself performs, (i.e. an actual
 bug) be SURE that you attach the full log by running XAVA **with** 
