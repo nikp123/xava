@@ -117,11 +117,12 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     glEnable(GL_DEPTH_TEST);
 
     // we just need working pointers so that realloc() works
-    vertexData = malloc(1);
+    arr_init(vertexData);
+    arr_init(gradientColor);
 
     // gradients
     if(arr_count(conf->gradients) > 0)
-        gradientColor = malloc(4*sizeof(GLfloat)*arr_count(conf->gradients));
+        arr_resize(gradientColor, 4*arr_count(conf->gradients));
 
     for(uint32_t i=0; i<arr_count(conf->gradients); i++) {
         uint32_t grad_col;
@@ -143,7 +144,7 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glUseProgram(pre.program);
 
     // reallocate and attach verticies data
-    REALLOC_SELF(vertexData, xava->bars*12);
+    arr_resize(vertexData, xava->bars*12);
     glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
     // since most of this information remains untouched, let's precalculate
@@ -282,8 +283,8 @@ EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
     // delete both pipelines
     xava_gl_module_program_destroy(&pre);
 
-    free(gradientColor);
-    free(vertexData);
+    arr_free(gradientColor);
+    arr_free(vertexData);
 }
 
 EXP_FUNC xava_version xava_gl_module_version(void) {
