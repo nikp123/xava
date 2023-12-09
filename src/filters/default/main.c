@@ -135,17 +135,17 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
     xavaBailCondition(data->state.highcf > audio->rate / 2,
             "Higher cutoff cannot be higher than the sample rate / 2");
 
-    MALLOC_SELF(data->fpeak,  xava->bars);
-    MALLOC_SELF(data->k,      xava->bars);
-    MALLOC_SELF(data->f,      xava->bars);
-    MALLOC_SELF(data->lcf,    xava->bars);
-    MALLOC_SELF(data->hcf,    xava->bars);
-    MALLOC_SELF(data->fmem,   xava->bars);
-    MALLOC_SELF(data->flast,  xava->bars);
-    MALLOC_SELF(data->flastd, xava->bars);
-    MALLOC_SELF(data->fall,   xava->bars);
-    MALLOC_SELF(data->fl,     xava->bars);
-    MALLOC_SELF(data->fr,     xava->bars);
+    arr_init_n(data->fpeak,  xava->bars);
+    arr_init_n(data->k,      xava->bars);
+    arr_init_n(data->f,      xava->bars);
+    arr_init_n(data->lcf,    xava->bars);
+    arr_init_n(data->hcf,    xava->bars);
+    arr_init_n(data->fmem,   xava->bars);
+    arr_init_n(data->flast,  xava->bars);
+    arr_init_n(data->flastd, xava->bars);
+    arr_init_n(data->fall,   xava->bars);
+    arr_init_n(data->fl,     xava->bars);
+    arr_init_n(data->fr,     xava->bars);
 
     return 0;
 }
@@ -158,17 +158,17 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     // if fpeak is not cleared that means that the variables are not initialized
     if(xava->bars == 0)
         xava->bars = 1;
-    REALLOC_SELF(data->fpeak,  xava->bars);
-    REALLOC_SELF(data->k,      xava->bars);
-    REALLOC_SELF(data->f,      xava->bars);
-    REALLOC_SELF(data->lcf,    xava->bars);
-    REALLOC_SELF(data->hcf,    xava->bars);
-    REALLOC_SELF(data->fmem,   xava->bars);
-    REALLOC_SELF(data->flast,  xava->bars);
-    REALLOC_SELF(data->flastd, xava->bars);
-    REALLOC_SELF(data->fall,   xava->bars);
-    REALLOC_SELF(data->fl,     xava->bars);
-    REALLOC_SELF(data->fr,     xava->bars);
+    arr_resize(data->fpeak,  xava->bars);
+    arr_resize(data->k,      xava->bars);
+    arr_resize(data->f,      xava->bars);
+    arr_resize(data->lcf,    xava->bars);
+    arr_resize(data->hcf,    xava->bars);
+    arr_resize(data->fmem,   xava->bars);
+    arr_resize(data->flast,  xava->bars);
+    arr_resize(data->flastd, xava->bars);
+    arr_resize(data->fall,   xava->bars);
+    arr_resize(data->fl,     xava->bars);
+    arr_resize(data->fr,     xava->bars);
 
     // oddoneout only works if the number of bars is odd, go figure
     if(data->state.oddoneout) {
@@ -389,17 +389,17 @@ EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
 
     // honestly even I don't know what these mean
     // but for the meantime, they are moved here and I won't touch 'em
-    free(data->fpeak);
-    free(data->k);
-    free(data->f);
-    free(data->lcf);
-    free(data->hcf);
-    free(data->fmem);
-    free(data->flast);
-    free(data->flastd);
-    free(data->fall);
-    free(data->fl);
-    free(data->fr);
+    arr_free(data->fpeak);
+    arr_free(data->k);
+    arr_free(data->f);
+    arr_free(data->lcf);
+    arr_free(data->hcf);
+    arr_free(data->fmem);
+    arr_free(data->flast);
+    arr_free(data->flastd);
+    arr_free(data->fall);
+    arr_free(data->fl);
+    arr_free(data->fr);
 
     free(data);
 }
