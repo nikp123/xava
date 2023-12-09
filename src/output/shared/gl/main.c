@@ -10,11 +10,109 @@
 // eat dick, compiler
 #include "post.c"
 
+// TODO: NUKE THIS
 static XAVAGLHostOptions host;
+
+XAVAGLModule SGLModuleGetHandle(char *module_name) {
+    // add module name
+    XAVAGLModule module;
+    module.name = module_name;
+
+    char path[MAX_PATH];
+    char *returned_path;
+
+    // path gets reset here
+    strcpy(path, "gl/module/");
+    strcat(path, module_name);
+
+    // we need the path without the extension for the folder that's going
+    // to store our shaders
+    module.prefix = strdup(path);
+
+    strcat(path, "/module");
+
+    // prefer local version (ie. build-folder)
+    module.handle = xava_module_path_load(path);
+    if(xava_module_valid(module.handle))
+        return module;
+
+    xavaLog("Failed to load '%s' because: '%s'",
+            path, xava_module_error_get(module.handle));
+
+    strcat(path, xava_module_extension_get());
+    xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, path,
+        &returned_path) == false, "Failed to open gl module '%s'", path);
+
+    // remove the file extension because of my bad design
+    size_t offset=strlen(returned_path)-strlen(xava_module_extension_get());
+    returned_path[offset] = '\0';
+
+    module.handle = xava_module_path_load(returned_path);
+
+    xavaBailCondition(!xava_module_valid(module.handle),
+            "Failed to load gl module '%s' because: '%s'",
+            returned_path, xava_module_error_get(module.handle));
+    free(returned_path);
+
+    return module;
+}
 
 #define LOAD_FUNC_POINTER(name) { \
     module->func.name = xava_module_symbol_address_get(module->handle, "xava_gl_module_" #name); \
     xavaBailCondition(module->func.name == NULL, "xava_gl_module_" #name " not found!"); \
+}
+
+void SGLModuleAppendToSystem(XAVA *xava, XAVAGLModule *module, XAVAGLHostOptions *host) {
+    LOAD_FUNC_POINTER(version);
+    LOAD_FUNC_POINTER(config_load);
+    LOAD_FUNC_POINTER(ionotify_callback);
+    LOAD_FUNC_POINTER(init);
+    LOAD_FUNC_POINTER(apply);
+    LOAD_FUNC_POINTER(event);
+    LOAD_FUNC_POINTER(draw);
+    LOAD_FUNC_POINTER(clear);
+    LOAD_FUNC_POINTER(cleanup);
+
+    module->options.xava             = xava;
+    module->options.resolution_scale = host->resolution_scale;
+    module->options.prefix           = module->prefix;
+    module->options.events           = host->events;
+
+    // check if the module is of a appropriate version
+    xava_version_verify(module->func.version());
+
+    // load it's config
+    module->func.config_load(module, xava);
+}
+
+void SGLModuleLoad(XAVA *xava, XAVAGLHostOptions *host, char *known_key_name, uint32_t key_number) {
+    xava_config_source config = xava->default_config.config;
+    char key_name[128];
+
+    // preprocessor macro fuckery (should've been rust)
+    XAVA_CONFIG_OPTION(char*, module_name);
+
+    if(known_key_name == NULL) {
+        snprintf(key_name, 128, "module_%u", key_number);
+        XAVA_CONFIG_GET_STRING(config, "gl", key_name, NULL, module_name);
+
+        // module invalid, probably means that all desired modules are loaded
+        if(!module_name_is_set_from_file) {
+            xavaLog("'%s' has not been set properly!", module_name);
+            return;
+        }
+    } else {
+        module_name = known_key_name;
+    }
+
+    // This is where the path gets processed and the module handle figured out
+    XAVAGLModule module = SGLModuleGetHandle(module_name);
+
+    // the part of the function where function pointers get loaded per module
+    SGLModuleAppendToSystem(xava, &module, host);
+
+    // append loaded module to GL handle
+    arr_add(host->module, module);
 }
 
 void SGLConfigLoad(XAVA *xava) {
@@ -29,97 +127,22 @@ void SGLConfigLoad(XAVA *xava) {
     host.events = newXAVAEventStack();
     host.xava   = xava;
 
-    // loop until all entries have been read
-    char key_name[128];
-    uint32_t key_number = 1;
-    do {
-        snprintf(key_name, 128, "module_%u", key_number);
-        XAVA_CONFIG_OPTION(char*, module_name);
-        XAVA_CONFIG_GET_STRING(config, "gl", key_name, NULL, module_name);
+    //
+    // module code goes here
+    //
 
-        // module invalid, probably means that all desired modules are loaded
-        if(!module_name_is_set_from_file) {
-            xavaLog("'%s' has not been set properly!", module_name);
-            break;
-        }
+    // Load each individual module (try up to 128, idfk)
+    // Fix this if possible
+    for(uint8_t i = 1; i < 128; i++) {
+        SGLModuleLoad(xava, &host, NULL, i);
+    }
 
-        // add module name
-        XAVAGLModule module;
-        module.name = module_name;
-
-        // the part of the function where module path gets figured out
-        do {
-            char path[MAX_PATH];
-            char *returned_path;
-
-            // path gets reset here
-            strcpy(path, "gl/module/");
-            strcat(path, module_name);
-
-            // we need the path without the extension for the folder that's going
-            // to store our shaders
-            module.prefix = strdup(path);
-
-            strcat(path, "/module");
-
-            // prefer local version (ie. build-folder)
-            module.handle = xava_module_path_load(path);
-            if(xava_module_valid(module.handle))
-                break;
-
-            xavaLog("Failed to load '%s' because: '%s'",
-                    path, xava_module_error_get(module.handle));
-
-            strcat(path, xava_module_extension_get());
-            xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, path,
-                &returned_path) == false, "Failed to open gl module '%s'", path);
-
-            // remove the file extension because of my bad design
-            size_t offset=strlen(returned_path)-strlen(xava_module_extension_get());
-            returned_path[offset] = '\0';
-
-            module.handle = xava_module_path_load(returned_path);
-
-            xavaBailCondition(!xava_module_valid(module.handle),
-                    "Failed to load gl module '%s' because: '%s'",
-                    returned_path, xava_module_error_get(module.handle));
-            free(returned_path);
-        } while(0);
-
-        // append loaded module to cairo handle
-        arr_add(host.module, module);
-
-        // the part of the function where function pointers get loaded per module
-        {
-            XAVAGLModule *module =
-                &host.module[arr_count(host.module)-1];
-
-            LOAD_FUNC_POINTER(version);
-            LOAD_FUNC_POINTER(config_load);
-            LOAD_FUNC_POINTER(ionotify_callback);
-            LOAD_FUNC_POINTER(init);
-            LOAD_FUNC_POINTER(apply);
-            LOAD_FUNC_POINTER(event);
-            LOAD_FUNC_POINTER(draw);
-            LOAD_FUNC_POINTER(clear);
-            LOAD_FUNC_POINTER(cleanup);
-
-            module->options.xava             = xava;
-            module->options.resolution_scale = host.resolution_scale;
-            module->options.prefix           = module->prefix;
-            module->options.events           = host.events;
-
-            // remember to increment the key number
-            key_number++;
-
-            // check if the module is of a appropriate version
-            xava_version_verify(module->func.version());
-
-            // load it's config
-            module->func.config_load(module, xava);
-        }
-    } while(1);
-
+    if(arr_count(host.module) == 0) {
+       xavaWarn("You have NO GL output modules loaded.\n"
+           "Refusing to run like that. Loading default 'bars' module instead");
+       SGLModuleLoad(xava, &host, "bars", 1);
+    }
+    
     xava_gl_module_post_config_load(&host);
 }
 

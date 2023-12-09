@@ -13,11 +13,124 @@
     module->func.name = xava_module_symbol_address_get(module->handle, "xava_cairo_module_" #name); \
     xavaBailCondition(module->func.name == NULL, "xava_cairo_module_" #name " not found!");
 
+void xava_output_cairo_module_append_to_system(
+  XAVA *xava,
+  xava_cairo_module *module,
+  xava_cairo_handle *handle)  {
+    LOAD_FUNC_POINTER(version);
+    LOAD_FUNC_POINTER(config_load);
+    LOAD_FUNC_POINTER(regions);
+    LOAD_FUNC_POINTER(init);
+    LOAD_FUNC_POINTER(apply);
+    LOAD_FUNC_POINTER(event);
+    LOAD_FUNC_POINTER(cleanup);
+    LOAD_FUNC_POINTER(ionotify_callback);
+
+    module->config.name   = module->name;
+    module->config.xava   = xava;
+    module->config.prefix = module->prefix;
+    module->config.events = handle->events;
+    module->features = module->func.config_load(&module->config);
+
+    if(module->features & XAVA_CAIRO_FEATURE_DRAW_REGION) {
+        LOAD_FUNC_POINTER(draw_region);
+        LOAD_FUNC_POINTER(clear);
+    }
+
+    if(module->features & XAVA_CAIRO_FEATURE_DRAW_REGION_SAFE) {
+        LOAD_FUNC_POINTER(draw_safe);
+    }
+
+    if(module->features & XAVA_CAIRO_FEATURE_FULL_DRAW) {
+        LOAD_FUNC_POINTER(draw_full);
+    }
+}
+
+xava_cairo_module xava_output_cairo_module_get_handle(
+    char *module_name) {
+    xava_cairo_module module;
+    char path[MAX_PATH];
+    char *returned_path;
+
+    // add module name
+    module.name = module_name;
+    module.regions = NULL;
+
+    // path gets reset here
+    strcpy(path, "cairo/module/");
+    strcat(path, module_name);
+
+    // we need the path without the extension for the folder that's going
+    // to store our shaders
+    module.prefix = strdup(path);
+
+    strcat(path, "/module");
+
+    // prefer local version (ie. build-folder)
+    module.handle = xava_module_path_load(path);
+    if(xava_module_valid(module.handle))
+        return module;
+
+    xavaLog("Failed to load '%s' because: '%s'",
+            path, xava_module_error_get(module.handle));
+
+    strcat(path, xava_module_extension_get());
+    xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, path,
+        &returned_path) == false, "Failed to open cairo module '%s'", path);
+
+    // remove the file extension because of my bad design
+    size_t offset=strlen(returned_path)-strlen(xava_module_extension_get());
+    returned_path[offset] = '\0';
+
+    module.handle = xava_module_path_load(returned_path);
+
+    xavaBailCondition(!xava_module_valid(module.handle),
+            "Failed to load cairo module '%s' because: '%s'",
+            returned_path, xava_module_error_get(module.handle));
+    free(returned_path);
+
+    return module;
+}
+
+void xava_output_cairo_module_load(
+    XAVA *xava,
+    xava_cairo_handle *handle,
+    char *known_key_name,
+    uint32_t key_number) {
+
+    xava_config_source config = xava->default_config.config;
+    char key_name[128];
+
+    // preprocessor macro fuckery (should've been rust)
+    XAVA_CONFIG_OPTION(char*, module_name);
+
+    if(known_key_name == NULL) {
+        snprintf(key_name, 128, "module_%u", key_number);
+        XAVA_CONFIG_GET_STRING(config, "cairo", key_name, NULL, module_name);
+
+        // module invalid, probably means that all desired modules are loaded
+        if(!module_name_is_set_from_file) {
+            xavaLog("'%s' has not been set properly!", module_name);
+            return;
+        }
+    } else {
+        module_name = known_key_name;
+    }
+
+    // This is where the path gets processed and the module handle figured out
+    xava_cairo_module module = xava_output_cairo_module_get_handle(module_name);
+
+    // the part of the function where function pointers get loaded per module
+    xava_output_cairo_module_append_to_system(xava, &module, handle);
+
+    // append loaded module to cairo handle
+    arr_add(handle->modules, module);
+}
+
 // creates flexible instances, which ARE memory managed and must be free-d after use
 xava_cairo_handle *__internal_xava_output_cairo_load_config(
         XAVA *xava) {
 
-    xava_config_source config = xava->default_config.config;
     xava_cairo_handle *handle;
     MALLOC_SELF(handle, 1);
     handle->xava = xava;
@@ -25,101 +138,17 @@ xava_cairo_handle *__internal_xava_output_cairo_load_config(
     arr_init(handle->modules);
     handle->events = newXAVAEventStack();
 
-    // loop until all entries have been read
-    char key_name[128];
-    uint32_t key_number = 1;
-    do {
-        snprintf(key_name, 128, "module_%u", key_number);
-        char *module_name = xavaConfigGetString(config, "cairo", key_name, NULL);
+    // Load each individual module (try up to 128, idfk)
+    // Fix this if possible
+    for(uint8_t i = 1; i < 128; i++) {
+        xava_output_cairo_module_load(xava, handle, NULL, i);
+    }
 
-        // module invalid, probably means that all desired modules are loaded
-        if(module_name == NULL)
-            break;
-
-        // add module name
-        xava_cairo_module module;
-        module.name = module_name;
-        module.regions = NULL;
-
-        // the part of the function where module path gets figured out
-        do {
-            char path[MAX_PATH];
-            char *returned_path;
-
-            // path gets reset here
-            strcpy(path, "cairo/module/");
-            strcat(path, module_name);
-
-            // we need the path without the extension for the folder that's going
-            // to store our shaders
-            module.prefix = strdup(path);
-
-            strcat(path, "/module");
-
-            // prefer local version (ie. build-folder)
-            module.handle = xava_module_path_load(path);
-            if(xava_module_valid(module.handle))
-                break;
-
-            xavaLog("Failed to load '%s' because: '%s'",
-                    path, xava_module_error_get(module.handle));
-
-            strcat(path, xava_module_extension_get());
-            xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, path,
-                &returned_path) == false, "Failed to open cairo module '%s'", path);
-
-            // remove the file extension because of my bad design
-            size_t offset=strlen(returned_path)-strlen(xava_module_extension_get());
-            returned_path[offset] = '\0';
-
-            module.handle = xava_module_path_load(returned_path);
-
-            xavaBailCondition(!xava_module_valid(module.handle),
-                    "Failed to load cairo module '%s' because: '%s'",
-                    returned_path, xava_module_error_get(module.handle));
-            free(returned_path);
-        } while(0);
-
-        // append loaded module to cairo handle
-        arr_add(handle->modules, module);
-
-        // the part of the function where function pointers get loaded per module
-        {
-            struct xava_cairo_module *module =
-                &handle->modules[arr_count(handle->modules)-1];
-
-            LOAD_FUNC_POINTER(version);
-            LOAD_FUNC_POINTER(config_load);
-            LOAD_FUNC_POINTER(regions);
-            LOAD_FUNC_POINTER(init);
-            LOAD_FUNC_POINTER(apply);
-            LOAD_FUNC_POINTER(event);
-            LOAD_FUNC_POINTER(cleanup);
-            LOAD_FUNC_POINTER(ionotify_callback);
-
-            module->config.name   = module->name;
-            module->config.xava   = xava;
-            module->config.prefix = module->prefix;
-            module->config.events = handle->events;
-            module->features = module->func.config_load(&module->config);
-
-            if(module->features & XAVA_CAIRO_FEATURE_DRAW_REGION) {
-                LOAD_FUNC_POINTER(draw_region);
-                LOAD_FUNC_POINTER(clear);
-            }
-
-            if(module->features & XAVA_CAIRO_FEATURE_DRAW_REGION_SAFE) {
-                LOAD_FUNC_POINTER(draw_safe);
-            }
-
-            if(module->features & XAVA_CAIRO_FEATURE_FULL_DRAW) {
-                LOAD_FUNC_POINTER(draw_full);
-            }
-
-            // remember to increment the key number
-            key_number++;
-        }
-    } while(1);
+    if(arr_count(handle->modules) == 0) {
+       xavaWarn("You have NO cairo output modules loaded.\n"
+           "Refusing to run like that. Loading default 'bars' module instead");
+       xava_output_cairo_module_load(xava, handle, "bars", 1);
+    }
 
     return handle;
 }
