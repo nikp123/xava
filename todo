@@ -1,8 +1,10 @@
 TODO
 ----
 
-* automatic library managment for Windows builds
-* automatic installer builds for Windows
+* review window functions for the pre-FFT stage such as:
+  * blackman
+  * kaiser
+
 * per-platform new default configs
 * configurable left OR right when in mono
 * possibility to save settings to config file
