@@ -5,6 +5,8 @@ TODO
   * blackman
   * kaiser
 
+* use nix to generate appimages and flatpaks automatically
+
 * per-platform new default configs
 * configurable left OR right when in mono
 * possibility to save settings to config file
