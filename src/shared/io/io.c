@@ -366,7 +366,8 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
 
                 if(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, defaultConfigFileName, &found) == false) {
                     if(type == XAVA_FILE_TYPE_CONFIG) // error only if it's necesary
-                        xavaError("Could not find the file within the XAVA installation! Bailing out...");
+                        xavaError("Could not find the file '%s' within the XAVA installation! Bailing out...",
+                            defaultConfigFileName);
                     free((*actualPath));
                     return false;
                 }
