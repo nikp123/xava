@@ -10,6 +10,7 @@
 #include "config.h"
 #include "shared.h"
 #include "shared/log.h"
+#include "shared/util/array.h"
 
 static const char *colorStrings[8] = {"black", "red", "green", "yellow",
                                         "blue", "magenta", "cyan", "white"};
@@ -214,6 +215,7 @@ char *load_config(char *configPath, XAVA *hand) {
     XAVA_CONFIG_GET_U32(hand->default_config.config, "color", "gradient_count", 0, gradient_count);
     p->gradients_is_set_from_file = gradient_count_is_set_from_file;
     arr_init_n(p->gradients, gradient_count);
+    arr_resize(p->gradients, gradient_count);
     if(arr_count(p->gradients) > 0) {
         xavaBailCondition(arr_count(p->gradients) < 2,
                 "At least two colors must be given as gradient!\n");
