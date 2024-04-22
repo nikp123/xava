@@ -4,7 +4,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 # REQUIRE GIT to be present
-if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git AND NOT NIX_BUILDER)
     message(FATAL_ERROR "XAVA from 0.7.0 onwards requires to be built in a .git directory")
 endif()
 
@@ -20,4 +20,3 @@ endif()
 if(UNIX_INDEPENDENT_PATHS)
     add_definitions("-DUNIX_INDEPENDENT_PATHS")
 endif()
-

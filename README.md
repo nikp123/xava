@@ -16,6 +16,7 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
   - [Windows](#windows)
   - [macOS](#macos)
   - [Linux](#linux)
+  - [Nix](#nix)
   - [Installing manually](#installing-manually)
 - [Updating](#updating)
 - [Usage](#usage)
@@ -118,6 +119,15 @@ and all you **really** need to to is just download and run it.
 
 You can get it at the [Releases](https://github.com/nikp123/xava/releases)
 page (labeled as "Development build").
+
+
+### Nix
+
+No build cache at the moment, but you're able to build and run this using one command:
+```nix
+nix run github:nikp123/xava?submodules=1
+```
+(Be sure to put the flakeref in quotes if you're using the fish shell).
 
 
 ### Installing manually

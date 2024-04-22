@@ -2,9 +2,7 @@
 #define __XAVA_SHARED_LOG_H
 
 // static analyser, please shut the fuck up
-#ifdef SOURCE_PATH_SIZE
-    #define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
-#else
+#ifndef __FILENAME__
     #define __FILENAME__ __FILE__
 #endif
 

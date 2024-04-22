@@ -7,7 +7,9 @@ set(ADDITIONAL_SHARED_DEFINITIONS "")
 set(ADDITIONAL_SHARED_INCLUDE_DIRS "")
 
 # Pull git required submodules
-execute_process(COMMAND git submodule update --init)
+if(NOT NIX_BUILDER)
+    execute_process(COMMAND git submodule update --init)
+endif()
 
 # Pull submodule and install dependency
 add_library(iniparser STATIC
@@ -41,7 +43,8 @@ target_link_libraries(xava-shared PRIVATE ${ADDITIONAL_SHARED_LIBRARIES} inipars
 target_compile_definitions(xava-shared PRIVATE ${ADDITIONAL_SHARED_DEFINITIONS})
 target_include_directories(xava-shared PRIVATE "${ADDITIONAL_SHARED_INCLUDE_DIRS}" lib/iniparser/src lib/x-watcher)
 
-install (TARGETS xava-shared DESTINATION lib)
+install (TARGETS xava-shared
+	DESTINATION lib)
 
 find_and_copy_dlls(xava-shared)
 

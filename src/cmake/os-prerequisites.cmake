@@ -36,10 +36,15 @@ if(MINGW)
 
     add_definitions("-DXAVA_PREDEFINED_SENS_VALUE=0.005")
 else()
-    # This hack is a of courtesy of: https://stackoverflow.com/a/40947954/3832385
+    # Drop everything besides the path within the project
+    # inside of __FILENAME__ references which I use for logging
+    #
+    # See: https://stackoverflow.com/a/16658858
+    #
+    # Needed for achieving purity in a nix build
+    add_compile_options(-ffile-prefix-map=${CMAKE_SOURCE_DIR}/=/)
+
     if(GNU)
-        string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
-        add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
         set(BUILD_DEBUG_FLAGS "-rdynamic")
         set(CMAKE_SHARED_LINKER_FLAGS "-rdynamic")
     endif()
