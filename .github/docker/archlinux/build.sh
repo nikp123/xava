@@ -19,6 +19,10 @@ make install DESTDIR=AppDir
 # Fix AppImage not running due to the lack of FUSE
 export APPIMAGE_EXTRACT_AND_RUN=1
 
+# Fix AppImage not building due to stripping incompatibilities with ArchLinux
+# https://github.com/linuxdeploy/linuxdeploy/issues/272
+export NO_STRIP=true
+
 # Create AppImage
 env LD_LIBRARY_PATH=. linuxdeploy \
 	--appdir AppDir \
