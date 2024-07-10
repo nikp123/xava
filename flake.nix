@@ -59,6 +59,8 @@
             wayland-protocols
             wayland-utils
             xorg.libX11
+	    xorg.libXdmcp
+	    xorg.libXfixes
             xorg.libXrandr
         
             # Graphics API
@@ -67,6 +69,7 @@
         
             # Misc
             curl
+	    dbus
             expat # Might be a nixpkgs bug idfk
             taglib
             zlib
