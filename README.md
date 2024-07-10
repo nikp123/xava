@@ -125,9 +125,11 @@ page (labeled as "Development build").
 
 No build cache at the moment, but you're able to build and run this using one command:
 ```nix
-nix run github:nikp123/xava?submodules=1
+nix run git+https://github.com/nikp123/xava?submodules=1
 ```
 (Be sure to put the flakeref in quotes if you're using the fish shell).
+
+(No, the ``github:`` flakeref type doesn't work due to some bugs on nixpkgs)
 
 
 ### Installing manually
