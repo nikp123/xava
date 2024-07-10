@@ -10,6 +10,11 @@ Debug/
 .cache/
 .vimspector.json
 
+# Exclude nix stuff
+.direnv
+result
+xava
+
 # Just some random patches I keep around
 # Usually some experiments gone wrong, I guess
 *.patch
