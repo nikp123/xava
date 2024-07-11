@@ -191,9 +191,8 @@ void calculateColors(XAVA_CONFIG *conf) {
             if (count == lineNumberFg)
             {
                 sscanf(line, "#%06X", &conf->col);
-                fclose(file);
             }
-            if (count == lineNumberBg)
+            else if (count == lineNumberBg)
             {
                 sscanf(line, "#%06X", &conf->bgcol);
                 fclose(file);

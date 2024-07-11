@@ -252,9 +252,8 @@ EXP_FUNC void xavaOutputLoadConfig(XAVA *hand) {
             if (count == lineNumberFg)
             {
                 sscanf(line, "#%06X", &p->col);
-                fclose(file);
             }
-            if (count == lineNumberBg)
+            else if (count == lineNumberBg)
             {
                 sscanf(line, "#%06X", &p->bgcol);
                 fclose(file);
