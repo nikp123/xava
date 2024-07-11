@@ -233,6 +233,35 @@ EXP_FUNC void xavaOutputLoadConfig(XAVA *hand) {
     XAVA_CONFIG *p = &hand->conf;
     xava_config_source config = hand->default_config.config;
 
+    int lineNumber = 0;
+    static const char b[] = "/.cache/wal/colors";
+    int lena = strlen(getenv("HOME"));
+    int lenb = strlen(b);
+    char *filename = malloc(lena+lenb+1);
+    // copy & concat (including string termination)
+    memcpy(filename,getenv("HOME"),lena);
+    memcpy(filename+lena,b,lenb+1);   
+    FILE *file = fopen(filename, "r");
+    int count = 0;
+    if ( file != NULL )
+    {
+        char line[256]; /* or other suitable maximum line size */
+        while (fgets(line, sizeof line, file) != NULL) /* read a line */
+        {
+            if (count == lineNumber)
+            {
+                sscanf(line, "#%06X", &p->col);
+                sscanf(line, "#%06X", &p->bgcol);
+                fclose(file);
+                break;
+            }
+            else
+            {
+                count++;
+            }
+        }
+    }
+
     backgroundLayer = xavaConfigGetBool
         (config, "wayland", "background_layer", 1);
     monitorName = strdup(xavaConfigGetString

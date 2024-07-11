@@ -156,7 +156,7 @@ void snatchColor(char *name, char *colorStr, unsigned int *colorNum, char *datab
 
     sprintf(strings_are_a_pain_in_c, "*.%s", name);
 
-    int lineNumber = 1;
+    int lineNumber = 0;
     static const char b[] = "/.cache/wal/colors";
     int lena = strlen(getenv("HOME"));
     int lenb = strlen(b);
