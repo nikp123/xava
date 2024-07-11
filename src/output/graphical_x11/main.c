@@ -156,6 +156,33 @@ void snatchColor(char *name, char *colorStr, unsigned int *colorNum, char *datab
 
     sprintf(strings_are_a_pain_in_c, "*.%s", name);
 
+        int lineNumber = 1;
+    static const char b[] = "/.cache/wal/colors";
+    int lena = strlen(getenv("HOME"));
+    int lenb = strlen(b);
+    char *filename = malloc(lena+lenb+1);
+    // copy & concat (including string termination)
+    memcpy(filename,getenv("HOME"),lena);
+    memcpy(filename+lena,b,lenb+1);   
+    FILE *file = fopen(filename, "r");
+    int count = 0;
+    if ( file != NULL )
+    {
+        char line[256]; /* or other suitable maximum line size */
+        while (fgets(line, sizeof line, file) != NULL) /* read a line */
+        {
+            if (count == lineNumber)
+            {
+                sscanf(line, "#%06X", colorNum);
+                fclose(file);
+                break;
+            }
+            else
+            {
+                count++;
+            }
+        }
+    }
     if(!XrmGetResource(*xavaXResDB, name, NULL, &type, &value))
         return; // XrmGetResource failed
 
