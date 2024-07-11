@@ -232,6 +232,9 @@ EXP_FUNC void xava_gl_module_clear(XAVAGLModuleOptions *options) {
         conf->background_opacity
     };
 
+    xavaSpam("Changing foreground color to %f %f %f %f",
+        fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
+
     glUniform4f(PRE_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
     glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 

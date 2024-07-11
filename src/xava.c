@@ -42,7 +42,7 @@
 
 char *configPath;
 
-static bool kys = 0, should_reload = 0;
+static bool kys = 0, should_reload = 0, should_redraw = 0;
 
 // teh main XAVA handle (made just to not piss off MinGW)
 static XAVA xava;
@@ -50,24 +50,49 @@ static XAVA xava;
 // XAVA magic variables, too many of them indeed
 static pthread_t p_thread;
 
+// Not expected to be needed outside of xava.c
+// so I'm keeping this here
+typedef enum xava_ionotify_id{
+    XAVA_IONOTIFY_CALLBACK_MAIN,
+    XAVA_IONOTIFY_CALLBACK_PYWAL
+} XAVA_IONOTIFY_ID;
+
 void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
         int id, XAVA *xava) {
-    UNUSED(id);
-    UNUSED(xava);
     UNUSED(filename);
-    switch(event) {
-        case XAVA_IONOTIFY_CHANGED:
-        //case XAVA_IONOTIFY_DELETED: // ignore because it is just broken
-            should_reload = 1;
+
+    switch(id) {
+        case XAVA_IONOTIFY_CALLBACK_MAIN:
+            switch(event) {
+                case XAVA_IONOTIFY_CHANGED:
+                //case XAVA_IONOTIFY_DELETED: // ignore because it is just broken
+                    should_reload = 1;
+                    break;
+                case XAVA_IONOTIFY_ERROR:
+                    xavaBail("ionotify event errored out! Bailing...");
+                    break;
+                case XAVA_IONOTIFY_CLOSED:
+                    xavaLog("ionotify socket closed");
+                    break;
+                default:
+                    xavaLog("Unrecognized ionotify call occured!");
+                    break;
+            }
             break;
-        case XAVA_IONOTIFY_ERROR:
-            xavaBail("ionotify event errored out! Bailing...");
-            break;
-        case XAVA_IONOTIFY_CLOSED:
-            xavaLog("ionotify socket closed");
+        case XAVA_IONOTIFY_CALLBACK_PYWAL:
+            // bail if we didn't change
+            if(event != XAVA_IONOTIFY_CHANGED)
+                break;
+
+            XAVA_CONFIG *p = &xava->conf;
+
+            pywalGetColors(&p->col, &p->bgcol);
+            xavaLog("New pywal colors: #%06X #%06X", p->col, p->bgcol);
+
+            should_redraw = true;
             break;
         default:
-            xavaLog("Unrecognized ionotify call occured!");
+            xavaLog("Unrecognized ionotify id in ionotify call!");
             break;
     }
     return;
@@ -220,9 +245,23 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         thing.xava_ionotify_func = &handle_ionotify_call;
         thing.filename = configPath;
         thing.ionotify = xava.ionotify;
-        thing.id = 1;
+        thing.id = XAVA_IONOTIFY_CALLBACK_MAIN;
         thing.xava = &xava;
         xavaIONotifyAddWatch(&thing);
+
+        pywalGetColors(&p->col,&p->bgcol);
+        char *pywalConfigFilename = malloc(256);
+        if (pywalConfigGetFilename(pywalConfigFilename)){
+            struct xava_ionotify_watch_setup pywal;
+            pywal.xava_ionotify_func = &handle_ionotify_call;
+            pywal.filename = pywalConfigFilename;
+            pywal.ionotify = xava.ionotify;
+            pywal.id = XAVA_IONOTIFY_CALLBACK_PYWAL;
+            pywal.xava = &xava;
+            xavaIONotifyAddWatch(&pywal);
+        } else {
+            free(pywalConfigFilename);
+        }
 
         // load symbols
         audio->func.loop        = xava_module_symbol_address_get(audio->module, "xavaInput");
@@ -323,7 +362,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
             output->func.apply(&xava);
 
             bool resizeWindow = false;
-            bool redrawWindow = false;
 
             while  (!resizeWindow) {
                 switch(output->func.handle_input(&xava)) {
@@ -337,7 +375,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                         resizeWindow = TRUE;
                         break;
                     case XAVA_REDRAW:
-                        redrawWindow = TRUE;
+                        should_redraw = TRUE;
                         break;
                     default:
                         // ignore other values
@@ -410,14 +448,12 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                 }
 
                 // output: draw processed input
-                if(redrawWindow) {
+                if(should_redraw) {
                     output->func.clear(&xava);
-
                     // audio output is unallocated without the filter
                     if(!p->flag.skipFilter)
                         memset(xava.fl, 0x00, sizeof(int)*xava.bars);
-
-                    redrawWindow = FALSE;
+                    should_redraw = FALSE;
                 }
                 output->func.draw(&xava);
 
