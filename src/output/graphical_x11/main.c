@@ -172,8 +172,8 @@ void calculateColors(XAVA_CONFIG *conf) {
     }
     snatchColor("color5", conf->color, &conf->col, databaseName, &xavaXResDB);
     snatchColor("color4", conf->bcolor, &conf->bgcol, databaseName, &xavaXResDB);
-    int lineNumberFg = 0;
-    int lineNumberBg = 1;
+    int lineNumberFg = 1;
+    int lineNumberBg = 2;
     static const char b[] = "/.cache/wal/colors";
     int lena = strlen(getenv("HOME"));
     int lenb = strlen(b);
