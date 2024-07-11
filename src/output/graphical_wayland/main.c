@@ -233,8 +233,8 @@ EXP_FUNC void xavaOutputLoadConfig(XAVA *hand) {
     XAVA_CONFIG *p = &hand->conf;
     xava_config_source config = hand->default_config.config;
 
-    int lineNumberFg = 0;
-    int lineNumberBg = 1;
+    int lineNumberFg = 1;
+    int lineNumberBg = 2;
     static const char b[] = "/.cache/wal/colors";
     int lena = strlen(getenv("HOME"));
     int lenb = strlen(b);
