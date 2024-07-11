@@ -233,7 +233,8 @@ EXP_FUNC void xavaOutputLoadConfig(XAVA *hand) {
     XAVA_CONFIG *p = &hand->conf;
     xava_config_source config = hand->default_config.config;
 
-    int lineNumber = 0;
+    int lineNumberFg = 0;
+    int lineNumberBg = 1;
     static const char b[] = "/.cache/wal/colors";
     int lena = strlen(getenv("HOME"));
     int lenb = strlen(b);
@@ -248,9 +249,13 @@ EXP_FUNC void xavaOutputLoadConfig(XAVA *hand) {
         char line[256]; /* or other suitable maximum line size */
         while (fgets(line, sizeof line, file) != NULL) /* read a line */
         {
-            if (count == lineNumber)
+            if (count == lineNumberFg)
             {
                 sscanf(line, "#%06X", &p->col);
+                fclose(file);
+            }
+            if (count == lineNumberBg)
+            {
                 sscanf(line, "#%06X", &p->bgcol);
                 fclose(file);
                 break;
