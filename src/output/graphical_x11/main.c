@@ -172,38 +172,6 @@ void calculateColors(XAVA_CONFIG *conf) {
     }
     snatchColor("color5", conf->color, &conf->col, databaseName, &xavaXResDB);
     snatchColor("color4", conf->bcolor, &conf->bgcol, databaseName, &xavaXResDB);
-    int lineNumberFg = 1;
-    int lineNumberBg = 2;
-    static const char b[] = "/.cache/wal/colors";
-    int lena = strlen(getenv("HOME"));
-    int lenb = strlen(b);
-    char *filename = malloc(lena+lenb+1);
-    // copy & concat (including string termination)
-    memcpy(filename,getenv("HOME"),lena);
-    memcpy(filename+lena,b,lenb+1);   
-    FILE *file = fopen(filename, "r");
-    int count = 0;
-    if ( file != NULL )
-    {
-        char line[256]; /* or other suitable maximum line size */
-        while (fgets(line, sizeof line, file) != NULL) /* read a line */
-        {
-            if (count == lineNumberFg)
-            {
-                sscanf(line, "#%06X", &conf->col);
-            }
-            else if (count == lineNumberBg)
-            {
-                sscanf(line, "#%06X", &conf->bgcol);
-                fclose(file);
-                break;
-            }
-            else
-            {
-                count++;
-            }
-        }
-    }
 }
 
 EXP_FUNC int xavaInitOutput(XAVA *xava) {

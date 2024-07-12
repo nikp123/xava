@@ -51,6 +51,7 @@
 #include "shared/log.h"
 #include "shared/ionotify.h"
 #include "shared/config/config.h"
+#include "shared/config/pywal.h"
 #include "shared/io/io.h"
 #include "shared/util/version.h"
 

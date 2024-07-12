@@ -51,24 +51,36 @@ static XAVA xava;
 static pthread_t p_thread;
 
 void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
-        int id, XAVA *xava) {
-    UNUSED(id);
-    UNUSED(xava);
+        int id, XAVA *xavaionot) {
     UNUSED(filename);
-    switch(event) {
-        case XAVA_IONOTIFY_CHANGED:
-        //case XAVA_IONOTIFY_DELETED: // ignore because it is just broken
-            should_reload = 1;
+    UNUSED(xavaionot);
+    switch(id) {
+        case XAVA_IONOTIFY_CALLBACK_MAIN:
+            printf("triggered non pywal!\n");
+            switch(event) {
+                case XAVA_IONOTIFY_CHANGED:
+                //case XAVA_IONOTIFY_DELETED: // ignore because it is just broken
+                    should_reload = 1;
+                    break;
+                case XAVA_IONOTIFY_ERROR:
+                    xavaBail("ionotify event errored out! Bailing...");
+                    break;
+                case XAVA_IONOTIFY_CLOSED:
+                    xavaLog("ionotify socket closed");
+                    break;
+                default:
+                    xavaLog("Unrecognized ionotify call occured!");
+                    break;
+            }
             break;
-        case XAVA_IONOTIFY_ERROR:
-            xavaBail("ionotify event errored out! Bailing...");
-            break;
-        case XAVA_IONOTIFY_CLOSED:
-            xavaLog("ionotify socket closed");
+        case XAVA_IONOTIFY_CALLBACK_PYWAL:
+            printf("triggered pywal!\n");
+            XAVA_CONFIG     *p      = &xava.conf;
+            pywalGetColors(&p->col,&p->bgcol);
             break;
         default:
-            xavaLog("Unrecognized ionotify call occured!");
-            break;
+            xavaLog("Unrecognized ionotify id in ionotify call!");
+        break;
     }
     return;
 }
@@ -220,25 +232,23 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         thing.xava_ionotify_func = &handle_ionotify_call;
         thing.filename = configPath;
         thing.ionotify = xava.ionotify;
-        thing.id = 1;
+        thing.id = XAVA_IONOTIFY_CALLBACK_MAIN;
         thing.xava = &xava;
         xavaIONotifyAddWatch(&thing);
 
-        // attach pywal colors file to the IONotify thing
-        static const char b[] = "/.cache/wal/colors";
-        int lena = strlen(getenv("HOME"));
-        int lenb = strlen(b);
-        char *filename = malloc(lena+lenb+1);
-        // copy & concat (including string termination)
-        memcpy(filename,getenv("HOME"),lena);
-        memcpy(filename+lena,b,lenb+1);   
-        struct xava_ionotify_watch_setup pywal;
-        pywal.xava_ionotify_func = &handle_ionotify_call;
-        pywal.filename = filename;
-        pywal.ionotify = xava.ionotify;
-        pywal.id = 1;
-        pywal.xava = &xava;
-        xavaIONotifyAddWatch(&pywal);
+        pywalGetColors(&p->col,&p->bgcol);
+        char *pywalConfigFilename = malloc(256);
+        if (pywalConfigGetFilename(pywalConfigFilename)){
+            struct xava_ionotify_watch_setup pywal;
+            pywal.xava_ionotify_func = &handle_ionotify_call;
+            pywal.filename = pywalConfigFilename;
+            pywal.ionotify = xava.ionotify;
+            pywal.id = XAVA_IONOTIFY_CALLBACK_PYWAL;
+            pywal.xava = &xava;
+            xavaIONotifyAddWatch(&pywal);
+        } else {
+            free(pywalConfigFilename);
+        }
 
         // load symbols
         audio->func.loop        = xava_module_symbol_address_get(audio->module, "xavaInput");

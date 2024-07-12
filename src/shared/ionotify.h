@@ -9,6 +9,11 @@ typedef struct xava_ionotify_watch_setup* XAVAIONOTIFYWATCHSETUP;
 // make the compilers shuttings up
 typedef struct XAVA XAVA;
 
+typedef enum xava_ionotify_id{
+    XAVA_IONOTIFY_CALLBACK_MAIN,
+    XAVA_IONOTIFY_CALLBACK_PYWAL
+} XAVA_IONOTIFY_ID;
+
 // doubt that XAVA_IONOTIFY_DELETED ever be implemented, but I don't care
 typedef enum xava_ionotify_event {
     XAVA_IONOTIFY_NOTHING,

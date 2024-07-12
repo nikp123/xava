@@ -32,6 +32,7 @@ endif()
 add_library(xava-shared SHARED
     src/shared/log.c
     src/shared/config/config.c
+    src/shared/config/pywal.c
     src/shared/module/abstractions.c
     src/shared/ionotify.c
     src/shared/io/io.c
