@@ -73,8 +73,9 @@ void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
             }
             break;
         case XAVA_IONOTIFY_CALLBACK_PYWAL:
-            XAVA_CONFIG     *p      = &xava.conf;
-            pywalGetColors(&p->col,&p->bgcol);
+            /*XAVA_CONFIG     *p      = &xava.conf;
+            pywalGetColors(&p->col,&p->bgcol);*/
+            should_reload = 1; // I'm reloading since I don't know how to reload colors dynamically
             break;
         default:
             xavaLog("Unrecognized ionotify id in ionotify call!");
