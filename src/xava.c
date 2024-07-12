@@ -224,6 +224,22 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         thing.xava = &xava;
         xavaIONotifyAddWatch(&thing);
 
+        // attach pywal colors file to the IONotify thing
+        static const char b[] = "/.cache/wal/colors";
+        int lena = strlen(getenv("HOME"));
+        int lenb = strlen(b);
+        char *filename = malloc(lena+lenb+1);
+        // copy & concat (including string termination)
+        memcpy(filename,getenv("HOME"),lena);
+        memcpy(filename+lena,b,lenb+1);   
+        struct xava_ionotify_watch_setup pywal;
+        pywal.xava_ionotify_func = &handle_ionotify_call;
+        pywal.filename = filename;
+        pywal.ionotify = xava.ionotify;
+        pywal.id = 1;
+        pywal.xava = &xava;
+        xavaIONotifyAddWatch(&pywal);
+
         // load symbols
         audio->func.loop        = xava_module_symbol_address_get(audio->module, "xavaInput");
         audio->func.load_config = xava_module_symbol_address_get(audio->module, "xavaInputLoadConfig");
