@@ -18,6 +18,13 @@ char *a = getenv("XDG_CACHE_HOME");
     } else {
         sprintf(filename,"%s%s",a,"/.cache/wal/colors");
     }
+    FILE *file = fopen(filename, "r");
+    if ( file != NULL )
+    {
+        fclose(file);
+    } else {
+        return false;
+    }
     return true;
 }
 
