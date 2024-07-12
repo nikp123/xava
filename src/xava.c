@@ -50,10 +50,18 @@ static XAVA xava;
 // XAVA magic variables, too many of them indeed
 static pthread_t p_thread;
 
+void xava_window_redraw(XAVA *xava){
+    XAVA_OUTPUT     *output = &xava->output;
+    XAVA_CONFIG     *p      = &xava->conf;
+    output->func.clear(xava);
+    // audio output is unallocated without the filter
+    if(!p->flag.skipFilter)
+    memset(xava->fl, 0x00, sizeof(int)*xava->bars);
+}
+
 void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
-        int id, XAVA *xavaionot) {
+        int id, XAVA *xava) {
     UNUSED(filename);
-    UNUSED(xavaionot);
     switch(id) {
         case XAVA_IONOTIFY_CALLBACK_MAIN:
             switch(event) {
@@ -73,9 +81,9 @@ void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
             }
             break;
         case XAVA_IONOTIFY_CALLBACK_PYWAL:
-            /*XAVA_CONFIG     *p      = &xava.conf;
-            pywalGetColors(&p->col,&p->bgcol);*/
-            should_reload = 1; // I'm reloading since I don't know how to reload colors dynamically
+            XAVA_CONFIG     *p      = &xava->conf;
+            pywalGetColors(&p->col,&p->bgcol);
+            xava_window_redraw(xava);
             break;
         default:
             xavaLog("Unrecognized ionotify id in ionotify call!");
@@ -436,14 +444,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
                 // output: draw processed input
                 if(redrawWindow) {
-                    output->func.clear(&xava);
-
-                    // audio output is unallocated without the filter
-                    if(!p->flag.skipFilter)
-                        memset(xava.fl, 0x00, sizeof(int)*xava.bars);
-
-                    redrawWindow = FALSE;
+                    xava_window_redraw(&xava);     
                 }
+                redrawWindow = FALSE;
                 output->func.draw(&xava);
 
                 if(!p->vsync) // the window handles frametimes instead of XAVA
