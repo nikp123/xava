@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <time.h>
 
 #include <tchar.h>
@@ -49,7 +50,7 @@ i32 oldX, oldY, oldW, oldH;
 #endif
 
 // a crappy workaround for a flawed event-loop design
-static _Bool resized=FALSE, quit=FALSE;
+static bool resized=FALSE, quit=FALSE;
 
 // Warning: shitty win32 api design below, cover your poor eyes
 // Why can't I just pass this shit immediately to my events function

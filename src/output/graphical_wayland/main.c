@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
@@ -31,7 +32,7 @@
 /* Globals */
 struct waydata wd;
 
-static _Bool backgroundLayer;
+static bool backgroundLayer;
        char* monitorName;
 
 uint32_t fgcol,bgcol;

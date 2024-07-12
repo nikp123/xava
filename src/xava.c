@@ -42,7 +42,7 @@
 
 char *configPath;
 
-static _Bool kys = 0, should_reload = 0;
+static bool kys = 0, should_reload = 0;
 
 // teh main XAVA handle (made just to not piss off MinGW)
 static XAVA xava;

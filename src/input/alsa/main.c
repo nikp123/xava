@@ -1,5 +1,6 @@
-#include <alsa/asoundlib.h>
+#include <stdbool.h>
 
+#include <alsa/asoundlib.h>
 #include <sys/types.h>
 #include <dirent.h>
 
@@ -90,14 +91,14 @@ static void fill_audio_outs(XAVA_AUDIO* audio, signed char* buffer,
     }
 }
 
-static _Bool is_loop_device_for_sure(const char * text) {
+static bool is_loop_device_for_sure(const char * text) {
     const char * const LOOPBACK_DEVICE_PREFIX = "hw:Loopback,";
     return strncmp(text, LOOPBACK_DEVICE_PREFIX, strlen(LOOPBACK_DEVICE_PREFIX)) == 0;
 }
 
-static _Bool directory_exists(const char * path) {
+static bool directory_exists(const char * path) {
     DIR * const dir = opendir(path);
-    _Bool exists;// = dir != NULL;
+    bool exists;// = dir != NULL;
     if (dir == NULL) exists = 0;
     else exists = 1;
     closedir(dir);

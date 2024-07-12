@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
@@ -150,7 +151,7 @@ void validate_config(XAVA *hand, xava_config_source config) {
 
     // validate: window settings
     // validate: alignment
-    _Bool foundAlignment = 0;
+    bool foundAlignment = 0;
     const char *alignments[13] = {"top_left", "top_right", "bottom_left", "bottom_right", "left",
                                  "right", "top", "bottom", "center", "none"};
     for(int i = 0; i < 10; i++) {
