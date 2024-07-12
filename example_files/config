@@ -200,9 +200,11 @@
 # For wasapi 'source', specify 'loopback' to capture audio from the system or
 # anything else to capture from an input device, such as a microphone.
 #
-# For pipewire, the 'source' parameter is ignored and instead the visualizer is
-# supposed to be configured using an external tool, such as 'pavucontrol' (works
-# on PipeWire too, trust me).
+# For pipewire, it will try connecting to record system audio output (might not work)
+# However, if you set the 'source' parameter manually it will try targetting that
+# specific applications audio output.
+# Example: If you use Supersonic, you'd put source = 'supersonic'
+# To find out your applications name use Helvum or `pw-cli list-objects`
 #
 # You can also specify 'list' as the source to portaudio to list all available
 # audio devices
