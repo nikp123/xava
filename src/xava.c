@@ -56,7 +56,6 @@ void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
     UNUSED(xavaionot);
     switch(id) {
         case XAVA_IONOTIFY_CALLBACK_MAIN:
-            printf("triggered non pywal!\n");
             switch(event) {
                 case XAVA_IONOTIFY_CHANGED:
                 //case XAVA_IONOTIFY_DELETED: // ignore because it is just broken
@@ -74,7 +73,6 @@ void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
             }
             break;
         case XAVA_IONOTIFY_CALLBACK_PYWAL:
-            printf("triggered pywal!\n");
             XAVA_CONFIG     *p      = &xava.conf;
             pywalGetColors(&p->col,&p->bgcol);
             break;
