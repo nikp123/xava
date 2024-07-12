@@ -38,3 +38,6 @@ TODO
 * move alsa, portaudio, sndio, shmem and fifo into the expert audio category
   - these modules require intimate understanding of how audio systems work and 
   therefore should not be recommended to non-expert users
+
+* drop cairo as it's too complex to maintain both systems
+ - i have my own reasons, sorry
