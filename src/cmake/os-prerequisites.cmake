@@ -42,7 +42,10 @@ else()
     # See: https://stackoverflow.com/a/16658858
     #
     # Needed for achieving purity in a nix build
-    add_compile_options(-ffile-prefix-map=${CMAKE_SOURCE_DIR}/=/)
+    #
+    # Assume we're running this from the ./build directory 
+    # so that GDB picks up our source files when debugging
+    add_compile_options(-ffile-prefix-map=${CMAKE_SOURCE_DIR}/=../)
 
     if(GNU)
         set(BUILD_DEBUG_FLAGS "-rdynamic")
