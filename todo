@@ -31,7 +31,7 @@ TODO
     (only one at a time unfornately, as I don't want to reinvent The Moon)
   - test and fix loopback
 
-* drop pulseaudio and cubeb support
+* drop pulseaudio support
   - complexity is not what I want and I don't want to support things that are not
   well supported
 
