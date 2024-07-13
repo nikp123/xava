@@ -14,7 +14,7 @@ EXP_FUNC bool pywalConfigGetFilename(char *filename) {
 	if(a == NULL)
             return false;
         
-	sprintf(filename,"%s%s", a, "/.config/wal/colors");
+	sprintf(filename,"%s%s", a, "/.cache/wal/colors");
     } else {
         sprintf(filename,"%s%s", a, "/wal/colors");
     }
