@@ -137,7 +137,7 @@ EXP_FUNC void* xavaInput(void *audiodata) {
     pwdata.loop = pw_main_loop_new(NULL);
     pwdata.stream = pw_stream_new_simple(
             pw_main_loop_get_loop(pwdata.loop),
-            "audio-capture",
+            PACKAGE,
             props,
             &stream_events,
             &pwdata);
