@@ -1,6 +1,6 @@
 FROM archlinux:latest
 
-LABEL org.opencontainers.image.source https://github.com/nikp123/xava
+LABEL org.opencontainers.image.source=https://github.com/nikp123/xava
 
 WORKDIR /mnt
 
