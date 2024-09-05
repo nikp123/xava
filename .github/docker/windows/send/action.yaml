@@ -12,7 +12,7 @@ runs:
   using: 'composite'
   steps:
     - name: Uploading artifact for ${{ matrix.system }}-${{ matrix.arch }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: xava-installer-${{ matrix.arch }}.exe
         path: xava-installer-${{ matrix.arch }}.exe

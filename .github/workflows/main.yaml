@@ -54,20 +54,19 @@ jobs:
       - uses: actions/checkout@v3
       - run: rm -rf *
       - uses: actions/download-artifact@v4
-      - name: Reorganize release files
+        with:
+          pattern: xava-*
+      - uses: actions/download-artifact@v4
+        with:
+          name: version.txt
+      - name: Show artifact files
         run: |
-          ls -R
-          for i in xava-*; do
-            mv $i temp
-            mv temp/$i $i
-            rmdir temp
-          done
           ls -R
 
       - name: Read version file
         run: |
-          cat version.txt/version.txt
-          VER=$(cat version.txt/version.txt)
+          cat version.txt
+          VER=$(cat version.txt)
           echo "VERSION=$VER" >> $GITHUB_ENV
 
       - uses: "marvinpinto/action-automatic-releases@latest"
