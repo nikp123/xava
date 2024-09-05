@@ -12,14 +12,14 @@ runs:
   using: 'composite'
   steps:
     # Differentiate between ACT and actual GitHub Actions
-  - uses: docker/setup-buildx-action@v2
+  - uses: docker/setup-buildx-action@v3
     if: ${{ env.ACT }}
     with:
       driver: docker
-  - uses: docker/setup-buildx-action@v2
+  - uses: docker/setup-buildx-action@v3
     if: ${{ !env.ACT }}
   - name: Prepare image
-    uses: docker/build-push-action@v3
+    uses: docker/build-push-action@v6
     with:
       load: true
       file: '.github/docker/${{ inputs.system }}/Dockerfile'
