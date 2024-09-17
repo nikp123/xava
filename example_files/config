@@ -117,8 +117,6 @@
 #  - window borders (be it client-side or server-side)
 #  - fullscreen mode
 #  - non-transparent windows (just use background_opacity instead lol)
-#  - any kind of GPU acceleration
-#  - window positioning logic
 #  - taskbar icon
 #
 # Also in XDG, XAVA may crash when resizing the window due to buffer
