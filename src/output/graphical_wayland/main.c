@@ -80,16 +80,14 @@ EXP_FUNC int xavaInitOutput(XAVA *hand) {
     xavaBailCondition(!wd.compositor, "Your compositor doesn't support wl_compositor, failing...");
     xavaBailCondition(!xavaXDGWMBase, "Your compositor doesn't support xdg_wm_base, failing...");
 
-    if(xavaWLRLayerShell == NULL || xavaXDGOutputManager == NULL) {
+    if((xavaWLRLayerShell == NULL || xavaXDGOutputManager == NULL)
+        && backgroundLayer) {
         xavaWarn("Your compositor doesn't support some or any of the following:\n"
                 "zwlr_layer_shell_v1 and/or zwlr_output_manager_v1\n"
                 "This will DISABLE the ability to use the background layer for"
                 "safety reasons!");
         backgroundLayer = 0;
     }
-
-    // needed to be done twice for xdg_output to do it's frickin' job
-    wl_display_roundtrip(wd.display);
 
     wd.surface = wl_compositor_create_surface(wd.compositor);
 
@@ -99,8 +97,6 @@ EXP_FUNC int xavaInitOutput(XAVA *hand) {
     } else {
         xdg_init(&wd);
     }
-
-    //wl_surface_set_buffer_scale(xavaWLSurface, 3);
 
     // process all of this, FINALLY
     wl_surface_commit(wd.surface);
