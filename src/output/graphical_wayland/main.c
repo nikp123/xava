@@ -89,6 +89,9 @@ EXP_FUNC int xavaInitOutput(XAVA *hand) {
         backgroundLayer = 0;
     }
 
+    // needed to be done twice for xdg_output to do it's frickin' job                                        .. 
+    wl_display_roundtrip(wd.display);
+
     wd.surface = wl_compositor_create_surface(wd.compositor);
 
     // The option carries the same functionality here to Wayland as well
