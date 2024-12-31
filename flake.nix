@@ -58,6 +58,7 @@
           SDL2
           wayland
           wayland-protocols
+          wayland-scanner
           wayland-utils
           xorg.libX11
           xorg.libXdmcp
