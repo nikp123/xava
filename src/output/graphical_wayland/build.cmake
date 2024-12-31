@@ -4,19 +4,20 @@ pkg_get_variable(WL_PROT_DIR wayland-protocols pkgdatadir)
 
 # Project default
 option(WAYLAND "WAYLAND" ON)
-
 IF(WAYLAND_PROTOCOLS_FOUND)
+    find_program(SCANNER wayland-scanner
+                 REQUIRED)
     function(generate_wayland_source input output)
         get_filename_component(FILE_EXT "${output}" LAST_EXT)
         if(FILE_EXT MATCHES ".c")
             add_custom_command(OUTPUT "${XAVA_MODULE_DIR}/gen/${output}"
-                COMMAND wayland-scanner private-code
+                COMMAND "${SCANNER}"  private-code
                 "${input}"
                 "${XAVA_MODULE_DIR}/gen/${output}"
                 VERBATIM)
         elseif(FILE_EXT MATCHES ".h")
             add_custom_command(OUTPUT "${XAVA_MODULE_DIR}/gen/${output}"
-                COMMAND wayland-scanner client-header
+                COMMAND "${SCANNER}"  client-header
                 "${input}"
                 "${XAVA_MODULE_DIR}/gen/${output}"
                 VERBATIM)
