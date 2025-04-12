@@ -149,7 +149,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *s) {
         }
     }
 
-    XG_EVENT_STACK *glEventStack = GLEvent(s);
+    XG_EVENT *glEventStack = GLEvent(s);
     while(pendingXAVAEventStack(glEventStack)) {
         XG_EVENT event = popXAVAEventStack(glEventStack);
         if(event != XAVA_IGNORE)

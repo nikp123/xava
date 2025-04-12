@@ -12,11 +12,11 @@ struct options {
 } options;
 
 xava_config_source *config_file;
-XAVAIONOTIFY       file_notifications;
+xava_ionotify       file_notifications;
 
 // ionotify fun
 EXP_FUNC void xava_cairo_module_ionotify_callback
-                (XAVA_IONOTIFY_EVENT event,
+                (xava_ionotify_event event,
                 const char* filename,
                 int id,
                 XAVA* xava) {
@@ -51,18 +51,15 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
     // setup file notifications
     file_notifications = xavaIONotifySetup();
 
-    XAVAIONOTIFYWATCHSETUP setup;
-    MALLOC_SELF(setup, 1);
-    setup->filename           = config_file_path;
-    setup->id                 = 1;
-    setup->xava_ionotify_func = xava_cairo_module_ionotify_callback;
-    setup->xava               = (XAVA*) handle;
-    setup->ionotify           = file_notifications;
+    xava_ionotify_watch_setup setup;
+    setup.filename           = config_file_path;
+    setup.id                 = 1;
+    setup.xava_ionotify_func = xava_cairo_module_ionotify_callback;
+    setup.xava               = (XAVA*) handle;
+    setup.ionotify           = file_notifications;
     xavaIONotifyAddWatch(setup);
 
     xavaIONotifyStart(file_notifications);
-
-    free(setup);
 
     return XAVA_CAIRO_FEATURE_FULL_DRAW |
         XAVA_CAIRO_FEATURE_DRAW_REGION;

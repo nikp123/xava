@@ -26,7 +26,7 @@ struct _ArrayHeader {
 #define arr_capacity(a) (_arr_header(a)->capacity)
 
 #define arr_back(a) ((a)[arr_count(a) - 1])
-#define arr_pop(a)  ((a)[_arr_header(a)->count--])
+#define arr_pop(a)  ((a)[(_arr_header(a)->count--)-1])
 
 #define arr_reserve(a, n) do { \
    if(n <= arr_capacity(a)) break; \

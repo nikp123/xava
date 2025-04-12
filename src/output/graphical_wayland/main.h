@@ -19,8 +19,8 @@ struct waydata {
     struct wl_surface    *surface;
     struct wl_display    *display;
     struct wl_compositor *compositor;
-    XAVA   *hand;
-    XG_EVENT_STACK       *events;
+    XAVA                 *hand;
+    XG_EVENT             *events;
     struct wl_list       outputs;
     #ifdef EGL
         struct _escontext ESContext;

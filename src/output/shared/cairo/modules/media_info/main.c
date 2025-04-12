@@ -575,7 +575,7 @@ EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_hand
 
 // ionotify fun
 EXP_FUNC void         xava_cairo_module_ionotify_callback
-                (XAVA_IONOTIFY_EVENT event,
+                (xava_ionotify_event event,
                 const char* filename,
                 int id,
                 XAVA* xava) {

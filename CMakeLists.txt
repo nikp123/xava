@@ -13,6 +13,9 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+# Regardless of build type we want tests to be available
+enable_testing()
+
 # Allow for custom link prefixes (in order to optimize CMake builds for packagers)
 if(NOT XAVA_LINK_TO_INSTALL_DIR)
 	set(XAVA_LINK_TO_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")

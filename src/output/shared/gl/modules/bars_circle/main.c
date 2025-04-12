@@ -72,7 +72,7 @@ struct gl_renderer_options {
 /**
  * This function is used for handling file change notifications.
  */
-EXP_FUNC void xava_gl_module_ionotify_callback(XAVA_IONOTIFY_EVENT event,
+EXP_FUNC void xava_gl_module_ionotify_callback(xava_ionotify_event event,
                                 const char *filename,
                                 int id,
                                 XAVA* xava) {

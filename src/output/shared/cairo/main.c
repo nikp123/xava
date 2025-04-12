@@ -198,7 +198,7 @@ void __internal_xava_output_cairo_apply(xava_cairo_handle *handle) {
     }
 }
 
-XG_EVENT_STACK *__internal_xava_output_cairo_event(xava_cairo_handle *handle) {
+XG_EVENT *__internal_xava_output_cairo_event(xava_cairo_handle *handle) {
     // run the module's event handlers
     for(size_t i = 0; i < arr_count(handle->modules); i++) {
         handle->modules[i].func.event(&handle->modules[i].config);

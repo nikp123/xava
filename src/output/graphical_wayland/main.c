@@ -192,7 +192,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *hand) {
         }
     }
 
-    XG_EVENT_STACK *eventStack = 
+    XG_EVENT *eventStack = 
     #if defined(CAIRO)
         __internal_xava_output_cairo_event(wd.cairo_handle);
     #elif defined(EGL)

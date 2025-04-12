@@ -1,31 +1,32 @@
+#include <assert.h>
 #include <x-watcher.h>
 
-#include "shared/ionotify.h"
+#include "array.h"
 #include "shared.h"
+#include "shared/ionotify.h"
 
-// cringe but bare with me k
-struct hax {
-    void *original_data;
-    void (*xava_ionotify_func)(XAVA_IONOTIFY_EVENT,
-            const char *filename, int id, XAVA*);
-};
+EXP_FUNC xava_ionotify xavaIONotifySetup(void) {
+    xava_ionotify ionotify;
 
-static struct hax hax[100];
-static size_t hax_count;
+    // create file handle structure
+    arr_init(ionotify.handles);
 
-EXP_FUNC XAVAIONOTIFY xavaIONotifySetup(void) {
-    hax_count = 0;
-    return (XAVAIONOTIFY)xWatcher_create();
+    ionotify.xwatcher_instance = xWatcher_create();
+
+    return ionotify;
 }
 
-// before calling the acutal library, this function takes care of
-// converting the xWatcher's event types to native ones
-void __internal_xavaIONotifyWorkAroundDumbDecisions(XWATCHER_FILE_EVENT event,
-        const char *name, int id, void* data) {
-    struct hax *h = (struct hax*)data;
-    XAVA_IONOTIFY_EVENT new_event = 0;
+/**
+ * This is the callback wrapper for the xWatcher library
+ * The use of this is meant to be internal only.
+ **/
+void xavaIONotifyCallbackWrapper(XWATCHER_FILE_EVENT event, const char *path,
+                                 int id, void *data) {
+    xava_ionotify_file_handle *handle = data;
 
-    switch(event) {
+    xava_ionotify_event new_event;
+
+    switch (event) {
         case XWATCHER_FILE_CREATED:
         case XWATCHER_FILE_MODIFIED:
             new_event = XAVA_IONOTIFY_CHANGED;
@@ -33,10 +34,10 @@ void __internal_xavaIONotifyWorkAroundDumbDecisions(XWATCHER_FILE_EVENT event,
         case XWATCHER_FILE_REMOVED:
             new_event = XAVA_IONOTIFY_DELETED;
             break;
-        case XWATCHER_FILE_OPENED:             // this gets triggered by basically everything
+        case XWATCHER_FILE_OPENED: // this gets triggered by basically everything
         case XWATCHER_FILE_ATTRIBUTES_CHANGED: // usually not important
         case XWATCHER_FILE_NONE:
-        case XWATCHER_FILE_RENAMED:            // ignoring because most likely breaks visualizer
+        case XWATCHER_FILE_RENAMED: // ignoring because most likely breaks visualizer
         case XWATCHER_FILE_UNSPECIFIED:
             new_event = XAVA_IONOTIFY_NOTHING;
             break;
@@ -44,36 +45,30 @@ void __internal_xavaIONotifyWorkAroundDumbDecisions(XWATCHER_FILE_EVENT event,
             new_event = XAVA_IONOTIFY_ERROR;
     }
 
-    h->xava_ionotify_func(new_event, name, id, h->original_data);
+    handle->xava_ionotify_func(new_event, path, id, handle->xava);
 }
 
-EXP_FUNC bool xavaIONotifyAddWatch(XAVAIONOTIFYWATCHSETUP setup) {
+EXP_FUNC bool xavaIONotifyAddWatch(xava_ionotify_watch_setup setup) {
     xWatcher_reference reference;
 
-    // workaround in progress
-    hax[hax_count].original_data      = setup->xava;
-    xavaBailCondition(!setup->xava_ionotify_func,
-        "BUG: IONotify function is NULL");
-    hax[hax_count].xava_ionotify_func = setup->xava_ionotify_func;
+    xava_ionotify_file_handle file_handle = {
+        .xava = setup.xava, .xava_ionotify_func = setup.xava_ionotify_func};
 
-    reference.callback_func   = __internal_xavaIONotifyWorkAroundDumbDecisions;
-    reference.context         = setup->id;
-    reference.path            = setup->filename;
-    reference.additional_data = &hax[hax_count];
+    arr_add(setup.ionotify.handles, file_handle);
 
-    // hax counter
-    hax_count++;
+    reference.callback_func = xavaIONotifyCallbackWrapper;
+    reference.context = setup.id;
+    reference.path = setup.filename;
+    reference.additional_data = &arr_back(setup.ionotify.handles);
 
-    xavaBailCondition(hax_count > 100, "Scream at @nikp123 to fix this!");
-
-    return xWatcher_appendFile(setup->ionotify, &reference);
+    return xWatcher_appendFile(setup.ionotify.xwatcher_instance, &reference);
 }
 
-EXP_FUNC bool xavaIONotifyStart(const XAVAIONOTIFY ionotify) {
-    return xWatcher_start(ionotify);
+EXP_FUNC bool xavaIONotifyStart(const xava_ionotify ionotify) {
+    return xWatcher_start(ionotify.xwatcher_instance);
 }
 
-EXP_FUNC void xavaIONotifyKill(const XAVAIONOTIFY ionotify) {
-    xWatcher_destroy(ionotify);
+EXP_FUNC void xavaIONotifyKill(const xava_ionotify ionotify) {
+    xWatcher_destroy(ionotify.xwatcher_instance);
+    arr_free(ionotify.handles);
 }
-

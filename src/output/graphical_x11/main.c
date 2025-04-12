@@ -583,7 +583,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
     }
 
     // yes this is violent C macro (ab)-use, live with it
-    XG_EVENT_STACK *eventStack = 
+    XG_EVENT *eventStack = 
     #if defined(CAIRO)
         __internal_xava_output_cairo_event(xavaCairoHandle);
     #elif defined(EGL)

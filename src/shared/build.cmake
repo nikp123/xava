@@ -40,14 +40,21 @@ add_library(xava-shared SHARED
     ${ADDITIONAL_SHARED_SOURCES}
 )
 set_target_properties(xava-shared PROPERTIES COMPILE_FLAGS "-fPIC")
-target_link_libraries(xava-shared PRIVATE ${ADDITIONAL_SHARED_LIBRARIES} iniparser pthread)
+target_link_libraries(xava-shared PRIVATE ${ADDITIONAL_SHARED_LIBRARIES}
+  iniparser pthread)
 target_compile_definitions(xava-shared PRIVATE ${ADDITIONAL_SHARED_DEFINITIONS})
-target_include_directories(xava-shared PRIVATE "${ADDITIONAL_SHARED_INCLUDE_DIRS}" lib/iniparser/src lib/x-watcher)
+target_include_directories(xava-shared PRIVATE
+  "${ADDITIONAL_SHARED_INCLUDE_DIRS}" lib/iniparser/src lib/x-watcher)
 
-install (TARGETS xava-shared
-	DESTINATION lib)
+install(TARGETS xava-shared DESTINATION lib)
 
 find_and_copy_dlls(xava-shared)
+
+# Test the library because it's very buggy
+add_executable(basic_event_stack src/shared/test/basic_event_stack.c)
+target_link_libraries(basic_event_stack PRIVATE xava-shared)
+add_test(NAME basic_event_stack COMMAND basic_event_stack)
+
 
 # Add legal disclaimers
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_iniparser.txt"

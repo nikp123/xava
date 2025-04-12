@@ -211,7 +211,7 @@ typedef struct XAVA {
         uint32_t w, h;
     } bar_space;
 
-    XAVAIONOTIFY ionotify;
+    xava_ionotify ionotify;
 } XAVA;
 
 #endif

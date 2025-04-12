@@ -122,57 +122,34 @@ EXP_FUNC unsigned long xavaSleep(unsigned long oldTime, int framerate) {
     return 0;
 }
 
-
 // XAVA event stack
-EXP_FUNC void pushXAVAEventStack(XG_EVENT_STACK *stack, XG_EVENT event) {
-    xavaSpam("XAVA event %d added (id=%d)", stack->pendingEvents, event);
-
-    stack->pendingEvents++;
-
-    REALLOC_SELF(stack->events, stack->pendingEvents);
-
-    stack->events[stack->pendingEvents-1] = event;
+EXP_FUNC void pushXAVAEventStack(XG_EVENT *stack, XG_EVENT event) {
+  arr_add(stack, event);
 }
 
-EXP_FUNC XG_EVENT popXAVAEventStack(XG_EVENT_STACK *stack) {
-    XG_EVENT event = stack->events[0];
+EXP_FUNC XG_EVENT popXAVAEventStack(XG_EVENT *stack) { return arr_pop(stack); }
 
-    stack->pendingEvents--;
-    for(int i = 0; i<stack->pendingEvents; i++) {
-        stack->events[i] = stack->events[i+1];
-    }
+EXP_FUNC XG_EVENT *newXAVAEventStack() {
+  XG_EVENT *stack;
 
-    REALLOC_SELF(stack->events, stack->pendingEvents);
+  arr_init(stack);
 
-    xavaSpam("XAVA event %d destroyed (id=%d)", stack->pendingEvents, event);
-
-    return event;
+  return stack;
 }
 
-EXP_FUNC XG_EVENT_STACK *newXAVAEventStack() {
-    XG_EVENT_STACK *stack = calloc(1, sizeof(XG_EVENT_STACK));
-    stack->pendingEvents = 0;
-    stack->events = malloc(1); // needs a valid pointer here
-    return stack;
-}
+EXP_FUNC void destroyXAVAEventStack(XG_EVENT *stack) { arr_free(stack); }
 
-EXP_FUNC void destroyXAVAEventStack(XG_EVENT_STACK *stack) {
-    free(stack->events);
-    free(stack);
-}
-
-EXP_FUNC bool pendingXAVAEventStack(XG_EVENT_STACK *stack) {
-    return (stack->pendingEvents > 0) ? true : false;
+EXP_FUNC bool pendingXAVAEventStack(XG_EVENT *stack) {
+  return (arr_count(stack) > 0) ? true : false;
 }
 
 // used for blocking in case an processing an event at the wrong
 // time can cause disaster
-EXP_FUNC bool isEventPendingXAVA(XG_EVENT_STACK *stack, XG_EVENT event) {
-    for(int i = 0; i < stack->pendingEvents; i++) {
-        if(stack->events[i] == event) return true;
-    }
+EXP_FUNC bool isEventPendingXAVA(XG_EVENT *stack, XG_EVENT event) {
+  int found;
+  arr_find(stack, event, &found);
 
-    return false;
+  return (found != -1);
 }
 
 // this function is an abstraction for checking whether or not a certain file is usable

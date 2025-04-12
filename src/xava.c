@@ -57,7 +57,7 @@ typedef enum xava_ionotify_id{
     XAVA_IONOTIFY_CALLBACK_PYWAL
 } XAVA_IONOTIFY_ID;
 
-void handle_ionotify_call(XAVA_IONOTIFY_EVENT event, const char *filename,
+void handle_ionotify_call(xava_ionotify_event event, const char *filename,
         int id, XAVA *xava) {
     UNUSED(filename);
 
@@ -247,18 +247,18 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         thing.ionotify = xava.ionotify;
         thing.id = XAVA_IONOTIFY_CALLBACK_MAIN;
         thing.xava = &xava;
-        xavaIONotifyAddWatch(&thing);
+        xavaIONotifyAddWatch(thing);
 
         pywalGetColors(&p->col,&p->bgcol);
         char *pywalConfigFilename = malloc(256);
         if (pywalConfigGetFilename(pywalConfigFilename)){
-            struct xava_ionotify_watch_setup pywal;
+            xava_ionotify_watch_setup pywal;
             pywal.xava_ionotify_func = &handle_ionotify_call;
             pywal.filename = pywalConfigFilename;
             pywal.ionotify = xava.ionotify;
             pywal.id = XAVA_IONOTIFY_CALLBACK_PYWAL;
             pywal.xava = &xava;
-            xavaIONotifyAddWatch(&pywal);
+            xavaIONotifyAddWatch(pywal);
         } else {
             free(pywalConfigFilename);
         }

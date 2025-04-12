@@ -168,7 +168,7 @@ void SGLApply(XAVA *xava){
     xava_gl_module_post_apply(&host);
 }
 
-XG_EVENT_STACK *SGLEvent(XAVA *xava) {
+XG_EVENT *SGLEvent(XAVA *xava) {
     for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
 

@@ -52,18 +52,13 @@ typedef enum XAVA_GRAHPICAL_EVENT {
     XAVA_QUIT
 } XG_EVENT;
 
-typedef struct XAVA_GRAHPICAL_EVENT_STACK {
-    int pendingEvents;
-    XG_EVENT *events;
-} XG_EVENT_STACK;
-
 // simulated event stack
-extern void            pushXAVAEventStack    (XG_EVENT_STACK *stack, XG_EVENT event);
-extern XG_EVENT        popXAVAEventStack     (XG_EVENT_STACK *stack);
-extern XG_EVENT_STACK *newXAVAEventStack     ();
-extern void            destroyXAVAEventStack (XG_EVENT_STACK *stack);
-extern bool            pendingXAVAEventStack (XG_EVENT_STACK *stack);
-extern bool            isEventPendingXAVA    (XG_EVENT_STACK *stack, XG_EVENT event);
+extern void      pushXAVAEventStack    (XG_EVENT *stack, XG_EVENT event);
+extern XG_EVENT  popXAVAEventStack     (XG_EVENT *stack);
+extern XG_EVENT *newXAVAEventStack     ();
+extern void      destroyXAVAEventStack (XG_EVENT *stack);
+extern bool      pendingXAVAEventStack (XG_EVENT *stack);
+extern bool      isEventPendingXAVA    (XG_EVENT *stack, XG_EVENT event);
 
 // OS abstractions
 extern           int xavaMkdir(const char *dir);
