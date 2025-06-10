@@ -22,7 +22,7 @@ if(CAIRO_MODULES)
         #find_and_copy_dlls(cairo_stars)
 
         set_target_properties(cairo_stars PROPERTIES OUTPUT_NAME "cairo/module/stars/module")
-        install(FILES "${CMAKE_BINARY_DIR}/cairo/module/stars/config.ini" RENAME config.ini.example DESTINATION share/xava/cairo/module/stars/)
+        install(FILES "${CMAKE_BINARY_DIR}/cairo/module/stars/config.ini" DESTINATION share/xava/cairo/module/stars/)
         install(TARGETS cairo_stars RENAME module DESTINATION share/xava/cairo/module/stars/)
     else()
         message(WARNING "CAIRO library not found; \"cairo_stars\" won't build")

@@ -65,6 +65,14 @@ extern           int xavaMkdir(const char *dir);
 extern          bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **actualPath);
 extern unsigned long xavaSleep(unsigned long oldTime, int framerate);
 extern unsigned long xavaGetTime(void);
+/**
+ * A basic file copy function that takes in literal C string file paths as parameters
+ * Both absolute and relative paths should work.
+ * 
+ * @param source - The source file path
+ * @param dest   - The destination file path
+ */
+extern bool xavaCopyFile(char *source, char *dest);
 
 // file/memory abstractions
 extern RawData *xavaReadFile(const char *file);

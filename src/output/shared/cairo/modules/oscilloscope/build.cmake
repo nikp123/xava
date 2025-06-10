@@ -23,7 +23,7 @@ if(CAIRO_MODULES)
         #find_and_copy_dlls(cairo_oscilloscope)
 
         set_target_properties(cairo_oscilloscope PROPERTIES OUTPUT_NAME "cairo/module/oscilloscope/module")
-        install(FILES "${CMAKE_BINARY_DIR}/cairo/module/oscilloscope/config.ini" RENAME config.ini.example DESTINATION share/xava/cairo/module/oscilloscope/)
+        install(FILES "${CMAKE_BINARY_DIR}/cairo/module/oscilloscope/config.ini" DESTINATION share/xava/cairo/module/oscilloscope/)
         install(TARGETS cairo_oscilloscope RENAME module DESTINATION share/xava/cairo/module/oscilloscope/)
     else()
         message(WARNING "CAIRO library not found; \"cairo_oscilloscope\" won't build")

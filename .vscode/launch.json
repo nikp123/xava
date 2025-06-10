@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
+            //"args": ["-p", "~/config"],
             "cwd": "${workspaceFolder}/build/",
             "name": "XAVA Debug Launch",
             "type": "cppdbg",

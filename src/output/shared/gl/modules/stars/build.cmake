@@ -35,9 +35,9 @@ if(GL_MODULES)
         configure_file("${XAVA_MODULE_DIR}/config.ini"    gl/module/stars/config.ini    COPYONLY)
 
         install(TARGETS gl_stars RENAME module DESTINATION share/xava/gl/module/stars/)
-        install(FILES "${CMAKE_BINARY_DIR}/gl/module/stars/vertex.glsl"   RENAME vertex.glsl.example   DESTINATION share/xava/gl/module/stars/)
-        install(FILES "${CMAKE_BINARY_DIR}/gl/module/stars/fragment.glsl" RENAME fragment.glsl.example DESTINATION share/xava/gl/module/stars/)
-        install(FILES "${CMAKE_BINARY_DIR}/gl/module/stars/config.ini"    RENAME config.ini.example    DESTINATION share/xava/gl/module/stars/)
+        install(FILES "${CMAKE_BINARY_DIR}/gl/module/stars/vertex.glsl"   DESTINATION share/xava/gl/module/stars/)
+        install(FILES "${CMAKE_BINARY_DIR}/gl/module/stars/fragment.glsl" DESTINATION share/xava/gl/module/stars/)
+        install(FILES "${CMAKE_BINARY_DIR}/gl/module/stars/config.ini"    DESTINATION share/xava/gl/module/stars/)
 
         # Maybe GL license?
     else()

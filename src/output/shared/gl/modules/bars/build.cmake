@@ -34,8 +34,8 @@ if(GL_MODULES)
         configure_file("${XAVA_MODULE_DIR}/fragment.glsl" gl/module/bars/fragment.glsl COPYONLY)
 
         install(TARGETS gl_bars RENAME module DESTINATION share/xava/gl/module/bars/)
-        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/vertex.glsl"   RENAME vertex.glsl.example   DESTINATION share/xava/gl/module/bars/)
-        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/fragment.glsl" RENAME fragment.glsl.example DESTINATION share/xava/gl/module/bars/)
+        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/vertex.glsl"   DESTINATION share/xava/gl/module/bars/)
+        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/fragment.glsl" DESTINATION share/xava/gl/module/bars/)
 
         # Maybe GL license?
     else()

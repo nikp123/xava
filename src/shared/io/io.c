@@ -9,6 +9,7 @@
 #include <assert.h>
 
 #include <unistd.h>
+#include <dirent.h>
 
 #include "shared/log.h"
 #include "shared.h"
@@ -152,12 +153,73 @@ EXP_FUNC bool isEventPendingXAVA(XG_EVENT *stack, XG_EVENT event) {
   return (found != -1);
 }
 
-// this function is an abstraction for checking whether or not a certain file is usable
-// You define what kind of behaviour a certain file should have, then it's filename
-// inside of the "file container" (for configs that would be ~/.config/xava/...) and
-// actualPath (if successful) will return the path where that file could be found
-// (this string is heap allocated, so a free is a must)
-EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **actualPath) {
+/** 
+ * @name Get the directory path of whatever file path string you specify.
+ * @details Does NOT check if the string that was passed through is a path or not.
+ *          The dir and file pointers are heap allocated so they must be freed.
+ * @param source - The UNIX formatted path string containing our directory and file
+ * @param dir - Pointer to where our output directory string will be written (can be NULL'd if you want no result)
+ * @param file - Pointer to where our file name string will be written (can be NULL'd if you want no result)
+**/
+void splitDirAndFileFromUnixPathString(const char *source, char **dir, char **file) {
+    // this special little routine copies the path from the filename (if there is any)
+    const size_t path_size = strlen(source);
+
+    for (size_t i=path_size; i; --i) {
+        // Break path if it's found
+        if (source[i] == DIRBRK) {
+            if(dir != NULL)  *dir  = strndup(source, i);
+            if(file != NULL) *file = strdup(source+i+1); 
+            break;
+        }
+    }
+}
+
+/** 
+ * @details Appends a UNIX style path to any OS string, does path break conversions for you.
+ *          Does not do any allocations.
+ * @param root Dynamically or statically allocated string, which is larger than root + relative
+ * @param param Static string we want to append to root
+**/
+void appendUnixRelativePathToNative(char *root, const char *relative) {
+    size_t og_root_offset = strlen(root);
+
+    strcat(root, relative);
+
+    // break if the native platform uses UNIX paths
+    #if DIRBRK == '/'
+        return; 
+    #endif
+    
+    // Can be just a Windows thing, but just in case an OS uses some weird chars for dirs
+    // this code can handle it
+    for(size_t i = og_root_offset; i < strlen(root); i++) {
+        if(root[i] == '/') root[i] = DIRBRK;
+    }
+}
+
+// Returns true when a path exists, must be natively formatted
+bool checkPath(char *path) {
+    DIR *dir = opendir(path);
+    // close the directory
+    if(dir != NULL) { closedir(dir); return true; }
+
+    // check errno if you want to handle errors
+    return false;
+}
+
+/**
+ * This function is all in one gigantic function which manages all the platform differences when
+ * it comes to what kind of resource you're trying to find. For example: "I want a cache file on Windows"
+ * and it returning the proper path with which you can access that resource, taking into consideration
+ * all the specific platform differences that exist in the world.
+ * 
+ * @param type Defines what type of file resource you're trying to fetch
+ * @param virtualFilePath Relative file path inside of the general resource folder for that system
+ *  For example, when you have a config file on Linux, this appends that path to ~/.config/.
+ * @param actualPath Pointer to the path 
+ **/
+EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *virtualFilePath, char **actualPath) {
     bool writeCheck = false;
     switch(type) {
         case XAVA_FILE_TYPE_CACHE:
@@ -189,7 +251,7 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
                     sprintf(configHome, "%s/.config/%s/", homeDir, PACKAGE);
                     (*actualPath) = configHome;
                 } else {
-                    (*actualPath) = malloc((strlen(configHome)+strlen(PACKAGE)+strlen(filename)+3)*sizeof(char));
+                    (*actualPath) = malloc((strlen(configHome)+strlen(PACKAGE)+strlen(virtualFilePath)+3)*sizeof(char));
                     assert((*actualPath) != NULL);
 
                     sprintf((*actualPath), "%s/%s/", configHome, PACKAGE);
@@ -229,17 +291,21 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
         }
         case XAVA_FILE_TYPE_PACKAGE:
         {
+            /**
+              Lets settle on user-centric behaviour here,
+              DO NOT expect to launch from the properties directory 
+              but rather the build directory inside its
+              Anything else won't work and WILL break.
+            **/
             #if defined(__APPLE__)||defined(__unix__)
-                // TODO: Support non-installed configurations
                 char *path = malloc(MAX_PATH);
-                #ifdef UNIX_INDEPENDENT_PATHS
-                    char *ptr;
-                    strcpy(path, ptr=find_prefix());
-                    strcat(path, "/share/"PACKAGE"/");
-                    //free(ptr);
-                #else
+                char *ptr = find_prefix();
+                strcpy(path, ptr);
+                if(ptr != NULL) free(ptr);
+
+                if(!checkPath(path)) {
                     strcpy(path, PREFIX"/share/"PACKAGE"/");
-                #endif
+                }
                 (*actualPath) = path;
             #elif defined(__WIN32__)
                 // Windows uses widechars internally
@@ -279,28 +345,15 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
             break;
     }
 
+    char *actualFileName, *actualFileDir;
+
     // this special little routine copies the path from the filename (if there is any)
-    size_t last_dir_offset = 0;
-    size_t path_size = strlen((*actualPath)); // DO NOT USE THIS LATER ON IN THE CODE
-    const char *new_filename = filename;
-    for(size_t i=0; i<strlen(filename); i++) {
-        // caught a directory
-        if(filename[i] == '/' || filename[i] == '\\') { // Using UNIX-like directories inside codebase, FYI
-            for(size_t j=last_dir_offset; j<i; j++) {
-                (*actualPath)[path_size+j] = filename[j];
-            }
-
-            (*actualPath)[path_size+i] = DIRBRK; // use whatever the platforms supports natively
-            (*actualPath)[path_size+i+1] = '\0'; // because C
-
-            last_dir_offset = i+1;
-            new_filename = &filename[last_dir_offset];
-        }
-    }
+    appendUnixRelativePathToNative(*actualPath, virtualFilePath);
+    splitDirAndFileFromUnixPathString(*actualPath, &actualFileDir, &actualFileName);
 
     // config: create directory
     if(writeCheck)
-        xavaMkdir((*actualPath));
+        xavaMkdir(actualFileDir);
 
     // add filename
     switch(type) {
@@ -308,14 +361,14 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
         case XAVA_FILE_TYPE_CONFIG:
         case XAVA_FILE_TYPE_OPTIONAL_CONFIG:
         case XAVA_FILE_TYPE_CACHE:
-            strcat((*actualPath), new_filename);
+            // literal noop, this is intentional
             break;
         case XAVA_FILE_TYPE_CUSTOM_READ:
         case XAVA_FILE_TYPE_CUSTOM_WRITE:
-            (*actualPath) = (char*)filename;
+            (*actualPath) = (char*)virtualFilePath;
             break;
         default:
-            (*actualPath) = (char*)new_filename;
+            (*actualPath) = (char*)actualFileName;
             break;
     }
 
@@ -324,85 +377,53 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
         case XAVA_FILE_TYPE_CONFIG:
         {
             // don't be surprised if you find a lot of bugs here, beware!
-            FILE *fp = fopen((*actualPath), "rb"), *fn;
-            if (!fp) {
-                xavaLog("File '%s' does not exist! Trying to make a new one...", (*actualPath));
-
-                // if that particular config file does not exist, try copying the default one
-                char *found;
-
-                #ifdef __WIN32__
-                    #define EXAMPLE_FILE_EXT ""
-                #else
-                    #define EXAMPLE_FILE_EXT ".example"
-                #endif
-
-                // use old filename, because it carries the sub-directories with it
-                char *defaultConfigFileName = malloc(strlen(filename)+1+strlen(EXAMPLE_FILE_EXT));
-                sprintf(defaultConfigFileName, "%s" EXAMPLE_FILE_EXT, filename);
-
-                if(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, defaultConfigFileName, &found) == false) {
-                    if(type == XAVA_FILE_TYPE_CONFIG) // error only if it's necesary
-                        xavaError("Could not find the file '%s' within the XAVA installation! Bailing out...",
-                            defaultConfigFileName);
-                    free((*actualPath));
-                    return false;
-                }
-
-                free(defaultConfigFileName);
-
-                // try to save the default file
-                fp = fopen((*actualPath), "wb");
-                fn = fopen(found, "rb"); // don't bother checking, it'll succeed anyway
-
-                xavaMkdir((*actualPath));
-
-                if(fp==NULL) {
-                    xavaError("Failed to save the default config file '%s' to '%s'!",
-                            found, (*actualPath));
-                    free(found);
-                    free((*actualPath));
-                    fclose(fn);
-                    return false;
-                }
-
-                size_t filesize;
-
-                // jump to end of file
-                fseek(fn, 0, SEEK_END);
-                // report offset == filesize
-                filesize = ftell(fn);
-                // jump back to beginning
-                fseek(fn, 0, SEEK_SET);
-
-                // allocate buffer
-                void *fileBuffer = malloc(filesize);
-                if(fileBuffer == NULL) {
-                    xavaError("Could not allocate config file!");
-                    fclose(fn);
-                    fclose(fp);
-                    free(found);
-                    free((*actualPath));
-                    return false;
-                }
-
-                // read into buffer
-                fread(fileBuffer, filesize, 1, fn);
-                // write out that buffer
-                fwrite(fileBuffer, filesize, 1, fp);
-                // free the buffer
-                free(fileBuffer);
-                // close handles
-                fclose(fn);
-                // close the default location string
-                free(found);
-
-                xavaLog("Successfully created default config file on '%s'!", (*actualPath));
+            FILE *fp = fopen((*actualPath), "rb");
+            if (fp != NULL) { // if the file already exists, just exit the routine
+                fclose(fp);
+                return true;
             }
-            fclose(fp);
 
-            // we can finally say that this has finished
-            return true;
+            // If the file is *NOT* (no such file or directory) but some other error
+            // ChatGPT says this is portable to Windows too, so idk
+            xavaBailCondition(errno != ENOENT, 
+                "File '%s' could not be opened due to reason: %s. Please check it!",
+                (*actualPath), strerror(errno));
+
+            xavaLog("File '%s' does not exist! Trying to make a new one...", (*actualPath), errno);
+
+            /**
+             * In case the user configuration file doesn't exist, try loading the one from the
+             * XAVA installtaiton folder instead.
+             **/
+            char *packageFilePath;
+            if(!xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, virtualFilePath, &packageFilePath)) {
+                // throw user error if the file is not optional
+                xavaBailCondition(type == XAVA_FILE_TYPE_CONFIG,
+                    "Could not find the file '%s' within the XAVA installation! Bailing out...", virtualFilePath);
+  
+                free(actualFileDir);
+                free(actualFileName);
+                free((*actualPath));
+                return false;
+            }
+
+            // try to save the default file
+            if(!xavaCopyFile(packageFilePath, (*actualPath))) {
+                xavaBailCondition(type != XAVA_FILE_TYPE_OPTIONAL_CONFIG,
+                    "Bailing because an required config file (%s) couldn't be generated.",
+                    (*actualPath));
+
+                xavaError("Could generate optional config file '%s'!", (*actualPath));
+                free((*actualPath));
+                free(actualFileDir);
+                free(actualFileName);
+                free(packageFilePath);
+                return false;
+            }
+
+            free(actualFileDir); free(actualFileName); free(packageFilePath);
+
+            xavaLog("Successfully created default config file on '%s'!", (*actualPath));            
             break; // this break doesn't do shit apart from shutting up the static analyser
         }
         default:
@@ -411,7 +432,8 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
             if(writeCheck) {
                 fp = fopen((*actualPath), "ab");
                 if(fp == NULL) {
-                    xavaLog("Could not open '%s' for writing!", (*actualPath));
+                    xavaLog("Could not open '%s' for writing! (error: %d)",
+                        (*actualPath), strerror(errno));
                     switch(type) {
                         case XAVA_FILE_TYPE_PACKAGE:
                         case XAVA_FILE_TYPE_CACHE:
@@ -425,7 +447,8 @@ EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **ac
             } else {
                 fp = fopen((*actualPath), "rb");
                 if(fp == NULL) {
-                    xavaLog("Could not open '%s' for reading!", (*actualPath));
+                    xavaLog("Could not open '%s' for reading! (error: %s)",
+                        (*actualPath), strerror(errno));
                     switch(type) {
                         case XAVA_FILE_TYPE_PACKAGE:
                         case XAVA_FILE_TYPE_CACHE:
@@ -464,7 +487,10 @@ EXP_FUNC RawData *xavaReadFile(const char *file) {
         return NULL;
     }
 
-    fread(data->data, sizeof(char), data->size, fp);
+    // Assert just checks if the whole file was been able to be read in.
+    // Never expected to fail unless we are literally dealing with the FS
+    // dying.
+    assert(1 == fread(data->data, data->size, 1, fp));
 
     ((char*)data->data)[data->size] = 0x00;
 
@@ -480,10 +506,56 @@ EXP_FUNC RawData *xavaReadFile(const char *file) {
     return data;
 }
 
+EXP_FUNC bool xavaCopyFile(char *source, char *dest) {
+    FILE *fs, *fd;
+
+    fs = fopen(source, "rb"); // We already know that this path is correct
+    if(fs == NULL) {
+        xavaWarn("Unable to copy the source '%s' file!", source);
+        return false;
+    }
+
+    fd = fopen(dest, "wb");
+    if(fd == NULL) {
+        xavaWarn("Unable to write to the destination '%s' file!", dest);
+        fclose(fs);
+        return false;
+    }
+
+    size_t filesize;
+
+    // jump to end of file
+    fseek(fs, 0, SEEK_END);
+    // report offset == filesize
+    filesize = ftell(fs);
+    // jump back to beginning
+    fseek(fs, 0, SEEK_SET);
+
+    // allocate buffer
+    void *fileBuffer = malloc(filesize);
+    assert(fileBuffer);
+
+    // read into buffer
+    assert(1 == fread(fileBuffer, filesize, 1, fs));
+    // write out that buffer
+    assert(1 == fwrite(fileBuffer, filesize, 1, fd));
+    // free the buffer
+    free(fileBuffer);
+    // close handles
+    fclose(fs); fclose(fd);
+
+    xavaSpam("Copied %d bytes from %s to %s", 
+        filesize, source, dest);
+
+    return true;
+}
+
 EXP_FUNC void xavaCloseFile(RawData *file) {
     free(file->data);
     free(file);
 }
+
+
 
 EXP_FUNC void *xavaDuplicateMemory(void *memory, size_t size) {
     void *duplicate = malloc(size+1);

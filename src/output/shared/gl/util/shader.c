@@ -31,7 +31,7 @@ void xava_gl_module_shader_load(xava_gl_module_program *program,
   switch (stage) {
   case SGL_VERT: {
     strcat(file_path, "/vertex.glsl");
-    xavaLogCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, file_path,
+    xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, file_path,
                                           &returned_path) == false,
                      "Failed to load '%s'!", file_path);
     shader = &program->vert;
@@ -88,32 +88,35 @@ void xava_gl_module_shader_load(xava_gl_module_program *program,
 
   xava_ionotify_watch_setup setup = {0};
 
-  // load file
-  if (stage == SGL_CONFIG) {
-    program->config = xavaConfigOpen(returned_path);
+  // If no module is attached inotify reload should be ignored
+  if (module != NULL) {
+    // load file
+    if (stage == SGL_CONFIG) {
+      program->config = xavaConfigOpen(returned_path);
 
-    // add watcher
-    setup.filename = returned_path;
-    setup.id = 1; // dont really care tbh
-    setup.xava = xava;
-    setup.ionotify = xava->ionotify;
-    setup.xava_ionotify_func = module->func.ionotify_callback;
-    xavaBailCondition(!xavaIONotifyAddWatch(setup),
-                      "xavaIONotifyAddWatch failed!");
-  } else {
-    shader->path = strdup(returned_path);
-    file = xavaReadFile(shader->path);
-    shader->text = xavaDuplicateMemory(file->data, file->size);
-    xavaCloseFile(file);
+      // add watcher
+      setup.filename = returned_path;
+      setup.id = 1; // dont really care tbh
+      setup.xava = xava;
+      setup.ionotify = xava->ionotify;
+      setup.xava_ionotify_func = module->func.ionotify_callback;
+      xavaBailCondition(!xavaIONotifyAddWatch(setup),
+                        "xavaIONotifyAddWatch failed!");
+    } else {
+      shader->path = strdup(returned_path);
+      file = xavaReadFile(shader->path);
+      shader->text = xavaDuplicateMemory(file->data, file->size);
+      xavaCloseFile(file);
 
-    // add watcher
-    setup.filename = shader->path;
-    setup.id = 1; // dont really care tbh
-    setup.xava = xava;
-    setup.ionotify = xava->ionotify;
-    setup.xava_ionotify_func = module->func.ionotify_callback;
-    xavaBailCondition(!xavaIONotifyAddWatch(setup),
-                      "xavaIONotifyAddWatch failed!");
+      // add watcher
+      setup.filename = shader->path;
+      setup.id = 1; // dont really care tbh
+      setup.xava = xava;
+      setup.ionotify = xava->ionotify;
+      setup.xava_ionotify_func = module->func.ionotify_callback;
+      xavaBailCondition(!xavaIONotifyAddWatch(setup),
+                        "xavaIONotifyAddWatch failed!");
+    }
   }
 
   // clean escape

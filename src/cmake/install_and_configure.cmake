@@ -16,7 +16,7 @@ endforeach()
 # Install
 install (TARGETS xava DESTINATION bin)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/final-LICENSE.txt" DESTINATION share/licenses/xava)
-install (FILES example_files/config RENAME config.example DESTINATION share/xava)
+install (FILES example_files/config RENAME config DESTINATION share/xava)
 
 # Install DLLs
 find_and_copy_dlls(xava)

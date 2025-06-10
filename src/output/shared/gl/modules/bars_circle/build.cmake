@@ -34,9 +34,9 @@ if(GL_MODULES)
         configure_file("${XAVA_MODULE_DIR}/fragment.glsl" gl/module/bars_circle/fragment.glsl COPYONLY)
         configure_file("${XAVA_MODULE_DIR}/config.ini"    gl/module/bars_circle/config.ini    COPYONLY)
         install(TARGETS gl_bars_circle RENAME module DESTINATION share/xava/gl/module/bars_circle/)
-        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars_circle/vertex.glsl"   RENAME vertex.glsl.example   DESTINATION share/xava/gl/module/bars_circle/)
-        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars_circle/fragment.glsl" RENAME fragment.glsl.example DESTINATION share/xava/gl/module/bars_circle/)
-        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars_circle/config.ini"    RENAME config.ini.example    DESTINATION share/xava/gl/module/bars_circle/)
+        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars_circle/vertex.glsl"   DESTINATION share/xava/gl/module/bars_circle/)
+        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars_circle/fragment.glsl" DESTINATION share/xava/gl/module/bars_circle/)
+        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars_circle/config.ini"    DESTINATION share/xava/gl/module/bars_circle/)
 
         # Maybe GL license?
     else()

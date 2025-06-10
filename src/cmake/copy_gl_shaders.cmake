@@ -5,7 +5,7 @@ foreach(files ${filters})
     string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
     string(REPLACE "vertex.glsl" "" target_path ${target_path})
     configure_file("example_files/${target_path}/vertex.glsl" ${target_path}/vertex.glsl COPYONLY)
-    install(FILES "example_files/${target_path}/vertex.glsl" RENAME vertex.glsl.example DESTINATION "share/xava/${target_path}")
+    install(FILES "example_files/${target_path}/vertex.glsl" DESTINATION "share/xava/${target_path}")
 endforeach()
 
 # Install geometry shaders
@@ -15,7 +15,7 @@ foreach(files ${filters})
     string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
     string(REPLACE "geometry.glsl" "" target_path ${target_path})
     configure_file("example_files/${target_path}/geometry.glsl" ${target_path}/geometry.glsl COPYONLY)
-    install(FILES "example_files/${target_path}/geometry.glsl" RENAME geometry.glsl.example DESTINATION "share/xava/${target_path}")
+    install(FILES "example_files/${target_path}/geometry.glsl" DESTINATION "share/xava/${target_path}")
 endforeach()
 
 # Install fragment shaders
@@ -25,7 +25,7 @@ foreach(files ${filters})
     string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
     string(REPLACE "fragment.glsl" "" target_path ${target_path})
     configure_file("example_files/${target_path}/fragment.glsl" ${target_path}/fragment.glsl COPYONLY)
-    install(FILES "example_files/${target_path}/fragment.glsl" RENAME fragment.glsl.example DESTINATION "share/xava/${target_path}")
+    install(FILES "example_files/${target_path}/fragment.glsl" DESTINATION "share/xava/${target_path}")
 endforeach()
 
 # Install shader configs
@@ -35,6 +35,6 @@ foreach(files ${filters})
     string(REPLACE "${xava_SOURCE_DIR}/example_files/" "" target_path ${path})
     string(REPLACE "config.ini" "" target_path ${target_path})
     configure_file("example_files/${target_path}/config.ini" ${target_path}/config.ini COPYONLY)
-    install(FILES "example_files/${target_path}/config.ini" RENAME config.ini.example DESTINATION "share/xava/${target_path}")
+    install(FILES "example_files/${target_path}/config.ini" DESTINATION "share/xava/${target_path}")
 endforeach()
 

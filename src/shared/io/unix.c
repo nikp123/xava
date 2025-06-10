@@ -179,8 +179,7 @@ br_dirname (const char *path)
 		return result;
 }
 
-char *
-find_prefix(void) {
+char* find_prefix(void) {
 	char *exe  = find_exe();
 	char *dir1 = br_dirname(exe);
 	char *dir2 = br_dirname(dir1);
