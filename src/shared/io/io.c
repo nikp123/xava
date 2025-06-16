@@ -22,6 +22,14 @@
 #include "shared/io/unix.h"
 #endif
 
+/*
+ * DISCLAIMER:
+ *
+ * The following logic assumes we are working with UTF-8 file names with UNIX directory breaks by default.
+ * Please try to maintain that. xavaFindAndCheckFile should be the only function that turns those strings
+ * into platform specific path types
+*/
+
 EXP_FUNC int xavaMkdir(const char *dir) {
     /* Stolen from: https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950 */
     /* Adapted from http://stackoverflow.com/a/2336245/119527 */
@@ -153,7 +161,7 @@ EXP_FUNC bool isEventPendingXAVA(XG_EVENT *stack, XG_EVENT event) {
   return (found != -1);
 }
 
-/** 
+/**
  * @name Get the directory path of whatever file path string you specify.
  * @details Does NOT check if the string that was passed through is a path or not.
  *          The dir and file pointers are heap allocated so they must be freed.
@@ -161,7 +169,7 @@ EXP_FUNC bool isEventPendingXAVA(XG_EVENT *stack, XG_EVENT event) {
  * @param dir - Pointer to where our output directory string will be written (can be NULL'd if you want no result)
  * @param file - Pointer to where our file name string will be written (can be NULL'd if you want no result)
 **/
-void splitDirAndFileFromUnixPathString(const char *source, char **dir, char **file) {
+void splitDirAndFileFromNativePathString(const char *source, char **dir, char **file) {
     // this special little routine copies the path from the filename (if there is any)
     const size_t path_size = strlen(source);
 
@@ -169,13 +177,13 @@ void splitDirAndFileFromUnixPathString(const char *source, char **dir, char **fi
         // Break path if it's found
         if (source[i] == DIRBRK) {
             if(dir != NULL)  *dir  = strndup(source, i);
-            if(file != NULL) *file = strdup(source+i+1); 
+            if(file != NULL) *file = strdup(source+i+1);
             break;
         }
     }
 }
 
-/** 
+/**
  * @details Appends a UNIX style path to any OS string, does path break conversions for you.
  *          Does not do any allocations.
  * @param root Dynamically or statically allocated string, which is larger than root + relative
@@ -188,9 +196,9 @@ void appendUnixRelativePathToNative(char *root, const char *relative) {
 
     // break if the native platform uses UNIX paths
     #if DIRBRK == '/'
-        return; 
+        return;
     #endif
-    
+
     // Can be just a Windows thing, but just in case an OS uses some weird chars for dirs
     // this code can handle it
     for(size_t i = og_root_offset; i < strlen(root); i++) {
@@ -208,265 +216,267 @@ bool checkPath(char *path) {
     return false;
 }
 
-/**
- * This function is all in one gigantic function which manages all the platform differences when
- * it comes to what kind of resource you're trying to find. For example: "I want a cache file on Windows"
- * and it returning the proper path with which you can access that resource, taking into consideration
- * all the specific platform differences that exist in the world.
- * 
- * @param type Defines what type of file resource you're trying to fetch
- * @param virtualFilePath Relative file path inside of the general resource folder for that system
- *  For example, when you have a config file on Linux, this appends that path to ~/.config/.
- * @param actualPath Pointer to the path 
- **/
-EXP_FUNC bool xavaFindAndCheckFile(XF_TYPE type, const char *virtualFilePath, char **actualPath) {
-    bool writeCheck = false;
-    switch(type) {
-        case XAVA_FILE_TYPE_CACHE:
-            writeCheck = true;
+// Returns true if a file exists, must be natively formatted
+bool checkFile(char *path) {
+    FILE *fp = fopen(path, "rb");
+    // close the file
+    if(fp != NULL) { fclose(fp); return true; }
 
+    // check errno if you want to handle errors
+    return false;
+}
+
+/**
+ * This is needed for debugging and development purposes.
+ * We need to check whether or not the program we are running
+ * is behaving locally or is it system-wide.
+ *
+ * @return - NULL is not FHS, and heap-allocated prefix if it is
+ **/
+EXP_FUNC char* xavaFileType_AreWeFHSlike(void) {
+    #if !defined(__APPLE__)||!defined(__unix__)
+        return NULL;
+    #endif
+
+    printf("%s\n", find_prefix());
+
+    // get your system path
+    char *path = getenv("PATH");
+
+    /**
+     * I get that what I'm doing here is extremely janky but
+     * essentially it boils down to testing whether or not
+     * the PATH variables are the same as the find_prefix + /bin
+     **/
+    char *ptr = find_prefix();
+    char *exe_path = malloc(MAX_PATH);
+    assert(exe_path != NULL);
+    snprintf(exe_path, MAX_PATH, "%s/bin", ptr);
+
+    char* token;
+    char* rest = path;
+    while ((token = strtok_r(rest, ":", &rest))) {
+        if(!strcmp(exe_path, token)) {
+            // skipping a directory check here because I assume UNIX
+            // properly tells me where the applicaiton has been launched from
+            xavaSpam("Assuming the path '%s' is correct", exe_path);
+            free(exe_path);
+            return ptr;
+        }
+    }
+
+    xavaSpam("We aren't FHS, prefix was: %s", ptr);
+    free(exe_path); free(ptr);
+    return NULL;
+}
+
+char *xavaFileType_DiscoverPath(XF_TYPE type, const char *name) {
+    char *path = malloc(MAX_PATH);
+    assert(path != NULL);
+
+    switch(type) {
+        case XAVA_FILE_TYPE_CACHE: {
             // TODO: When you use it, FINISH IT!
-            {
-                xavaError("XAVA_FILE_TYPE_CACHE is not implemented yet!");
-                return false;
-            }
+            xavaError("XAVA_FILE_TYPE_CACHE is not implemented yet!");
+            goto xavaFileType_DiscoverPath_defer;
             break;
+        }
         case XAVA_FILE_TYPE_CONFIG:
-        case XAVA_FILE_TYPE_OPTIONAL_CONFIG:
-        {
+        case XAVA_FILE_TYPE_OPTIONAL_CONFIG: {
             #if defined(__unix__) // FOSS-y/Linux-y implementation
                 char *configHome = getenv("XDG_CONFIG_HOME");
 
                 if(configHome == NULL) {
                     xavaLog("XDG_CONFIG_HOME is not set. Assuming it's in the default path per XDG-spec.");
 
-                    char *homeDir;
-                    xavaErrorCondition((homeDir = getenv("HOME")) == NULL,
-                            "This system is $HOME-less. Aborting execution...");
+                    char *homeDir = getenv("HOME");
+                    if(homeDir == NULL) {
+                        xavaError("This system is $HOME-less. Execution cannot continue!");
+                        goto xavaFileType_DiscoverPath_defer;
+                    }
 
-                    configHome = malloc(MAX_PATH);
-                    assert(configHome != NULL);
-
-                    // filename is added in post
-                    sprintf(configHome, "%s/.config/%s/", homeDir, PACKAGE);
-                    (*actualPath) = configHome;
+                    snprintf(path, MAX_PATH, "%s/.config/%s/%s", homeDir, PACKAGE, name);
                 } else {
-                    (*actualPath) = malloc((strlen(configHome)+strlen(PACKAGE)+strlen(virtualFilePath)+3)*sizeof(char));
-                    assert((*actualPath) != NULL);
-
-                    sprintf((*actualPath), "%s/%s/", configHome, PACKAGE);
+                    snprintf(path, MAX_PATH, "%s/%s/%s", configHome, PACKAGE, name);
                 }
-            #elif defined(__APPLE__) // App-lol implementation
-                char *configHome = malloc(MAX_PATH);
-                char *homeDir;
+            #elif defined(__APPLE__)
+                char *homeDir = getenv("HOME");
 
-                // you must have a really broken system for this to be false
-                if((homeDir = getenv("HOME")) == NULL) {
+                // you must have a really broken system for this to be true
+                if(homeDir == NULL) {
                     xavaError("macOS is $HOME-less. Bailing out!!!");
-                    free(configHome);
-                    return false;
+                    goto xavaFileType_DiscoverPath_defer;
                 }
 
-                sprintf(configHome, "%s//Library//Application Support//", homeDir);
-                (*actualPath) = configHome;
+                // do we need to correct for file paths here?
+                snprintf(path, MAX_PATH, "%s//Library//Application Support//%s", homeDir, name);
             #elif defined(__WIN32__) // Windows-y implementation
-                char *configHome = malloc(MAX_PATH);
-                char *homeDir;
+                char *homeDir = getenv("APPDATA");
 
                 // stop using windows 98 ffs
-                if((homeDir = getenv("APPDATA")) == NULL) {
-                    xavaError("XAVA could not find \%AppData\%! Something's REALLY wrong.");
-                    free(configHome);
-                    return false;
+                if(homeDir == NULL) {
+                    xavaError("XAVA could not find \%AppData\%! Something's REALLY wrong or you are using an ANCIENT OS.");
+                    goto xavaFileType_DiscoverPath_defer;
                 }
 
-                sprintf(configHome, "%s\\%s\\", homeDir, PACKAGE);
-                (*actualPath) = configHome;
+                // Windows' paths use backslashes, so we need to correct for that here
+                char *new_name = strcpy(name);
+                for(size_t i = 0; i < strlen(name); i++) {
+                    if(new_name[i] == '/') new_name[i] = '\\';
+                }
+
+                snprintf(path, MAX_PATH, "%s\\%s\\%s", homeDir, PACKAGE, new_name);
+                free(new_name);
             #else
                 #error "Platform not supported"
             #endif
-
-            writeCheck = true;
             break;
         }
         case XAVA_FILE_TYPE_PACKAGE:
         {
             /**
               Lets settle on user-centric behaviour here,
-              DO NOT expect to launch from the properties directory 
+              DO NOT expect to launch from the properties directory
               but rather the build directory inside its
               Anything else won't work and WILL break.
             **/
             #if defined(__APPLE__)||defined(__unix__)
-                char *path = malloc(MAX_PATH);
-                char *ptr = find_prefix();
-                strcpy(path, ptr);
-                if(ptr != NULL) free(ptr);
-
-                if(!checkPath(path)) {
-                    strcpy(path, PREFIX"/share/"PACKAGE"/");
+                char *prefix = xavaFileType_AreWeFHSlike();
+                if(prefix != NULL) {
+                    strcpy(path, prefix);
+                    free(prefix);
+                } else {
+                    prefix = find_prefix();
+                    assert(prefix != NULL);
+                    // Yes this check is very memey, but idc anymore this shit is hard enough anyway
+                    snprintf(path, MAX_PATH, "%s/%s/xava.png", prefix, name);
+                    free(prefix);
+                    if(checkFile(path)) {
+                        xavaSpam("Guessing local file at '%s'", path);
+                        break;
+                    }
+                    xavaSpam("None of the given prefixes match nor is it local, desparately trying PREFIX instead.")
+                    snprintf(path, MAX_PATH, PREFIX"/share/"PACKAGE"/%s", name);
                 }
-                (*actualPath) = path;
             #elif defined(__WIN32__)
                 // Windows uses widechars internally
                 WCHAR wpath[MAX_PATH];
-                char *path = malloc(MAX_PATH);
 
                 // Get path of where the executable is installed
                 HMODULE hModule = GetModuleHandleW(NULL);
                 GetModuleFileNameW(hModule, wpath, MAX_PATH);
                 wcstombs(path, wpath, MAX_PATH);
 
-                // bullshit string hacks with nikp123 (ep. 1)
-                for(int i = strlen(path)-1; i > 0; i--) { // go from end of the string
+                // Get path from filename
+                size_t i = 0;
+                for(i = strlen(path)-1; i > 0; i--) { // go from end of the string
                     if(path[i] == DIRBRK) { // if we've hit a path, change the characters in front
                         path[i+1] = '\0'; // end the string after the path
                         break;
                     }
                 }
-
-                (*actualPath) = path;
+                // append our desired file within that
+                strncat(path, name, MAX_PATH);
+                // convert UNIXy path to native
+                for(i; i<strlen(path); i++) { if(path[i] == '/') path[i] = '\\'; }
             #else
                 #error "Platform not supported"
             #endif
-            writeCheck = false;
             break;
         }
-        case XAVA_FILE_TYPE_CUSTOM_WRITE:
-            writeCheck = true;
-            goto yeet;
-        case XAVA_FILE_TYPE_CUSTOM_READ:
-        yeet:
-            CALLOC_SELF((*actualPath), MAX_PATH);
-            break;
         default:
         case XAVA_FILE_TYPE_NONE:
             xavaBail("Your code broke. The file type is invalid");
-            break;
+            goto xavaFileType_DiscoverPath_defer;
+
     }
 
-    char *actualFileName, *actualFileDir;
+    return path;
+xavaFileType_DiscoverPath_defer:
+    free(path);
+    return NULL;
+}
 
-    // this special little routine copies the path from the filename (if there is any)
-    appendUnixRelativePathToNative(*actualPath, virtualFilePath);
-    splitDirAndFileFromUnixPathString(*actualPath, &actualFileDir, &actualFileName);
+/**
+ * This function is all in one gigantic function which manages all the platform differences when
+ * it comes to what kind of resource you're trying to find. For example: "I want a cache file on Windows"
+ * and it returning the proper path with which you can access that resource, taking into consideration
+ * all the specific platform differences that exist in the world.
+ *
+ * @param type Defines what type of file resource you're trying to fetch
+ * @param name Name of the resource that is trying to be fetched. This name acts like a path
+ * on top of the container's own path. For example, when you have a config file on Linux, this
+ * appends that path to ~/.config/.
+ * @return Heap-allocated value of the path that got discovered. NULL if the function failed.
+ **/
+EXP_FUNC char *xavaFindAndCheckFile(XF_TYPE type, const char *name) {
+    char *path = malloc(MAX_PATH);
+    assert(path != NULL);
 
-    // config: create directory
-    if(writeCheck)
-        xavaMkdir(actualFileDir);
+    // check whether or not the file should be checked for the ability to write to it
+    bool writeCheck = false;
 
-    // add filename
-    switch(type) {
-        case XAVA_FILE_TYPE_PACKAGE:
-        case XAVA_FILE_TYPE_CONFIG:
-        case XAVA_FILE_TYPE_OPTIONAL_CONFIG:
+    // correct the write check per type
+    switch (type) {
         case XAVA_FILE_TYPE_CACHE:
-            // literal noop, this is intentional
-            break;
-        case XAVA_FILE_TYPE_CUSTOM_READ:
-        case XAVA_FILE_TYPE_CUSTOM_WRITE:
-            (*actualPath) = (char*)virtualFilePath;
-            break;
-        default:
-            (*actualPath) = (char*)actualFileName;
-            break;
-    }
-
-    switch(type) {
-        case XAVA_FILE_TYPE_OPTIONAL_CONFIG:
         case XAVA_FILE_TYPE_CONFIG:
-        {
-            // don't be surprised if you find a lot of bugs here, beware!
-            FILE *fp = fopen((*actualPath), "rb");
-            if (fp != NULL) { // if the file already exists, just exit the routine
-                fclose(fp);
-                return true;
-            }
-
-            // If the file is *NOT* (no such file or directory) but some other error
-            // ChatGPT says this is portable to Windows too, so idk
-            xavaBailCondition(errno != ENOENT, 
-                "File '%s' could not be opened due to reason: %s. Please check it!",
-                (*actualPath), strerror(errno));
-
-            xavaLog("File '%s' does not exist! Trying to make a new one...", (*actualPath), errno);
-
-            /**
-             * In case the user configuration file doesn't exist, try loading the one from the
-             * XAVA installtaiton folder instead.
-             **/
-            char *packageFilePath;
-            if(!xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, virtualFilePath, &packageFilePath)) {
-                // throw user error if the file is not optional
-                xavaBailCondition(type == XAVA_FILE_TYPE_CONFIG,
-                    "Could not find the file '%s' within the XAVA installation! Bailing out...", virtualFilePath);
-  
-                free(actualFileDir);
-                free(actualFileName);
-                free((*actualPath));
-                return false;
-            }
-
-            // try to save the default file
-            if(!xavaCopyFile(packageFilePath, (*actualPath))) {
-                xavaBailCondition(type != XAVA_FILE_TYPE_OPTIONAL_CONFIG,
-                    "Bailing because an required config file (%s) couldn't be generated.",
-                    (*actualPath));
-
-                xavaError("Could generate optional config file '%s'!", (*actualPath));
-                free((*actualPath));
-                free(actualFileDir);
-                free(actualFileName);
-                free(packageFilePath);
-                return false;
-            }
-
-            free(actualFileDir); free(actualFileName); free(packageFilePath);
-
-            xavaLog("Successfully created default config file on '%s'!", (*actualPath));            
-            break; // this break doesn't do shit apart from shutting up the static analyser
-        }
-        default:
-        {
-            FILE *fp;
-            if(writeCheck) {
-                fp = fopen((*actualPath), "ab");
-                if(fp == NULL) {
-                    xavaLog("Could not open '%s' for writing! (error: %d)",
-                        (*actualPath), strerror(errno));
-                    switch(type) {
-                        case XAVA_FILE_TYPE_PACKAGE:
-                        case XAVA_FILE_TYPE_CACHE:
-                            free((*actualPath));
-                            break;
-                        default:
-                            break;
-                    }
-                    return false;
-                }
-            } else {
-                fp = fopen((*actualPath), "rb");
-                if(fp == NULL) {
-                    xavaLog("Could not open '%s' for reading! (error: %s)",
-                        (*actualPath), strerror(errno));
-                    switch(type) {
-                        case XAVA_FILE_TYPE_PACKAGE:
-                        case XAVA_FILE_TYPE_CACHE:
-                            free((*actualPath));
-                            break;
-                        default:
-                            break;
-                    }
-                    return false;
-                }
-            }
-            fclose(fp);
-            return true;
-            break; // this also never gets executed sadly
-        }
+        case XAVA_FILE_TYPE_OPTIONAL_CONFIG:
+            writeCheck = true; break;
+        case XAVA_FILE_TYPE_PACKAGE:
+        case XAVA_FILE_TYPE_NONE:
+            writeCheck = false; break;
     }
 
-    return false; // if you somehow ended up here, it's probably something breaking so "failure" it is
+    // we implement all the discovery stuff there and let this function deal
+    // with whatever quirkyness the OS has (Linux is by FAR the worse here)
+    char *discovered = xavaFileType_DiscoverPath(type, name);
+    if(discovered == NULL) goto xavaFindAndCheckFile_defer;
+    strncpy(path, discovered, MAX_PATH);
+    free(discovered);
+
+    // create directory if it doesn't exist at the moment
+    if(writeCheck) {
+        char *directory;
+        splitDirAndFileFromNativePathString(path, &directory, NULL);
+
+        if(checkPath(directory) == 0) {
+            if(xavaMkdir(directory) == 0) {
+                xavaError("Couldn't create directory '%s'!", directory);
+                free(directory);
+                goto xavaFindAndCheckFile_defer;
+            }
+        }
+
+        free(directory);
+    }
+
+    /**
+     * This logic implements what do we do in case we find or don't find that
+     * specific file we just dicsovered the path to.
+     **/
+    FILE *fp;
+    if((fp = fopen(path, writeCheck ? "a" : "r")) == NULL) {
+        if(type == XAVA_FILE_TYPE_CONFIG) {
+            // yay, recursion
+            char *install_path = xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, name);
+            if (install_path == NULL) goto xavaFindAndCheckFile_defer;
+
+            if(!xavaCopyFile(install_path, path)) {
+                xavaError("Couldn't copy '%s' to '%s'!", install_path, path);
+                goto xavaFindAndCheckFile_defer;
+            }
+        } else {
+            xavaError("Couldn't fetch resource '%s' at '%s'", name, path);
+            goto xavaFindAndCheckFile_defer;
+        }
+    }
+    fclose(fp);
+
+    // Then we FINALLY return the path that's (hopefully valid)
+    return path;
+xavaFindAndCheckFile_defer:
+    free(path);
+    return NULL;
 }
 
 EXP_FUNC RawData *xavaReadFile(const char *file) {
@@ -544,7 +554,7 @@ EXP_FUNC bool xavaCopyFile(char *source, char *dest) {
     // close handles
     fclose(fs); fclose(fd);
 
-    xavaSpam("Copied %d bytes from %s to %s", 
+    xavaSpam("Copied %d bytes from %s to %s",
         filesize, source, dest);
 
     return true;
@@ -554,8 +564,6 @@ EXP_FUNC void xavaCloseFile(RawData *file) {
     free(file->data);
     free(file);
 }
-
-
 
 EXP_FUNC void *xavaDuplicateMemory(void *memory, size_t size) {
     void *duplicate = malloc(size+1);

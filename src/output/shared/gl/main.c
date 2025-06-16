@@ -40,8 +40,8 @@ XAVAGLModule SGLModuleGetHandle(char *module_name) {
             path, xava_module_error_get(module.handle));
 
     strcat(path, xava_module_extension_get());
-    xavaBailCondition(xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, path,
-        &returned_path) == false, "Failed to open gl module '%s'", path);
+    returned_path = xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, path);
+    xavaBailCondition(returned_path == NULL, "Failed to open gl module '%s'", path);
 
     // remove the file extension because of my bad design
     size_t offset=strlen(returned_path)-strlen(xava_module_extension_get());
@@ -142,7 +142,7 @@ void SGLConfigLoad(XAVA *xava) {
            "Refusing to run like that. Loading default 'bars' module instead");
        SGLModuleLoad(xava, &host, "bars", 1);
     }
-    
+
     xava_gl_module_post_config_load(&host);
 }
 

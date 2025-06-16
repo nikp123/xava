@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <limits.h>
+#include <errno.h>
 
 #include "output/shared/graphical.h"
 #include "config.h"
@@ -173,22 +174,19 @@ char *load_config(char *configPath, XAVA *hand) {
 
     // config: creating path to default config file
     if (configPath == NULL) {
-        char *found;
-        bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
+        configPath = xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG,
             #if defined(__WIN32__)||defined(__APPLE__)
-                "config.cfg",
+                "config.cfg"
             #elif defined(__unix__)
-                "config",
+                "config"
             #endif
-            &found);
+            );
 
-        configPath = found;
-        xavaBailCondition(!success, "Failed to create default config file!");
+        xavaBailCondition(configPath == NULL, "Failed to create default config file!");
     } else { //opening specified file
-        bool success = xavaFindAndCheckFile(XAVA_FILE_TYPE_CUSTOM_READ,
-                configPath, &configPath);
-        xavaBailCondition(success == false, "Specified config file '%s' does not exist!",
-                                    configPath);
+        FILE *fp = fopen(configPath, "rb");
+        xavaBailCondition(fp == NULL, "Specified config file '%s' cannot be opened! %s",
+                                    configPath, strerror(errno));
     }
 
     // config: parse ini

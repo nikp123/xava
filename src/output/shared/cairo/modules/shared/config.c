@@ -42,10 +42,9 @@ void *xava_cairo_module_file_load(
     }
 
     // get REAL path
-    char *actual_path;
+    char *actual_path = xavaFindAndCheckFile(xava_io_file_type, file_path);
     xavaReturnErrorCondition(
-        xavaFindAndCheckFile(xava_io_file_type,
-            file_path, &actual_path) == false,
+        actual_path == NULL,
         NULL,
         "Failed to find or open '%s'", file_path);
 

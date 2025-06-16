@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 // define directory breaks cuz windows sucks
 #ifdef __WIN32__
@@ -36,8 +37,6 @@ typedef enum XAVA_FILE_TYPE {
     XAVA_FILE_TYPE_CACHE,            // where cached files are stored (shader cache)
     XAVA_FILE_TYPE_PACKAGE,          // where files that are part of the packages are stored (assets or binaries)
     XAVA_FILE_TYPE_NONE,             // this is an error
-    XAVA_FILE_TYPE_CUSTOM_READ,      // custom file that can only be readable (must include full path)
-    XAVA_FILE_TYPE_CUSTOM_WRITE      // custom file that can be both readable and writable (must include full path)
 } XF_TYPE;
 
 // simulated data type
@@ -61,14 +60,14 @@ extern bool      pendingXAVAEventStack (XG_EVENT *stack);
 extern bool      isEventPendingXAVA    (XG_EVENT *stack, XG_EVENT event);
 
 // OS abstractions
-extern           int xavaMkdir(const char *dir);
-extern          bool xavaFindAndCheckFile(XF_TYPE type, const char *filename, char **actualPath);
-extern unsigned long xavaSleep(unsigned long oldTime, int framerate);
-extern unsigned long xavaGetTime(void);
+extern           int  xavaMkdir(const char *dir);
+extern          char* xavaFindAndCheckFile(XF_TYPE type, const char *filename);
+extern unsigned long  xavaSleep(unsigned long oldTime, int framerate);
+extern unsigned long  xavaGetTime(void);
 /**
  * A basic file copy function that takes in literal C string file paths as parameters
  * Both absolute and relative paths should work.
- * 
+ *
  * @param source - The source file path
  * @param dest   - The destination file path
  */
