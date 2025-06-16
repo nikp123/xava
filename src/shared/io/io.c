@@ -176,8 +176,18 @@ void splitDirAndFileFromNativePathString(const char *source, char **dir, char **
     for (size_t i=path_size; i; --i) {
         // Break path if it's found
         if (source[i] == DIRBRK) {
-            if(dir != NULL)  *dir  = strndup(source, i);
-            if(file != NULL) *file = strdup(source+i+1);
+            if(dir != NULL) {
+                // strndup is not standard on Windows yet
+                *dir = malloc(path_size+1);
+                assert(*dir != NULL);
+                strncpy(*dir, source, path_size+1);
+                (*dir)[i] = '\0';
+            }
+            if(file != NULL) {
+                *file = malloc(path_size-i);
+                assert(*file != NULL);
+                strncpy(*file, source+i+1, path_size-i);
+            }
             break;
         }
     }
@@ -234,9 +244,9 @@ bool checkFile(char *path) {
  * @return - NULL is not FHS, and heap-allocated prefix if it is
  **/
 EXP_FUNC char* xavaFileType_AreWeFHSlike(void) {
-    #if !defined(__APPLE__)||!defined(__unix__)
-        return NULL;
-    #endif
+#if !defined(__APPLE__)||!defined(__unix__)
+    return NULL;
+#else
 
     printf("%s\n", find_prefix());
 
@@ -268,6 +278,7 @@ EXP_FUNC char* xavaFileType_AreWeFHSlike(void) {
     xavaSpam("We aren't FHS, prefix was: %s", ptr);
     free(exe_path); free(ptr);
     return NULL;
+#endif
 }
 
 char *xavaFileType_DiscoverPath(XF_TYPE type, const char *name) {
@@ -320,7 +331,8 @@ char *xavaFileType_DiscoverPath(XF_TYPE type, const char *name) {
                 }
 
                 // Windows' paths use backslashes, so we need to correct for that here
-                char *new_name = strcpy(name);
+                char *new_name = malloc(strlen(name)+1);
+                strcpy(new_name, name);
                 for(size_t i = 0; i < strlen(name); i++) {
                     if(new_name[i] == '/') new_name[i] = '\\';
                 }
@@ -376,9 +388,9 @@ char *xavaFileType_DiscoverPath(XF_TYPE type, const char *name) {
                     }
                 }
                 // append our desired file within that
-                strncat(path, name, MAX_PATH);
+                strncat(path, name, MAX_PATH-1);
                 // convert UNIXy path to native
-                for(i; i<strlen(path); i++) { if(path[i] == '/') path[i] = '\\'; }
+                for(; i<strlen(path); i++) { if(path[i] == '/') path[i] = '\\'; }
             #else
                 #error "Platform not supported"
             #endif
@@ -431,7 +443,7 @@ EXP_FUNC char *xavaFindAndCheckFile(XF_TYPE type, const char *name) {
     // with whatever quirkyness the OS has (Linux is by FAR the worse here)
     char *discovered = xavaFileType_DiscoverPath(type, name);
     if(discovered == NULL) goto xavaFindAndCheckFile_defer;
-    strncpy(path, discovered, MAX_PATH);
+    strncpy(path, discovered, MAX_PATH-1);
     free(discovered);
 
     // create directory if it doesn't exist at the moment
