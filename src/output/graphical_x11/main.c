@@ -43,10 +43,8 @@ static GC xavaXGraphics;
 
 static XVisualInfo xavaVInfo;
 static XSetWindowAttributes xavaAttr;
-static Atom wm_delete_window, wmState, fullScreen, mwmHintsProperty, wmStateBelow, taskbar;
 static XClassHint xavaXClassHint;
 static XWMHints xavaXWMHints;
-static XEvent xev;
 static Bool xavaSupportsRR;
 static int xavaRREventBase;
 
@@ -58,6 +56,9 @@ static XRRCrtcInfo        *xavaXCrtcInfo;
 static char *monitorName;
 static bool overrideRedirectEnabled;
 static bool reloadOnDisplayConfigure;
+
+// Atoms required across multiple places in the codebase
+static Atom wm_delete_window;
 
 #ifdef GL
     static int VisData[] = {
@@ -174,6 +175,45 @@ void calculateColors(XAVA_CONFIG *conf) {
     snatchColor("color4", conf->bcolor, &conf->bgcol, databaseName, &xavaXResDB);
 }
 
+void setNetWMState(
+        Display *display,
+        Window window,
+        Window root,
+        bool add, Atom atom) {
+    // If we don't have this, we should probably fail. (The 1 at the end)
+    const Atom wmState = XInternAtom(display, "_NET_WM_STATE", 0);
+
+    XEvent event;
+
+    /**
+     * Set up window properties through Atoms,
+     *
+     * XSendEvent requests the following format:
+     *  window  = the respective client window
+     *  message_type = _NET_WM_STATE
+     *  format = 32
+     *  data.l[0] = the action, as listed below
+     *  data.l[1] = first property to alter
+     *  data.l[2] = second property to alter
+     *  data.l[3] = source indication (0-unk,1-normal app,2-pager)
+     *  other data.l[] elements = 0
+    **/
+    event.xclient.type = ClientMessage;
+    event.xclient.window = window;
+    event.xclient.message_type = wmState;
+    event.xclient.format = 32;
+    event.xclient.data.l[0] = add ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+    event.xclient.data.l[1] = atom;
+    event.xclient.data.l[2] = 0;
+    event.xclient.data.l[3] = 0;
+    event.xclient.data.l[4] = 0;
+
+    // Send event
+    XSendEvent(display, root, 0, SubstructureRedirectMask | SubstructureNotifyMask, &event);
+    // Make sure its applied immediatelly
+    XFlush(xavaXDisplay);
+}
+
 EXP_FUNC int xavaInitOutput(XAVA *xava) {
     XAVA_CONFIG *conf = &xava->conf;
 
@@ -191,8 +231,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     xavaXRoot = RootWindow(xavaXDisplay, xavaXScreenNumber);
 
     // select appropriate screen
-    xavaXScreenResources = XRRGetScreenResources(xavaXDisplay,
-        DefaultRootWindow(xavaXDisplay));
+    xavaXScreenResources = XRRGetScreenResources(xavaXDisplay, xavaXRoot);
     char *screenname = NULL; // potential bugfix if X server has no displays
 
     xavaSpam("Number of detected screens: %d", xavaXScreenResources->noutput);
@@ -271,7 +310,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
                 conf->flag.transparency ? 32 : 24, TrueColor, &xavaVInfo);
 
     xavaAttr.colormap = XCreateColormap(xavaXDisplay,
-            DefaultRootWindow(xavaXDisplay), xavaVInfo.visual, AllocNone);
+            xavaXRoot, xavaVInfo.visual, AllocNone);
     xavaXColormap = xavaAttr.colormap;
     calculateColors(conf);
     xavaAttr.background_pixel = 0;
@@ -298,7 +337,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     XStoreName(xavaXDisplay, xavaXWindow, "XAVA");
 
     // The "X" button is handled by the window manager and not Xorg, so we set up a Atom
-    wm_delete_window = XInternAtom (xavaXDisplay, "WM_DELETE_WINDOW", 0);
+    wm_delete_window = XInternAtom(xavaXDisplay, "WM_DELETE_WINDOW", 0);
     XSetWMProtocols(xavaXDisplay, xavaXWindow, &wm_delete_window, 1);
 
     xavaXClassHint.res_name = (char *)"XAVA";
@@ -328,47 +367,32 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     xavaXGraphics = XCreateGC(xavaXDisplay, xavaXWindow, 0, 0);
 
     // Set up atoms
-    wmState = XInternAtom(xavaXDisplay, "_NET_WM_STATE", 0);
-    taskbar = XInternAtom(xavaXDisplay, "_NET_WM_STATE_SKIP_TASKBAR", 0);
-    fullScreen = XInternAtom(xavaXDisplay, "_NET_WM_STATE_FULLSCREEN", 0);
-    mwmHintsProperty = XInternAtom(xavaXDisplay, "_MOTIF_WM_HINTS", 0);
-    wmStateBelow = XInternAtom(xavaXDisplay, "_NET_WM_STATE_BELOW", 1);
-
-    /**
-     * Set up window properties through Atoms,
-     *
-     * XSendEvent requests the following format:
-     *  window  = the respective client window
-     *  message_type = _NET_WM_STATE
-     *  format = 32
-     *  data.l[0] = the action, as listed below
-     *  data.l[1] = first property to alter
-     *  data.l[2] = second property to alter
-     *  data.l[3] = source indication (0-unk,1-normal app,2-pager)
-     *  other data.l[] elements = 0
-    **/
-    xev.xclient.type = ClientMessage;
-    xev.xclient.window = xavaXWindow;
-    xev.xclient.message_type = wmState;
-    xev.xclient.format = 32;
-    xev.xclient.data.l[2] = 0;
-    xev.xclient.data.l[3] = 0;
-    xev.xclient.data.l[4] = 0;
+    Atom mwmHintsProperty = XInternAtom(xavaXDisplay, "_MOTIF_WM_HINTS", 0);
+    Atom wmStateBelow = XInternAtom(xavaXDisplay, "_NET_WM_STATE_BELOW", 1);
+    Atom wmStateSkipTaskbar = XInternAtom(xavaXDisplay, "_NET_WM_STATE_SKIP_TASKBAR", 0);
+    Atom wmStateSticky = XInternAtom(xavaXDisplay, "_NET_WM_STATE_STICKY", 0);
 
     // keep window in bottom property
-    xev.xclient.data.l[0] = conf->flag.beneath ?
-        _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
-    xev.xclient.data.l[1] = wmStateBelow;
-    XSendEvent(xavaXDisplay, xavaXRoot, 0,
-            SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    setNetWMState(xavaXDisplay,
+        xavaXWindow,
+        xavaXRoot,
+        conf->flag.beneath,
+        wmStateBelow);
     if(conf->flag.beneath) XLowerWindow(xavaXDisplay, xavaXWindow);
 
+    // make window sticky property
+    setNetWMState(xavaXDisplay,
+        xavaXWindow,
+        xavaXRoot,
+        true,
+        wmStateSticky);
+
     // remove window from taskbar
-    xev.xclient.data.l[0] = conf->flag.taskbar ?
-        _NET_WM_STATE_REMOVE : _NET_WM_STATE_ADD;
-    xev.xclient.data.l[1] = taskbar;
-    XSendEvent(xavaXDisplay, xavaXRoot, 0,
-            SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    setNetWMState(xavaXDisplay,
+        xavaXWindow,
+        xavaXRoot,
+        !(conf->flag.taskbar),
+        wmStateSkipTaskbar);
 
     // Setting window options
     struct mwmHints hints;
@@ -413,6 +437,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
                 cairo_create(xavaXCairoSurface));
     #endif
 
+    XFlush(xavaXDisplay);
     return 0;
 }
 
@@ -431,7 +456,6 @@ EXP_FUNC void xavaOutputClear(XAVA *xava) {
 
 EXP_FUNC int xavaOutputApply(XAVA *xava) {
     XAVA_CONFIG *conf = &xava->conf;
-
     calculateColors(conf);
 
     //Atom xa = XInternAtom(xavaXDisplay, "_NET_WM_WINDOW_TYPE", 0); May be used in the future
@@ -445,20 +469,19 @@ EXP_FUNC int xavaOutputApply(XAVA *xava) {
     //}
     // The code above breaks stuff, please don't use it.
 
-
-    // tell the window manager to switch to a fullscreen state
-    xev.xclient.type=ClientMessage;
-    xev.xclient.serial = 0;
-    xev.xclient.send_event = 1;
-    xev.xclient.window = xavaXWindow;
-    xev.xclient.message_type = wmState;
-    xev.xclient.format = 32;
-    xev.xclient.data.l[0] = conf->flag.fullscreen ?
-        _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
-    xev.xclient.data.l[1] = fullScreen;
-    xev.xclient.data.l[2] = 0;
-    XSendEvent(xavaXDisplay, xavaXRoot, 0,
-            SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    // Send a hint so that the window manager knows to fullscreen this window
+    // This also assumes that the window will be in front of everything else.
+    // Use with care.
+    const Atom stateFullscreen = XInternAtom(xavaXDisplay, "_NET_WM_STATE_FULLSCREEN", 0);
+    setNetWMState(xavaXDisplay,
+        xavaXWindow,
+        xavaXRoot,
+        // IMPORTANT: Fullscreen flag ASSUMES that the window will be in focus
+        // and above everything else. We need to handle window positioning and
+        // size manually when using the below flag, we cannot just use the
+        // fullscreen hint to cheat here.
+        conf->flag.fullscreen && !conf->flag.beneath,
+        stateFullscreen);
 
     xavaOutputClear(xava);
 
@@ -508,8 +531,26 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
                         if(conf->bs > 0) conf->bs--;
                         return XAVA_RESIZE;
                     case XK_f: // fullscreen
-                        conf->flag.fullscreen = !conf->flag.fullscreen;
-                        return XAVA_RESIZE;
+                        /**
+                         * For developers: I cannot use the fullscreen hint as
+                         * it conflicts with the below hint. Fullscreen hint
+                         * implies the window will be above every other.
+                         * Therefore in order to simulate fullscreen + below
+                         * I manually resize the window in the code, which in
+                         * turn complicates the logic too much for a toggle
+                         * feature to be enabled and to behave as it should.
+                         * (As it does under Wayland)
+                         * Sorry about that.
+                         **/
+                        if(conf->flag.beneath) {
+                            xavaError("Trying to toggle fullscreen while forcing the window below won't work! "
+                                "This is due to a technical reason/complication of X11. Sorry for the inconvenience. "
+                                "You can however change this in the configuration and it will work there.");
+                        } else {
+                            conf->flag.fullscreen = !conf->flag.fullscreen;
+                            return XAVA_RESIZE;
+                        }
+                        break;
                     case XK_Up:
                         conf->sens *= 1.05;
                         break;
@@ -558,7 +599,19 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
                 calculate_win_geo(xava,
                         trackedXavaXWindow.width,
                         trackedXavaXWindow.height);
+
+                // HOWEVER, if we are using fullscreen and below flags at the same
+                // time, we need to resize manually because the fullscreen hint
+                // assumes the window should be above everything else.
+                if(conf->flag.fullscreen && conf->flag.beneath) {
+                    int width  = DisplayWidth (xavaXDisplay, xavaXScreenNumber);
+                    int height = DisplayHeight(xavaXDisplay, xavaXScreenNumber);
+                    XMoveResizeWindow(xavaXDisplay, xavaXWindow,
+                            0, 0, // set 0 position
+                            width, height);
+                }
             }
+
             action = XAVA_RESIZE;
             break;
         }
@@ -583,7 +636,7 @@ EXP_FUNC XG_EVENT xavaOutputHandleInput(XAVA *xava) {
     }
 
     // yes this is violent C macro (ab)-use, live with it
-    XG_EVENT *eventStack = 
+    XG_EVENT *eventStack =
     #if defined(CAIRO)
         __internal_xava_output_cairo_event(xavaCairoHandle);
     #elif defined(EGL)
