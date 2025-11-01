@@ -174,7 +174,7 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glUniformMatrix4fv(PRE_PROJMATRIX, 1, GL_FALSE, (GLfloat*) projectionMatrix);
 
     // update screen resoltion
-    glUniform2f(PRE_RESOLUTION, xava->outer.w, xava->outer.h);
+    glUniform2f(PRE_RESOLUTION, xava->inner.w, xava->inner.h);
 
     // update spacing info
     glUniform1f(PRE_REST,        (float)xava->rest);
