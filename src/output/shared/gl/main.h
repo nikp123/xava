@@ -24,7 +24,7 @@ typedef struct XAVAGLModuleOptions {
   GLdouble resolution_scale;
   XAVA *xava;
   void (*ionotify_callback)(xava_ionotify_event event, const char *filename,
-                            int id, XAVA *);
+                            int id, void *);
 
   char *prefix;
   XG_EVENT *events;
@@ -68,7 +68,7 @@ struct XAVAGLModule {
     void (*draw)(XAVAGLModuleOptions *);
     void (*cleanup)(XAVAGLModuleOptions *);
     void (*ionotify_callback)(xava_ionotify_event event, const char *filename,
-                              int id, XAVA *);
+                              int id, void *);
   } func;
 
   XAVAGLModuleOptions options;

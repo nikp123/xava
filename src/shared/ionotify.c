@@ -8,7 +8,7 @@
 EXP_FUNC xava_ionotify xavaIONotifySetup(void)
 {
     xava_ionotify ionotify;
-    
+
     // WARNING: This begins a chain which leads to a very nasty reallocation bug,
     // pls rewrite this wholeass module in order to avoid it. The 100 is just a shitty
     // workaround. I do not know what causes it and I don't have the patience to debug it.
@@ -50,7 +50,7 @@ void xavaIONotifyCallbackWrapper(XWATCHER_FILE_EVENT event, const char *path,
         new_event = XAVA_IONOTIFY_ERROR;
     }
 
-    handle->xava_ionotify_func(new_event, path, id, handle->xava);
+    handle->xava_ionotify_func(new_event, path, id, handle->global);
 }
 
 EXP_FUNC bool xavaIONotifyAddWatch(xava_ionotify_watch_setup setup)
@@ -58,7 +58,7 @@ EXP_FUNC bool xavaIONotifyAddWatch(xava_ionotify_watch_setup setup)
     xWatcher_reference reference;
 
     xava_ionotify_file_handle file_handle = {
-        .xava = setup.xava, .xava_ionotify_func = setup.xava_ionotify_func};
+        .global = setup.global, .xava_ionotify_func = setup.xava_ionotify_func};
 
     arr_add((setup.ionotify.handles), file_handle);
 

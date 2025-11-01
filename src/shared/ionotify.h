@@ -22,11 +22,11 @@ typedef enum xava_ionotify_event {
  **/
 typedef struct xava_ionotify_file_handle {
   // The global XAVA instance
-  XAVA *xava;
+  void *global;
 
   // The desired event handler for said file
   void (*xava_ionotify_func)(xava_ionotify_event event, const char *filename,
-                             int id, XAVA *);
+                             int id, void *);
 } xava_ionotify_file_handle;
 
 typedef struct xava_ionotify {
@@ -45,9 +45,9 @@ typedef struct xava_ionotify_watch_setup {
   xava_ionotify ionotify; // The global IONotify handle
   int id; // Optional ID that will be passed to your desired callback function
   char *filename; // The full path of the file that's going to be watched
-  XAVA *xava;     // The global XAVA handle
+  void *global;     // The global XAVA handle
   void (*xava_ionotify_func)(xava_ionotify_event, const char *filename, int id,
-                             XAVA *); // The target callback fucntion
+                             void *); // The target callback fucntion
 } xava_ionotify_watch_setup;
 
 extern xava_ionotify xavaIONotifySetup(void);

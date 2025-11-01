@@ -88,7 +88,7 @@ void xava_gl_module_shader_load(xava_gl_module_program *program,
             // add watcher
             setup.filename = returned_path;
             setup.id = 1; // dont really care tbh
-            setup.xava = xava;
+            setup.global = xava;
             setup.ionotify = xava->ionotify;
             setup.xava_ionotify_func = module->func.ionotify_callback;
             xavaBailCondition(!xavaIONotifyAddWatch(setup),
@@ -102,7 +102,7 @@ void xava_gl_module_shader_load(xava_gl_module_program *program,
             // add watcher
             setup.filename = shader->path;
             setup.id = 1; // dont really care tbh
-            setup.xava = xava;
+            setup.global = xava;
             setup.ionotify = xava->ionotify;
             setup.xava_ionotify_func = module->func.ionotify_callback;
             xavaBailCondition(!xavaIONotifyAddWatch(setup),

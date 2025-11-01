@@ -5,16 +5,15 @@
 #include "shared/config/pywal.h"
 #include "shared.h"
 
+// FIXME: This implementation really doesn't fit the project. FIX IT!
+
 EXP_FUNC bool pywalConfigGetFilename(char *filename) {
     char *a = getenv("XDG_CACHE_HOME");
     if(a == NULL) {
         a = getenv("HOME");
-        // user should not be HOME-less under any circumstances
-        // we will not handle a HOME-less case
-	if(a == NULL)
-            return false;
-        
-	sprintf(filename,"%s%s", a, "/.cache/wal/colors");
+        xavaBailCondition(a == NULL, "User is $HOME-less. Aborting.");
+
+        sprintf(filename,"%s%s", a, "/.cache/wal/colors");
     } else {
         sprintf(filename,"%s%s", a, "/wal/colors");
     }
@@ -30,15 +29,20 @@ EXP_FUNC bool pywalConfigGetFilename(char *filename) {
     return true;
 }
 
-EXP_FUNC void pywalGetColors(unsigned int *fgColorNum, unsigned int *bgColorNum) {
+#define PYWAL_MAX_LINE_LENGHT 256
+
+EXP_FUNC void pywalGetColors(
+        unsigned int *fgColorNum,
+        unsigned int *bgColorNum
+        ) {
     int lineNumberFg = 1;
     int lineNumberBg = 2;
-    char *filename = malloc(256);
+    char *filename = malloc(MAX_PATH);
     pywalConfigGetFilename(filename);
     FILE *file = fopen(filename, "r");
     int count = 0;
     if(file != NULL) {
-        char line[256]; /* or other suitable maximum line size */
+        char line[PYWAL_MAX_LINE_LENGHT]; /* or other suitable maximum line size */
         while (fgets(line, sizeof line, file) != NULL) {
             if (count == lineNumberFg) {
                 sscanf(line, "#%06X", fgColorNum);
@@ -53,4 +57,4 @@ EXP_FUNC void pywalGetColors(unsigned int *fgColorNum, unsigned int *bgColorNum)
 }
 
 
-    
+

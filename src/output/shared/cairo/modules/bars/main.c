@@ -13,13 +13,14 @@ struct options {
 
 xava_config_source *config_file;
 xava_ionotify       file_notifications;
+char config_file_path[MAX_PATH];
 
 // ionotify fun
 EXP_FUNC void xava_cairo_module_ionotify_callback
                 (xava_ionotify_event event,
                 const char* filename,
                 int id,
-                XAVA* xava) {
+                void* xava) {
     UNUSED(filename);
     UNUSED(id);
 
@@ -42,31 +43,29 @@ EXP_FUNC xava_version xava_cairo_module_version(void) {
 
 // load all the necessary config data and report supported drawing modes
 EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_handle* handle) {
-    char config_file_path[MAX_PATH];
     config_file = xava_cairo_module_file_load(
             XAVA_CAIRO_FILE_CONFIG, handle, "config.ini", config_file_path);
 
     options.mirror = xavaConfigGetBool(*config_file, "bars", "mirror", false);
-
-    // setup file notifications
-    file_notifications = xavaIONotifySetup();
-
-    xava_ionotify_watch_setup setup;
-    setup.filename           = config_file_path;
-    setup.id                 = 1;
-    setup.xava_ionotify_func = xava_cairo_module_ionotify_callback;
-    setup.xava               = (XAVA*) handle;
-    setup.ionotify           = file_notifications;
-    xavaIONotifyAddWatch(setup);
-
-    xavaIONotifyStart(file_notifications);
 
     return XAVA_CAIRO_FEATURE_FULL_DRAW |
         XAVA_CAIRO_FEATURE_DRAW_REGION;
 }
 
 EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* handle) {
-    UNUSED(handle);
+    // setup file notifications
+    file_notifications = xavaIONotifySetup();
+
+    xava_ionotify_watch_setup setup;
+    setup.filename           = config_file_path;
+    setup.id                 = 1;
+    setup.xava_ionotify_func = &xava_cairo_module_ionotify_callback;
+    setup.global             = handle;
+    setup.ionotify           = file_notifications;
+    xavaIONotifyAddWatch(setup);
+
+    xavaIONotifyStart(file_notifications);
+
 }
 EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* handle) {
     UNUSED(handle);

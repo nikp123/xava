@@ -30,6 +30,12 @@ void xava_output_cairo_module_append_to_system(
     module->config.xava   = xava;
     module->config.prefix = module->prefix;
     module->config.events = handle->events;
+
+    // For future devs: Do NOT starts threads here.
+    // This fucntion is very much thread unsafe due to using
+    // stack allocated objects, because the thing is being
+    // initialized here.
+    // Move your file watcher functions to init instead.
     module->features = module->func.config_load(&module->config);
 
     if(module->features & XAVA_CAIRO_FEATURE_DRAW_REGION) {
