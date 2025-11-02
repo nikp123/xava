@@ -56,6 +56,9 @@ struct gl_renderer_options {
     struct color {
         bool blending;
     } color;
+    struct bars {
+        bool mirror;
+    } bars;
 } gl_options;
 
 /**
@@ -81,6 +84,9 @@ EXP_FUNC void xava_gl_module_ionotify_callback(xava_ionotify_event event,
 EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
     xava_gl_module_shader_load(&pre, SGL_PRE, SGL_VERT, "", module, xava);
     xava_gl_module_shader_load(&pre, SGL_PRE, SGL_FRAG, "", module, xava);
+    xava_gl_module_shader_load(&pre, SGL_PRE, SGL_CONFIG, "", module, xava);
+
+    gl_options.bars.mirror = xavaConfigGetBool(pre.config, "bars", "mirror", false);
 }
 
 EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
@@ -148,19 +154,20 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
 
     // since most of this information remains untouched, let's precalculate
+    float offset = gl_options.bars.mirror ? xava->inner.h/2.0f : 0.0f;
     for(uint32_t i=0; i<xava->bars; i++) {
         vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);
-        vertexData[i*12+1]  = 1.0f;
+        vertexData[i*12+1]  = offset + 1.0f;
         vertexData[i*12+2]  = vertexData[i*12];
-        vertexData[i*12+3]  = 0.0f;
+        vertexData[i*12+3]  = offset;
         vertexData[i*12+4]  = vertexData[i*12]+conf->bw;
-        vertexData[i*12+5]  = 0.0f;
+        vertexData[i*12+5]  = offset;
         vertexData[i*12+6]  = vertexData[i*12+4];
-        vertexData[i*12+7]  = 1.0f;
+        vertexData[i*12+7]  = offset + 1.0f;
         vertexData[i*12+8]  = vertexData[i*12+4];
-        vertexData[i*12+9]  = 0.0f;
+        vertexData[i*12+9]  = offset;
         vertexData[i*12+10] = vertexData[i*12];
-        vertexData[i*12+11] = 1.0f;
+        vertexData[i*12+11] = offset + 1.0f;
     }
 
     // do image scaling
@@ -250,14 +257,25 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
     /**
      * Here we start rendering to the texture
      **/
-
     register GLfloat *d = vertexData;
-    for(register uint32_t i=0; i<xava->bars; i++) {
-        // the speed part
-        *(++d)  = xava->f[i];
-        *(d+=6) = xava->f[i];
-        *(d+=4) = xava->f[i];
-        d++;
+    if(!gl_options.bars.mirror) {
+        for(register uint32_t i=0; i<xava->bars; i++) {
+            d[1]  = xava->f[i];
+            d[7]  = xava->f[i];
+            d[11] = xava->f[i];
+            d     += 12;
+        }
+    } else {
+        float offset = xava->inner.h/2;
+        for(register uint32_t i=0; i<xava->bars; i++) {
+            d[1]  = offset + xava->f[i]/2;
+            d[3]  = offset - xava->f[i]/2;
+            d[5]  = offset - xava->f[i]/2;
+            d[7]  = offset + xava->f[i]/2;
+            d[9]  = offset - xava->f[i]/2;
+            d[11] = offset + xava->f[i]/2;
+            d     += 12;
+        }
     }
 
     // switch to pre shaders

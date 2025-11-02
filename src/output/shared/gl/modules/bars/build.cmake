@@ -32,6 +32,7 @@ if(GL_MODULES)
 
         configure_file("${XAVA_MODULE_DIR}/vertex.glsl"   gl/module/bars/vertex.glsl   COPYONLY)
         configure_file("${XAVA_MODULE_DIR}/fragment.glsl" gl/module/bars/fragment.glsl COPYONLY)
+        configure_file("${XAVA_MODULE_DIR}/config.ini"    gl/module/bars/config.ini   COPYONLY)
 
         install(TARGETS gl_bars RENAME module DESTINATION share/xava/gl/module/bars/)
         install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/vertex.glsl"   DESTINATION share/xava/gl/module/bars/)
