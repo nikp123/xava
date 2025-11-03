@@ -266,14 +266,14 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
             d     += 12;
         }
     } else {
-        float offset = xava->inner.h/2;
+        float offset = floor(xava->inner.h/2.0f);
         for(register uint32_t i=0; i<xava->bars; i++) {
-            d[1]  = offset + xava->f[i]/2;
+            d[1]  = offset + xava->f[i]/2 + 1.0f;
             d[3]  = offset - xava->f[i]/2;
             d[5]  = offset - xava->f[i]/2;
-            d[7]  = offset + xava->f[i]/2;
+            d[7]  = offset + xava->f[i]/2 + 1.0f;
             d[9]  = offset - xava->f[i]/2;
-            d[11] = offset + xava->f[i]/2;
+            d[11] = offset + xava->f[i]/2 + 1.0f;
             d     += 12;
         }
     }
