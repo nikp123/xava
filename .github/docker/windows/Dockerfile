@@ -7,8 +7,8 @@ WORKDIR /mnt
 # Append ownstuff's repo to the arch install
 RUN echo $'\n\
 [ownstuff]\n\
-Server = https://martchus.no-ip.biz/repo/arch/$repo/os/$arch\n\
 Server = https://ftp.f3l.de/~martchus/$repo/os/$arch\n\
+Server = https://martchus.dyn.f3l.de/repo/arch/$repo/os/$arch\n\
 SigLevel = Optional TrustAll' >> /etc/pacman.conf
 
 # Update Arch
