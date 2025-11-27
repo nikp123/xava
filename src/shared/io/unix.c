@@ -24,7 +24,7 @@
  * Licensed with WTFPL
  */
 
-static char *find_exe(void)
+char *find_exe(void)
 {
 	char *path, *path2, *line, *result;
 	size_t buf_size;
@@ -177,16 +177,6 @@ br_dirname (const char *path)
 		return strdup ("/");
 	} else
 		return result;
-}
-
-char* find_prefix(void) {
-	char *exe  = find_exe();
-	char *dir1 = br_dirname(exe);
-	char *dir2 = br_dirname(dir1);
-	free(exe);
-	free(dir1);
-
-	return dir2;
 }
 
 #endif

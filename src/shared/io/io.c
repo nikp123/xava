@@ -236,50 +236,6 @@ bool checkFile(char *path) {
     return false;
 }
 
-/**
- * This is needed for debugging and development purposes.
- * We need to check whether or not the program we are running
- * is behaving locally or is it system-wide.
- *
- * @return - NULL is not FHS, and heap-allocated prefix if it is
- **/
-EXP_FUNC char* xavaFileType_AreWeFHSlike(void) {
-#if !defined(__APPLE__)||!defined(__unix__)
-    return NULL;
-#else
-
-    printf("%s\n", find_prefix());
-
-    // get your system path
-    char *path = getenv("PATH");
-
-    /**
-     * I get that what I'm doing here is extremely janky but
-     * essentially it boils down to testing whether or not
-     * the PATH variables are the same as the find_prefix + /bin
-     **/
-    char *ptr = find_prefix();
-    char *exe_path = malloc(MAX_PATH);
-    assert(exe_path != NULL);
-    snprintf(exe_path, MAX_PATH, "%s/bin", ptr);
-
-    char* token;
-    char* rest = path;
-    while ((token = strtok_r(rest, ":", &rest))) {
-        if(!strcmp(exe_path, token)) {
-            // skipping a directory check here because I assume UNIX
-            // properly tells me where the applicaiton has been launched from
-            xavaSpam("Assuming the path '%s' is correct", exe_path);
-            free(exe_path);
-            return ptr;
-        }
-    }
-
-    xavaSpam("We aren't FHS, prefix was: %s", ptr);
-    free(exe_path); free(ptr);
-    return NULL;
-#endif
-}
 
 char *xavaFileType_DiscoverPath(XF_TYPE type, const char *name) {
     char *path = malloc(MAX_PATH);
@@ -353,23 +309,28 @@ char *xavaFileType_DiscoverPath(XF_TYPE type, const char *name) {
               Anything else won't work and WILL break.
             **/
             #if defined(__APPLE__)||defined(__unix__)
-                char *prefix = xavaFileType_AreWeFHSlike();
-                if(prefix != NULL) {
-                    strcpy(path, prefix);
-                    free(prefix);
-                } else {
-                    prefix = find_prefix();
-                    assert(prefix != NULL);
-                    // Yes this check is very memey, but idc anymore this shit is hard enough anyway
-                    snprintf(path, MAX_PATH, "%s/%s/xava.png", prefix, name);
-                    free(prefix);
+                bool found = false;
+                char *prefix = find_exe();  // Get full path of the current executable
+                assert(prefix != NULL);     // Check if it's valid
+                do {
+                    char *new_prefix = br_dirname(prefix); // Drop top branch of the file path
+                    assert(new_prefix != NULL);            // Check validity
+                    free(prefix);                          // Clean last entry
+                    prefix = new_prefix;                   // Update pointer
+
+                    snprintf(path, MAX_PATH, "%s/%s", prefix, name);
                     if(checkFile(path)) {
                         xavaSpam("Guessing local file at '%s'", path);
+                        found = true;
                         break;
                     }
-                    xavaSpam("None of the given prefixes match nor is it local, desparately trying PREFIX instead.")
-                    snprintf(path, MAX_PATH, PREFIX"/share/"PACKAGE"/%s", name);
-                }
+                } while(strcmp(prefix, "/")); // Keep trying to find XAVAs' files until we run out of parent directories
+
+                // Found a valid path, no need to discover further.
+                if(found) break; 
+
+                xavaSpam("None the binary paths' parents contain the file '%s'! Desparately trying to find it in PREFIX instead.", name);
+                snprintf(path, MAX_PATH, PREFIX"/share/"PACKAGE"/%s", name);
             #elif defined(__WIN32__)
                 // Windows uses widechars internally
                 WCHAR wpath[MAX_PATH];
@@ -452,7 +413,7 @@ EXP_FUNC char *xavaFindAndCheckFile(XF_TYPE type, const char *name) {
         splitDirAndFileFromNativePathString(path, &directory, NULL);
 
         if(checkPath(directory) == 0) {
-            if(xavaMkdir(directory) == 0) {
+            if(xavaMkdir(directory) != 0) {
                 xavaError("Couldn't create directory '%s'!", directory);
                 free(directory);
                 goto xavaFindAndCheckFile_defer;
@@ -466,8 +427,8 @@ EXP_FUNC char *xavaFindAndCheckFile(XF_TYPE type, const char *name) {
      * This logic implements what do we do in case we find or don't find that
      * specific file we just dicsovered the path to.
      **/
-    FILE *fp;
-    if((fp = fopen(path, writeCheck ? "a" : "r")) == NULL) {
+    FILE *fp = fopen(path, writeCheck ? "r+" : "r");
+    if(fp == NULL) {
         if(type == XAVA_FILE_TYPE_CONFIG) {
             // yay, recursion
             char *install_path = xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, name);
@@ -481,8 +442,7 @@ EXP_FUNC char *xavaFindAndCheckFile(XF_TYPE type, const char *name) {
             xavaError("Couldn't fetch resource '%s' at '%s'", name, path);
             goto xavaFindAndCheckFile_defer;
         }
-    }
-    fclose(fp);
+    } else fclose(fp);
 
     // Then we FINALLY return the path that's (hopefully valid)
     return path;
@@ -511,7 +471,7 @@ EXP_FUNC RawData *xavaReadFile(const char *file) {
 
     // Assert just checks if the whole file was been able to be read in.
     // Never expected to fail unless we are literally dealing with the FS
-    // dying.
+    // dying or the program bugging out and copying empty files :(
     assert(1 == fread(data->data, data->size, 1, fp));
 
     ((char*)data->data)[data->size] = 0x00;
