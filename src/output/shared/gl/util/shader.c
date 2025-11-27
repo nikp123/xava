@@ -54,7 +54,7 @@ void xava_gl_module_shader_load(xava_gl_module_program *program,
         }
         case SGL_CONFIG: { // load shader config file
             strcat(file_path, "/config.ini");
-            returned_path = xavaFindAndCheckFile(XAVA_FILE_TYPE_OPTIONAL_CONFIG, file_path);
+            returned_path = xavaFindAndCheckFile(XAVA_FILE_TYPE_CONFIG, file_path);
             xavaLogCondition(returned_path == NULL, "Failed to load '%s'!", file_path);
             break;
         }
