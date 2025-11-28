@@ -70,14 +70,20 @@
 
         nativeBuildInputs = with final; [
           # Compiling and fetching dependencies
-          gcc
+          clang
           cmake
-          pkg-config
           git # Not sure if it's needed
+          pkg-config
 
           # For building icons
           imagemagick
           librsvg
+
+          # For debugging
+          clang-tools
+
+          # Patching
+          makeWrapper
         ];
 
         buildInputs = runtime_libraries final;
