@@ -8,6 +8,9 @@ include(src/cmake/utilities.cmake)
 # Fix/handle common build errors
 include(src/cmake/build-fix.cmake)
 
+# Include fixes needed to get LSPs working
+include(src/cmake/lsp.cmake)
+
 # Debug is default
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug)
