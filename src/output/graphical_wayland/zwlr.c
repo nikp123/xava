@@ -32,7 +32,7 @@ static void layer_surface_configure(void *data,
     struct waydata *wd = data;
     XAVA *xava = wd->hand;
 
-    if(width != 0 && height != 0) {
+    if(width != xava->outer.w && height != xava->outer.h) {
         calculate_win_geo(xava, width, height);
 
         #ifdef EGL
@@ -49,6 +49,8 @@ static void layer_surface_configure(void *data,
 
         pushXAVAEventStack(wd->events, XAVA_REDRAW);
         pushXAVAEventStack(wd->events, XAVA_RESIZE);
+
+        xavaSpam("ZWLR layer surface configure to %d %d", width, height);
     }
 
     // Respond to compositor
