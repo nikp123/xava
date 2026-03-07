@@ -25,7 +25,11 @@ EXP_FUNC void xava_module_free(XAVAMODULE *module) {
 
 EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
     #ifdef UNIX_INDEPENDENT_PATHS
-        char *prefix = find_prefix();
+        char *exe    = find_exe();
+        char *bindir = br_dirname(exe);
+        char *prefix = br_dirname(bindir);
+        free(exe);
+        free(bindir);
     #else
         char *prefix = PREFIX;
     #endif
@@ -66,7 +70,7 @@ EXP_FUNC XAVAMODULE *xava_module_load(char *name) {
         module->name, module->moduleHandle);
 
     #ifdef UNIX_INDEPENDENT_PATHS
-        //free(prefix);
+        free(prefix);
     #endif
 
     return module;
