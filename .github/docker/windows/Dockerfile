@@ -1,4 +1,4 @@
-FROM archlinux:latest
+FROM ghcr.io/archlinux/archlinux:base
 
 LABEL org.opencontainers.image.source=https://github.com/nikp123/xava
 
