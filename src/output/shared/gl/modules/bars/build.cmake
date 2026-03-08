@@ -37,6 +37,7 @@ if(GL_MODULES)
         install(TARGETS gl_bars RENAME module DESTINATION share/xava/gl/module/bars/)
         install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/vertex.glsl"   DESTINATION share/xava/gl/module/bars/)
         install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/fragment.glsl" DESTINATION share/xava/gl/module/bars/)
+        install(FILES "${CMAKE_BINARY_DIR}/gl/module/bars/config.ini"    DESTINATION share/xava/gl/module/bars/)
 
         # Maybe GL license?
     else()
