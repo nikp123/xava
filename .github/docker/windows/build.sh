@@ -9,11 +9,11 @@ rm -rf debug
 # Bail on error
 set -e
 
-build_args="-j$(nproc)"
-cmake_args='-DCMAKE_INSTALL_PREFIX=/usr'
-
 # toolchain prefixes because C
 tool_prefix="$arch-w64-mingw32"
+
+build_args="-j$(nproc)"
+cmake_args="-DCMAKE_INSTALL_PREFIX=/usr -DPKG_CONFIG_PATH=/usr/bin/${tool_prefix}-pkg-config"
 
 # Fix build issue from Actions
 git config --global --add safe.directory /github/workspace
