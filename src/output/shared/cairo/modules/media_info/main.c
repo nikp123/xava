@@ -47,11 +47,16 @@ typedef struct text {
     // same logic as for artwork except size controls the font size
     float        x, y, size;
 
-    float        max_x;
+    // max_x must be specified, but max_y is only used while centering the text
+    float        max_x, max_y;
 
     struct color {
         float r, g, b, a;
     } color;
+
+    struct positioning {
+        bool center;
+    } postitioning;
 
     cairo_font_slant_t slant;
     cairo_font_weight_t weight;
@@ -63,7 +68,7 @@ struct region {
 
 struct options {
     artwork cover;
-    text    title, artist;
+    text    title, artist, cover_text;
 } options;
 
 cairo_surface_t *surface;
@@ -96,6 +101,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
     options.title.max_x = 0.8;
     options.title.y = 0.080;
     options.title.size = 40;
+    options.title.postitioning.center = false;
     options.title.color.r = 1.0;
     options.title.color.g = 1.0;
     options.title.color.b = 1.0;
@@ -108,10 +114,25 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
     options.artist.max_x = 0.8;
     options.artist.y = 0.160;
     options.artist.size = 28;
+    options.artist.postitioning.center = false;
     options.artist.color.r = 1.0;
     options.artist.color.g = 1.0;
     options.artist.color.b = 1.0;
     options.artist.color.a = 1.0;
+    
+    options.cover_text.font = "Noto Sans";
+    options.cover_text.weight = CAIRO_FONT_WEIGHT_NORMAL;
+    options.cover_text.slant  = CAIRO_FONT_SLANT_NORMAL;
+    options.cover_text.x = 0.05;
+    options.cover_text.max_x = 0.20;
+    options.cover_text.y = 0.05;
+    options.cover_text.max_y = 0.20;
+    options.cover_text.size = 50;
+    options.cover_text.postitioning.center = true;
+    options.cover_text.color.r = 0.0;
+    options.cover_text.color.g = 0.0;
+    options.cover_text.color.b = 0.0;
+    options.cover_text.color.a = 1.0;
 
     // processing weight and slant
 
@@ -141,6 +162,11 @@ EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* ha
         old_h = xava->outer.h;
         xava_util_media_data_thread_data(media_data_thread)->version++;
     }
+
+    options.cover_text.color.r = ARGB_R_32(xava->conf.bgcol)/255.0;
+    options.cover_text.color.g = ARGB_G_32(xava->conf.bgcol)/255.0;
+    options.cover_text.color.b = ARGB_B_32(xava->conf.bgcol)/255.0;
+    //options.cover_text.color.a = ARGB_A_32(xava->conf.bgcol)/255.0;
 }
 
 struct xava_cairo_region xava_cairo_module_calculate_artwork_region(
@@ -263,100 +289,6 @@ EXP_FUNC void               xava_cairo_module_event      (xava_cairo_module_hand
     }
 }
 
-struct region xava_cairo_module_draw_artwork(
-        cairo_t          *cr,
-        XAVA             *xava,
-        artwork          *artwork) {
-    // avoid unsafety
-    if(artwork->image->ready == false)
-        return (struct region){ 0 };
-
-    cairo_surface_t *art_surface = cairo_image_surface_create_for_data(
-            artwork->image->image_data,
-            CAIRO_FORMAT_RGB24, artwork->image->w, artwork->image->h,
-            cairo_format_stride_for_width(CAIRO_FORMAT_RGB24, artwork->image->w));
-
-    float actual_scale_x = (float)xava->outer.w / artwork->image->w;
-    float actual_scale_y = (float)xava->outer.h / artwork->image->h;
-
-    float scale_x = 1.0;
-    float scale_y = 1.0;
-
-    float crop_x = 0.0, crop_y = 0.0;
-
-    switch(artwork->display_mode) {
-        case ARTWORK_FULLSCREEN:
-            scale_x = actual_scale_x;
-            scale_y = actual_scale_y;
-            break;
-        case ARTWORK_CROP_CENTER:
-            if(artwork->image->w > artwork->image->h) {
-                crop_x = 0.5 * (artwork->image->w-artwork->image->h);
-            }
-            if(artwork->image->h > artwork->image->w) {
-                crop_y = 0.5 * (artwork->image->h-artwork->image->w);
-            }
-        case ARTWORK_PRESERVE:
-            if(actual_scale_x > actual_scale_y) {
-                scale_x = actual_scale_y*artwork->size;
-                scale_y = actual_scale_y*artwork->size;
-            } else {
-                scale_x = actual_scale_x*artwork->size;
-                scale_y = actual_scale_x*artwork->size;
-            }
-            break;
-        case ARTWORK_SCALED:
-            scale_x = actual_scale_x*artwork->size;
-            scale_y = actual_scale_y*artwork->size;
-            break;
-    }
-
-    // this is necessary because performance otherwise is god-awful
-    switch(artwork->texture_mode) {
-        case ARTWORK_NEAREST:
-            cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_NEAREST);
-            break;
-        case ARTWORK_BEST:
-            cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BEST);
-            break;
-    }
-
-    // scale image
-    cairo_scale(cr, scale_x, scale_y);
-
-    // pixel scale x/y
-    float ps_x = 1.0/scale_x;
-    float ps_y = 1.0/scale_y;
-
-    float offset_x = (xava->outer.w/scale_x - artwork->image->w + crop_x*2.0)*artwork->x;
-    float offset_y = (xava->outer.h/scale_y - artwork->image->h + crop_y*2.0)*artwork->y;
-
-    // set artwork as brush
-    cairo_set_source_surface(cr, art_surface, offset_x-crop_x, offset_y-crop_y);
-
-    // overwrite dem pixels
-    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-    cairo_rectangle(cr, floor(offset_x), floor(offset_y),
-            floor(artwork->image->w - crop_x*2.0),
-            floor(artwork->image->h - crop_y*2.0));
-
-    // draw artwork
-    cairo_fill(cr);
-
-    // restore old scale
-    cairo_scale(cr, ps_x, ps_y);
-
-    // free artwork surface
-    cairo_surface_destroy(art_surface);
-
-    return (struct region) {
-        .w = artwork->image->w*scale_x,
-        .h = artwork->image->h*scale_y,
-        .x = offset_x*scale_x,
-        .y = offset_y*scale_x,
-    };
-}
-
 struct region xava_cairo_module_draw_text(
         cairo_t     *cr,
         XAVA        *xava,
@@ -389,6 +321,11 @@ xava_cairo_module_resize_font:
     float offset_x = xava->outer.w * text->x;
     float offset_y = extents.height + (xava->outer.h - extents.height) * text->y;
 
+    if(text->postitioning.center) {
+        offset_x += (xava->outer.w * text->max_x - extents.width) / 2.0;
+        offset_y += (xava->outer.h * text->max_y - extents.height) / 2.0;
+    }
+
     // draw text
     cairo_move_to(cr, offset_x, offset_y);
     cairo_show_text(cr, text->text);
@@ -403,6 +340,131 @@ xava_cairo_module_resize_font:
     };
 }
 
+struct region xava_cairo_module_draw_artwork(
+        cairo_t          *cr,
+        XAVA             *xava,
+        artwork          *artwork,
+        text             *cover_text) {
+    cairo_surface_t *art_surface = NULL;    
+
+    if(artwork->image->ready == false) {
+        artwork->image->w = 500;
+        artwork->image->h = 500;
+        artwork->image->size = 500;
+    }
+
+    float actual_scale_x = (float)xava->outer.w / artwork->image->w;
+    float actual_scale_y = (float)xava->outer.h / artwork->image->h;
+
+    float scale_x = 1.0;
+    float scale_y = 1.0;
+
+    float crop_x = 0.0, crop_y = 0.0;
+
+    switch(artwork->display_mode) {
+        case ARTWORK_FULLSCREEN:
+            scale_x = actual_scale_x;
+            scale_y = actual_scale_y;
+            break;
+        case ARTWORK_CROP_CENTER:
+            if(artwork->image->w > artwork->image->h) {
+                crop_x = 0.5 * (artwork->image->w-artwork->image->h);
+            }
+            if(artwork->image->h > artwork->image->w) {
+                crop_y = 0.5 * (artwork->image->h-artwork->image->w);
+            }
+            [[fallthrough]];
+        case ARTWORK_PRESERVE:
+            if(actual_scale_x > actual_scale_y) {
+                scale_x = actual_scale_y*artwork->size;
+                scale_y = actual_scale_y*artwork->size;
+            } else {
+                scale_x = actual_scale_x*artwork->size;
+                scale_y = actual_scale_x*artwork->size;
+            }
+            break;
+        case ARTWORK_SCALED:
+            scale_x = actual_scale_x*artwork->size;
+            scale_y = actual_scale_y*artwork->size;
+            break;
+    }
+
+    // this is necessary because performance otherwise is god-awful
+    switch(artwork->texture_mode) {
+        case ARTWORK_NEAREST:
+            cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_NEAREST);
+            break;
+        case ARTWORK_BEST:
+            cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BEST);
+            break;
+    }
+
+    // scale image
+    cairo_scale(cr, scale_x, scale_y);
+
+    // pixel scale x/y
+    float ps_x = 1.0/scale_x;
+    float ps_y = 1.0/scale_y;
+
+    if(artwork->image->ready == false) {
+        // we're drawing a pure square on the screen, we dont need to crop anything
+        crop_x = 0.0;
+        crop_y = 0.0;
+    }
+
+    float offset_x = (xava->outer.w/scale_x - artwork->image->w + crop_x*2.0)*artwork->x;
+    float offset_y = (xava->outer.h/scale_y - artwork->image->h + crop_y*2.0)*artwork->y;
+
+    if(artwork->image->ready) {
+        // create cover texture
+        art_surface = cairo_image_surface_create_for_data(
+            artwork->image->image_data,
+            CAIRO_FORMAT_RGB24, artwork->image->w, artwork->image->h,
+            cairo_format_stride_for_width(CAIRO_FORMAT_RGB24, artwork->image->w));
+
+        // set artwork as brush
+        cairo_set_source_surface(cr, art_surface, offset_x-crop_x, offset_y-crop_y);
+    } else {
+        // use primary color in case artwork fails to load
+        cairo_set_source_rgba(cr,
+            ARGB_R_32(xava->conf.col)/255.0,
+            ARGB_G_32(xava->conf.col)/255.0,
+            ARGB_B_32(xava->conf.col)/255.0,
+            xava->conf.foreground_opacity);
+    }
+
+    // overwrite dem pixels
+    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+    cairo_rectangle(cr, floor(offset_x), floor(offset_y),
+            floor(artwork->image->w - crop_x*2.0),
+            floor(artwork->image->h - crop_y*2.0));
+
+    // draw artwork
+    cairo_fill(cr);
+
+    // restore old scale
+    cairo_scale(cr, ps_x, ps_y);
+
+    if(artwork->image->ready == false) {
+        cover_text->max_x = artwork->size * scale_x;
+        cover_text->max_y = artwork->size * scale_y * xava->outer.w/xava->outer.h;
+
+        xava_cairo_module_draw_text(
+            cr, xava, cover_text);
+    }
+
+    // free artwork surface
+    if(art_surface != NULL)
+        cairo_surface_destroy(art_surface);
+
+    return (struct region) {
+        .w = artwork->image->w*scale_x,
+        .h = artwork->image->h*scale_y,
+        .x = offset_x*scale_x,
+        .y = offset_y*scale_x,
+    };
+}
+
 cairo_surface_t *xava_cairo_module_draw_new_media_screen(
         xava_cairo_module_handle *handle,
         struct options           *options,
@@ -410,9 +472,10 @@ cairo_surface_t *xava_cairo_module_draw_new_media_screen(
 
     XAVA *xava = handle->xava;
 
-    artwork *cover =  &options->cover;
-    text    *title =  &options->title;
-    text    *artist = &options->artist;
+    artwork *cover      = &options->cover;
+    text    *title      = &options->title;
+    text    *artist     = &options->artist;
+    text    *cover_text = &options->cover_text; 
 
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, xava->outer.w, xava->outer.h);
     cairo_t *new_context = cairo_create(surface);
@@ -426,7 +489,7 @@ cairo_surface_t *xava_cairo_module_draw_new_media_screen(
     struct region regions[region_count];
 
     regions[0] = xava_cairo_module_draw_artwork(
-            new_context, handle->xava, cover);
+            new_context, handle->xava, cover, cover_text);
 
     regions[1] = xava_cairo_module_draw_text(
             new_context, handle->xava, title);
@@ -462,7 +525,6 @@ cairo_surface_t *xava_cairo_module_draw_new_media_screen(
 
 // assume that the entire screen's being overwritten
 EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_handle* handle) {
-
     struct media_data *data;
     data = xava_util_media_data_thread_data(media_data_thread);
 
@@ -472,9 +534,10 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
             cairo_surface_destroy(surface);
         }
 
-        options.artist.text = data->artist;
-        options.title.text  = data->title;
-        options.cover.image = &data->cover;
+        options.artist.text      = data->artist;
+        options.title.text       = data->title;
+        options.cover_text.text  = data->artist; // Default to just drawing the author's name on the cover photo
+        options.cover.image      = &data->cover;
 
         surface = xava_cairo_module_draw_new_media_screen(
                 handle, &options, &surface_region);
@@ -483,13 +546,6 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
 
         xavaLog("Artwork update number: %d", data->version);
     }
-
-    // skip drawing if no artwork is available
-    if(options.cover.image == NULL)
-        return;
-
-    if(options.cover.image->ready == false)
-        return;
 
     cairo_set_operator(handle->cr, CAIRO_OPERATOR_OVER);
 
