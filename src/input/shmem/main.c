@@ -46,7 +46,6 @@ EXP_FUNC void* xavaInput(void* data)
     int bytes = 0;
     int t = 0;
     */
-    int n = 0;
     int i;
 
     xavaSpam("SHMEM source: %s", audio->source);
@@ -62,6 +61,8 @@ EXP_FUNC void* xavaInput(void* data)
     audio->rate = mmap_area->rate;
 
     while (1) {
+        int n = audio->audio_out_head;
+
 //        for (i = 0; i < BUFSIZE; i += 2) { // BUFSIZE / 2
         for (i = VB_OFFSET; i < BUFSIZE+VB_OFFSET; i += 2) {
             if (audio->channels == 1) {
@@ -71,8 +72,12 @@ EXP_FUNC void* xavaInput(void* data)
                 audio->audio_out_r[n] = mmap_area->buffer[i + 1];
             }
             n++;
-            if (n == 2048 - 1) n = 0;
+            if (n == (int)audio->inputsize)
+                n = 0;
         }
+
+        audio->audio_out_head = n;
+
         if (audio->terminate == 1) {
             break;
         }

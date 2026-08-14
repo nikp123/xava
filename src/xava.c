@@ -133,7 +133,6 @@ void cleanup(void) {
     // config file path
     //free(configPath); don't free as the string is ONLY allocated during bootup
 
-    // cleanup remaining FFT buffers (abusing C here)
     if(audio->channels == 2)
         free(audio->audio_out_r);
 
@@ -293,7 +292,6 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
         // set up audio properties BEFORE the input is initialized
         audio->inputsize = p->inputsize;
-        audio->fftsize   = p->fftsize;
         audio->format    = -1;
         audio->terminate = 0;
         audio->channels  = 1 + p->stereo;
@@ -308,15 +306,16 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
             filter->func.load_config(&xava);
 
         // setup audio garbo
-        MALLOC_SELF(audio->audio_out_l, p->fftsize+1);
+        audio->audio_out_head = 0;
+        MALLOC_SELF(audio->audio_out_l, p->inputsize);
         if(p->stereo)
-            MALLOC_SELF(audio->audio_out_r, p->fftsize+1);
+            MALLOC_SELF(audio->audio_out_r, p->inputsize);
         if(p->stereo) {
-            for (uint32_t i = 0; i < audio->fftsize; i++) {
+            for (uint32_t i = 0; i < audio->inputsize; i++) {
                 audio->audio_out_l[i] = 0;
                 audio->audio_out_r[i] = 0;
             }
-        } else for(uint32_t i=0; i < audio->fftsize; i++) audio->audio_out_l[i] = 0;
+        } else for(uint32_t i=0; i < audio->inputsize; i++) audio->audio_out_l[i] = 0;
 
         // thr_id = below
         pthread_create(&p_thread, NULL, audio->func.loop, (void*)audio);
@@ -395,7 +394,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                 // process: populate input buffer and check if input is present
                 silence = 1;
 
-                for (uint32_t i = 0; i < audio->fftsize; i++) {
+                for (uint32_t i = 0; i < audio->inputsize; i++) {
                     if(audio->audio_out_l[i]) {
                         silence = 0;
                         break;
@@ -403,7 +402,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                 }
 
                 if(p->stereo) {
-                    for (uint32_t i = 0; i < audio->fftsize; i++) {
+                    for (uint32_t i = 0; i < audio->inputsize; i++) {
                         if(audio->audio_out_r[i]) {
                             silence = 0;
                             break;
@@ -418,7 +417,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                     xavaSpamCondition(xava.pauseRendering, "Resuming from sleep");
                 }
 
-                // process: if input was present for the last 5 seconds apply FFT to it
+                // process: if we slept for 5 seconds try rendering a new frame
                 if (sleep < p->framerate * 5) {
                     xava.pauseRendering = false;
                 } else if(xava.pauseRendering) {

@@ -16,7 +16,6 @@ typedef struct {
 } paTestData;
 
 static XAVA_AUDIO *audio;
-static uint32_t n = 0;
 
 static int recordCallback(const void *inputBuffer, void *outputBuffer,
     unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,
@@ -41,6 +40,8 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
         finished = paContinue;
     }
 
+    int n = audio->audio_out_head;
+
     if(inputBuffer == NULL) {
         for(i=0; i<framesToCalc; i++) {
             if(audio->channels == 1) audio->audio_out_l[n] = SAMPLE_SILENCE;
@@ -48,7 +49,9 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
                 audio->audio_out_l[n] = SAMPLE_SILENCE;
                 audio->audio_out_r[n] = SAMPLE_SILENCE;
             }
-            if(n == audio->inputsize-1) n = 0;
+            n++;
+            if(n == (int)audio->inputsize-1)
+                n = 0;
         }
     } else {
         for(i=0; i<framesToCalc; i++) {
@@ -58,9 +61,12 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
                 audio->audio_out_r[n] = *rptr++;
             }
             n++;
-            if(n == audio->inputsize-1) n = 0;
+            if(n == (int)audio->inputsize-1)
+                n = 0;
         }
     }
+
+    audio->audio_out_head = n;
 
     data->frameIndex += framesToCalc;
     if(finished == paComplete) {

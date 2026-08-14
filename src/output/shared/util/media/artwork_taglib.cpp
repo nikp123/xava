@@ -14,11 +14,11 @@
  * https://rajeevandlinux.wordpress.com/2012/04/24/extract-album-art-from-mp3-files-using-taglib-in-c/
  **/
 
+#include "shared.h"
+
 // extern everything because it's a C program after all
 extern "C" {
 static const char *taglib_id_picture = "APIC";
-
-#include "shared.h"
 
 #include "artwork.h"
 
@@ -31,18 +31,18 @@ bool xava_util_artwork_update_by_audio_file(const char *url,
 
     xavaReturnWarnCondition(id3v2tag == nullptr, true,
             "id3v2 not present in '%s'", url);
-    
+
     // picture frame
     frame = id3v2tag->frameListMap()[taglib_id_picture];
     xavaReturnLogCondition(frame.isEmpty() == true, true,
             "'%s' has no artwork information", url);
-    
+
     for(auto it = frame.begin(); it != frame.end(); ++it) {
         pic_frame = (TagLib::ID3v2::AttachedPictureFrame *)(*it);
 
         //if(pic_frame->type() ==
         //  TagLib::ID3v2::AttachedPictureFrame::FrontCover) {}
-        
+
         // extract image (in it’s compressed form)
         artwork->size = pic_frame->picture().size();
         artwork->file_data = static_cast<unsigned char*>

@@ -257,8 +257,6 @@ char *load_config(char *configPath, XAVA *hand) {
 
     // config: filter
     XAVA_CONFIG_GET_STRING(hand->default_config.config, "filter", "name", XAVA_DEFAULT_FILTER, filterMethod);
-    XAVA_CONFIG_GET_U32(hand->default_config.config, "filter", "fft_size", 14, p->fftsize);
-    p->fftsize = (int)exp2((double)p->fftsize);
 
     validate_config(hand, hand->default_config.config);
 

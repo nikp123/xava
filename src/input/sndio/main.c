@@ -13,7 +13,7 @@ EXP_FUNC void* xavaInput(void* data)
     struct sio_par par;
     struct sio_hdl *hdl;
     int16_t buf[256];
-    unsigned int i, n, channels;
+    unsigned int i, channels;
 
     assert(audio->channels > 0);
     channels = audio->channels;
@@ -35,10 +35,11 @@ EXP_FUNC void* xavaInput(void* data)
 
     xavaBailCondition(!sio_start(hdl), "sio_start() failed");
 
-    n = 0;
     while (audio->terminate != 1) {
         xavaBailCondition(sio_read(hdl, buf, sizeof(buf)) == 0,
             "sio_read() failed: %s\n", strerror(errno));
+
+        int n = audio->audio_out_head;
 
         for (i = 0; i < sizeof(buf)/sizeof(buf[0]); i += 2) {
             if (par.rchan == 1) {
@@ -50,6 +51,8 @@ EXP_FUNC void* xavaInput(void* data)
             }
             n = (n + 1) % audio->inputsize;
         }
+
+        audio->audio_out_head = n;
     }
 
     sio_stop(hdl);

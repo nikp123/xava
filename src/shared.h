@@ -4,6 +4,19 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+// A type that only exists because we're mixing C++ and C code.
+#ifdef __cplusplus
+    // If a C++ file (.cpp) includes this header
+    #include <atomic>
+    typedef std::atomic<int> xava_atomic_int;
+
+    extern "C" {
+#else
+    // If a C file (.c) includes this header
+    #include <stdatomic.h>
+    typedef atomic_int xava_atomic_int;
+#endif
+
 // Audio sensitivity and volume varies greatly between
 // different audio, audio systems and operating systems
 // This value is used to properly calibrate the sensitivity
@@ -65,8 +78,6 @@ typedef struct XAVA_CONFIG {
     XAVA_CONFIG_OPTION(bool, stereo);
     XAVA_CONFIG_OPTION(bool, autosens);
 
-    XAVA_CONFIG_OPTION(u32, fftsize);
-
     // input/output related options
 
     // 1 - colors
@@ -127,7 +138,7 @@ typedef struct XAVA_CONFIG {
 
 /**
     This is the module responsible for turning your raw audio data into something that is
-    displayable on a screen. 
+    displayable on a screen.
 
     To nerdify the statement: You turn your audio samples into screen units.
 
@@ -174,7 +185,7 @@ typedef struct XAVA_FILTER {
     // The internal way XAVA tracks this module. It's not your job as a module dev to poke
     // this around. You may explode the whole program by doing so.
     XAVAMODULE *module;
-    
+
     // Read about XAVA_OUTPUTs' data. I don't want duplicate explainations.
     void       *data;
 } XAVA_FILTER;
@@ -260,7 +271,7 @@ typedef struct XAVA_OUTPUT {
          **/
         int      (*apply)        (XAVA*);
         /**
-            Handle input, handles input..... Ok, this is a function that you as a developer 
+            Handle input, handles input..... Ok, this is a function that you as a developer
             of an output module allow your users to control the visaulizer with.
 
             Handle your mouse events, window drags, window resizes, keyboard strokes...etc. here.
@@ -301,14 +312,14 @@ typedef struct XAVA_OUTPUT {
     // You as the application developer should **never** have to touch this
     XAVAMODULE *module;
 
-    /** 
+    /**
         This is the fun one, this is the "state handle" that XAVA is giving you.
 
-        Absolfuckinglutely avoid using globally defined variables whenever you can 
+        Absolfuckinglutely avoid using globally defined variables whenever you can
         or I will hunt you down.
 
         Yes this could be quite anything you imagine, however you're expected to take great
-        care of what you got because its the ONLY thing that you got. And yea, I expect 
+        care of what you got because its the ONLY thing that you got. And yea, I expect
         all of your functions to safely handle this, otherwise we got a problem.
     **/
     void       *data;
@@ -329,7 +340,7 @@ typedef struct XAVA_AUDIO {
             This processes the input module specifc configuration
             and denotes any changes in its internal buffers.
             Use the provided values in this struct for said purpose.
-            Don't set up file watchers here for the same reason 
+            Don't set up file watchers here for the same reason
             you shouldn't for outputs as well.
 
             The XAVA handle given here is not guranteed to be thread-safe.
@@ -365,15 +376,13 @@ typedef struct XAVA_AUDIO {
     float        *audio_out_r;
     float        *audio_out_l;
 
+    /**
+     *   The head pointer that points to the latest sample
+     **/
+    xava_atomic_int audio_out_head;
+
     // The size of the buffer (in samples) holding your incoming samples
     uint32_t     inputsize;
-
-    /**
-        The size of the FFT that gets rendered by the filter module.
-        I have no fucking idea why this is here, should be very muched moved away
-        because it's not relevant here.
-    **/
-    uint32_t     fftsize;
 
     /**
         Sample format. Not really defined atm, this should be fixed to mean
@@ -452,5 +461,9 @@ typedef struct XAVA {
 
     xava_ionotify ionotify;
 } XAVA;
+
+#ifdef __cplusplus
+    } // Closing extern "C"
+#endif
 
 #endif

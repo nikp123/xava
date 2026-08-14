@@ -20,7 +20,6 @@ EXP_FUNC void* xavaInput(void* data)
 {
     XAVA_AUDIO *audio = (XAVA_AUDIO *)data;
     int fd;
-    uint32_t n = 0;
     //signed char buf[1024];
     //int tempr, templ, lo, q;
     int t = 0;
@@ -39,6 +38,8 @@ EXP_FUNC void* xavaInput(void* data)
 
     while (1) {
         bytes = read(fd, buf, sizeof(buf));
+
+        int n = audio->audio_out_head;
 
         if (bytes < 1) { //if no bytes read sleep 10ms and zero shared buffer
             nanosleep (&req, NULL);
@@ -62,7 +63,8 @@ EXP_FUNC void* xavaInput(void* data)
             // assuming samples are 16bit (as per example)
             // also reading more than the retrieved buffer is considered memory corruption
             for (uint32_t i = 0; i < bytes/2; i += 2) {
-                if (audio->channels == 1) audio->audio_out_l[n] = (float)(buf[i] + buf[i + 1]) / (float)2.0;
+                if (audio->channels == 1)
+                    audio->audio_out_l[n] = (float)(buf[i] + buf[i + 1]) / (float)2.0;
 
                 //stereo storing channels in buffer
                 if (audio->channels == 2) {
@@ -70,10 +72,11 @@ EXP_FUNC void* xavaInput(void* data)
                     audio->audio_out_r[n] = buf[i + 1];
                 }
 
-                n++;
-                if (n == audio->inputsize-1) n = 0;
+                n = (n+1) % (int)audio->inputsize;
             }
         }
+
+        audio->audio_out_head = n;
 
         if (audio->terminate == 1) {
             close(fd);

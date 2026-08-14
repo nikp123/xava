@@ -70,7 +70,7 @@ static void fill_audio_outs(XAVA_AUDIO* audio, signed char* buffer,
     const int size) {
     int radj = audio->format / 4; // adjustments for interleaved
     int ladj = audio->format / 8;
-    static int audio_out_buffer_index = 0;
+    int n    = audio->audio_out_head;
     // sorting out one channel and only biggest octet
     for (int buffer_index = 0; buffer_index < size; buffer_index += ladj * 2) {
         // first channel
@@ -80,15 +80,15 @@ static void fill_audio_outs(XAVA_AUDIO* audio, signed char* buffer,
 
         // mono: adding channels and storing it in the buffer
         if (audio->channels == 1)
-            audio->audio_out_l[audio_out_buffer_index] = (templ + tempr) / 2;
+            audio->audio_out_l[n] = (templ + tempr) / 2;
         else { // stereo storing channels in buffer
-            audio->audio_out_l[audio_out_buffer_index] = templ;
-            audio->audio_out_r[audio_out_buffer_index] = tempr;
+            audio->audio_out_l[n] = templ;
+            audio->audio_out_r[n] = tempr;
         }
 
-        ++audio_out_buffer_index;
-        audio_out_buffer_index %= audio->inputsize;
+        n = (n+1) % audio->inputsize;
     }
+    audio->audio_out_head = n; // update the atomic pointer once we're done storing samples
 }
 
 static bool is_loop_device_for_sure(const char * text) {

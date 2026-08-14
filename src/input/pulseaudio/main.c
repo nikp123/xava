@@ -95,8 +95,7 @@ void getPulseDefaultSink(void* data) {
 EXP_FUNC void* xavaInput(void* data)
 {
     XAVA_AUDIO *audio = (XAVA_AUDIO *)data;
-    uint32_t n;
-    int16_t buf[audio->inputsize];
+    int16_t buf[audio->latency*2];
 
     // get default audio source if there is none
     if(strcmp(audio->source, "auto") == 0) {
@@ -125,8 +124,6 @@ EXP_FUNC void* xavaInput(void* data)
         pthread_exit(NULL);
     }
 
-    n = 0;
-
     while (1) {
         /* Record some data ... */
         if (pa_simple_read(s, buf, sizeof(buf), &error) < 0) {
@@ -137,9 +134,12 @@ EXP_FUNC void* xavaInput(void* data)
             pthread_exit(NULL);
         }
 
+        int n = audio->audio_out_head;
+
         //sorting out channels
-        for (uint32_t i = 0; i < audio->inputsize; i += 2) {
-            if (audio->channels == 1) audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
+        for (uint32_t i = 0; i < audio->latency; i += 2) {
+            if (audio->channels == 1)
+                audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
 
             // stereo storing channels in buffer
             if (audio->channels == 2) {
@@ -148,8 +148,12 @@ EXP_FUNC void* xavaInput(void* data)
             }
 
             n++;
-            if (n == audio->inputsize) n = 0;
+            if (n == (int)audio->inputsize)
+                n = 0;
         }
+
+        audio->audio_out_head = n;
+
         if (audio->terminate == 1) {
             pa_simple_free(s);
             free(audio->source);

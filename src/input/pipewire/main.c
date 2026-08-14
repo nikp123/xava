@@ -12,8 +12,6 @@
 
 #include "shared.h"
 
-static int n = 0;
-
 struct pwdata {
     struct pw_main_loop *loop;
     struct pw_stream *stream;
@@ -58,6 +56,8 @@ static void on_process(void *userdata)
     // first data chunk
     audio_buffer = buf[0].datas[0].data;
 
+    int n = audio->audio_out_head;
+
     // audio conversion magic
     switch(audio->channels) {
         case 1:
@@ -74,6 +74,7 @@ static void on_process(void *userdata)
             }
             break;
     }
+    audio->audio_out_head = n;
 
     // inform pipewire that we got the thing
     pw_stream_queue_buffer(pwdata->stream, b);

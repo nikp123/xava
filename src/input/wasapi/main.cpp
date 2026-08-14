@@ -24,7 +24,6 @@ const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 
 static XAVA_AUDIO *audio;
-static u32 n;
 
 HRESULT sinkSetFormat(WAVEFORMATEX * pWF) {
     // For the time being, just return OK.
@@ -39,6 +38,9 @@ HRESULT sinkSetFormat(WAVEFORMATEX * pWF) {
 
 HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
     float *pBuffer = (float*)pData;
+
+    int n = data->audio_out_head.load(std::memory_order_relaxed);
+
     // convert 32-bit float to something usable
     switch(audio->channels) {
         case 1:
@@ -46,19 +48,24 @@ HRESULT sinkCopyData(BYTE * pData, UINT32 NumFrames) {
                 audio->audio_out_l[n] = *pBuffer++;
                 //audio->audio_out_l[n] += *pBuffer++;
                 audio->audio_out_l[n] *= 16383.5f;
+
                 n++;
-                if(n == audio->inputsize) n = 0;
+                if (n == (int)audio->input_size) n = 0;
             }
             break;
         case 2:
             for(UINT32 i=0; i<NumFrames; i++) {
                 audio->audio_out_l[n] = (*pBuffer++)*32767.0f;
                 audio->audio_out_r[n] = (*pBuffer++)*32767.0f;
+
                 n++;
-                if(n == audio->inputsize) n = 0;
+                if (n == (int)audio->input_size) n = 0;
             }
             break;
     }
+
+    // the pointer is a bit late but meh
+    data->audio_out_head.store(n, std::memory_order_release);
     return S_OK;
 }
 
