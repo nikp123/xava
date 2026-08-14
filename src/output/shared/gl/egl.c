@@ -39,7 +39,24 @@ EGLBoolean EGLCreateContext(XAVA *xava, struct _escontext *ESContext) {
 
   eglBindAPI(EGL_OPENGL_API);
 
-  EGLDisplay display = eglGetDisplay(ESContext->native_display);
+  EGLDisplay display = EGL_NO_DISPLAY;
+
+  // Modern/API-correct path: create the display for the native platform this
+  // windowing system lives on (Wayland/X11). Passing a raw native display
+  // pointer to eglGetDisplay() no longer works on current Mesa.
+  if (ESContext->platform != 0) {
+    PFNEGLGETPLATFORMDISPLAYEXTPROC getPlatformDisplay =
+        (PFNEGLGETPLATFORMDISPLAYEXTPROC)
+            eglGetProcAddress("eglGetPlatformDisplayEXT");
+    if (getPlatformDisplay != NULL)
+      display = getPlatformDisplay(ESContext->platform,
+                                   ESContext->native_display, NULL);
+  }
+
+  // Legacy fallback for backends that don't provide a platform
+  if (display == EGL_NO_DISPLAY)
+    display = eglGetDisplay(ESContext->native_display);
+
   if (display == EGL_NO_DISPLAY) {
     xavaError("No EGL display");
     return EGL_FALSE;

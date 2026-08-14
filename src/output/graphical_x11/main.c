@@ -359,6 +359,7 @@ EXP_FUNC int xavaInitOutput(XAVA *xava) {
     #ifdef EGL
         ESContext.native_window = xavaXWindow;
         ESContext.native_display = xavaXDisplay;
+        ESContext.platform = EGL_PLATFORM_X11_EXT;
         EGLCreateContext(xava, &ESContext);
         EGLInit(xava);
     #endif

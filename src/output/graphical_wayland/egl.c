@@ -25,6 +25,7 @@ void waylandEGLCreateWindow(struct waydata *wd) {
 
     wd->ESContext.native_window = (EGLNativeWindowType)egl_window;
     wd->ESContext.native_display = wd->display;
+    wd->ESContext.platform = EGL_PLATFORM_WAYLAND_EXT;
 }
 
 void waylandEGLWindowResize(struct waydata *wd, int w, int h) {
