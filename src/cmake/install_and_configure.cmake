@@ -33,7 +33,7 @@ if(UNIX AND NOT APPLE)
                  REQUIRED)
 
     execute_process (COMMAND
-        "${CONVERT}" convert -size 128x128 -density 1200 -background none -format png32
+        "${CONVERT}" -size 128x128 -density 1200 -background none -format png32
         "${CMAKE_CURRENT_SOURCE_DIR}/assets/linux/xava.svg"
         "${CMAKE_CURRENT_BINARY_DIR}/xava.png"
          COMMAND_ERROR_IS_FATAL ANY)
