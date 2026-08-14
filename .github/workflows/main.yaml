@@ -17,12 +17,6 @@ jobs:
         - system: archlinux
           arch: x86_64
           icon: '🟦'
-        - system: windows
-          arch: i686
-          icon: '⬛'
-        - system: windows
-          arch: x86_64
-          icon: '🟦'
 
     name: 🚧${{ matrix.icon }} ${{ matrix.system }} (${{ matrix.arch }})
     steps:
@@ -77,7 +71,5 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            xava-installer-i686.exe
-            xava-installer-x86_64.exe
             xava-x86_64.AppImage
 

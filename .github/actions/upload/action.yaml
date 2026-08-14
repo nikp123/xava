@@ -21,9 +21,4 @@ runs:
     with:
       system: ${{ inputs.system }}
       arch:   ${{ inputs.arch   }}
-  - uses: ./.github/docker/windows/send
-    if: contains(inputs.system, 'windows')
-    with:
-      system: ${{ inputs.system }}
-      arch:   ${{ inputs.arch   }}
 

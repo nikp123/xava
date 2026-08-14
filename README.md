@@ -13,8 +13,8 @@ a fork of [Karl Stavestrand's](mailto:karl@stavestrand.no) [C.A.V.A.](https://gi
 
 - [What it is](#what-it-is)
 - [Getting started](#getting-started)
-  - [Windows](#windows)
-  - [macOS](#macos)
+  - [Windows (deprecated)](#windows-deprecated)
+  - [macOS (depreacted)](#macos-depreacted)
   - [Linux](#linux)
   - [Nix](#nix)
   - [Installing manually](#installing-manually)
@@ -63,20 +63,20 @@ X.A.V.A. is a bar spectrum audio visualizer in a graphical window
  (X11, Wayland (wlroots and xdg shell), Windows, SDL2).
 
 This program is not intended for scientific use. It's written
- to look responsive and aesthetic when used to visualize music. 
+ to look responsive and aesthetic when used to visualize music.
 
 
 Getting started
 ---------------
 
-### Windows
+### Windows (deprecated)
 
-There should be an installer in the Releases page of this repository. Just
- download, install and run it. Non-release builds are unstable, so expect
- breakage.
+NOTE: I have no interest in maintaining this anymore. Consider it broken.
+It proved too much of a hassle to maintain and keep working.
 
-You can get them at the [Releases](https://github.com/nikp123/xava/releases)
-page (labeled as "Development build").
+You will have to compile this yourself. I suggest using MinGW, but your
+mileage may vary and it's likely that it's not going to work. I am done
+supporting Windows or Microsoft anything.
 
 The configuration file is located in ``%appdata%\xava\config.cfg``
 
@@ -87,10 +87,10 @@ Technical notes:
 > Windows version lacks features compared to Linux version as that's my target.
 If you want the "full" experience, consider using this on a Linux machine.
 
-### macOS
+### macOS (deprecated)
 
-> VERY likely that it's broken. I don't recommend trying this unless you are
-completely sure that you know what you're doing.
+NOTE: Might work but I wouldn't count on it. Plus no native macOS code exists,
+so your options might be very limited. Consider it broken.
 
 You have to compile this yourself, get the dependencies installed via brew (look
  below) and compile it using the method described above.
@@ -162,7 +162,7 @@ Updating
 --------
 
 If you happen to be updating this program, just keep in mind that breaking
-changes DO occur sometimes. 
+changes DO occur sometimes.
 
 In most cases, errors that show up might look like
 [issue #43](https://github.com/nikp123/xava/issues/43)
@@ -190,7 +190,7 @@ via a start menu entry or a desktop shortcut. If not, you can still choose to
 start it as a command-line executable:
 
 	Usage : xava [options]
-	Visualize audio input in terminal. 
+	Visualize audio input in terminal.
 
 	Options:
 		-p	path to config file
@@ -240,7 +240,7 @@ section of this README.
 
 ### How do I start the visualizer on system startup
 
-On Windows create a shortcut of the ``xava.exe`` 
+On Windows create a shortcut of the ``xava.exe``
 (which is in the install directory) and copy it to
 ``C:\Users\you\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\``
 
@@ -263,12 +263,12 @@ If you're running Windows and you used the installer, you'll find a
 ``Configure XAVA`` shortcut in your Start Menu. Use it to open the XAVA
 configuration.
 
-By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`, 
+By default a configuration file is located in `$XDG_CONFIG_HOME/xava/config`,
 `$HOME/.config/xava/config` or on Windows `%APPDATA%\xava\config`
 
 The configurations are seperated into different categories such as ``[general]``
 or ``[window]`` which are used to configure how certain parts of the visualizer
-should function. 
+should function.
 
 For example: ``[filter]`` refers to options that control the behavior of the
 audio **filtering**/conversion to bars system, whilst ``[output]`` controls how
@@ -276,7 +276,7 @@ the output result should be drawn.
 
 By default the configurations are commented by a semi-colon ``;`` in front of
 the option. You'll need to remove this semi-colon for the configuration changes
-to be effective. 
+to be effective.
 
 
 ### Equalizer
@@ -298,7 +298,7 @@ which refers to the part of the frequency spectrum.
 
 ![3_138](https://cloud.githubusercontent.com/assets/6376571/8670183/a54a851e-29e8-11e5-9eff-346bf6ed91e0.png)
 
-In this example the frequency spectrum is divided in 5 parts. 
+In this example the frequency spectrum is divided in 5 parts.
 You may be able to see that the 1st, 3rd and 5th parts have been totally disabled and
 you can see the result of it on the screenshot above.
 
@@ -311,7 +311,7 @@ you can see the result of it on the screenshot above.
 
 ![3_139](https://cloud.githubusercontent.com/assets/6376571/8670181/9db0ef50-29e8-11e5-81bc-3e2bb9892da0.png)
 
-And in this example you can see that the lower parts (1 and 2) 
+And in this example you can see that the lower parts (1 and 2)
 have been amplified while 5 is being lowered.
 
 
@@ -331,7 +331,7 @@ audio input source.
 #### From WASAPI (Windows only, super easy)
 
 If you are on Windows, just use this.
- Don't even bother dealing with other options. 
+ Don't even bother dealing with other options.
 
 It's enabled by default if it detects compilation for Windows and if it's
  disabled go and set ``method`` to ``wasapi`` in the ``[input]``section of the
@@ -350,10 +350,10 @@ First make sure you have installed pulseaudio dev files and
 
 If you're lucky all you have to do is to set this line in the
  config file under the ``[input]`` section ``method = pulseaudio``.
- 
+
 If nothing happens you might have to use a different source
  than the default. The default might also be your microphone.
- Look at the config file for help. 
+ Look at the config file for help.
 
 #### From portaudio
 
@@ -403,7 +403,7 @@ Look at the included example file `example_files/etc/asound.conf`
  on how to use  the multi channel. I was able to make this work
  on my laptop (an Asus UX31 running Ubuntu), but I had no luck
  with the ALSA method on my Rasberry PI (Rasbian) with an USB DAC.
- The PulseAudio method however works perfectly on my PI. 
+ The PulseAudio method however works perfectly on my PI.
 
 Read more about the ALSA method [here](http://stackoverflow.com/questions/12984089/capture-playback-on-play-only-sound-card-with-alsa).
 
@@ -614,7 +614,7 @@ and may introduce problems on older software/hardware (fxp. Windows XP),
 #### Transparency
 
 You can enable transparent windows:
-     
+
 	transparency = *true or false*
 
 And with transparency comes the ability to change the opacity of the background and the bars:
@@ -625,7 +625,7 @@ And with transparency comes the ability to change the opacity of the background 
 #### Advanced window behaviour
 
 Force the window to be behind any window (may not work):
-    
+
 	keep_below = *true or false*
 
 Set window properties (useful for scripts relying on window class information):
@@ -634,11 +634,11 @@ Set window properties (useful for scripts relying on window class information):
 
 This changes the X11 window type so that the compositor doesn't
 apply shadows and blur onto the window. However, this is not
-guaranteed to work, plus additional breakage may occur. 
+guaranteed to work, plus additional breakage may occur.
 
 Make the window not react on mouse input (it just lets the click
  go through the window):
-    
+
 	interactable = 0
 
 Pro-tip: You can still gain control of the window by clicking
@@ -698,7 +698,7 @@ But if you want to have gradients on the bars instead of static colors, you can
 enable them by changing:
 
 	gradient_count = *number of colors higher than 1*
-	
+
 	gradient_color_1 = *same rule as colors*
 	gradient_color_2 = *same rule as colors*
 	...
@@ -732,6 +732,6 @@ out of place and convoluting. If that's the case you may file an issue where you
 explain your confusion and I will try fixing said issue.
 
 Otherwise, if the issue is of how the program itself performs, (i.e. an actual
-bug) be SURE that you attach the full log by running XAVA **with** 
+bug) be SURE that you attach the full log by running XAVA **with**
 ``XAVA_SCREAM=1`` set in your environment.
 
