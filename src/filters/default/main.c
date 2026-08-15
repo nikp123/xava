@@ -18,6 +18,13 @@
 #define GRAVITY_SCALE    (50.0/100.0)
 #define INTEGRAL_SCALE   0.01
 
+typedef enum WINDOW_TYPE {
+    SQUARE,
+    HANN,
+    HAMMING,
+    BLACKMAN,
+} window_type;
+
 typedef struct XAVA_FILTER_CONFIG {
     const uint32_t lowcf, highcf; // low and high cutoff frequency
     const uint32_t overshoot;
@@ -37,6 +44,8 @@ typedef struct XAVA_FILTER_CONFIG {
     const float gravity;
     const float eqBalance;
 
+    const char* window;
+
     XAVA_CONFIG_OPTION(bool, oddoneout);
 } XAVA_FILTER_CONFIG;
 
@@ -44,9 +53,14 @@ typedef struct FFT_BAND {
     fftwf_plan pl, pr;
     fftwf_complex *outl, *outr;
 
+    float    *window;
+
     uint32_t fft_size;
-    double   start_freq, stop_freq;
+    float    start_freq, stop_freq;
     float    *in_l, *in_r;
+
+    // used for debugging purposes only
+    uint32_t last_calcbars;
 } fft_band;
 
 typedef struct XAVA_FILTER_DATA {
@@ -69,6 +83,9 @@ typedef struct XAVA_FILTER_DATA {
     // for that framerate
     fft_band *bands;
 
+    // Which window function to apply to the visualizers audio data
+    window_type window;
+
     uint32_t max_fft_size;
     uint32_t *lcf, *hcf;
 
@@ -77,35 +94,53 @@ typedef struct XAVA_FILTER_DATA {
     XAVA_FILTER_CONFIG state;
 } XAVA_FILTER_DATA;
 
-void separate_freq_bands(fftwf_complex *out,
+void separate_freq_bands(
+        fftwf_complex *out,
         uint32_t channel,
         double sens,
-        uint32_t fftsize,
         XAVA_FILTER_DATA *data,
-        double low, double high,
+        fft_band         *band,
         uint32_t sample_rate) {
     uint32_t o, i;
-    double y[fftsize / 2 + 1];
+    double y[band->fft_size / 2 + 1];
     double temp;
 
-    uint32_t step = log2f(data->max_fft_size) - log2f(fftsize);
+    bool spam = band->last_calcbars != data->calcbars;
+
+    uint32_t step = log2f(data->max_fft_size) - log2f(band->fft_size);
+
+    uint32_t low_limit = floor(band->start_freq / ((float)sample_rate / 2.0) * ((float)data->max_fft_size / 2.0));
+    uint32_t high_limit = floor(band->stop_freq / ((float)sample_rate / 2.0) * ((float)data->max_fft_size / 2.0));
+
+    if(spam) {
+        xavaSpam("Rate %d, FFT size %d", sample_rate, band->fft_size);
+        xavaSpam("Band low %f [%d] and high %f [%d]",
+                band->start_freq,
+                low_limit,
+                band->stop_freq,
+                high_limit);
+    }
 
     // process: separate frequency bands
     for (o = 0; o < data->calcbars; o++) {
         float peak = 0;
 
         // if the frequency is below the range, skip it
-        if ( data->lcf[o] < floor(low / (sample_rate / 2) * (data->max_fft_size)) )
+        if ( data->hcf[o] <= low_limit) {
+            if(spam) xavaSpam("skipped bar %d: %d < %d", o, data->lcf[o], low_limit);
             continue;
+        }
 
         // if the frequency is over the range, exit the loop
-        if ( data->lcf[o] > floor(high / (sample_rate / 2) * (data->max_fft_size)) )
+        if ( data->lcf[o] >= high_limit) {
+            if(spam) xavaSpam("skipped band at bar %d: %d > %d", o, data->lcf[o], high_limit);
             break;
+        }
 
-        //xavaSpam("band %d: %d -> %d / %f", o, data->lcf[o], data->hcf[o], exp2f(step));
+        if(spam) xavaSpam("bar %d: %d -> %d / %d", o, data->lcf[o], data->hcf[o], (int)exp2f(step));
 
         // process: get peaks (if we have less fft samples available, we just skip those peaks)
-        for (i = data->lcf[o]/exp2f(step); i <= data->hcf[o]/exp2f(step); i++) {
+        for (i = data->lcf[o] >> step; i <= data->hcf[o] >> step; i++) {
             //getting r of compex
             y[i] = hypot(out[i][0], out[i][1]);
             peak += y[i]; //adding upp band
@@ -117,6 +152,9 @@ void separate_freq_bands(fftwf_complex *out,
         if (channel == 1) data->fl[o] = temp;
         else data->fr[o] = temp;
     }
+
+    if(spam)
+        band->last_calcbars = data->calcbars;
 }
 
 
@@ -155,6 +193,34 @@ void monstercat_filter(int bars,
     }
 }
 
+void generate_window(float *w, size_t n, window_type type) {
+    switch(type) {
+        case SQUARE:
+            for (size_t i = 0; i < n; i++) {
+                w[i] = 1.0f;
+            }
+            break;
+        case HANN:
+            for (size_t i = 0; i < n; i++) {
+                w[i] = 0.5 * (1.0 - cos(2.0 * M_PI * i / (n - 1)));
+            }
+            break;
+        case HAMMING:
+            for (size_t i = 0; i < n; i++) {
+                w[i] = 0.54 - 0.46 * cos(2.0 * M_PI * i / (n - 1));
+            }
+            break;
+        case BLACKMAN:
+            for (size_t i = 0; i < n; i++) {
+                w[i] = 0.42 - 0.5 * cos(2.0 * M_PI * i / (n - 1)) +
+                           0.08 * cos(4.0 * M_PI * i / (n - 1));
+            }
+            break;
+        default:
+            xavaBail("You selected a non-existing window function");
+    }
+}
+
 EXP_FUNC int xavaFilterInit(XAVA *xava) {
     XAVA_AUDIO         *audio = &xava->audio;
     XAVA_CONFIG            *p = &xava->conf;
@@ -165,25 +231,30 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
 
     arr_init(data->bands);
 
-    data->max_fft_size = exp2l(ceil(log2(audio->rate / data->state.lowcf) + 1) + data->state.fft_extra);
+    data->max_fft_size = 0;
     xavaBailCondition(data->max_fft_size > audio->inputsize, "Your input buffer *must* or *equal* be larger than the FFT bin size.");
 
     // fft: determine the boudary between high and low frequency windows
     // use nyquist rule for this
-    double boundary_frequency = INFINITY;
-    double last_boundary_frequency = data->state.highcf;
-    double target_framerate = p->framerate;
+    float boundary_frequency = INFINITY;
+    float last_boundary_frequency = data->state.highcf;
+    float target_framerate = p->framerate;
     do {
         fft_band band;
 
         boundary_frequency = target_framerate;
 
         // Applied NyQuist here
-        band.fft_size   = exp2l(ceil(log2(audio->rate / boundary_frequency)) + data->state.fft_extra);
-        band.start_freq = boundary_frequency * exp2(data->state.fft_extra);
+        band.fft_size   = exp2l(ceil(log2((float)audio->rate / boundary_frequency)) + data->state.fft_extra);
+        if(band.fft_size > data->max_fft_size)
+            data->max_fft_size = band.fft_size;
+        band.start_freq = boundary_frequency;
         band.stop_freq  = last_boundary_frequency;
         arr_init_n(band.in_l, band.fft_size);
         arr_init_n(band.in_r, band.fft_size);
+
+        arr_init_n(band.window, band.fft_size);
+        generate_window(band.window, band.fft_size, data->window);
 
         CALLOC_SELF(band.outl, band.fft_size/2+1);
         band.pl = fftwf_plan_dft_r2c_1d(band.fft_size, band.in_l, band.outl, FFTW_MEASURE);
@@ -198,7 +269,7 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
 
         arr_add(data->bands, band);
 
-        xavaLog("Created frequency band %d with F: %f -> %f and fftsize = %d", arr_count(data->bands), band.start_freq, band.stop_freq, band.fft_size);
+        xavaLog("Created frequency band %d with F: %f -> %f and fft_size = %d", arr_count(data->bands), band.start_freq, band.stop_freq, band.fft_size);
     } while(boundary_frequency > data->state.lowcf);
 
     arr_init_n(data->fpeak,  xava->bars);
@@ -276,27 +347,24 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     // since oddoneout requires every odd bar, why not split them in half?
     data->calcbars = data->state.oddoneout ? xava->bars/2+1 : xava->bars;
 
-    // frequency constant that we'll use for logarithmic progression of frequencies
-    double freqconst = log(data->state.highcf-data->state.lowcf) /
-      log(pow(data->calcbars, data->state.logScale));
-    //freqconst = -2;
-
     // process: calculate cutoff frequencies
     uint32_t n;
     for (n=0; n < data->calcbars; n++) {
-        float fc = pow(
-                powf(n, (data->state.logScale-1.0) *
-                    ((double)n+1.0) /
-                    ((double)data->calcbars)+1.0),
-                freqconst) +
-            data->state.lowcf;
-        float fre = fc / (audio->rate / 2.0);
+        // changing the scale factor
+        float t = pow((float)n / (float)data->calcbars, data->state.logScale);
+
+        // use geometric law to logarithmically scale frequencies
+        float fc = (float)data->state.lowcf * powf((float)data->state.highcf/data->state.lowcf, t);
+
+        float fre = fc / ((float)audio->rate / 2.0);
         // Remember nyquist!, pr my calculations this should be rate/2
         // and  nyquist freq in M/2 but testing shows it is not...
         // or maybe the nq freq is in M/4
 
         //lfc stores the lower cut frequency foo each bar in the fft out buffer
-        data->lcf[n] = floor(fre * (data->max_fft_size/2.0));
+        data->lcf[n] = floor(fre * (data->max_fft_size / 2));
+
+        xavaLog("Bar %d start frequency: %f [%d]", n, fc, data->lcf[n]);
 
         if (n != 0) {
             //hfc holds the high cut frequency for each bar
@@ -337,9 +405,14 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
         // But hey, at least on the upside, we don't rely on UB to actually
         // render out our visualizer :OOOO
         if(headpos < band->fft_size) {
-            if(p->stereo)
-                memcpy(band->in_r, &(audio->audio_out_r[audio->inputsize - band->fft_size + headpos]), (band->fft_size - headpos)*sizeof(float));
-            memcpy(band->in_l, &(audio->audio_out_l[audio->inputsize - band->fft_size + headpos]),     (band->fft_size - headpos)*sizeof(float));
+            if(p->stereo) {
+                for(size_t i = 0; i < band->fft_size - headpos; i++) {
+                    band->in_r[i] = band->window[i] * audio->audio_out_r[audio->inputsize - band->fft_size + headpos + i];
+                }
+            }
+            for(size_t i = 0; i < band->fft_size - headpos; i++) {
+                band->in_l[i] = band->window[i] * audio->audio_out_l[audio->inputsize - band->fft_size + headpos + i];
+            }
             skip = 0;
             size = headpos;
             seek = band->fft_size - headpos;
@@ -350,14 +423,18 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
         }
 
         if(p->stereo) {
-            memcpy(&(band->in_r[seek]), &(audio->audio_out_r[skip]), size*sizeof(float));
+            for(size_t i = 0; i < size; i++) {
+                band->in_r[seek + i] = band->window[seek + i] * audio->audio_out_r[skip + i];
+            }
             fftwf_execute(band->pr);
-            separate_freq_bands(band->outr, 2, p->sens, band->fft_size, data, band->start_freq, band->stop_freq, audio->rate);
+            separate_freq_bands(band->outr, 2, p->sens, data, band, audio->rate);
         }
 
-        memcpy(&(band->in_l[seek]), &(audio->audio_out_l[skip]), size*sizeof(float));
+        for(size_t i = 0; i < size; i++) {
+            band->in_l[seek + i] = band->window[seek + i] * audio->audio_out_l[skip + i];
+        }
         fftwf_execute(band->pl);
-        separate_freq_bands(band->outl, 1, p->sens, band->fft_size, data, band->start_freq, band->stop_freq, audio->rate);
+        separate_freq_bands(band->outl, 1, p->sens, data, band, audio->rate);
     }
 
     if(data->state.oddoneout) {
@@ -476,6 +553,8 @@ EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
         }
         fftwf_destroy_plan(band->pl);
         free(band->outl);
+
+        arr_free(band->window);
     }
     arr_free(data->bands);
     fftwf_cleanup();
@@ -513,7 +592,7 @@ XAVA_FILTER_CONFIG generate_default_config(xava_config_source config) {
             * INTEGRAL_SCALE,
 
         .ignore     = xavaConfigGetF64(config, "filter", "ignore", 0),
-        .logScale   = xavaConfigGetF64(config, "filter", "log", 1.3),
+        .logScale   = xavaConfigGetF64(config, "filter", "log", 1.0),
 
         .monstercat = xavaConfigGetF64(config, "filter", "monstercat", 0.0)
             * MONSTERCAT_SCALE,
@@ -526,6 +605,8 @@ XAVA_FILTER_CONFIG generate_default_config(xava_config_source config) {
         .eqBalance  = xavaConfigGetF64(config, "filter", "eq_balance", 0.67),
 
         .fft_extra  = xavaConfigGetI32(config, "filter", "fft_extra", 0),
+
+        .window     = xavaConfigGetString(config, "filter", "window", "square"),
     };
 }
 
@@ -586,6 +667,20 @@ EXP_FUNC void xavaFilterLoadConfig(XAVA *xava) {
         } else {
             xavaBail("[BUG] Tell nik to fix those stupid defaults!");
         }
+    }
+
+    // validate: window
+    if(!strcmp(state->window, "square")) {
+        data->window = SQUARE;
+    } else if(!strcmp(state->window, "hann")) {
+        data->window = HANN;
+    } else if(!strcmp(state->window, "hamming")) {
+        data->window = HAMMING;
+    } else if(!strcmp(state->window, "blackman")) {
+        data->window = BLACKMAN;
+    } else {
+        xavaBail("Invalid window function selected '%s', possible values are: "
+                "square, hann, hamming, blackman", state->window);
     }
 
     // validate: integral

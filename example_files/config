@@ -319,9 +319,15 @@
 # In bar height, bars that would have been lower that this (in pixels) will not be drawn.
 ; ignore = 0
 
-# Adjust the logarithmic scale of the frequency band (the lower the value,
-# the less difference between bars in frequency)
-; log = 1.3
+# Control the power of the logarithmic scale which is used to distribute the
+# bar frequencies. Higher values prefers growth on the top end, lower values
+# prefers growth in the lower end
+#
+# The scaling law is as follows:
+# bar_freq = low_cutoff * ((high_cutoff/low_cutoff)^((bar_number / bar_count) ^ log))
+# If you don't understand this, fire up your graphing calculator and
+# put that equation in.
+; log = 1.0
 
 # Average out the value of each ~~odd~~ even bar (just like the monstercat visualizer)
 ; oddoneout = true
@@ -340,6 +346,17 @@
 # Manual sensitivity in %. Autosens must be turned off for this to take effect.
 # 200.0 means double height and so on. Accepts only non-negative values.
 ; sensitivity = 100.0
+
+# Since we're chopping up audio into small chunks so that FFT can work fast
+# you can optionally enable a window function to clean up the input so we
+# get a cleaner FFT output.
+#
+# Available options are:
+# - square [default]
+# - hann - Hann window function
+# - hamming - Hamming window function
+# - blackman - Blackman window function
+; window = square
 
 # Don't touch unless you know the implications. Really, don't. And it's
 # complicated. Here we go:
