@@ -1,0 +1,16 @@
+inputs:
+  system:
+    description: 'Target operating system'
+    required: true
+    default: 'ubuntu'
+  arch:
+    description: 'Target architecture'
+    required: true
+    default: 'x86_64'
+
+runs:
+  using: docker
+  image: docker://xava-build-ubuntu:latest
+  entrypoint: './.github/docker/ubuntu/build.sh'
+  args:
+    - ${{ inputs.arch }}

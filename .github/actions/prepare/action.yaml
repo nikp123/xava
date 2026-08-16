@@ -2,7 +2,7 @@ inputs:
   system:
     description: 'Target operating system'
     required: true
-    default: 'archlinux'
+    default: 'ubuntu'
   arch:
     description: 'Target architecture'
     required: true
