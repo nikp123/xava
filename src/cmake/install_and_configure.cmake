@@ -25,8 +25,12 @@ include("src/cmake/copy_gl_shaders.cmake")
 
 if(UNIX AND NOT APPLE)
     # I am lazy and I just want to convert the icons into a format most desktops will be fine with
-    find_program(CONVERT magick
-                 REQUIRED)
+    # ImageMagick 7 onwards use `magick`; earlier versions use `convert`.
+    find_program(CONVERT magick)
+    if(NOT CONVERT)
+        find_program(CONVERT convert
+                     REQUIRED)
+    endif()
 
     # Despite the program not being called, we need it because it's called by magick
     find_program(LIBRSVG rsvg-convert
