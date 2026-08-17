@@ -61,24 +61,44 @@ EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
     int supported_systems = sizeof(systems)/sizeof(sys);
 
     char *system = NULL;
-    int i = 0;
 
-    xava_output_module_default_find_any_remaining:
-    for(; i < supported_systems; i++) {
+    for(int i = 0; i < supported_systems; i++) {
+        // First test which graphics/output mode works
+        // (depends on which are compiled in)
         if(systems[i].test_func()) {
+            /**
+             * In hindsight, I should've left a comment but basically
+             * these if cases do execute separately. Hence one exiting
+             * skipping the loop cycle here early is fine.
+             *
+             * That's because these code branches execute separately,
+             * ie. only one of them gets compiled into the resulting binary.
+             **/
             #ifdef CAIRO
             system = systems[i].cairo;
-            if(system != NULL)
-                break;
+            if(system == NULL)
+                continue;
             #endif
+
             #ifdef OPENGL
             system = systems[i].opengl;
-            if(system != NULL)
-                break;
+            if(system == NULL)
+                continue;
             #endif
         }
+
+        module = xava_module_output_load(system);
+
+        // only legitimate way to exit the loading loop
+        if(xava_module_valid(module))
+            break;
+
+        xavaLog("xava module failed to load (probably bug): %s",
+            xava_module_error_get(module));
     }
 
+    // After we've exhausted all the options we inform the user that we have
+    // failed and thus crash the program.
     xavaBailCondition(system == NULL,
         "No supported output methods found for '%s'",
     #if defined(CAIRO)
@@ -91,19 +111,8 @@ EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
     #endif
         );
 
-    module = xava_module_output_load(system);
-    if(!xava_module_valid(module)) {
-        // execution halts here if the condition fails btw
-        xavaBailCondition(i == supported_systems-1,
-            "xava module failed to load (definitely bug): %s",
-            xava_module_error_get(module));
-
-        xavaLog("xava module failed to load (probably bug): %s",
-            xava_module_error_get(module));
-        goto xava_output_module_default_find_any_remaining;
-    }
-
-
+    // From here onwards, we don't need to iterate because we've succeeded
+    // in loading so far.
     functions.cleanup      = xava_module_symbol_address_get(module, "xavaOutputCleanup");
     functions.init         = xava_module_symbol_address_get(module, "xavaInitOutput");
     functions.clear        = xava_module_symbol_address_get(module, "xavaOutputClear");
