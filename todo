@@ -2,11 +2,12 @@ TODO
 ----
 
 * review window functions for the pre-FFT stage such as:
-  * blackman
-  * kaiser
+  * blackman (done)
+  * kaiser   (i forgor to do this one)
 
 * use nix to generate appimages and flatpaks automatically
   - doesn't work atm, check later
+  - still doesn't fucking work
 
 * new demo video and/or screenshots
 
