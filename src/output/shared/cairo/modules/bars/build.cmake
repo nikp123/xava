@@ -15,14 +15,22 @@ if(CAIRO_MODULES)
         target_link_libraries(cairo_bars xava-shared "${CAIRO_LIBRARIES}")
 
         target_compile_definitions(cairo_bars PUBLIC -DCAIRO)
-        set_target_properties(cairo_bars PROPERTIES PREFIX "")
-        set_target_properties(cairo_bars PROPERTIES IMPORT_PREFIX "")
+        set_target_properties(cairo_bars PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies, I hate this)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/../../../../../lib"
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+            # Set output path
+            OUTPUT_NAME "cairo/module/bars/module"
+        )
+
         configure_file("${XAVA_MODULE_DIR}/config.ini"   cairo/module/bars/config.ini   COPYONLY)
 
         # this copies the dlls for mr. windows
         #find_and_copy_dlls(cairo_bars)
 
-        set_target_properties(cairo_bars PROPERTIES OUTPUT_NAME "cairo/module/bars/module")
         install(FILES "${CMAKE_BINARY_DIR}/cairo/module/bars/config.ini" DESTINATION share/xava/cairo/module/bars/)
         install(TARGETS cairo_bars RENAME module DESTINATION share/xava/cairo/module/bars/)
     else()

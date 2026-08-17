@@ -11,7 +11,14 @@ if(PULSEAUDIO)
         target_link_libraries(in_pulseaudio xava-shared "${PULSEAUDIO_LIBRARIES}")
         target_include_directories(in_pulseaudio PRIVATE "${PULSEAUDIO_INCLUDE_DIRS}")
         target_link_directories(in_pulseaudio PRIVATE "${PULSEAUDIO_LIBRARY_DIRS}")
-        set_target_properties(in_pulseaudio PROPERTIES PREFIX "")
+        set_target_properties(in_pulseaudio PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+        )
         install(TARGETS in_pulseaudio DESTINATION lib/xava)
 
         # Add legal disclaimer

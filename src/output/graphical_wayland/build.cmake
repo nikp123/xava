@@ -109,7 +109,14 @@ if(WAYLAND)
             ${WAYLAND_INCLUDE_DIRS} ${WAYLAND_EGL_INCLUDE_DIRS})
         target_link_directories(out_wayland_opengl PRIVATE
             ${WAYLAND_LIBRARY_DIRS} ${WAYLAND_EGL_LIBRARY_DIRS})
-        set_target_properties(out_wayland_opengl PROPERTIES PREFIX "")
+        set_target_properties(out_wayland_opengl PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+        )
         install(TARGETS out_wayland_opengl DESTINATION lib/xava)
         target_compile_definitions(out_wayland_opengl PUBLIC -DWAYLAND -DEGL)
     else()
@@ -142,7 +149,14 @@ if(WAYLAND)
             ${WAYLAND_INCLUDE_DIRS} ${CAIRO_INCLUDE_DIRS})
         target_link_directories(out_wayland_cairo PRIVATE
             ${WAYLAND_LIBRARY_DIRS} ${CAIRO_LIBRARY_DIRS})
-        set_target_properties(out_wayland_cairo PROPERTIES PREFIX "")
+        set_target_properties(out_wayland_cairo PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+        )
         install(TARGETS out_wayland_cairo DESTINATION lib/xava)
         target_compile_definitions(out_wayland_cairo PUBLIC -DWAYLAND -DCAIRO
             -DSHM)

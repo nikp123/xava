@@ -22,14 +22,21 @@ if(CAIRO_MODULES)
             "${CAIRO_LIBRARIES}")
 
         target_compile_definitions(cairo_media_info PUBLIC -DCAIRO)
-        set_target_properties(cairo_media_info PROPERTIES PREFIX "")
-        set_target_properties(cairo_media_info PROPERTIES IMPORT_PREFIX "")
+        set_target_properties(cairo_media_info PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies, I hate this)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/../../../../../lib"
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+            # Set output path
+            OUTPUT_NAME "cairo/module/media_info/module"
+        )
         configure_file("${XAVA_MODULE_DIR}/config.ini"   cairo/module/media_info/config.ini   COPYONLY)
 
         # this copies the dlls for mr. windows
         #find_and_copy_dlls(cairo_media_info)
 
-        set_target_properties(cairo_media_info PROPERTIES OUTPUT_NAME "cairo/module/media_info/module")
         install(TARGETS cairo_media_info RENAME module DESTINATION share/xava/cairo/module/media_info/)
     else()
         message(WARNING "CAIRO, TagLib, Zlib, DBus-1 and/or CURL library not found; \"cairo_media_info\" won't build")

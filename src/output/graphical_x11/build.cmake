@@ -30,7 +30,15 @@ if(X11)
                 target_link_libraries(out_x11_opengl xava-shared
                     "${GLX_LIBRARIES}" "${X11_LIBRARIES}")
                 target_compile_definitions(out_x11_opengl PUBLIC -DGL)
-                set_target_properties(out_x11_opengl PROPERTIES PREFIX "")
+                set_target_properties(out_x11_opengl PROPERTIES
+                    # Strip prefix from the resulting library
+                    PREFIX ""
+                    IMPORT_PREFIX ""
+                    # Set RPATH (where to look for system dependencies)
+                    INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+                    # Force RPATH
+                    LINK_FLAGS "-Wl,--disable-new-dtags"
+                )
                 install(TARGETS out_x11_opengl DESTINATION lib/xava)
 
                 # Maybe GL license?
@@ -53,7 +61,15 @@ if(X11)
                 target_link_libraries(out_x11_egl xava-shared GLEW
                     "${EGL_LIBRARIES}" "${X11_LIBRARIES}")
                 target_compile_definitions(out_x11_egl PUBLIC -DEGL)
-                set_target_properties(out_x11_egl PROPERTIES PREFIX "")
+                set_target_properties(out_x11_egl PROPERTIES
+                    # Strip prefix from the resulting library
+                    PREFIX ""
+                    IMPORT_PREFIX ""
+                    # Set RPATH (where to look for system dependencies)
+                    INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+                    # Force RPATH
+                    LINK_FLAGS "-Wl,--disable-new-dtags"
+                )
                 install(TARGETS out_x11_egl DESTINATION lib/xava)
 
                 # Maybe EGL license?
@@ -77,7 +93,15 @@ if(X11)
                 target_link_libraries(out_x11_cairo xava-shared
                     "${CAIRO_LIBRARIES}" "${X11_LIBRARIES}")
                 target_compile_definitions(out_x11_cairo PUBLIC -DCAIRO)
-                set_target_properties(out_x11_cairo PROPERTIES PREFIX "")
+                set_target_properties(out_x11_cairo PROPERTIES
+                    # Strip prefix from the resulting library
+                    PREFIX ""
+                    IMPORT_PREFIX ""
+                    # Set RPATH (where to look for system dependencies)
+                    INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+                    # Force RPATH
+                    LINK_FLAGS "-Wl,--disable-new-dtags"
+                )
                 install(TARGETS out_x11_cairo DESTINATION lib/xava)
 
                 # Maybe EGL license?

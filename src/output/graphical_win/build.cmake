@@ -34,7 +34,15 @@ if(WINAPI)
                     target_link_libraries(out_win_opengl xava-shared
                         "-lglew32 -lgdi32 -lwinmm -lopengl32 -ldwmapi")
                     target_compile_definitions(out_win_opengl PUBLIC -DWIN -DGL)
-                    set_target_properties(out_win_opengl PROPERTIES PREFIX "")
+                    set_target_properties(out_win_opengl PROPERTIES
+                        # Strip prefix from the resulting library
+                        PREFIX ""
+                        IMPORT_PREFIX ""
+                        # Set RPATH (where to look for system dependencies)
+                        INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+                        # Force RPATH
+                        LINK_FLAGS "-Wl,--disable-new-dtags"
+                    )
 
                     find_and_copy_dlls(out_win_opengl)
                 else()
@@ -57,7 +65,15 @@ if(WINAPI)
                     target_include_directories(out_win_cairo PRIVATE
                         "${CAIRO_INCLUDE_DIRS}")
                     target_compile_definitions(out_win_cairo PUBLIC -DWIN -DCAIRO)
-                    set_target_properties(out_win_cairo PROPERTIES PREFIX "")
+                    set_target_properties(out_win_cairo PROPERTIES
+                        # Strip prefix from the resulting library
+                        PREFIX ""
+                        IMPORT_PREFIX ""
+                        # Set RPATH (where to look for system dependencies)
+                        INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+                        # Force RPATH
+                        LINK_FLAGS "-Wl,--disable-new-dtags"
+                    )
 
                     find_and_copy_dlls(out_win_cairo)
                 else()

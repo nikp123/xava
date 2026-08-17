@@ -34,7 +34,15 @@ if(SDL2)
             ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
         target_link_directories(out_sdl2_opengl PRIVATE
             ${SDL2_LIBRARY_DIRS} ${GLEW_LIBRARY_DIRS})
-        set_target_properties(out_sdl2_opengl PROPERTIES PREFIX "")
+        set_target_properties(out_sdl2_opengl PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            IMPORT_PREFIX ""
+            # Set RPATH (where to look for system dependencies)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+        )
         target_compile_definitions(out_sdl2_opengl PUBLIC -DSDL -DGL)
         install(TARGETS out_sdl2_opengl DESTINATION lib/xava)
 

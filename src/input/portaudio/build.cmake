@@ -17,7 +17,14 @@ if(PORTAUDIO)
         target_link_libraries(in_portaudio xava-shared "${PORTAUDIO_LIBRARIES}")
         target_include_directories(in_portaudio PRIVATE "${PORTAUDIO_INCLUDE_DIRS}")
         target_link_directories(in_portaudio PRIVATE "${PORTAUDIO_LIBRARY_DIRS}")
-        set_target_properties(in_portaudio PROPERTIES PREFIX "")
+        set_target_properties(in_portaudio PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+        )
         install(TARGETS in_portaudio DESTINATION lib/xava)
 
         find_and_copy_dlls(in_portaudio)

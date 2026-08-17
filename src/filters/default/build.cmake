@@ -12,7 +12,14 @@ if(FILTER_DEFAULT)
                                         "${GLOBAL_FUNCTION_SOURCES}")
     target_link_libraries(filter_default xava-shared "${FFTW3_LIBRARIES}")
     target_link_directories(filter_default PRIVATE "${FFTW3_LIBRARY_DIRS}")
-    set_target_properties(filter_default PROPERTIES PREFIX "")
+    set_target_properties(filter_default PROPERTIES
+        # Strip prefix from the resulting library
+        PREFIX ""
+        # Set RPATH (where to look for system dependencies)
+        INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+        # Force RPATH
+        LINK_FLAGS "-Wl,--disable-new-dtags"
+    )
     target_include_directories(filter_default PRIVATE ${FFTW3_INCLUDE_DIRS})
     install(TARGETS filter_default DESTINATION lib/xava)
 

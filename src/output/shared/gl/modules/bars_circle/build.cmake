@@ -11,9 +11,9 @@ if(GL_MODULES)
                                     "${XAVA_MODULE_DIR}/../../util/shader.c"
                                     "${XAVA_MODULE_DIR}/../../util/misc.c"
                                     "${GLOBAL_FUNCTION_SOURCES}")
-        target_link_directories(gl_bars_circle PRIVATE 
+        target_link_directories(gl_bars_circle PRIVATE
             "${GLEW_LIBRARY_DIRS}")
-        target_include_directories(gl_bars_circle PRIVATE 
+        target_include_directories(gl_bars_circle PRIVATE
             "${GLEW_INCLUDE_DIRS}")
 
         if(WINDOWS OR MINGW OR MSVC OR CYGWIN)
@@ -23,9 +23,16 @@ if(GL_MODULES)
         endif()
         target_compile_definitions(gl_bars_circle PUBLIC -DGL)
 
-        set_target_properties(gl_bars_circle PROPERTIES PREFIX "")
-        set_target_properties(gl_bars_circle PROPERTIES IMPORT_PREFIX "")
-        set_target_properties(gl_bars_circle PROPERTIES OUTPUT_NAME "gl/module/bars_circle/module")
+        set_target_properties(gl_bars_circle PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies, I hate this)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/../../../../../lib"
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+            # Set output path
+            OUTPUT_NAME "gl/module/bars_circle/module"
+        )
 
         # this copies the dlls for mr. windows
         #find_and_copy_dlls(gl_bars_circle)

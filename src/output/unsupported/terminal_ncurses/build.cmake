@@ -5,18 +5,26 @@ option(NCURSES "NCURSES" ON)
 if(NCURSES)
     pkg_check_modules(NCURSES QUIET ncurses)
     if(NCURSES_FOUND)
-        add_library(out_ncurses SHARED 
+        add_library(out_ncurses SHARED
             "${XAVA_MODULE_DIR}/main.c"
             "src/output/shared/graphical.c"
             "${GLOBAL_FUNCTION_SOURCES}")
         target_link_libraries(out_ncurses xava-shared "${NCURSES_LIBRARIES}")
         target_include_directories(out_ncurses PRIVATE "${NCURSES_INCLUDE_DIRS}")
         target_link_directories(out_ncurses PRIVATE "${NCURSES_LIBRARY_DIRS}")
-        set_target_properties(out_ncurses PROPERTIES PREFIX "")
+        set_target_properties(out_ncurses PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            IMPORT_PREFIX ""
+            # Set RPATH (where to look for system dependencies)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+        )
         install(TARGETS out_ncurses DESTINATION lib/xava)
 
         # Add legal disclaimer
-        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_ncurses.txt" 
+        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE_ncurses.txt"
             "NCurses license can be obtained at: https://raw.githubusercontent.com/ELLIOTTCABLE/ncurses/master/license.txt\n")
     else()
         message(WARNING "NCurses library not found; NCurses won't build")

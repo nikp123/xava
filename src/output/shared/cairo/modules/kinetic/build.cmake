@@ -15,14 +15,21 @@ if(CAIRO_MODULES)
         target_link_libraries(cairo_kinetic xava-shared "${CAIRO_LIBRARIES}")
 
         target_compile_definitions(cairo_kinetic PUBLIC -DCAIRO)
-        set_target_properties(cairo_kinetic PROPERTIES PREFIX "")
-        set_target_properties(cairo_kinetic PROPERTIES IMPORT_PREFIX "")
+        set_target_properties(cairo_kinetic PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies, I hate this)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/../../../../../lib"
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+            # Set output path
+            OUTPUT_NAME "cairo/module/kinetic/module"
+        )
         configure_file("${XAVA_MODULE_DIR}/config.ini"   cairo/module/kinetic/config.ini   COPYONLY)
 
         # this copies the dlls for mr. windows
         #find_and_copy_dlls(cairo_kinetic)
 
-        set_target_properties(cairo_kinetic PROPERTIES OUTPUT_NAME "cairo/module/kinetic/module")
         install(TARGETS cairo_kinetic RENAME module DESTINATION share/xava/cairo/module/kinetic/)
     else()
         message(WARNING "CAIRO library not found; \"cairo_kinetic\" won't build")

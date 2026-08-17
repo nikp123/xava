@@ -23,9 +23,16 @@ if(GL_MODULES)
         endif()
         target_compile_definitions(gl_stars PUBLIC -DGL)
 
-        set_target_properties(gl_stars PROPERTIES PREFIX "")
-        set_target_properties(gl_stars PROPERTIES IMPORT_PREFIX "")
-        set_target_properties(gl_stars PROPERTIES OUTPUT_NAME "gl/module/stars/module")
+        set_target_properties(gl_stars PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies, I hate this)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/../../../../../lib"
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+            # Set output path
+            OUTPUT_NAME "gl/module/stars/module"
+        )
 
         # this copies the dlls for mr. windows
         #find_and_copy_dlls(gl_stars)

@@ -11,7 +11,14 @@ if(PIPEWIRE)
         target_link_libraries(in_pipewire xava-shared "${PIPEWIRE_LIBRARIES}")
         target_include_directories(in_pipewire PRIVATE "${PIPEWIRE_INCLUDE_DIRS}")
         target_link_directories(in_pipewire PRIVATE "${PIPEWIRE_LIBRARY_DIRS}")
-        set_target_properties(in_pipewire PROPERTIES PREFIX "")
+        set_target_properties(in_pipewire PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+        )
         install(TARGETS in_pipewire DESTINATION lib/xava)
 
         # Add legal disclaimer

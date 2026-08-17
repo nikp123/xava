@@ -105,8 +105,31 @@ EXP_FUNC XAVAMODULE *xava_module_path_load(char *path) {
 
 EXP_FUNC char *xava_module_error_get(XAVAMODULE *module) {
     UNUSED(module);
-    return dlerror();
+    char buffer[4096];
+
+    char *write_ptr = buffer;
+    size_t room_left = sizeof(buffer);
+    *write_ptr = '\0';
+
+    char *out;
+    while ((out = dlerror()) != NULL) {
+        int written = snprintf(write_ptr, room_left, "%s\n", out); // Added '\n' for readability between multiple errors
+
+        if (written < 0) {
+            break;
+        }
+
+        if ((size_t)written >= room_left) {
+            break;
+        }
+
+        write_ptr += written;
+        room_left -= written;
+    }
+
+    return strdup(buffer);
 }
+
 
 EXP_FUNC void *xava_module_symbol_address_get(XAVAMODULE *module, char *symbol) {
     void *address = dlsym(module->moduleHandle, symbol);

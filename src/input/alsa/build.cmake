@@ -11,7 +11,14 @@ if(ALSA)
         target_link_libraries(in_alsa xava-shared "${ALSA_LIBRARIES}")
         target_include_directories(in_alsa PRIVATE "${ALSA_INCLUDE_DIRS}")
         target_link_directories(in_alsa PRIVATE "${ALSA_LIBRARY_DIRS}")
-        set_target_properties(in_alsa PROPERTIES PREFIX "")
+        set_target_properties(in_alsa PROPERTIES
+            # Strip prefix from the resulting library
+            PREFIX ""
+            # Set RPATH (where to look for system dependencies)
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/.."
+            # Force RPATH
+            LINK_FLAGS "-Wl,--disable-new-dtags"
+        )
         install(TARGETS in_alsa DESTINATION lib/xava)
 
         # Add legal disclaimer

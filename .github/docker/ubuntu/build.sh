@@ -12,12 +12,17 @@ mkdir build
 cd build
 
 # Build AppImage version of XAVA
-cmake .. -DUNIX_INDEPENDENT_PATHS=ON -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 make install DESTDIR=AppDir
 
 # Fix AppImage not running due to the lack of FUSE
 export APPIMAGE_EXTRACT_AND_RUN=1
+
+# Force a current, ABI-clean runtime stub instead of whatever ships
+# bundled/cached — this is what fixes "ELF file ABI version invalid"
+# on hosts with stricter glibc (e.g. Debian Trixie).
+export LDAI_RUNTIME_FILE=/usr/local/bin/appimage-runtime-x86_64
 
 # Create AppImage
 env LD_LIBRARY_PATH=. linuxdeploy \
