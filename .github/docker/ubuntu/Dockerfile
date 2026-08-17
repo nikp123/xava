@@ -63,5 +63,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 # Download and install linuxdeploy. The distro has no real package, so fetch
 # the upstream release; it bundles the `appimage` output plugin + runtime.
 RUN wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
-    && chmod +x linuxdeploy-x86_64.AppImage \
-    && mv linuxdeploy-x86_64.AppImage /usr/local/bin/linuxdeploy
+    && wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage \
+    && wget -q https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64 \
+    && chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-appimage-x86_64.AppImage \
+    && mv linuxdeploy-x86_64.AppImage /usr/local/bin/linuxdeploy \
+    && mv linuxdeploy-plugin-appimage-x86_64.AppImage /usr/local/bin/linuxdeploy-plugin-appimage \
+    && mv runtime-x86_64 /usr/local/bin/appimage-runtime-x86_64
