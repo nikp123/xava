@@ -93,6 +93,9 @@ EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
         if(xava_module_valid(module))
             break;
 
+        // Invalidate the system reference if it fails to be loaded
+        system = NULL;
+
         xavaLog("xava module failed to load (probably bug): %s",
             xava_module_error_get(module));
     }
