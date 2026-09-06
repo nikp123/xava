@@ -15,13 +15,16 @@ uniform vec4 gradient_color[8];
 // screen width and height
 uniform vec2 resolution;
 
+// offset to the bars in case they dont occupy the whole viewport
+uniform vec2 bars_offset;
+
 uniform float intensity;
 
 layout(location=0) out vec4 FragColor;
 
 void main() {
 	if(gradient_sections > 0.0) {
-		float across = (gl_FragCoord.y/resolution.y)*gradient_sections;
+		float across = ((gl_FragCoord.y - bars_offset.y)/resolution.y)*gradient_sections;
 		int section = int(floor(across));
 		float off = mod(across, 1.0);
 		FragColor = mix(gradient_color[section], gradient_color[section+1], off);

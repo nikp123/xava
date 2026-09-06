@@ -36,6 +36,7 @@ static GLuint PRE_BARS;
 static GLuint PRE_AUDIO;
 static GLuint PRE_AUDIO_RATE;
 static GLuint PRE_RESOLUTION;
+static GLuint PRE_BARS_OFFSET;
 static GLuint PRE_PROJMATRIX;
 
 // color information
@@ -112,6 +113,7 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     PRE_AUDIO         = glGetAttribLocation( pre.program, "audio_data");
     PRE_AUDIO_RATE    = glGetUniformLocation(pre.program, "audio_rate");
     PRE_RESOLUTION    = glGetUniformLocation(pre.program, "resolution");
+    PRE_BARS_OFFSET   = glGetUniformLocation(pre.program, "bars_offset");
     PRE_REST          = glGetUniformLocation(pre.program, "rest");
     PRE_BAR_WIDTH     = glGetUniformLocation(pre.program, "bar_width");
     PRE_BAR_SPACING   = glGetUniformLocation(pre.program, "bar_spacing");
@@ -182,6 +184,9 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
 
     // update screen resoltion
     glUniform2f(PRE_RESOLUTION, xava->inner.w, xava->inner.h);
+    glUniform2f(PRE_BARS_OFFSET,
+            xava->outer.w - xava->inner.x - xava->inner.w,
+            xava->outer.h - xava->inner.y - xava->inner.h);
 
     // update spacing info
     glUniform1f(PRE_REST,        (float)xava->rest);
