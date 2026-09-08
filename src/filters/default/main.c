@@ -108,9 +108,16 @@ void separate_freq_bands(
     bool spam = band->last_calcbars != data->calcbars;
 
     uint32_t step = log2f(data->max_fft_size) - log2f(band->fft_size);
+    uint32_t shift = (uint32_t)exp2f(step);
+
+    // Window functions cause artifacting at FFT edges, this needs to
+    // be compensated for if we don't want that to show up in our FFT results.
+    // Yes, this is a magic value in disguise.
+    const float aliasing_factor = 1.5;
 
     uint32_t low_limit = floor(band->start_freq / ((float)sample_rate / 2.0) * ((float)data->max_fft_size / 2.0));
-    uint32_t high_limit = floor(band->stop_freq / ((float)sample_rate / 2.0) * ((float)data->max_fft_size / 2.0));
+    uint32_t high_limit = floor(band->stop_freq / ((float)sample_rate / 2.0) * ((float)data->max_fft_size / 2.0))
+        * aliasing_factor;
 
     if(spam) {
         xavaSpam("Rate %d, FFT size %d", sample_rate, band->fft_size);
@@ -125,28 +132,27 @@ void separate_freq_bands(
     for (o = 0; o < data->calcbars; o++) {
         float peak = 0;
 
-        // if the frequency is below the range, skip it
-        if ( data->hcf[o] <= low_limit) {
-            if(spam) xavaSpam("skipped bar %d: %d < %d", o, data->lcf[o], low_limit);
+        uint32_t bar_lo = data->lcf[o] > low_limit ? data->lcf[o] : low_limit;
+        uint32_t bar_hi = data->hcf[o] < high_limit ? data->hcf[o] : high_limit;
+
+        if (bar_lo > bar_hi) {
+            if(spam) xavaSpam("bar %d has no overlap with this band", o);
             continue;
         }
 
-        // if the frequency is over the range, exit the loop
-        if ( data->lcf[o] >= high_limit) {
-            if(spam) xavaSpam("skipped band at bar %d: %d > %d", o, data->lcf[o], high_limit);
-            break;
-        }
+        if(spam) xavaSpam("bar %d: %d -> %d / %d", o, bar_lo, bar_hi, (int)exp2f(step));
 
-        if(spam) xavaSpam("bar %d: %d -> %d / %d", o, data->lcf[o], data->hcf[o], (int)exp2f(step));
+        uint32_t i_lo = (bar_lo + shift - 1) >> step;
+        uint32_t i_hi = bar_hi >> step;
 
         // process: get peaks (if we have less fft samples available, we just skip those peaks)
-        for (i = data->lcf[o] >> step; i <= data->hcf[o] >> step; i++) {
+        for (i = i_lo; i <= i_hi; i++) {
             //getting r of compex
             y[i] = hypot(out[i][0], out[i][1]);
             peak += y[i]; //adding upp band
         }
 
-        peak = peak / (data->hcf[o]-data->lcf[o] + 1) * exp2f(step); //getting average
+        peak = peak / (i_hi - i_lo + 1) * shift; //getting average
         temp = peak * sens * data->k[o] / 800000; //multiplying with k and sens
         if (temp <= data->state.ignore) temp = 0;
         if (channel == 1) data->fl[o] = temp;
