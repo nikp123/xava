@@ -22,3 +22,5 @@ xava
 
 !src/output/graphical_wayland/gen/.gitignore
 
+# Annoying neovim files
+nvim.log

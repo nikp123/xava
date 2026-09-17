@@ -107,7 +107,7 @@ source = "Background Music"
 And now, within "Background Music" change the audio source of
  XAVA to the speaker output that you want recorded.
 
-You are free to use either ``ncurses`` or ``x11_cairo`` output methods.
+You (basically) can only use the ``x11_cairo`` output method.
 
 No OpenGL, because Apple likes to be Apple.
 
@@ -474,7 +474,6 @@ Note: squeezelite must be started with the `-v` flag to enable visualizer suppor
 Since 0.7.1.1 the output methods have been sorted into three categories:
  * OpenGL output methods
  * Cairo output methods
- * Unsupported output methods (basically those that don't have **good** support)
 
 In the ``[output]`` section of the config there's an parameter named ``method``.
 This "method" determines what drawing system you will like XAVA to use for it's
@@ -491,7 +490,6 @@ For example:
  * Windows uses ``win``
  * Linux uses either ``x11`` or ``wayland``
  * Any other operating system is going to use ``sdl2``
- * And unsupported modes such as ``ncurses`` (which is a terminal display)
 
 To select whether you'd use ``opengl`` or ``cairo`` with any of the
 aforementioned window backends, you just type ``_thing``  after the backend

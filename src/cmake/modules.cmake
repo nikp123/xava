@@ -20,7 +20,7 @@ foreach(dir ${filters})
 endforeach()
 
 # Build output modules
-file(GLOB outputs "src/output/*/build.cmake" )
+file(GLOB outputs "src/output/*/build.cmake" "src/output/unsupported/*/build.cmake")
 foreach(dir ${outputs})
     # Exclude the default module
     if("${dir}" STREQUAL "${CMAKE_SOURCE_DIR}/src/output/default/build.cmake")
