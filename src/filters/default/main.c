@@ -238,7 +238,6 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
     arr_init(data->bands);
 
     data->max_fft_size = 0;
-    xavaBailCondition(data->max_fft_size > audio->inputsize, "Your input buffer *must* or *equal* be larger than the FFT bin size.");
 
     // fft: determine the boudary between high and low frequency windows
     // use nyquist rule for this
@@ -277,6 +276,8 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
 
         xavaLog("Created frequency band %d with F: %f -> %f and fft_size = %d", arr_count(data->bands), band.start_freq, band.stop_freq, band.fft_size);
     } while(boundary_frequency > data->state.lowcf);
+
+    xavaBailCondition(data->max_fft_size > audio->inputsize, "Your input buffer *must* or *equal* be larger than the FFT bin size.");
 
     arr_init_n(data->fpeak,  xava->bars);
     arr_init_n(data->k,      xava->bars);
