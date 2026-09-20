@@ -103,9 +103,9 @@ EXP_FUNC void* xavaInput(void* data)
     }
 
     /* The sample type to use */
-    static const pa_sample_spec ss = {
-        .format = PA_SAMPLE_S16LE,
-        .rate =  44100,
+    pa_sample_spec ss = {
+        .format   = PA_SAMPLE_S16LE,
+        .rate     = audio->rate,
         .channels = 2
         };
     static pa_buffer_attr pb = {
@@ -137,7 +137,7 @@ EXP_FUNC void* xavaInput(void* data)
         int n = audio->audio_out_head;
 
         //sorting out channels
-        for (uint32_t i = 0; i < audio->latency; i += 2) {
+        for (uint32_t i = 0; i < audio->latency * 2; i += 2) {
             if (audio->channels == 1)
                 audio->audio_out_l[n] = (buf[i] + buf[i + 1]) / 2;
 
