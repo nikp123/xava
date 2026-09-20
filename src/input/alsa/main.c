@@ -152,6 +152,8 @@ EXP_FUNC void* xavaInput(void* data) {
                         //stereo storing channels in buffer
                         audio->audio_out_l[n] = buf[i];
                         audio->audio_out_r[n] = buf[i + 1];
+                        n++;
+                        if(n == audio->inputsize - 1) n = 0;
                     }
                 }
                 break;
