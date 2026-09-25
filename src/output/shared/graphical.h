@@ -13,8 +13,10 @@ void calculate_win_geo(XAVA *xava, uint32_t winW, uint32_t winH);
 #define DEF_FG_COL 6
 #define DEF_BG_COL 0
 #define COLOR_NUM 8
-static const unsigned int colorNumbers[] = {0x000000, 0xFF0000, 0x00FF00, 0xFFFF00,
-                                            0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF};
+static const unsigned int colorNumbers[] = {
+    0x000000, 0xFF0000, 0x00FF00, 0xFFFF00,
+    0x0000FF, 0xFF00FF, 0x00FFFF, 0xFFFFFF
+};
 
 #define ARGB_A_32(x) ((x>>24)&0xff)
 #define ARGB_R_32(x) ((x>>16)&0xff)

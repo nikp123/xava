@@ -30,12 +30,13 @@ endif()
 
 # Build XAVA shared library
 add_library(xava-shared SHARED
-    src/shared/log.c
     src/shared/config/config.c
     src/shared/config/pywal.c
-    src/shared/module/abstractions.c
+    src/shared/genre.c
     src/shared/ionotify.c
     src/shared/io/io.c
+    src/shared/log.c
+    src/shared/module/abstractions.c
     src/shared/util/version.c
     ${ADDITIONAL_SHARED_SOURCES}
 )

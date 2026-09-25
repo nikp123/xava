@@ -48,7 +48,8 @@ int validate_color(char *checkColor)
             (strcmp(checkColor, "magenta") == 0) || \
             (strcmp(checkColor, "cyan") == 0) || \
             (strcmp(checkColor, "white") == 0) || \
-            (strcmp(checkColor, "default") == 0)) validColor = 1;
+            (strcmp(checkColor, "default") == 0) || \
+            (strcmp(checkColor, "genre") == 0)) validColor = 1;
     }
     return validColor;
 }
@@ -58,7 +59,8 @@ unsigned int parse_color(char *colorStr, int defaultColor) {
     if(colorStr[0] == '#') {
         sscanf(colorStr, "#%x", &retColor);
     } else {
-        if(!strcmp(colorStr, "default"))
+        if(!strcmp(colorStr, "default") ||
+           !strcmp(colorStr, "genre"))
             return colorNumbers[defaultColor];
 
         for(size_t i = 0; i < COLOR_NUM; i++) {

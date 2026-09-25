@@ -119,7 +119,7 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
     options.artist.color.g = 1.0;
     options.artist.color.b = 1.0;
     options.artist.color.a = 1.0;
-    
+
     options.cover_text.font = "Noto Sans";
     options.cover_text.weight = CAIRO_FONT_WEIGHT_NORMAL;
     options.cover_text.slant  = CAIRO_FONT_SLANT_NORMAL;
@@ -252,7 +252,8 @@ struct xava_cairo_region xava_cairo_module_calculate_text_region(
 
 // report drawn regions
 EXP_FUNC xava_cairo_region* xava_cairo_module_regions(xava_cairo_module_handle* handle) {
-    XAVA *xava = handle->xava;
+    XAVA        *xava = handle->xava;
+    XAVA_CONFIG *conf = &xava->conf;
     struct xava_cairo_region *regions;
 
     arr_init_n(regions, region_count);
@@ -345,7 +346,7 @@ struct region xava_cairo_module_draw_artwork(
         XAVA             *xava,
         artwork          *artwork,
         text             *cover_text) {
-    cairo_surface_t *art_surface = NULL;    
+    cairo_surface_t *art_surface = NULL;
 
     if(artwork->image->ready == false) {
         artwork->image->w = 500;
@@ -475,7 +476,7 @@ cairo_surface_t *xava_cairo_module_draw_new_media_screen(
     artwork *cover      = &options->cover;
     text    *title      = &options->title;
     text    *artist     = &options->artist;
-    text    *cover_text = &options->cover_text; 
+    text    *cover_text = &options->cover_text;
 
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, xava->outer.w, xava->outer.h);
     cairo_t *new_context = cairo_create(surface);
@@ -525,7 +526,11 @@ cairo_surface_t *xava_cairo_module_draw_new_media_screen(
 
 // assume that the entire screen's being overwritten
 EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_handle* handle) {
+    XAVA        *xava = handle->xava;
+    XAVA_CONFIG *conf = &xava->conf;
+
     struct media_data *data;
+    bool   redraw = false;
     data = xava_util_media_data_thread_data(media_data_thread);
 
     // artwork has been updated, draw the new one
@@ -538,6 +543,24 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
         options.title.text       = data->title;
         options.cover_text.text  = data->artist; // Default to just drawing the author's name on the cover photo
         options.cover.image      = &data->cover;
+
+        // If genre is detected, update the color
+        if(strcmp(data->genre, "") && !strcmp(conf->color, "genre")) {
+            conf->col = xavaGenreToColor(data->genre);
+            redraw = true;
+
+            // We can't just report our own region as we quite literally
+            // need everything to redraw for this to work
+            pushXAVAEventStack(handle->events, XAVA_REDRAW);
+        }
+        if(strcmp(data->genre, "") && !strcmp(conf->bcolor, "genre")) {
+            conf->bgcol = xavaGenreToColor(data->genre);
+            redraw = true;
+
+            // We can't just report our own region as we quite literally
+            // need everything to redraw for this to work
+            pushXAVAEventStack(handle->events, XAVA_REDRAW);
+        }
 
         surface = xava_cairo_module_draw_new_media_screen(
                 handle, &options, &surface_region);
@@ -564,7 +587,7 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     // revert old (default) pixel drawing mode
     cairo_set_operator(handle->cr, CAIRO_OPERATOR_SOURCE);
 
-    redraw_everything = false;
+    redraw_everything = redraw;
 }
 
 // informs the thread that it should redraw

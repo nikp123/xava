@@ -65,6 +65,7 @@
 #include "shared/ionotify.h"
 #include "shared/config/config.h"
 #include "shared/config/pywal.h"
+#include "shared/genre.h"
 #include "shared/io/io.h"
 #include "shared/util/version.h"
 
@@ -83,6 +84,7 @@ typedef struct XAVA_CONFIG {
     // 1 - colors
     XAVA_CONFIG_OPTION(char*, color);
     XAVA_CONFIG_OPTION(char*, bcolor);           // pointer to color string
+
     // col = foreground color, bgcol = background color
     XAVA_CONFIG_OPTION(u32, col);
     XAVA_CONFIG_OPTION(u32, bgcol);                 // ARGB 32-bit value

@@ -271,6 +271,10 @@
 #  Xrdb
 #  - Under Windows 'default' uses your system accent color
 #  - And on any other 'default' is just black and cyan (the default colorscheme)
+#  - On Linux there's a "genre" option which defaults to the default color, but
+#  for cairo's media_info it uses the music metadata in order to update the
+#  color according to the music genre. The color scheme follows monstercat's
+#  old styling.
 ; background = default
 ; foreground = default
 
