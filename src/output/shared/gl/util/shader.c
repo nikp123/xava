@@ -172,6 +172,7 @@ void xava_gl_module_program_create(xava_gl_module_program *program) {
     GLint status;
 
     program->program = glCreateProgram();
+    xavaSpam("Creating OpenGL program %d", program->program);
     xava_gl_module_shader_build(&program->vert, GL_VERTEX_SHADER);
     if (program->geo
         .text) // optional stage, we check if it's included in the shader pack

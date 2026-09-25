@@ -1,20 +1,14 @@
-// color passed from the host
-uniform vec4 foreground_color;
+#version 420 core
 
-// color passed from the host
-uniform vec4 background_color;
+// input vertex
+in vec4 pos;
+in vec4 color;
 
-// screen width and height
-uniform vec2 resolution;
+out vec4 vcolor;
 
-uniform float intensity;
-
-varying vec4 vcolor;
+uniform mat4 projection_matrix;
 
 void main() {
-	gl_FragColor.rgb += vcolor.rgb   * vcolor.a;
-	gl_FragColor.rgb += gl_Color.rgb * gl_Color.a;
-	gl_FragColor.rgb /= vcolor.a     + gl_Color.a;
-	gl_FragColor.a    = max(vcolor.a, gl_Color.a);
+	vcolor = color;
+	gl_Position = pos*projection_matrix;
 }
-

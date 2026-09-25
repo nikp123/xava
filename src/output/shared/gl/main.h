@@ -28,6 +28,9 @@ typedef struct XAVAGLModuleOptions {
 
   char *prefix;
   XG_EVENT *events;
+
+  // where the module keeps it's internal data
+  void *data;
 } XAVAGLModuleOptions;
 
 // working around my badly designed includes
