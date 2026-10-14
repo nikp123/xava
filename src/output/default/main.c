@@ -85,6 +85,8 @@ EXP_FUNC void xavaOutputLoadConfig(XAVA *xava) {
             if(system == NULL)
                 continue;
             #endif
+        } else {
+            continue;
         }
 
         module = xava_module_output_load(system);
