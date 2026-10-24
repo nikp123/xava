@@ -2,6 +2,10 @@
 
 #include "misc.h"
 
+// Controls how hard the visualizer tends to prefer the lower bars
+// over the higher ones. Higher value means more preference towards lower bars.
+#define FREQ_BIAS 1.5
+
 float xava_gl_module_util_calculate_intensity(XAVA *xava) {
     XAVA_CONFIG *conf = &xava->conf;
 
@@ -13,7 +17,7 @@ float xava_gl_module_util_calculate_intensity(XAVA *xava) {
         float bar_percentage = (float)(xava->f[i]-1)/(float)conf->h;
         if(bar_percentage > 0.0) {
             intensity+=powf(bar_percentage,
-                    (float)2.0*(float)i/(float)xava->bars);
+                    (float)FREQ_BIAS*(float)i/(float)xava->bars);
         }
     }
 
