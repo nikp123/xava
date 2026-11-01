@@ -59,9 +59,11 @@ unsigned int parse_color(char *colorStr, int defaultColor) {
     if(colorStr[0] == '#') {
         sscanf(colorStr, "#%x", &retColor);
     } else {
-        if(!strcmp(colorStr, "default") ||
-           !strcmp(colorStr, "genre"))
+        if(!strcmp(colorStr, "default"))
             return colorNumbers[defaultColor];
+
+        if(!strcmp(colorStr, "genre"))
+            return colorNumbers[7]; // white color
 
         for(size_t i = 0; i < COLOR_NUM; i++) {
             if(!strcmp(colorStr, colorStrings[i])) {
