@@ -15,7 +15,10 @@ typedef enum uri_type {
     URI_TYPE_AUDIO_FILE
 } uri_type;
 
-size_t xava_util_download_artwork(void *ptr, size_t size, size_t nmemb,
+size_t xava_util_download_artwork(
+        void *ptr,
+        size_t size,
+        size_t nmemb,
         struct artwork *artwork) {
     if(artwork->file_data == NULL) {
         artwork->file_data = malloc(size*nmemb);
@@ -44,8 +47,10 @@ void xava_util_artwork_destroy(struct artwork *artwork) {
     artwork->file_data = NULL;
 }
 
-bool xava_util_artwork_update_by_download(const char *url,
-        struct artwork *artwork, CURL *curl) {
+bool xava_util_artwork_update_by_download(
+        const char *url,
+        struct artwork *artwork,
+        CURL *curl) {
     CURLcode res;
 
     curl_easy_setopt(curl, CURLOPT_URL,           url);
@@ -63,7 +68,9 @@ bool xava_util_artwork_update_by_download(const char *url,
     return false;
 }
 
-bool xava_util_artwork_update_by_file(const char *url, struct artwork *artwork) {
+bool xava_util_artwork_update_by_file(
+        const char *url,
+        struct artwork *artwork) {
     const char *filename = &url[strlen(URI_HEADER_FILE)];
     FILE *fp = fopen(filename, "rb");
 
@@ -82,8 +89,10 @@ bool xava_util_artwork_update_by_file(const char *url, struct artwork *artwork) 
     return false;
 }
 
-void xava_util_artwork_update(const char *url,
-        struct artwork *artwork, CURL *curl) {
+void xava_util_artwork_update(
+        const char *url,
+        struct artwork *artwork,
+        CURL *curl) {
     xava_util_artwork_destroy(artwork);
 
     uri_type type = URI_TYPE_DOWNLOAD;

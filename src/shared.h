@@ -60,6 +60,7 @@
 #include "shared/util/types.h"
 // this array thing is so useful, let's just force it upon everything. thank liv
 #include "shared/util/array.h"
+#include "shared/media_info/media_info.h"
 #include "shared/module/module.h"
 #include "shared/log.h"
 #include "shared/ionotify.h"
@@ -441,6 +442,9 @@ typedef struct XAVA {
     XAVA_AUDIO  audio;   // TODO: rename to input when brave enough
     XAVA_FILTER filter;
     XAVA_OUTPUT output;
+
+    // Special thing for fetching media info (such as artist info, cover, etc.)
+    XAVA_MEDIA_INFO_THREAD *media;
 
     XAVA_CONFIG conf;
 

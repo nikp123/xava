@@ -7,13 +7,8 @@
 // cairo-only utils
 #include "output/shared/cairo/util/module.h"
 
-// shared utils
-#include "output/shared/util/media/media_data.h"
-
 bool redraw_everything;
 static const int region_count = 3;
-
-struct media_data_thread *media_data_thread;
 
 typedef enum artwork_display_mode {
     ARTWORK_FULLSCREEN,
@@ -82,7 +77,7 @@ EXP_FUNC xava_version xava_cairo_module_version(void) {
     return xava_version_host_get();
 }
 
-// load all the necessary config data and report supported drawing modes
+// load all the necessary config info and report supported drawing modes
 EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_handle* handle) {
     UNUSED(handle);
 
@@ -143,7 +138,6 @@ EXP_FUNC XAVA_CAIRO_FEATURE xava_cairo_module_config_load(xava_cairo_module_hand
 
 EXP_FUNC void               xava_cairo_module_init(xava_cairo_module_handle* handle) {
     UNUSED(handle);
-    media_data_thread = xava_util_media_data_thread_create();
 
     last_version = 0;
     old_w = 0;
@@ -160,7 +154,7 @@ EXP_FUNC void               xava_cairo_module_apply(xava_cairo_module_handle* ha
         redraw_everything = true;
         old_w = xava->outer.w;
         old_h = xava->outer.h;
-        xava_util_media_data_thread_data(media_data_thread)->version++;
+        xavaMediaInfo(xava->media)->version++;
     }
 
     options.cover_text.color.r = ARGB_R_32(xava->conf.bgcol)/255.0;
@@ -529,45 +523,24 @@ EXP_FUNC void               xava_cairo_module_draw_full  (xava_cairo_module_hand
     XAVA        *xava = handle->xava;
     XAVA_CONFIG *conf = &xava->conf;
 
-    struct media_data *data;
     bool   redraw = false;
-    data = xava_util_media_data_thread_data(media_data_thread);
+    XAVA_MEDIA_INFO *info = xavaMediaInfo(xava->media);
 
     // artwork has been updated, draw the new one
-    if(data->version != last_version) {
-        if(data->version > 1) {
+    if(info->version != last_version) {
+        if(info->version > 1) {
             cairo_surface_destroy(surface);
         }
 
-        options.artist.text      = data->artist;
-        options.title.text       = data->title;
-        options.cover_text.text  = data->artist; // Default to just drawing the author's name on the cover photo
-        options.cover.image      = &data->cover;
-
-        // If genre is detected, update the color
-        if(strcmp(data->genre, "") && !strcmp(conf->color, "genre")) {
-            conf->col = xavaGenreToColor(data->genre);
-            redraw = true;
-
-            // We can't just report our own region as we quite literally
-            // need everything to redraw for this to work
-            pushXAVAEventStack(handle->events, XAVA_REDRAW);
-        }
-        if(strcmp(data->genre, "") && !strcmp(conf->bcolor, "genre")) {
-            conf->bgcol = xavaGenreToColor(data->genre);
-            redraw = true;
-
-            // We can't just report our own region as we quite literally
-            // need everything to redraw for this to work
-            pushXAVAEventStack(handle->events, XAVA_REDRAW);
-        }
+        options.artist.text      = info->artist;
+        options.title.text       = info->title;
+        options.cover_text.text  = info->artist; // Default to just drawing the author's name on the cover photo
+        options.cover.image      = &info->cover;
 
         surface = xava_cairo_module_draw_new_media_screen(
                 handle, &options, &surface_region);
 
-        last_version = data->version;
-
-        xavaLog("Artwork update number: %d", data->version);
+        last_version = info->version;
     }
 
     cairo_set_operator(handle->cr, CAIRO_OPERATOR_OVER);
@@ -597,10 +570,10 @@ EXP_FUNC void               xava_cairo_module_clear      (xava_cairo_module_hand
 }
 
 EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_handle* handle) {
-    struct media_data *data;
-    data = xava_util_media_data_thread_data(media_data_thread);
+    XAVA              *xava = handle->xava;
+    XAVA_MEDIA_INFO   *info = xavaMediaInfo(xava->media);
 
-    if(data->version != last_version)
+    if(info->version != last_version)
         redraw_everything = true;
 
     // break if nothing changes
@@ -608,7 +581,6 @@ EXP_FUNC void               xava_cairo_module_draw_region(xava_cairo_module_hand
         return;
 
     xava_cairo_region* regions = xava_cairo_module_regions(handle);
-    XAVA*              xava = handle->xava;
 
     int min_x = xava->outer.w,
         min_y = xava->outer.h,
@@ -647,7 +619,6 @@ EXP_FUNC void               xava_cairo_module_draw_safe  (xava_cairo_module_hand
 
 EXP_FUNC void               xava_cairo_module_cleanup    (xava_cairo_module_handle* handle) {
     UNUSED(handle);
-    xava_util_media_data_thread_destroy(media_data_thread);
     if(last_version > 0)
         cairo_surface_destroy(surface);
 }

@@ -1,6 +1,4 @@
 #include "shared/ionotify.h"
-#define TRUE 1
-#define FALSE 0
 
 #define _XOPEN_SOURCE_EXTENDED
 #include <locale.h>
@@ -108,6 +106,7 @@ void cleanup(void) {
     XAVA_OUTPUT *output = &xava.output;
 
     xavaIONotifyKill(xava.ionotify);
+    xavaMediaInfoDestroy(xava.media);
 
     // telling audio thread to terminate
     audio->terminate = 1;
@@ -238,6 +237,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
         // initialize ioNotify engine
         xava.ionotify = xavaIONotifySetup();
 
+        // initialize media info fetcher thread
+        xava.media = xavaMediaInfoCreate();
+
         // load config
         configPath = load_config(configPath, &xava);
 
@@ -331,6 +333,9 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
 
         xavaIONotifyStart(xava.ionotify);
 
+        // this is how we track media updates
+        uint64_t media_last_version = 0;
+
         while(!reloadConf) { //jumbing back to this loop means that you resized the screen
             if(p->flag.ignoreWindowSize == false) {
                 // handle for user setting too many bars
@@ -370,18 +375,37 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                         cleanup();
                         return EXIT_SUCCESS;
                     case XAVA_RELOAD:
-                        should_reload = 1;
+                        should_reload = true;
                         break;
                     case XAVA_RESIZE:
-                        resizeWindow = TRUE;
+                        resizeWindow = true;
                         break;
                     case XAVA_REDRAW:
-                        should_redraw = TRUE;
+                        should_redraw = true;
                         break;
                     default:
                         // ignore other values
                         break;
                 }
+
+                // media info has been updated, update everything
+                XAVA_MEDIA_INFO *info = xavaMediaInfo(xava.media);
+                if(info->version != media_last_version) {
+                    // If genre is detected, update the color
+                    if(strcmp(info->genre, "") && !strcmp(xava.conf.color, "genre")) {
+                        xava.conf.col = xavaGenreToColor(info->genre);
+                        should_redraw = true;
+                    }
+                    if(strcmp(info->genre, "") && !strcmp(xava.conf.bcolor, "genre")) {
+                        xava.conf.bgcol = xavaGenreToColor(info->genre);
+                        should_redraw = true;
+                    }
+
+                    media_last_version = info->version;
+
+                    xavaLog("Artwork update number: %d", info->version);
+                }
+
 
                 if (should_reload) {
                     reloadConf = true;
@@ -454,7 +478,7 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                     // audio output is unallocated without the filter
                     if(!p->flag.skipFilter)
                         memset(xava.fl, 0x00, sizeof(int)*xava.bars);
-                    should_redraw = FALSE;
+                    should_redraw = false;
                 }
                 output->func.draw(&xava);
 
