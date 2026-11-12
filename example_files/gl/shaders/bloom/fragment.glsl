@@ -23,7 +23,7 @@ layout(location=0) out vec4 FragColor;
 **/
 
 // Controls how large the blur would become
-#define strenght 3.0
+#define strenght 1.6
 // Controls how large the audio intensity needs to be before showing the effect
 #define cutoff   1.0
 // Blur regardless of intensity
@@ -41,6 +41,7 @@ vec4 blur13(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
   color += texture(image, uv - (off2 / resolution)) * 0.09447039785044732;
   color += texture(image, uv + (off3 / resolution)) * 0.010381362401148057;
   color += texture(image, uv - (off3 / resolution)) * 0.010381362401148057;
+  color.a /= 7; // dont add up alpha values please
   return color;
 }
 
