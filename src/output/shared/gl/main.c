@@ -118,6 +118,7 @@ void SGLModuleLoad(XAVA *xava, XAVAGLHostOptions *host, char *known_key_name, ui
 void SGLConfigLoad(XAVA *xava) {
     xava_config_source config = xava->default_config.config;
     XAVA_CONFIG_GET_F64(config, "gl", "resolution_scale", 1.0f, (&host)->resolution_scale);
+    XAVA_CONFIG_GET_BOOL(config, "gl", "kinetic", false, (&host)->kinetic);
 
     xavaBailCondition(host.resolution_scale <= 0.0f,
         "Resolution scale cannot be under or equal to 0.0");
@@ -158,12 +159,13 @@ void SGLInit(XAVA *xava) {
 }
 
 void SGLApply(XAVA *xava) {
-
-    glClearColor(
-        ARGB_R_32(xava->conf.bgcol)/255.0,
-        ARGB_G_32(xava->conf.bgcol)/255.0,
-        ARGB_B_32(xava->conf.bgcol)/255.0,
-        xava->conf.background_opacity);
+    if(host.kinetic == false) {
+        glClearColor(
+            ARGB_R_32(xava->conf.bgcol)/255.0,
+            ARGB_G_32(xava->conf.bgcol)/255.0,
+            ARGB_B_32(xava->conf.bgcol)/255.0,
+            xava->conf.background_opacity);
+    }
 
     for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
@@ -202,6 +204,16 @@ void SGLDraw(XAVA *xava) {
 
     // bind render target to texture
     xava_gl_module_post_pre_draw_setup(&host);
+
+    if(host.kinetic == true) {
+        glClearColor(
+            ARGB_R_32(xava->conf.bgcol)/255.0,
+            ARGB_G_32(xava->conf.bgcol)/255.0,
+            ARGB_B_32(xava->conf.bgcol)/255.0,
+            xava->conf.background_opacity *
+            (1.0 - xava_gl_module_util_calculate_intensity(xava))
+        );
+    }
 
     // clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);

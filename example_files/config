@@ -154,6 +154,10 @@
 # Works similarly to "render resolution scalers" in modern AAA game engines
 ; resolution_scale = 1.0
 
+# Have the visualizer brighten the background depending on "loudness"
+# (ie. intensity) of the audio that's being recorded. Really fun if you want
+# to show off kicks in a song or such.
+; kinetic = false
 
 [cairo]
 

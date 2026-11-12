@@ -80,6 +80,7 @@ struct XAVAGLModule {
 typedef struct XAVAGLHostOptions {
   XAVAGLModule *module;
   XAVA_CONFIG_OPTION(f64, resolution_scale);
+  XAVA_CONFIG_OPTION(bool, kinetic);
   XG_EVENT *events;
   XAVA *xava;
 

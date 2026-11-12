@@ -524,7 +524,7 @@ to the entire screen via the ``post_shader`` option. Currently, packed-in shader
 are:
  * ``default`` - does nothing special basically
  * ``shadow`` - adds simple 2D shadows
- * ``kinetic`` - changes background opacity based on the intensity of music
+ * ``bloom`` - makes the visualizer glow depending on how intense/loud the audio is
 
 #### Programming OpenGL shaders
 
