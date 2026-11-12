@@ -157,7 +157,14 @@ void SGLInit(XAVA *xava) {
     xava_gl_module_post_init(&host);
 }
 
-void SGLApply(XAVA *xava){
+void SGLApply(XAVA *xava) {
+
+    glClearColor(
+        ARGB_R_32(xava->conf.bgcol)/255.0,
+        ARGB_G_32(xava->conf.bgcol)/255.0,
+        ARGB_B_32(xava->conf.bgcol)/255.0,
+        xava->conf.background_opacity);
+
     for(uint32_t i = 0; i < arr_count(host.module); i++) {
         XAVAGLModule *module = &host.module[i];
 
