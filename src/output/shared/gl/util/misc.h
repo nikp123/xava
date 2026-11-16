@@ -12,6 +12,14 @@ typedef struct gl4f {
 
 float xava_gl_module_util_calculate_intensity(XAVA *xava);
 float xava_gl_module_util_obtain_time(void);
-gl4f mix(gl4f a, gl4f b, float ratio);
+inline gl4f mix(gl4f a, gl4f b, float ratio) {
+    return (gl4f) {
+        .r = a.r + (b.r - a.r) * ratio,
+        .g = a.g + (b.g - a.g) * ratio,
+        .b = a.b + (b.b - a.b) * ratio,
+        .a = a.a + (b.a - a.a) * ratio
+    };
+}
+
 #endif
 

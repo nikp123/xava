@@ -214,11 +214,11 @@ void SGLDraw(XAVA *xava) {
 
     if(host.kinetic == true) {
         glClearColor(
-            ARGB_R_32(xava->conf.bgcol)/255.0,
-            ARGB_G_32(xava->conf.bgcol)/255.0,
-            ARGB_B_32(xava->conf.bgcol)/255.0,
+            ARGB_R_32(xava->conf.bgcol)/255.0f,
+            ARGB_G_32(xava->conf.bgcol)/255.0f,
+            ARGB_B_32(xava->conf.bgcol)/255.0f,
             xava->conf.background_opacity *
-            (1.0 - xava_gl_module_util_calculate_intensity(xava))
+            (1.0f - xava_gl_module_util_calculate_intensity(xava))
         );
     }
 

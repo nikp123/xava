@@ -13,14 +13,15 @@
 // define types
 struct star {
     float     x, y;
-    float    angle;
-    uint32_t size;
+    // Instead of calculating sin/cos on every iteration, we precompute the vectors
+    float    vx, vy;
+    float    size;
 };
 
 struct star_options {
     float    density;
     uint32_t count;
-    uint32_t max_size;
+    float    max_size; // float because all the math is faster when this is a float
     char     *color_str;
     uint32_t color;
     bool     depth_test;
@@ -73,13 +74,13 @@ struct star_data {
 float xava_generate_star_angle(void) {
     float r = (float)rand()/(float)RAND_MAX;
 
-    return 0.7 - pow(sin(r*M_PI), 0.5);
+    return 0.7f - pow(sinf(r*M_PI), 0.5f);
 }
 
 float xava_generate_star_size(struct star_options *options) {
     float r = (float)rand()/(float)RAND_MAX;
 
-    return (1.0-powf(r, 0.5))*options->max_size+1.0;
+    return (1.0f-powf(r, 0.5f))*options->max_size+1.0f;
 }
 
 /**
@@ -126,11 +127,11 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
 
     data->options.count     = xavaConfigGetI32(data->pre.config, "stars", "count", 0);
     data->options.density   = 0.0001 * xavaConfigGetF64(data->pre.config, "stars", "density", 1.0);
-    data->options.max_size  = xavaConfigGetI32(data->pre.config, "stars", "max_size", 5);
+    data->options.max_size  = (float)xavaConfigGetI32(data->pre.config, "stars", "max_size", 5);
     data->options.color_str = xavaConfigGetString(data->pre.config, "stars", "color", NULL);
     data->options.depth_test = xavaConfigGetBool(data->pre.config, "stars", "depth_test", false);
 
-    xavaBailCondition(data->options.max_size < 1, "max_size cannot be below 1");
+    xavaBailCondition(data->options.max_size < 1.0f, "max_size cannot be below 1");
 }
 
 EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
@@ -203,40 +204,49 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glVertexAttribPointer(data->SHADER_POS,   2, GL_FLOAT, GL_FALSE, 0, data->vertexData);
     glVertexAttribPointer(data->SHADER_COLOR, 4, GL_FLOAT, GL_FALSE, 0, data->colorData);
 
+
+    color4f color = {
+        ARGB_R_32(data->options.color)/255.0,
+        ARGB_G_32(data->options.color)/255.0,
+        ARGB_B_32(data->options.color)/255.0,
+        1.0f
+    };
+
     // since most of this information remains untouched, let's precalculate
     for(uint32_t i=0; i<star_count; i++) {
         // generate the stars with random angles
         // but with a bias towards the right
-        data->stars[i].angle = xava_generate_star_angle();
-        data->stars[i].x     = fmod(rand(), xava->outer.w);
-        data->stars[i].y     = fmod(rand(), xava->outer.h);
+        float angle = xava_generate_star_angle();
+        data->stars[i].vx    = cosf(angle);
+        data->stars[i].vy    = sinf(angle);
+        data->stars[i].x     = fmodf(rand(), xava->outer.w);
+        data->stars[i].y     = fmodf(rand(), xava->outer.h);
         data->stars[i].size  = xava_generate_star_size(&data->options);
 
-        float l = floor(data->stars[i].x);
+        float l = floorf(data->stars[i].x);
         float r = l + data->stars[i].size;
-        float b = floor(data->stars[i].y);
+        float b = floorf(data->stars[i].y);
         float t = b + data->stars[i].size;
 
-        ((vec2f*)data->vertexData)[i*6+0] = (vec2f){l, t};
-        ((vec2f*)data->vertexData)[i*6+1] = (vec2f){l, b};
-        ((vec2f*)data->vertexData)[i*6+2] = (vec2f){r, b};
-        ((vec2f*)data->vertexData)[i*6+3] = (vec2f){r, t};
-        ((vec2f*)data->vertexData)[i*6+4] = (vec2f){r, b};
-        ((vec2f*)data->vertexData)[i*6+5] = (vec2f){l, t};
+        vec2f *restrict   v = &((vec2f*)data->vertexData)[i*6];
+        color4f *restrict c = &((color4f*)data->colorData)[i*6];
 
-        color4f color = {
-            ARGB_R_32(data->options.color)/255.0,
-            ARGB_G_32(data->options.color)/255.0,
-            ARGB_B_32(data->options.color)/255.0,
-            1.0 - (data->stars[i].size-1.0)/data->options.max_size
-        };
+        v[0] = (vec2f){l, t};
+        v[1] = (vec2f){l, b};
+        v[2] = (vec2f){r, b};
+        v[3] = (vec2f){r, t};
+        v[4] = (vec2f){r, b};
+        v[5] = (vec2f){l, t};
 
-        ((color4f*)data->colorData)[i*6+0] = color;
-        ((color4f*)data->colorData)[i*6+1] = color;
-        ((color4f*)data->colorData)[i*6+2] = color;
-        ((color4f*)data->colorData)[i*6+3] = color;
-        ((color4f*)data->colorData)[i*6+4] = color;
-        ((color4f*)data->colorData)[i*6+5] = color;
+        color.a = 1.0f - (data->stars[i].size - 1.0f)
+            / data->options.max_size;
+
+        c[0] = color;
+        c[1] = color;
+        c[2] = color;
+        c[3] = color;
+        c[4] = color;
+        c[5] = color;
     }
 
     // do image scaling
@@ -297,38 +307,47 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
      * Here we start rendering to the texture
      **/
     for(register uint32_t i=0; i<arr_count(data->stars); i++) {
-        struct star *star = &data->stars[i];
+        struct star* restrict star = &data->stars[i];
 
-        star->x += star->size*cos(star->angle)*intensity;
-        star->y += star->size*sin(star->angle)*intensity;
+        star->x += star->size*star->vx*intensity;
+        star->y += star->size*star->vy*intensity;
 
-        if(star->x < 0.0-star->size) {
-            star->x = xava->outer.w;
-            star->angle = xava_generate_star_angle();
+        if(star->x < 0.0f-star->size) {
+            star->x     = xava->outer.w;
+            float angle = xava_generate_star_angle();
+            star->vx    = cosf(angle);
+            star->vy    = sinf(angle);
         } else if(star->x > xava->outer.w+star->size) {
-            star->x = 0;
-            star->angle = xava_generate_star_angle();
+            star->x     = 0.0f;
+            float angle = xava_generate_star_angle();
+            star->vx    = cosf(angle);
+            star->vy    = sinf(angle);
         }
 
-        if(star->y < 0.0-star->size) {
-            star->y = xava->outer.h;
-            star->angle = xava_generate_star_angle();
+        if(star->y < 0.0f-star->size) {
+            star->y     = xava->outer.h;
+            float angle = xava_generate_star_angle();
+            star->vx    = cosf(angle);
+            star->vy    = sinf(angle);
         } else if(star->y > xava->outer.h+star->size) {
-            star->y = 0;
-            star->angle = xava_generate_star_angle();
+            star->y     = 0.0f;
+            float angle = xava_generate_star_angle();
+            star->vx    = cosf(angle);
+            star->vy    = sinf(angle);
         }
 
         float l = star->x;
         float r = l + star->size;
         float b = star->y;
         float t = b + star->size;
+        vec2f *restrict   v = &((vec2f*)data->vertexData)[i*6];
 
-        ((vec2f*)data->vertexData)[i*6+0] = (vec2f){l, t};
-        ((vec2f*)data->vertexData)[i*6+1] = (vec2f){l, b};
-        ((vec2f*)data->vertexData)[i*6+2] = (vec2f){r, b};
-        ((vec2f*)data->vertexData)[i*6+3] = (vec2f){r, t};
-        ((vec2f*)data->vertexData)[i*6+4] = (vec2f){r, b};
-        ((vec2f*)data->vertexData)[i*6+5] = (vec2f){l, t};
+        v[0] = (vec2f){l, t};
+        v[1] = (vec2f){l, b};
+        v[2] = (vec2f){r, b};
+        v[3] = (vec2f){r, t};
+        v[4] = (vec2f){r, b};
+        v[5] = (vec2f){l, t};
     }
 
     // switch to pre shaders

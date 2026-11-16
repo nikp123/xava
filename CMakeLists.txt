@@ -42,6 +42,9 @@ add_definitions(-DPREFIX="${XAVA_LINK_TO_INSTALL_DIR}")
 # Do OS-specific stuff
 include(src/cmake/os-prerequisites.cmake)
 
+# Enable optimization flags
+include(src/cmake/optimize.cmake)
+
 # Set appropriate C flags
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)

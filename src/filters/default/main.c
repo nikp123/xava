@@ -148,7 +148,7 @@ void separate_freq_bands(
         // process: get peaks (if we have less fft samples available, we just skip those peaks)
         for (i = i_lo; i <= i_hi; i++) {
             //getting r of compex
-            y[i] = hypot(out[i][0], out[i][1]);
+            y[i] = sqrtf(out[i][0] * out[i][0] + out[i][1] * out[i][1]);
             peak += y[i]; //adding upp band
         }
 
@@ -177,11 +177,11 @@ void monstercat_filter(int bars,
             //if (f[z] < 1) f[z] = 1;
             for (m_y = z - 1; m_y >= 0; m_y--) {
                 de = z - m_y;
-                f[m_y] = max(f[z] - pow(de, 2), f[m_y]);
+                f[m_y] = max(f[z] - powf(de, 2), f[m_y]);
             }
             for (m_y = z + 1; m_y < bars; m_y++) {
                 de = m_y - z;
-                f[m_y] = max(f[z] - pow(de, 2), f[m_y]);
+                f[m_y] = max(f[z] - powf(de, 2), f[m_y]);
             }
         }
     } else if (data->state.monstercat > 0) {
@@ -189,11 +189,11 @@ void monstercat_filter(int bars,
             //if (f[z] < 1)f[z] = 1;
             for (m_y = z - 1; m_y >= 0; m_y--) {
                 de = z - m_y;
-                f[m_y] = max(f[z] / pow(data->state.monstercat, de), f[m_y]);
+                f[m_y] = max(f[z] / powf(data->state.monstercat, de), f[m_y]);
             }
             for (m_y = z + 1; m_y < bars; m_y++) {
                 de = m_y - z;
-                f[m_y] = max(f[z] / pow(data->state.monstercat, de), f[m_y]);
+                f[m_y] = max(f[z] / powf(data->state.monstercat, de), f[m_y]);
             }
         }
     }
@@ -244,6 +244,10 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
     float boundary_frequency = INFINITY;
     float last_boundary_frequency = data->state.highcf;
     float target_framerate = p->framerate;
+    char* wisdom_filename = xavaFindAndCheckFile(XAVA_FILE_TYPE_CACHE, "fftw_wisdom");
+    if(wisdom_filename != NULL)
+        fftwf_import_wisdom_from_filename(wisdom_filename);
+
     do {
         fft_band band;
 
@@ -255,18 +259,18 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
             data->max_fft_size = band.fft_size;
         band.start_freq = boundary_frequency;
         band.stop_freq  = last_boundary_frequency;
-        arr_init_n(band.in_l, band.fft_size);
-        arr_init_n(band.in_r, band.fft_size);
+        band.in_l = fftwf_malloc(band.fft_size * sizeof(float));
+        band.in_r = fftwf_malloc(band.fft_size * sizeof(float));
 
         arr_init_n(band.window, band.fft_size);
         generate_window(band.window, band.fft_size, data->window);
 
-        CALLOC_SELF(band.outl, band.fft_size/2+1);
+        band.outl = fftwf_alloc_complex(band.fft_size/2+1);
         band.pl = fftwf_plan_dft_r2c_1d(band.fft_size, band.in_l, band.outl, FFTW_MEASURE);
 
         if(p->stereo) {
-            CALLOC_SELF(band.outr, band.fft_size/2+1);
-            band.pr = fftwf_plan_dft_r2c_1d(band.fft_size, band.in_r, band.outr, FFTW_MEASURE);
+            band.outr = fftwf_alloc_complex(band.fft_size/2+1);
+            band.pr   = fftwf_plan_dft_r2c_1d(band.fft_size, band.in_r, band.outr, FFTW_MEASURE);
         }
 
         target_framerate /= 2.0f;
@@ -276,6 +280,11 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
 
         xavaLog("Created frequency band %d with F: %f -> %f and fft_size = %d", arr_count(data->bands), band.start_freq, band.stop_freq, band.fft_size);
     } while(boundary_frequency > data->state.lowcf);
+
+    if(wisdom_filename != NULL) {
+        fftwf_export_wisdom_to_filename(wisdom_filename);
+        free(wisdom_filename);
+    }
 
     xavaBailCondition(data->max_fft_size > audio->inputsize, "Your input buffer *must* or *equal* be larger than the FFT bin size.");
 
@@ -358,7 +367,7 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
     uint32_t n;
     for (n=0; n < data->calcbars; n++) {
         // changing the scale factor
-        float t = pow((float)n / (float)data->calcbars, data->state.logScale);
+        float t = powf((float)n / (float)data->calcbars, data->state.logScale);
 
         // use geometric law to logarithmically scale frequencies
         float fc = (float)data->state.lowcf * powf((float)data->state.highcf/data->state.lowcf, t);
@@ -383,7 +392,7 @@ EXP_FUNC void xavaFilterApply(XAVA *xava) {
         }
 
         // process: weigh signal to frequencies height and EQ
-        data->k[n] = pow(fc, data->state.eqBalance);
+        data->k[n] = powf(fc, data->state.eqBalance);
         data->k[n] *= (float)(xava->inner.h-1) / 100;
         data->k[n] *= data->smooth[(int)floor(((double)n) * data->smh)];
     }
@@ -412,13 +421,26 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
         // But hey, at least on the upside, we don't rely on UB to actually
         // render out our visualizer :OOOO
         if(headpos < band->fft_size) {
+            float *restrict w = band->window;
+            float *restrict al = &audio->audio_out_l[audio->inputsize - band->fft_size + headpos];
+            float *restrict ar = &audio->audio_out_r[audio->inputsize - band->fft_size + headpos];
+            float *restrict il = band->in_l;
+            float *restrict ir = band->in_r;
             if(p->stereo) {
+                #if defined(__clang__) || defined(__GNUC__)
+                #pragma GCC ivdep
+                #endif
                 for(size_t i = 0; i < band->fft_size - headpos; i++) {
-                    band->in_r[i] = band->window[i] * audio->audio_out_r[audio->inputsize - band->fft_size + headpos + i];
+                    il[i] = w[i] * al[i];
+                    ir[i] = w[i] * ar[i];
                 }
-            }
-            for(size_t i = 0; i < band->fft_size - headpos; i++) {
-                band->in_l[i] = band->window[i] * audio->audio_out_l[audio->inputsize - band->fft_size + headpos + i];
+            } else {
+                #if defined(__clang__) || defined(__GNUC__)
+                #pragma GCC ivdep
+                #endif
+                for(size_t i = 0; i < band->fft_size - headpos; i++) {
+                    il[i] = w[i] * al[i];
+                }
             }
             skip = 0;
             size = headpos;
@@ -429,17 +451,30 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
             size = band->fft_size;
         }
 
+        float *restrict w  = &band->window[seek];
+        float *restrict al = &audio->audio_out_l[skip];
+        float *restrict ar = &audio->audio_out_r[skip];
+        float *restrict il = band->in_l;
+        float *restrict ir = band->in_r;
         if(p->stereo) {
+            #if defined(__clang__) || defined(__GNUC__)
+            #pragma GCC ivdep
+            #endif
             for(size_t i = 0; i < size; i++) {
-                band->in_r[seek + i] = band->window[seek + i] * audio->audio_out_r[skip + i];
+                ir[i] = w[i] * ar[i];
+                il[i] = w[i] * al[i];
             }
             fftwf_execute(band->pr);
             separate_freq_bands(band->outr, 2, p->sens, data, band, audio->rate);
+        } else {
+            #if defined(__clang__) || defined(__GNUC__)
+            #pragma GCC ivdep
+            #endif
+            for(size_t i = 0; i < size; i++) {
+                il[i] = w[i] * al[i];
+            }
         }
 
-        for(size_t i = 0; i < size; i++) {
-            band->in_l[seek + i] = band->window[seek + i] * audio->audio_out_l[skip + i];
-        }
         fftwf_execute(band->pl);
         separate_freq_bands(band->outl, 1, p->sens, data, band, audio->rate);
     }
@@ -511,7 +546,7 @@ EXP_FUNC void xavaFilterLoop(XAVA *xava) {
             int diff = xava->inner.h - data->f[i];
             if (diff < 0) diff = 0;
             double div = 1.0 / (double)(diff + 1);
-            //f[o] = f[o] - pow(div, 10) * (height + 1);
+            //f[o] = f[o] - powf(div, 10) * (height + 1);
             data->fmem[i] = data->fmem[i] * (1 - div / 20);
         }
     }
@@ -556,10 +591,12 @@ EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
 
         if(p->stereo) {
             fftwf_destroy_plan(band->pr);
-            free(band->outr);
+            fftwf_free(band->outr);
+            fftwf_free(band->in_r);
         }
         fftwf_destroy_plan(band->pl);
-        free(band->outl);
+        fftwf_free(band->outl);
+        fftwf_free(band->in_l);
 
         arr_free(band->window);
     }

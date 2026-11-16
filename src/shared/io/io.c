@@ -243,9 +243,26 @@ char *xavaFileType_DiscoverPath(XF_TYPE type, const char *name) {
 
     switch(type) {
         case XAVA_FILE_TYPE_CACHE: {
-            // TODO: When you use it, FINISH IT!
-            xavaError("XAVA_FILE_TYPE_CACHE is not implemented yet!");
-            goto xavaFileType_DiscoverPath_defer;
+            #if defined(__unix__) // FOSS-y/Linux-y implementation
+                char *cacheHome = getenv("XDG_CACHE_HOME");
+
+                if(cacheHome == NULL) {
+                    xavaLog("XDG_CACHE_HOME is not set. Assuming it's in the default path per XDG-spec.");
+
+                    char *homeDir = getenv("HOME");
+                    if(homeDir == NULL) {
+                        xavaError("This system is $HOME-less. Execution cannot continue!");
+                        goto xavaFileType_DiscoverPath_defer;
+                    }
+
+                    snprintf(path, MAX_PATH, "%s/.cache/%s/%s", homeDir, PACKAGE, name);
+                } else {
+                    snprintf(path, MAX_PATH, "%s/%s/%s", cacheHome, PACKAGE, name);
+                }
+            #else
+                xavaError("XAVA_FILE_TYPE_CACHE is not implemented yet!");
+                goto xavaFileType_DiscoverPath_defer;
+            #endif
             break;
         }
         case XAVA_FILE_TYPE_CONFIG:
@@ -327,7 +344,7 @@ char *xavaFileType_DiscoverPath(XF_TYPE type, const char *name) {
                 } while(strcmp(prefix, "/")); // Keep trying to find XAVAs' files until we run out of parent directories
 
                 // Found a valid path, no need to discover further.
-                if(found) break; 
+                if(found) break;
 
                 xavaSpam("None the binary paths' parents contain the file '%s'! Desparately trying to find it in PREFIX instead.", name);
                 snprintf(path, MAX_PATH, PREFIX"/share/"PACKAGE"/%s", name);
@@ -429,18 +446,32 @@ EXP_FUNC char *xavaFindAndCheckFile(XF_TYPE type, const char *name) {
      **/
     FILE *fp = fopen(path, writeCheck ? "r+" : "r");
     if(fp == NULL) {
-        if(type == XAVA_FILE_TYPE_CONFIG) {
-            // yay, recursion
-            char *install_path = xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, name);
-            if (install_path == NULL) goto xavaFindAndCheckFile_defer;
+        switch(type) {
+            case XAVA_FILE_TYPE_CONFIG: {
+                // yay, recursion
+                char *install_path = xavaFindAndCheckFile(XAVA_FILE_TYPE_PACKAGE, name);
+                if (install_path == NULL) goto xavaFindAndCheckFile_defer;
 
-            if(!xavaCopyFile(install_path, path)) {
-                xavaError("Couldn't copy '%s' to '%s'!", install_path, path);
+                if(!xavaCopyFile(install_path, path)) {
+                    xavaError("Couldn't copy '%s' to '%s'!", install_path, path);
+                    goto xavaFindAndCheckFile_defer;
+                }
+                break;
+            }
+            case XAVA_FILE_TYPE_CACHE: {
+                // create mock cache file as it's going to be overwritten anyway
+                FILE *fp = fopen(path, "w");
+                if(fp == NULL) {
+                    xavaError("Couldn't create cache file '%s'!", path);
+                    goto xavaFindAndCheckFile_defer;
+                }
+                fclose(fp);
+                break;
+            }
+            default: {
+                xavaError("Couldn't fetch resource '%s' at '%s'", name, path);
                 goto xavaFindAndCheckFile_defer;
             }
-        } else {
-            xavaError("Couldn't fetch resource '%s' at '%s'", name, path);
-            goto xavaFindAndCheckFile_defer;
         }
     } else fclose(fp);
 
