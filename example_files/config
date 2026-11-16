@@ -397,6 +397,11 @@
 # Possible values are positive integers from 0 onwards.
 ; fft_extra = 0
 
+# This related to fft_extra, but essentially controls how many lowest calculated
+# bands are taken into account in case the framerate is too high and you dont
+# want too many seperate bands to save on CPU performance.
+# Setting to 0 (default) lets all bands through.
+; band_count = 0
 
 [eq]
 

@@ -37,6 +37,13 @@ typedef struct XAVA_FILTER_CONFIG {
     **/
     const uint32_t fft_extra;
 
+    /**
+     * How many bands to actually keep in case the framerate is REALLY high
+     * and you dont need new FFT updates on every single frame.
+     * Setting to 0 lets all bands through.
+     **/
+    const uint32_t band_count;
+
     const float integral;
     const float ignore;
     const float logScale;
@@ -227,6 +234,20 @@ void generate_window(float *w, size_t n, window_type type) {
     }
 }
 
+void xavaFilterBandClean(fft_band *band, bool stereo) {
+    if(stereo) {
+        fftwf_destroy_plan(band->pr);
+        fftwf_free(band->outr);
+        fftwf_free(band->in_r);
+    }
+
+    fftwf_destroy_plan(band->pl);
+    fftwf_free(band->outl);
+    fftwf_free(band->in_l);
+
+    arr_free(band->window);
+}
+
 EXP_FUNC int xavaFilterInit(XAVA *xava) {
     XAVA_AUDIO         *audio = &xava->audio;
     XAVA_CONFIG            *p = &xava->conf;
@@ -284,6 +305,25 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
     if(wisdom_filename != NULL) {
         fftwf_export_wisdom_to_filename(wisdom_filename);
         free(wisdom_filename);
+    }
+
+    // cut off the higher bands if they end up being too CPU demanding
+    const int band_count = data->config.band_count;
+    if(band_count > 0) {
+        int count = arr_count(data->bands);
+
+        // delete the highest bands
+        for(int i = 0; i < count - band_count; i++) {
+            xavaFilterBandClean(&data->bands[i], p->stereo);
+        }
+
+        // move lower bands to the beginning of the list
+        for(int i = 0; i < band_count; i++) {
+            data->bands[i] = data->bands[i + (count - band_count)];
+        }
+
+        arr_resize(data->bands, band_count);
+        data->bands[0].stop_freq = data->state.highcf;
     }
 
     xavaBailCondition(data->max_fft_size > audio->inputsize, "Your input buffer *must* or *equal* be larger than the FFT bin size.");
@@ -587,18 +627,7 @@ EXP_FUNC void xavaFilterCleanup(XAVA *xava) {
 
     // free each freq window and the resources they occupy
     for(size_t i = 0; i < arr_count(data->bands); i++) {
-        fft_band *band = &data->bands[i];
-
-        if(p->stereo) {
-            fftwf_destroy_plan(band->pr);
-            fftwf_free(band->outr);
-            fftwf_free(band->in_r);
-        }
-        fftwf_destroy_plan(band->pl);
-        fftwf_free(band->outl);
-        fftwf_free(band->in_l);
-
-        arr_free(band->window);
+        xavaFilterBandClean(&data->bands[i], p->stereo);
     }
     arr_free(data->bands);
     fftwf_cleanup();
@@ -647,6 +676,8 @@ XAVA_FILTER_CONFIG generate_default_config(xava_config_source config) {
         .oddoneout_is_set_from_file = oddoneout_is_set_from_file,
 
         .eqBalance  = xavaConfigGetF64(config, "filter", "eq_balance", 0.67),
+
+        .band_count = xavaConfigGetI32(config, "filter", "band_count", 0),
 
         .fft_extra  = xavaConfigGetI32(config, "filter", "fft_extra", 0),
 
