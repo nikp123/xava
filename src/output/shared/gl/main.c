@@ -105,6 +105,13 @@ void SGLModuleLoad(XAVA *xava, XAVAGLHostOptions *host, char *known_key_name, ui
         module_name = known_key_name;
     }
 
+    // Handle deprecation warning
+    if(!strcmp(module_name, "bars_circle")) {
+        xavaWarn("\"bars_circle\" OpenGL module has been deprecated in favour of"
+                "the \"circle\" option inside of the \"bars\" module. Please use that instead!\n"
+                "Your visualizer will likely crash after this!");
+    }
+
     // This is where the path gets processed and the module handle figured out
     XAVAGLModule module = SGLModuleGetHandle(module_name);
 

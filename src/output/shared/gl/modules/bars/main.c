@@ -18,7 +18,8 @@ xava_gl_module_program pre;
 
 // shader buffers
 static GLfloat *vertexData;
-static GLfloat *gradientColor;
+static gl4f    *colorData;
+static gl4f    *gradientColor;
 
 // used to adjust the view
 static GLfloat projectionMatrix[16] =
@@ -44,8 +45,6 @@ static GLuint PRE_FGCOL;
 static GLuint PRE_BGCOL;
 
 // system information providers
-static GLuint PRE_GRAD_SECT_COUNT;
-static GLuint PRE_GRADIENTS;
 static GLuint PRE_TIME;
 static GLuint PRE_INTENSITY;
 
@@ -59,7 +58,20 @@ struct gl_renderer_options {
     } color;
     struct bars {
         bool mirror;
+        bool circle;
+        bool invert;
     } bars;
+    struct circle {
+        float start_height;
+    } circle;
+    struct rotation {
+        float per_minute;
+        float intensity_scale;
+        bool using_intensity;
+        bool invert;
+
+        float additional_angle;
+    } rotation;
 } gl_options;
 
 /**
@@ -88,6 +100,32 @@ EXP_FUNC void xava_gl_module_config_load(XAVAGLModule *module, XAVA *xava) {
     xava_gl_module_shader_load(&pre, SGL_PRE, SGL_CONFIG, "", module, xava);
 
     gl_options.bars.mirror = xavaConfigGetBool(pre.config, "bars", "mirror", false);
+    gl_options.bars.circle = xavaConfigGetBool(pre.config, "bars", "circle", false);
+    gl_options.bars.invert = xavaConfigGetBool(pre.config, "bars", "invert", false);
+
+    gl_options.circle.start_height =
+        xavaConfigGetF64(pre.config, "circle", "start_height", 0.2);
+
+    gl_options.rotation.per_minute =
+        xavaConfigGetF64(pre.config, "rotation", "per_minute", 1.0);
+    gl_options.rotation.using_intensity =
+        xavaConfigGetBool(pre.config, "rotation", "using_intensity", false);
+    gl_options.rotation.invert =
+        xavaConfigGetBool(pre.config, "rotation", "invert", false);
+    gl_options.rotation.intensity_scale =
+        xavaConfigGetF64(pre.config, "rotation", "intensity_scale", 1.0);
+    gl_options.rotation.additional_angle = 0.0;
+
+    // a little easter egg hehe
+    xavaBailCondition(gl_options.rotation.per_minute < 0.0,
+            "You cannot time travel, sorry..");
+
+    if(gl_options.bars.circle) {
+        xavaBailCondition(xava->conf.autobars == true,
+                "Since \"bars_circle\" can't rely on window geometry for bars, "
+                "you MUST specify the number of bars in [general]. Sorry about that.");
+        xava->conf.flag.ignoreWindowSize = true;
+    }
 }
 
 EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
@@ -98,11 +136,8 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
     xava_gl_module_program_create(&pre);
 
     // color
-    PRE_FGCOL      = glGetUniformLocation(pre.program, "foreground_color");
+    PRE_FGCOL      = glGetAttribLocation(pre.program, "foreground_color");
     PRE_BGCOL      = glGetUniformLocation(pre.program, "background_color");
-
-    PRE_GRAD_SECT_COUNT = glGetUniformLocation(pre.program, "gradient_sections");
-    PRE_GRADIENTS       = glGetUniformLocation(pre.program, "gradient_color");
 
     // sys info provider
     PRE_TIME       = glGetUniformLocation(pre.program, "time");
@@ -126,24 +161,28 @@ EXP_FUNC void xava_gl_module_init(XAVAGLModuleOptions *options) {
 
     // we just need working pointers so that realloc() works
     arr_init(vertexData);
+    arr_init(colorData);
     arr_init(gradientColor);
 
     // gradients
     if(arr_count(conf->gradients) > 0)
-        arr_resize(gradientColor, 4*arr_count(conf->gradients));
+        arr_resize(gradientColor, arr_count(conf->gradients));
 
     for(uint32_t i=0; i<arr_count(conf->gradients); i++) {
         uint32_t grad_col;
         sscanf(conf->gradients[i], "#%x", &grad_col);
-        gradientColor[i*4+0] = ARGB_R_32(grad_col) / 255.0;
-        gradientColor[i*4+1] = ARGB_G_32(grad_col) / 255.0;
-        gradientColor[i*4+2] = ARGB_B_32(grad_col) / 255.0;
-        //gradientColor[i*4+3] = ARGB_A_32(grad_col) / 255.0;
-        gradientColor[i*4+3] = conf->foreground_opacity;
+        gradientColor[i].r = ARGB_R_32(grad_col) / 255.0;
+        gradientColor[i].g = ARGB_G_32(grad_col) / 255.0;
+        gradientColor[i].b = ARGB_B_32(grad_col) / 255.0;
+        //gradientColor[i].a = ARGB_A_32(grad_col) / 255.0;
+        gradientColor[i].a = conf->foreground_opacity;
     }
 
     shouldRestart = false;
 }
+
+#define xava_gl_module_draw_rotate_x(x, y, a) (x*cos(a)-y*sin(a))
+#define xava_gl_module_draw_rotate_y(x, y, a) (x*sin(a)+y*cos(a))
 
 EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     XAVA *xava = options->xava;
@@ -152,24 +191,49 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glUseProgram(pre.program);
 
     // reallocate and attach verticies data
-    arr_resize(vertexData, xava->bars*12);
-    glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
+    uint32_t segments = MAX(arr_count(conf->gradients), 2)-1;
+    size_t   poly_count = xava->bars * 6 * segments;
+    if(gl_options.bars.mirror)
+        poly_count *= 2;
 
-    // since most of this information remains untouched, let's precalculate
-    float offset = gl_options.bars.mirror ? xava->inner.h/2.0f : 0.0f;
-    for(uint32_t i=0; i<xava->bars; i++) {
-        vertexData[i*12]    = xava->rest + i*(conf->bs+conf->bw);
-        vertexData[i*12+1]  = offset + 1.0f;
-        vertexData[i*12+2]  = vertexData[i*12];
-        vertexData[i*12+3]  = offset;
-        vertexData[i*12+4]  = vertexData[i*12]+conf->bw;
-        vertexData[i*12+5]  = offset;
-        vertexData[i*12+6]  = vertexData[i*12+4];
-        vertexData[i*12+7]  = offset + 1.0f;
-        vertexData[i*12+8]  = vertexData[i*12+4];
-        vertexData[i*12+9]  = offset;
-        vertexData[i*12+10] = vertexData[i*12];
-        vertexData[i*12+11] = offset + 1.0f;
+    arr_resize(vertexData,  poly_count * 2);
+    arr_resize(colorData,   poly_count);
+
+    gl4f fgcol = {
+        .r = ARGB_R_32(conf->col)/255.0,
+        .g = ARGB_G_32(conf->col)/255.0,
+        .b = ARGB_B_32(conf->col)/255.0,
+        .a = conf->foreground_opacity
+    };
+
+    if(gl_options.bars.circle) {
+        xava->rest = 0;
+    }
+
+    for(uint32_t j=0; j < segments; j++) {
+        for(uint32_t i=0; i<xava->bars; i++) {
+            // (bars_done * how_many_segments + segments_done) * num_of_verts_per_bar_segment
+            size_t o = (i*segments + j) * 6;
+
+            if(arr_count(conf->gradients) > 1) {
+                // top left
+                colorData[o]   = gradientColor[j+1];
+                // bottom left
+                colorData[o+1] = gradientColor[j];
+                // bottom right
+                colorData[o+2] = gradientColor[j];
+                // top right
+                colorData[o+3] = gradientColor[j+1];
+                // bottom right
+                colorData[o+4] = gradientColor[j];
+                // top left
+                colorData[o+5] = gradientColor[j+1];
+            } else {
+                for(uint32_t k=0; k<6; k++) {
+                    colorData[o+k] = fgcol;
+                }
+            }
+        }
     }
 
     // do image scaling
@@ -194,10 +258,6 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     glUniform1f(PRE_BAR_SPACING, (float)xava->conf.bs);
     glUniform1f(PRE_BAR_COUNT,   (float)xava->bars);
     glUniform1f(PRE_AUDIO_RATE,  (float)conf->inputsize);
-
-    u32 gradient_count = arr_count(conf->gradients);
-    glUniform1f(PRE_GRAD_SECT_COUNT, gradient_count ? gradient_count-1 : 0);
-    glUniform4fv(PRE_GRADIENTS, gradient_count, gradientColor);
 
     // "clear" the screen
     xava_gl_module_clear(options);
@@ -230,56 +290,160 @@ EXP_FUNC void xava_gl_module_clear(XAVAGLModuleOptions *options) {
     // (https://www.khronos.org/opengl/wiki/GLSL_:_common_mistakes#glUniform_doesn.27t_work)
     glUseProgram(pre.program);
 
-    float fgcol[4] = {
-        ARGB_R_32(conf->col)/255.0,
-        ARGB_G_32(conf->col)/255.0,
-        ARGB_B_32(conf->col)/255.0,
-        conf->foreground_opacity
-    };
-
-    float bgcol[4] = {
+    GLfloat bgcol[4] = {
         ARGB_R_32(conf->bgcol)/255.0,
         ARGB_G_32(conf->bgcol)/255.0,
         ARGB_B_32(conf->bgcol)/255.0,
         conf->background_opacity
     };
 
-    xavaSpam("Changing foreground color to %f %f %f %f",
-        fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
 
-    glUniform4f(PRE_FGCOL, fgcol[0], fgcol[1], fgcol[2], fgcol[3]);
     glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
-
-    //glClearColor(bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
 }
 
 EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
-    XAVA   *xava  = options->xava;
+    XAVA       *xava  = options->xava;
+    XAVA_CONFIG *conf = &xava->conf;
 
-    float intensity = xava_gl_module_util_calculate_intensity(xava);
-    float time      = xava_gl_module_util_obtain_time();
+    const float intensity = xava_gl_module_util_calculate_intensity(xava);
+    const float time      = xava_gl_module_util_obtain_time();
+    const uint32_t segments = MAX(arr_count(gradientColor), 2)-1;
+    const float viewport_width =
+        gl_options.bars.circle ?
+        xava->bars * (conf->bs + conf->bw) :
+        xava->inner.w;
 
     /**
      * Here we start rendering to the texture
      **/
-    register GLfloat *d = vertexData;
-    if(!gl_options.bars.mirror) {
-        for(register uint32_t i=0; i<xava->bars; i++) {
-            d[1]  = xava->f[i];
-            d[7]  = xava->f[i];
-            d[11] = xava->f[i];
-            d     += 12;
+    for(uint32_t j=0; j < segments; j++) {
+        float bar_floor = (xava->inner.h / segments) * j;
+        float bar_ceil  = (xava->inner.h / segments) * (j+1);
+        if(gl_options.bars.mirror) {
+            bar_floor /= 2.0;
+            bar_ceil  /= 2.0;
+            bar_floor += xava->inner.h/2.0;
+            bar_ceil += xava->inner.h/2.0;
         }
-    } else {
-        float offset = floor(xava->inner.h/2.0f);
-        for(register uint32_t i=0; i<xava->bars; i++) {
-            d[1]  = offset + xava->f[i]/2 + 1.0f;
-            d[3]  = offset - xava->f[i]/2;
-            d[5]  = offset - xava->f[i]/2;
-            d[7]  = offset + xava->f[i]/2 + 1.0f;
-            d[9]  = offset - xava->f[i]/2;
-            d[11] = offset + xava->f[i]/2 + 1.0f;
-            d     += 12;
+        for(uint32_t i=0; i<xava->bars; i++) {
+            // (bars_done * how_many_segments + segments_done) * num_of_verts_per_bar_segment * 2 floats
+            size_t o = (i*segments+j) * 6 * 2;
+
+            float height = xava->f[i];
+            if(gl_options.bars.mirror) {
+                height /= 2.0;
+                height += xava->inner.h/2.0;
+            }
+            float top = MIN(bar_ceil, MAX(bar_floor, height));
+
+            float progress = MIN(((float)height - bar_floor)/(bar_ceil-bar_floor), 1.0);
+
+            if(gl_options.bars.invert) {
+                // top left
+                vertexData[o]    = viewport_width - (xava->rest + i*(conf->bs+conf->bw));
+                // bottom right
+                vertexData[o+4]  = vertexData[o] - conf->bw;
+            } else {
+                // top left
+                vertexData[o]    = xava->rest + i*(conf->bs+conf->bw);
+                // bottom right
+                vertexData[o+4]  = vertexData[o] + conf->bw;
+            }
+            // top left
+            vertexData[o+1]  = top;
+            // bottom left
+            vertexData[o+2]  = vertexData[o];
+            vertexData[o+3]  = bar_floor;
+            // bottom right
+            vertexData[o+5]  = bar_floor;
+            // top right
+            vertexData[o+6]  = vertexData[o+4];
+            vertexData[o+7]  = top;
+            // bottom right
+            vertexData[o+8]  = vertexData[o+4];
+            vertexData[o+9]  = bar_floor;
+            // top left
+            vertexData[o+10] = vertexData[o];
+            vertexData[o+11] = top;
+
+            o = (i*segments + j) * 6;
+            if(arr_count(conf->gradients) > 1) {
+                // top left
+                colorData[o]   = mix(gradientColor[j], gradientColor[j+1], progress);
+                // top right
+                colorData[o+3] = mix(gradientColor[j], gradientColor[j+1], progress);
+                // top left
+                colorData[o+5] = mix(gradientColor[j], gradientColor[j+1], progress);
+            }
+        }
+    }
+
+    if(gl_options.bars.mirror) {
+        // mirroring the result over the Y axis
+        {
+            const size_t skip = segments * xava->bars * 6 * 2;
+            for(uint32_t i=0; i < segments*xava->bars; i++) {
+                size_t o = i * 6 * 2;
+                vertexData[skip + o]      = vertexData[o];
+                vertexData[skip + o + 1]  = xava->inner.h - vertexData[o + 1];
+                vertexData[skip + o + 2]  = vertexData[o + 2];
+                vertexData[skip + o + 3]  = xava->inner.h - vertexData[o + 3];
+                vertexData[skip + o + 4]  = vertexData[o + 4];
+                vertexData[skip + o + 5]  = xava->inner.h - vertexData[o + 5];
+                vertexData[skip + o + 6]  = vertexData[o + 6];
+                vertexData[skip + o + 7]  = xava->inner.h - vertexData[o + 7];
+                vertexData[skip + o + 8]  = vertexData[o + 8];
+                vertexData[skip + o + 9]  = xava->inner.h - vertexData[o + 9];
+                vertexData[skip + o + 10] = vertexData[o + 10];
+                vertexData[skip + o + 11] = xava->inner.h - vertexData[o + 11];
+            }
+        }
+        // copying the buffer for the upper section
+        {
+            const size_t skip = segments * xava->bars * 6;
+            for(uint32_t i=0; i < segments*xava->bars; i++) {
+                size_t o = i * 6;
+                for(uint32_t j=0; j<6; j++)
+                    colorData[skip + o + j] = colorData[o + j];
+            }
+        }
+    }
+
+    // Handle post processing geometry manipulation
+    if(gl_options.bars.circle) {
+        if(gl_options.rotation.using_intensity == false) {
+            gl_options.rotation.additional_angle =
+                fmod(2.0*M_PI*xava_gl_module_util_obtain_time()/60.0*
+                gl_options.rotation.per_minute, 2.0*M_PI);
+            if(gl_options.rotation.invert)
+                gl_options.rotation.additional_angle *= -1.0;
+        } else {
+            gl_options.rotation.additional_angle += xava_gl_module_util_calculate_intensity(xava) *
+                0.01 * (gl_options.rotation.invert ? -1.0 : 1.0) *
+                gl_options.rotation.intensity_scale;
+            gl_options.rotation.additional_angle =
+                fmod(gl_options.rotation.additional_angle, 2*M_PI);
+        }
+
+        const uint32_t m = gl_options.bars.mirror ? 2 : 1;
+        for(uint32_t j=0; j < segments; j++) {
+            for(uint32_t i=0; i<xava->bars * m; i++) {
+                // (bars_done * how_many_segments + segments_done) * num_of_verts_per_bar_segment * 2 floats
+                size_t o = (i*segments+j) * 6 * 2;
+
+                for(uint32_t k=0; k<6; k++) {
+                    // X coordinate becomes the angle [0 -> 2*M_PI]
+                    float angle     = vertexData[o+k*2] / viewport_width * 2*M_PI + gl_options.rotation.additional_angle;
+                    // Y becomes amplitude [0 -> 1.0]
+                    float amplitude = vertexData[o+k*2+1] / (float)xava->inner.h
+                        * (1.0 - gl_options.circle.start_height) + gl_options.circle.start_height;
+
+                    vertexData[o+k*2]    = xava->inner.w * xava_gl_module_draw_rotate_x(amplitude, amplitude, angle) / 2;
+                    vertexData[o+k*2+1]  = xava->inner.h * xava_gl_module_draw_rotate_y(amplitude, amplitude, angle) / 2;
+                    vertexData[o+k*2]    += xava->inner.w / 2;
+                    vertexData[o+k*2+1]  += xava->inner.h / 2;
+                }
+            }
         }
     }
 
@@ -292,15 +456,23 @@ EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
     // update intensity
     glUniform1f(PRE_INTENSITY, intensity);
 
-    // pointers get reset after each glUseProgram(), that's why this is done
+    // attribute pointers need to be assigned in order and every time we use
+    // OpenGL's useProgram()
     glVertexAttribPointer(PRE_BARS, 2, GL_FLOAT, GL_FALSE, 0, vertexData);
-
     glEnableVertexAttribArray(PRE_BARS);
+    glVertexAttribPointer(PRE_FGCOL, 4, GL_FLOAT, GL_FALSE,
+                      0, colorData);
+    glEnableVertexAttribArray(PRE_FGCOL);
 
     // You use the number of verticies, but not the actual polygon count
-    glDrawArrays(GL_TRIANGLES, 0, xava->bars*6);
+    size_t vertex_count = xava->bars * 6 * segments;
+    if(gl_options.bars.mirror)
+        vertex_count *= 2;
+
+    glDrawArrays(GL_TRIANGLES, 0, vertex_count);
 
     glDisableVertexAttribArray(PRE_BARS);
+    glDisableVertexAttribArray(PRE_FGCOL);
 }
 
 EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
@@ -311,6 +483,7 @@ EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
 
     arr_free(gradientColor);
     arr_free(vertexData);
+    arr_free(colorData);
 }
 
 EXP_FUNC xava_version xava_gl_module_version(void) {

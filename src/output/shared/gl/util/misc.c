@@ -32,3 +32,13 @@ float xava_gl_module_util_obtain_time(void) {
     return (float)fmodl((long double)xavaGetTime()/(long double)1000.0, 3600.0);
 }
 
+
+gl4f mix(gl4f a, gl4f b, float ratio) {
+    gl4f out;
+    out.r =  a.r * (1.0 - ratio) + b.r * ratio;
+    out.g =  a.g * (1.0 - ratio) + b.g * ratio;
+    out.b =  a.b * (1.0 - ratio) + b.b * ratio;
+    out.a =  a.a * (1.0 - ratio) + b.a * ratio;
+    return out;
+}
+

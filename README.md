@@ -509,9 +509,8 @@ options from module_1 to module_(however many you need) and are drawn in that
 order. That means that the module_1's pixels could get overwritten by module_2.
 
 Modules currently included in XAVA are:
- * ``bars`` (default) - draws the usual horizontal bar layout
+ * ``bars`` (default) - draws frequency bars
  * ``stars`` - a pre-2016 Monstercat inspired star effect
- * ``bars_circle`` - same as ``bars`` but drawn in a circle
 
 Each of these modules has it's seperate config file which can be found under:
 xava config directory > gl > module > *module's name* > config.ini
