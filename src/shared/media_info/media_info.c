@@ -95,11 +95,11 @@ void* media_info_thread_runner(void* ptr) {
     return NULL;
 }
 
-XAVA_MEDIA_INFO* xavaMediaInfo(XAVA_MEDIA_INFO_THREAD *thread) {
+EXP_FUNC XAVA_MEDIA_INFO* xavaMediaInfo(XAVA_MEDIA_INFO_THREAD *thread) {
     return &((struct media_info_thread*)thread)->info;
 }
 
-XAVA_MEDIA_INFO_THREAD* xavaMediaInfoCreate(void) {
+EXP_FUNC XAVA_MEDIA_INFO_THREAD* xavaMediaInfoCreate(void) {
     struct media_info_thread *thread;
     MALLOC_SELF(thread, 1);
 
@@ -112,7 +112,7 @@ XAVA_MEDIA_INFO_THREAD* xavaMediaInfoCreate(void) {
     return thread;
 }
 
-void xavaMediaInfoDestroy(XAVA_MEDIA_INFO_THREAD *thread) {
+EXP_FUNC void xavaMediaInfoDestroy(XAVA_MEDIA_INFO_THREAD *thread) {
     thread->alive = false;
     pthread_join(thread->thread, NULL);
     free(thread);
