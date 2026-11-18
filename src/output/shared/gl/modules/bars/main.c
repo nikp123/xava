@@ -199,41 +199,8 @@ EXP_FUNC void xava_gl_module_apply(XAVAGLModuleOptions *options) {
     arr_resize(vertexData,  poly_count * 2);
     arr_resize(colorData,   poly_count);
 
-    gl4f fgcol = {
-        .r = ARGB_R_32(conf->col)/255.0,
-        .g = ARGB_G_32(conf->col)/255.0,
-        .b = ARGB_B_32(conf->col)/255.0,
-        .a = conf->foreground_opacity
-    };
-
     if(gl_options.bars.circle) {
         xava->rest = 0;
-    }
-
-    for(uint32_t j=0; j < segments; j++) {
-        for(uint32_t i=0; i<xava->bars; i++) {
-            // (bars_done * how_many_segments + segments_done) * num_of_verts_per_bar_segment
-            size_t o = (i*segments + j) * 6;
-
-            if(arr_count(conf->gradients) > 1) {
-                // top left
-                colorData[o]   = gradientColor[j+1];
-                // bottom left
-                colorData[o+1] = gradientColor[j];
-                // bottom right
-                colorData[o+2] = gradientColor[j];
-                // top right
-                colorData[o+3] = gradientColor[j+1];
-                // bottom right
-                colorData[o+4] = gradientColor[j];
-                // top left
-                colorData[o+5] = gradientColor[j+1];
-            } else {
-                for(uint32_t k=0; k<6; k++) {
-                    colorData[o+k] = fgcol;
-                }
-            }
-        }
     }
 
     // do image scaling
@@ -290,15 +257,55 @@ EXP_FUNC void xava_gl_module_clear(XAVAGLModuleOptions *options) {
     // (https://www.khronos.org/opengl/wiki/GLSL_:_common_mistakes#glUniform_doesn.27t_work)
     glUseProgram(pre.program);
 
+    // Set background color
     GLfloat bgcol[4] = {
         ARGB_R_32(conf->bgcol)/255.0,
         ARGB_G_32(conf->bgcol)/255.0,
         ARGB_B_32(conf->bgcol)/255.0,
         conf->background_opacity
     };
-
-
     glUniform4f(PRE_BGCOL, bgcol[0], bgcol[1], bgcol[2], bgcol[3]);
+
+    uint32_t segments = MAX(arr_count(conf->gradients), 2)-1;
+    size_t   poly_count = xava->bars * 6 * segments;
+
+    // dont update the colors if the geometry is not ready yet
+    if(arr_count(colorData) != poly_count)
+        return;
+
+    // Set foreground color(s)
+    gl4f fgcol = {
+        .r = ARGB_R_32(conf->col)/255.0,
+        .g = ARGB_G_32(conf->col)/255.0,
+        .b = ARGB_B_32(conf->col)/255.0,
+        .a = conf->foreground_opacity
+    };
+    for(uint32_t j=0; j < segments; j++) {
+        for(uint32_t i=0; i<xava->bars; i++) {
+            // (bars_done * how_many_segments + segments_done) * num_of_verts_per_bar_segment
+            size_t o = (i*segments + j) * 6;
+
+            if(arr_count(conf->gradients) > 1) {
+                // top left
+                colorData[o]   = gradientColor[j+1];
+                // bottom left
+                colorData[o+1] = gradientColor[j];
+                // bottom right
+                colorData[o+2] = gradientColor[j];
+                // top right
+                colorData[o+3] = gradientColor[j+1];
+                // bottom right
+                colorData[o+4] = gradientColor[j];
+                // top left
+                colorData[o+5] = gradientColor[j+1];
+            } else {
+                for(uint32_t k=0; k<6; k++) {
+                    colorData[o+k] = fgcol;
+                }
+            }
+        }
+    }
+
 }
 
 EXP_FUNC void xava_gl_module_draw(XAVAGLModuleOptions *options) {
