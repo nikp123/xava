@@ -1,14 +1,21 @@
 #version 420 core
 
-// input vertex
-in vec4 fft_bars;
-in vec4 foreground_color;
+// color passed from the host
+uniform vec4 background_color;
 
-out vec4 color;
+// screen width and height
+uniform vec2 resolution;
 
-uniform mat4 projection_matrix;
+// offset to the bars in case they dont occupy the whole viewport
+uniform vec2 bars_offset;
+
+uniform float intensity;
+
+in vec4 color;
+
+layout(location=0) out vec4 FragColor;
 
 void main() {
-  color = foreground_color;
-  gl_Position = fft_bars*projection_matrix;
+  FragColor = color;
 }
+
