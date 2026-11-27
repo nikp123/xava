@@ -127,6 +127,12 @@ void EGLDraw(XAVA *xava) { SGLDraw(xava); }
 
 void EGLCleanup(XAVA *xava, struct _escontext *ESContext) {
   SGLCleanup(xava);
+
+  // unbind the context first, otherwise eglDestroySurface fails with
+  // EGL_BAD_CURRENT_SURFACE and the lines below won't actually free anything
+  eglMakeCurrent(ESContext->display, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                 EGL_NO_CONTEXT);
+
   eglDestroyContext(ESContext->display, ESContext->context);
   eglDestroySurface(ESContext->display, ESContext->surface);
   eglTerminate(ESContext->display);
