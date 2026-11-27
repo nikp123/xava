@@ -62,7 +62,7 @@ void xava_gl_module_post_config_load(XAVAGLHostOptions *vars) {
     XAVA_CONFIG_GET_STRING(config, "gl", "post_shader", "default", shader);
     if(strcmp("none", shader)) {
         xavaLog("Post shader '%s' enabled", shader);
-        
+
         // HACK: (ab)using the 1st modules inotify for the post shaders reload function
         xava_gl_module_shader_load(&vars->post, SGL_POST, SGL_VERT, shader,
                 &vars->module[0], xava);
@@ -119,17 +119,23 @@ void xava_gl_module_post_apply(XAVAGLHostOptions *vars) {
     XAVA              *xava = vars->xava;
     struct gl_vars    *gl   = &vars->gl_vars;
 
+    GLsizei width  = xava->outer.w*vars->resolution_scale;
+    GLsizei height = xava->outer.h*vars->resolution_scale;
+
     glUseProgram(vars->post.program);
 
     // update screen resoltion
     glUniform2f(gl->RESOLUTION, xava->outer.w, xava->outer.h);
 
-    // set texture properties
-    glGenTextures(1,              &vars->FBO.final_texture);
+    // Re-specify the storage of the existing render target textures instead of
+    // generating new objects on every resize. Allocating a new set each time
+    // orphans the previous window-sized textures/FBO (they can never be deleted
+    // because their handles get overwritten), which is a VRAM leak.
+    if(vars->FBO.final_texture == 0)
+        glGenTextures(1,              &vars->FBO.final_texture);
     glBindTexture(GL_TEXTURE_2D,   vars->FBO.final_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-            xava->outer.w*vars->resolution_scale,
-            xava->outer.h*vars->resolution_scale,
+            width, height,
             0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -137,24 +143,29 @@ void xava_gl_module_post_apply(XAVAGLHostOptions *vars) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     // set texture properties
-    glGenTextures(1,             &vars->FBO.depth_texture);
+    if(vars->FBO.depth_texture == 0)
+        glGenTextures(1,             &vars->FBO.depth_texture);
     glBindTexture(GL_TEXTURE_2D,  vars->FBO.depth_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-            xava->outer.w*vars->resolution_scale,
-            xava->outer.h*vars->resolution_scale,
+            width, height,
             0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    // set framebuffer properties
-    glGenFramebuffers(1,  &vars->FBO.framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, vars->FBO.framebuffer);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-            GL_TEXTURE_2D, vars->FBO.final_texture, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-            GL_TEXTURE_2D, vars->FBO.depth_texture, 0);
+    // set framebuffer properties - the attachments only need to be set up once
+    // since the texture objects stay the same across resizes
+    if(vars->FBO.framebuffer == 0) {
+        glGenFramebuffers(1,  &vars->FBO.framebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, vars->FBO.framebuffer);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                GL_TEXTURE_2D, vars->FBO.final_texture, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                GL_TEXTURE_2D, vars->FBO.depth_texture, 0);
+    } else {
+        glBindFramebuffer(GL_FRAMEBUFFER, vars->FBO.framebuffer);
+    }
 
     // check if it borked
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -241,7 +252,17 @@ void xava_gl_module_post_draw(XAVAGLHostOptions *vars) {
 }
 
 void xava_gl_module_post_cleanup(XAVAGLHostOptions *vars) {
-    if(vars->post_enabled) return;
+    if(!vars->post_enabled) return;
+
+    glDeleteFramebuffers(1,  &vars->FBO.framebuffer);
+    glDeleteTextures(1,      &vars->FBO.final_texture);
+    glDeleteTextures(1,      &vars->FBO.depth_texture);
+
+    // glDelete* leaves the handles untouched, so zero them out or the next
+    // apply() would try to reuse the deleted objects instead of creating new ones
+    vars->FBO.framebuffer   = 0;
+    vars->FBO.final_texture = 0;
+    vars->FBO.depth_texture = 0;
 
     if(vars->post.config != NULL) {
         xavaConfigClose(vars->post.config);

@@ -156,6 +156,15 @@ GLint xava_gl_module_shader_build(struct shader *shader, GLenum shader_type) {
             free(source_line);
         }
 
+        // clean up the failed shader object and its source, otherwise both the
+        // GL object and the source strings are leaked
+        glDeleteShader(shader->handle);
+        shader->handle = 0;
+        free(shader->path);
+        free(shader->text);
+        shader->path = NULL;
+        shader->text = NULL;
+
         return status;
     }
 
@@ -164,6 +173,8 @@ GLint xava_gl_module_shader_build(struct shader *shader, GLenum shader_type) {
     // free text and path info
     free(shader->path);
     free(shader->text);
+    shader->path = NULL;
+    shader->text = NULL;
 
     return status;
 }
@@ -171,32 +182,39 @@ GLint xava_gl_module_shader_build(struct shader *shader, GLenum shader_type) {
 void xava_gl_module_program_create(xava_gl_module_program *program) {
     GLint status;
 
+    // optional stage, we check if it's included in the shader pack. This has to
+    // be sampled before building, because building frees the shader source.
+    bool has_geo = program->geo.text != NULL;
+
     program->program = glCreateProgram();
     xavaSpam("Creating OpenGL program %d", program->program);
     xava_gl_module_shader_build(&program->vert, GL_VERTEX_SHADER);
-    if (program->geo
-        .text) // optional stage, we check if it's included in the shader pack
+    if (has_geo)
         xava_gl_module_shader_build(&program->geo, GL_GEOMETRY_SHADER);
     xava_gl_module_shader_build(&program->frag, GL_FRAGMENT_SHADER);
 
-    glAttachShader(program->program, program->vert.handle);
-    if (program->geo
-        .text) // optional stage, we check if it's included in the shader pack
+    if (program->vert.handle)
+        glAttachShader(program->program, program->vert.handle);
+    if (has_geo && program->geo.handle)
         glAttachShader(program->program, program->geo.handle);
-    glAttachShader(program->program, program->frag.handle);
+    if (program->frag.handle)
+        glAttachShader(program->program, program->frag.handle);
     glLinkProgram(program->program);
 
-    glDeleteShader(program->frag.handle);
-    if (program->geo
-        .text) // optional stage, we check if it's included in the shader pack
+    if (program->frag.handle)
+        glDeleteShader(program->frag.handle);
+    if (has_geo && program->geo.handle)
         glDeleteShader(program->geo.handle);
-    glDeleteShader(program->vert.handle);
+    if (program->vert.handle)
+        glDeleteShader(program->vert.handle);
 
     glGetProgramiv(program->program, GL_LINK_STATUS, &status);
     if (!status) {
         char log[1000];
         GLsizei len;
         glGetProgramInfoLog(program->program, 1000, &len, log);
+        glDeleteProgram(program->program);
+        program->program = 0;
         xavaBail("Error: linking:\n%*s\n", len, log);
     }
 }
