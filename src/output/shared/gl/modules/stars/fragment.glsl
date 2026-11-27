@@ -1,14 +1,20 @@
 #version 420 core
 
-// input vertex
-in vec4 pos;
-in vec4 color;
+// color passed from the host
+uniform vec4 foreground_color;
 
-out vec4 vcolor;
+// color passed from the host
+uniform vec4 background_color;
 
-uniform mat4 projection_matrix;
+// screen width and height
+uniform vec2 resolution;
+
+uniform float intensity;
+
+in vec4 vcolor;
+
+layout(location=0) out vec4 FragColor;
 
 void main() {
-	vcolor = color;
-	gl_Position = pos*projection_matrix;
+	FragColor = vcolor;
 }
