@@ -683,9 +683,11 @@ EXP_FUNC void xavaOutputCleanup(XAVA *xava) {
     #if defined(EGL)
         EGLCleanup(xava, &ESContext);
     #elif defined(GL)
+        // delete the GL objects while the context is still current, otherwise
+        // the glDelete* calls below are silently ignored
+        GLCleanup(xava);
         glXMakeCurrent(xavaXDisplay, 0, 0);
         glXDestroyContext(xavaXDisplay, xavaGLXContext);
-        GLCleanup(xava);
     #elif defined(CAIRO)
         __internal_xava_output_cairo_cleanup(xavaCairoHandle);
         UNUSED(xava);
