@@ -488,6 +488,11 @@ EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
     // delete both pipelines
     xava_gl_module_program_destroy(&pre);
 
+    if(pre.config != NULL) {
+        xavaConfigClose(pre.config);
+        pre.config = NULL;
+    }
+
     arr_free(gradientColor);
     arr_free(vertexData);
     arr_free(colorData);

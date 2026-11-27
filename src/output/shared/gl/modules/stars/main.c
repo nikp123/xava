@@ -396,6 +396,11 @@ EXP_FUNC void xava_gl_module_cleanup(XAVAGLModuleOptions *options) {
     // delete both pipelines
     xava_gl_module_program_destroy(&data->pre);
 
+    if(data->pre.config != NULL) {
+        xavaConfigClose(data->pre.config);
+        data->pre.config = NULL;
+    }
+
     arr_free(data->vertexData);
     arr_free(data->colorData);
     arr_free(data->stars);

@@ -243,6 +243,11 @@ void xava_gl_module_post_draw(XAVAGLHostOptions *vars) {
 void xava_gl_module_post_cleanup(XAVAGLHostOptions *vars) {
     if(vars->post_enabled) return;
 
+    if(vars->post.config != NULL) {
+        xavaConfigClose(vars->post.config);
+        vars->post.config = NULL;
+    }
+
     xava_gl_module_program_destroy(&vars->post);
 }
 
