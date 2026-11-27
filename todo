@@ -45,3 +45,14 @@ TODO
 
 * drop cairo as it's too complex to maintain both systems
  - i have my own reasons, sorry
+
+
+UNSOLVED BUGS
+----
+* investigate whether SDL2's dllquit destructor memory leak can be fixed
+ - Apparently SDL_CreateEnvironment allocates memory when XAVA is cleaning up
+ via dlclose().
+ - This exists regardless of output mode, because the of the auto output
+ detection via am_i_sdl2().
+* 400 bytes lost in 5 blocks somewhere still uninvestigated as reported by
+ valgrind.
