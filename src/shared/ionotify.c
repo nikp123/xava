@@ -1,7 +1,7 @@
 #include <assert.h>
-#include <x-watcher.h>
+#include <x-watcher/x-watcher.h>
 
-#include "array.h"
+#include <x-watcher/array.h>
 #include "shared.h"
 #include "shared/ionotify.h"
 

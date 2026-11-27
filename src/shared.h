@@ -59,7 +59,8 @@
 
 #include "shared/util/types.h"
 // this array thing is so useful, let's just force it upon everything. thank liv
-#include "shared/util/array.h"
+// We're using the x-watcher version so we don't have multiple sources of truth
+#include <x-watcher/array.h>
 #include "shared/media_info/media_info.h"
 #include "shared/module/module.h"
 #include "shared/log.h"

@@ -71,7 +71,11 @@ if(NOT THREAD_LIB)
 	message(FATAL_ERROR "pthread library not found")
 endif()
 
+# Making xava-shared's path globally accessible
 include_directories(src)
+
+# Making x-watcher's path globally accessible (required for resolving array.h)
+include_directories(lib/x-watcher/include)
 
 # Build shared library
 include("src/shared/build.cmake")

@@ -59,7 +59,7 @@ if(DEPS_FOUND)
         lib/iniparser/src
         lib/kiss-mpris-properties/src
         lib/stb
-        lib/x-watcher
+        lib/x-watcher/include
     )
 
     install(TARGETS xava-shared DESTINATION lib)

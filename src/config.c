@@ -12,7 +12,7 @@
 #include "config.h"
 #include "shared.h"
 #include "shared/log.h"
-#include "shared/util/array.h"
+#include <x-watcher/array.h>
 
 static const char *colorStrings[8] = {"black", "red", "green", "yellow",
                                         "blue", "magenta", "cyan", "white"};
