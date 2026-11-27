@@ -60,6 +60,8 @@ EXP_FUNC void xavaOutputCleanup(void *v) {
     wl_compositor_destroy(wd.compositor);
     wl_registry_destroy(xavaWLRegistry);
     wl_display_disconnect(wd.display);
+    destroyXAVAEventStack(wd.events);
+    wd.events = NULL;
     free(monitorName);
 }
 
