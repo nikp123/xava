@@ -270,7 +270,7 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
         fftwf_import_wisdom_from_filename(wisdom_filename);
 
     do {
-        fft_band band;
+        fft_band band = {0};
 
         boundary_frequency = target_framerate;
 
@@ -281,7 +281,6 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
         band.start_freq = boundary_frequency;
         band.stop_freq  = last_boundary_frequency;
         band.in_l = fftwf_malloc(band.fft_size * sizeof(float));
-        band.in_r = fftwf_malloc(band.fft_size * sizeof(float));
 
         arr_init_n(band.window, band.fft_size);
         generate_window(band.window, band.fft_size, data->window);
@@ -290,6 +289,10 @@ EXP_FUNC int xavaFilterInit(XAVA *xava) {
         band.pl = fftwf_plan_dft_r2c_1d(band.fft_size, band.in_l, band.outl, FFTW_MEASURE);
 
         if(p->stereo) {
+            // only allocate the right channel when it's actually used, otherwise
+            // the buffer is leaked since xavaFilterBandClean() only frees it when
+            // stereo is enabled
+            band.in_r = fftwf_malloc(band.fft_size * sizeof(float));
             band.outr = fftwf_alloc_complex(band.fft_size/2+1);
             band.pr   = fftwf_plan_dft_r2c_1d(band.fft_size, band.in_r, band.outr, FFTW_MEASURE);
         }
